@@ -212,14 +212,26 @@
 
     /* The Pawl */
     .pawl-box {
-      background: var(--surface);
+      background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(245,158,11,0.02) 100%);
       border: 1px solid var(--accent-dim);
+      border-left: 3px solid var(--accent);
       border-radius: 10px;
-      padding: 24px;
+      padding: 24px 28px;
       margin: 32px 0;
+      box-shadow: 0 4px 24px rgba(245,158,11,0.06), inset 0 1px 0 rgba(245,158,11,0.08);
+      position: relative;
+      overflow: hidden;
     }
-    .pawl-box h3 { color: var(--accent); font-size: 18px; margin-bottom: 8px; }
-    .pawl-box p { color: var(--muted); font-size: 15px; }
+    .pawl-box::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 120px; height: 120px;
+      background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .pawl-box h3 { color: var(--accent); font-size: 18px; margin-bottom: 8px; position: relative; }
+    .pawl-box p { color: var(--muted); font-size: 15px; line-height: 1.7; position: relative; }
 
     /* Comparison */
     .compare-grid {
@@ -353,15 +365,30 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 24px;
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+    .testimonial:hover {
+      border-color: rgba(245,158,11,0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.3);
     }
     .quote {
       color: var(--text);
       font-size: 15px;
-      line-height: 1.6;
+      line-height: 1.7;
       margin-bottom: 16px;
       font-style: italic;
     }
-    .quote::before { content: '\201C'; color: var(--accent); font-size: 20px; }
+    .quote::before {
+      content: '\201C';
+      color: var(--accent);
+      font-size: 32px;
+      line-height: 0;
+      vertical-align: -10px;
+      margin-right: 4px;
+      font-style: normal;
+    }
     .quoter-name { display: block; font-weight: 600; font-size: 14px; }
     .quoter-role { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
     .github-badge {
