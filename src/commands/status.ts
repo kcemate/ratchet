@@ -1,0 +1,104 @@
+import { Command } from 'commander';
+import chalk from 'chalk';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+import type { RatchetRun } from '../types.js';
+
+export const STATE_FILE = '.ratchet-state.json';
+
+export async function loadRunState(cwd: string): Promise<RatchetRun | null> {
+  try {
+    const raw = await readFile(join(cwd, STATE_FILE), 'utf-8');
+    return JSON.parse(raw) as RatchetRun;
+  } catch {
+    return null;
+  }
+}
+
+function formatDuration(startIso: string, endIso?: string): string {
+  const ms = (endIso ? new Date(endIso) : new Date()).getTime() - new Date(startIso).getTime();
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60_000) return `${(ms / 1000).toFixed(0)}s`;
+  const mins = Math.floor(ms / 60_000);
+  const secs = Math.floor((ms % 60_000) / 1000);
+  return `${mins}m ${secs}s`;
+}
+
+function colorStatus(status: RatchetRun['status']): string {
+  switch (status) {
+    case 'running':
+      return chalk.yellow('running ⏳');
+    case 'completed':
+      return chalk.green('completed ✓');
+    case 'failed':
+      return chalk.red('failed ✗');
+  }
+}
+
+export function statusCommand(): Command {
+  const cmd = new Command('status');
+
+  cmd
+    .description('Show the status of the current or most recent Ratchet run')
+    .action(async () => {
+      const cwd = process.cwd();
+
+      console.log(chalk.bold('\n⚙  Ratchet Status\n'));
+
+      const run = await loadRunState(cwd);
+
+      if (!run) {
+        console.log(
+          chalk.dim('  No runs found. Run ') +
+            chalk.cyan('ratchet torque --target <name>') +
+            chalk.dim(' to start.\n'),
+        );
+        return;
+      }
+
+      const passedClicks = run.clicks.filter((c) => c.testsPassed).length;
+      const totalClicks = run.clicks.length;
+      const duration = formatDuration(
+        run.startedAt as unknown as string,
+        run.finishedAt as unknown as string | undefined,
+      );
+
+      console.log(`  Run ID  : ${chalk.dim(run.id)}`);
+      console.log(
+        `  Target  : ${chalk.cyan(run.target.name)} ${chalk.dim(`(${run.target.path})`)}`,
+      );
+      console.log(`  Status  : ${colorStatus(run.status)}`);
+      console.log(
+        `  Clicks  : ${chalk.green(String(passedClicks))} passed / ${totalClicks} total`,
+      );
+      console.log(`  Time    : ${chalk.yellow(duration)}`);
+
+      if (run.clicks.length > 0) {
+        console.log('\n  ' + chalk.bold('Click history:'));
+        for (const click of run.clicks) {
+          const icon = click.testsPassed ? chalk.green('✓') : chalk.red('✗');
+          const commit = click.commitHash
+            ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`)
+            : chalk.dim(' [rolled back]');
+          const files =
+            click.filesModified.length > 0
+              ? chalk.dim(` — ${click.filesModified.slice(0, 3).join(', ')}${click.filesModified.length > 3 ? ` +${click.filesModified.length - 3} more` : ''}`)
+              : '';
+          console.log(`    ${icon} Click ${click.number}${commit}${files}`);
+        }
+      }
+
+      if (run.status === 'completed' && passedClicks > 0) {
+        console.log(
+          '\n  ' +
+            chalk.dim('Run ') +
+            chalk.cyan('ratchet tighten --pr') +
+            chalk.dim(' to create a pull request.'),
+        );
+      }
+
+      console.log('');
+    });
+
+  return cmd;
+}
