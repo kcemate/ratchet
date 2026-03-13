@@ -264,12 +264,18 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .stat:hover {
+      border-color: var(--accent-dim);
+      box-shadow: 0 4px 20px rgba(245,158,11,0.08);
     }
     .stat .num {
       font-size: 40px;
       font-weight: 800;
       color: var(--accent);
       display: block;
+      font-variant-numeric: tabular-nums;
     }
     .stat .label { color: var(--muted); font-size: 14px; }
 
@@ -605,15 +611,15 @@
       </p>
       <div class="stats">
         <div class="stat">
-          <span class="num">100+</span>
+          <span class="num" data-target="100" data-suffix="+">100+</span>
           <span class="label">autonomous commits</span>
         </div>
         <div class="stat">
-          <span class="num">496</span>
+          <span class="num" data-target="496">496</span>
           <span class="label">tests passing</span>
         </div>
         <div class="stat">
-          <span class="num">0</span>
+          <span class="num" data-target="0">0</span>
           <span class="label">regressions shipped</span>
         </div>
       </div>
@@ -745,6 +751,33 @@
         });
       }, { threshold: 0.12 });
       document.querySelectorAll('.fade-in').forEach(function(el) { obs.observe(el); });
+
+      // Animated stat counters
+      function animateCounter(el) {
+        var target = parseInt(el.getAttribute('data-target'), 10);
+        var suffix = el.getAttribute('data-suffix') || '';
+        if (target === 0) { el.textContent = '0' + suffix; return; }
+        var duration = 1200;
+        var start = null;
+        var startVal = 0;
+        function step(ts) {
+          if (!start) start = ts;
+          var progress = Math.min((ts - start) / duration, 1);
+          var ease = 1 - Math.pow(1 - progress, 3);
+          el.textContent = Math.round(startVal + ease * (target - startVal)) + suffix;
+          if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+      var statObs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) {
+            e.target.querySelectorAll('.num[data-target]').forEach(animateCounter);
+            statObs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.3 });
+      document.querySelectorAll('.stats').forEach(function(el) { statObs.observe(el); });
     })();
   </script>
 </body>
