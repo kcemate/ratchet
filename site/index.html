@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ratchet — Every click ships code.</title>
+  <meta name="description" content="Autonomous code improvement that only moves forward. Point it at your codebase, come back to shipped, tested commits.">
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --surface: #141416;
+      --border: #2a2a2e;
+      --text: #e4e4e7;
+      --muted: #8b8b94;
+      --accent: #f59e0b;
+      --accent-dim: #92610a;
+      --green: #22c55e;
+      --red: #ef4444;
+      --code-bg: #1a1a1e;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      padding: 100px 0 60px;
+      text-align: center;
+    }
+    .hero-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      display: block;
+    }
+    .hero h1 {
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .tagline {
+      font-size: 22px;
+      color: var(--muted);
+      margin-bottom: 40px;
+      font-weight: 400;
+    }
+
+    /* Terminal demo */
+    .terminal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0;
+      text-align: left;
+      max-width: 600px;
+      margin: 0 auto 60px;
+      overflow: hidden;
+    }
+    .terminal-bar {
+      background: var(--code-bg);
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .terminal-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+    .terminal-dot.red { background: #ff5f56; }
+    .terminal-dot.yellow { background: #ffbd2e; }
+    .terminal-dot.green { background: #27c93f; }
+    .terminal-body {
+      padding: 20px 24px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .terminal-body .prompt { color: var(--accent); }
+    .terminal-body .cmd { color: var(--text); }
+    .terminal-body .output { color: var(--muted); }
+    .terminal-body .success { color: var(--green); }
+
+    /* How it works */
+    .section {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+    .section h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      letter-spacing: -1px;
+    }
+    .section h2 span { color: var(--accent); }
+
+    /* Click loop */
+    .clicks {
+      display: grid;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .click-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .click-num {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 800;
+      font-size: 14px;
+      min-width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .click-step h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .click-step p { color: var(--muted); font-size: 14px; }
+
+    /* The Pawl */
+    .pawl-box {
+      background: var(--surface);
+      border: 1px solid var(--accent-dim);
+      border-radius: 10px;
+      padding: 24px;
+      margin: 32px 0;
+    }
+    .pawl-box h3 { color: var(--accent); font-size: 18px; margin-bottom: 8px; }
+    .pawl-box p { color: var(--muted); font-size: 15px; }
+
+    /* Comparison */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .compare-card {
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .compare-card.ratchet-card {
+      border-color: var(--accent);
+    }
+    .compare-card h3 { font-size: 16px; margin-bottom: 8px; }
+    .compare-card p { color: var(--muted); font-size: 14px; }
+    .compare-card .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .tag.oneshot { background: #1e1e2e; color: var(--muted); }
+    .tag.chat { background: #1e1e2e; color: var(--muted); }
+    .tag.auto { background: var(--accent-dim); color: var(--accent); }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 32px 0;
+    }
+    .stat {
+      text-align: center;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .stat .num {
+      font-size: 40px;
+      font-weight: 800;
+      color: var(--accent);
+      display: block;
+    }
+    .stat .label { color: var(--muted); font-size: 14px; }
+
+    /* Config */
+    .config-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--muted);
+      overflow-x: auto;
+    }
+    .config-block .key { color: var(--accent); }
+    .config-block .val { color: var(--green); }
+    .config-block .comment { color: #555; }
+
+    /* CTA */
+    .cta {
+      text-align: center;
+      padding: 80px 0;
+      border-top: 1px solid var(--border);
+    }
+    .cta h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .cta p { color: var(--muted); margin-bottom: 32px; font-size: 18px; }
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 700;
+      font-size: 16px;
+      padding: 14px 32px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      margin-left: 12px;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--muted);
+      font-size: 14px;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 36px; }
+      .tagline { font-size: 18px; }
+      .compare-grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+      .hero { padding: 60px 0 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <section class="hero">
+      <span class="hero-icon">🔧</span>
+      <h1>Meet <span>Ratchet</span></h1>
+      <p class="tagline">Autonomous code improvement that only moves forward.</p>
+
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="terminal-dot red"></div>
+          <div class="terminal-dot yellow"></div>
+          <div class="terminal-dot green"></div>
+        </div>
+        <div class="terminal-body">
+          <div><span class="prompt">$</span> <span class="cmd">ratchet torque --target "api-errors" --clicks 7</span></div>
+          <div class="output">🔧 Torquing api-errors (7 clicks)...</div>
+          <div class="output">  Click 1: <span class="success">✓</span> UUID validation on join endpoint</div>
+          <div class="output">  Click 2: <span class="success">✓</span> Input sanitization on timezone route</div>
+          <div class="output">  Click 3: <span class="success">✓</span> Middleware error consistency</div>
+          <div class="output">  Click 4: <span class="success">✓</span> Better 403 messages on membership</div>
+          <div class="output">  Click 5: <span class="success">✓</span> Premium gate hit logging</div>
+          <div class="output">  Click 6: <span class="success">✓</span> Reaction endpoint validation</div>
+          <div class="output">  Click 7: <span class="success">✓</span> Structured error logging</div>
+          <div class="output"><br><span class="success">✅ Tightened. 7/7 clicks shipped. 496 tests passing.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>What is a <span>click</span>?</h2>
+      <p style="color: var(--muted); font-size: 17px; margin-bottom: 24px;">
+        Every click is one autonomous improvement cycle. Ratchet analyzes your code, picks the highest-impact change, builds it, runs your tests, and commits — all without human intervention. Each click locks in progress. The ratchet only turns one way.
+      </p>
+      <div class="clicks">
+        <div class="click-step">
+          <div class="click-num">1</div>
+          <div>
+            <h3>Analyze</h3>
+            <p>Scan the target area. Identify the highest-impact improvement.</p>
+          </div>
+        </div>
+        <div class="click-step">
+          <div class="click-num">2</div>
+          <div>
+            <h3>Propose</h3>
+            <p>Pick ONE specific change. Not a laundry list — a focused fix.</p>
+          </div>
+        </div>
+        <div class="click-step">
+          <div class="click-num">3</div>
+          <div>
+            <h3>Build</h3>
+            <p>Write the code. Real files, real changes.</p>
+          </div>
+        </div>
+        <div class="click-step">
+          <div class="click-num">4</div>
+          <div>
+            <h3>Test</h3>
+            <p>Run the full test suite. Green or it doesn't ship.</p>
+          </div>
+        </div>
+        <div class="click-step">
+          <div class="click-num">5</div>
+          <div>
+            <h3>Commit</h3>
+            <p>Lock it in. Descriptive message, clean history.</p>
+          </div>
+        </div>
+        <div class="click-step">
+          <div class="click-num">6</div>
+          <div>
+            <h3>Repeat</h3>
+            <p>Next click. Keep going until the socket is tight.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pawl-box">
+        <h3>🛡️ The Pawl</h3>
+        <p>If tests fail, nothing commits. The ratchet can't slip backward — your codebase can only get better, never worse. That's the Pawl.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Battle-tested <span>results</span></h2>
+      <p style="color: var(--muted); font-size: 17px; margin-bottom: 24px;">
+        We built Ratchet internally and ran it on our own production app. These are real numbers.
+      </p>
+      <div class="stats">
+        <div class="stat">
+          <span class="num">100+</span>
+          <span class="label">autonomous commits</span>
+        </div>
+        <div class="stat">
+          <span class="num">496</span>
+          <span class="label">tests passing</span>
+        </div>
+        <div class="stat">
+          <span class="num">0</span>
+          <span class="label">regressions shipped</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Why not <span>X</span>?</h2>
+      <div class="compare-grid">
+        <div class="compare-card">
+          <h3>GitHub Copilot</h3>
+          <p>Autocompletes one line at a time. You're still driving.</p>
+          <span class="tag oneshot">One-shot</span>
+        </div>
+        <div class="compare-card">
+          <h3>Cursor / ChatGPT</h3>
+          <p>Chat-based editing. Good, but you're still in the loop for every change.</p>
+          <span class="tag chat">Human-driven</span>
+        </div>
+        <div class="compare-card">
+          <h3>Devin / Codex</h3>
+          <p>Great for full tasks. Not built for sustained iterative refinement.</p>
+          <span class="tag oneshot">Task-based</span>
+        </div>
+        <div class="compare-card ratchet-card">
+          <h3>Ratchet</h3>
+          <p>Sustained autonomous sprints. Analyze, build, test, commit, repeat. Hands-off.</p>
+          <span class="tag auto">Autonomous iteration</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Boundaries with <span>.ratchet.yml</span></h2>
+      <p style="color: var(--muted); font-size: 17px; margin-bottom: 24px;">
+        Your team's architectural intent, codified. Tell Ratchet what to improve — and what to leave alone.
+      </p>
+      <div class="config-block">
+        <span class="key">agent</span>: <span class="val">claude-code</span><br>
+        <span class="key">defaults</span>:<br>
+        &nbsp;&nbsp;<span class="key">clicks</span>: <span class="val">7</span><br>
+        &nbsp;&nbsp;<span class="key">test_command</span>: <span class="val">npm test</span><br>
+        <span class="key">targets</span>:<br>
+        &nbsp;&nbsp;- <span class="key">name</span>: <span class="val">error-handling</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">path</span>: <span class="val">src/api/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">description</span>: <span class="val">"Improve API error handling"</span><br>
+        <span class="key">boundaries</span>:<br>
+        &nbsp;&nbsp;- <span class="key">path</span>: <span class="val">src/auth/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">rule</span>: <span class="val">no-modify</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">reason</span>: <span class="val">"Auth architecture is intentional"</span> <span class="comment"># The team decides</span>
+      </div>
+    </section>
+
+    <section class="cta">
+      <h2>Your codebase, tighter.</h2>
+      <p>Point it at a problem. Come back to shipped code.</p>
+      <a href="https://github.com/giovanni-labs/ratchet" class="btn">View on GitHub</a>
+      <a href="mailto:giovannilabs@icloud.com" class="btn btn-secondary">Get in touch</a>
+    </section>
+
+    <footer>
+      <p>Built by <a href="https://github.com/giovanni-labs">Giovanni Labs</a> — an autonomous AI engineering org.</p>
+      <p style="margin-top: 8px;">Every click ships code. 🔧</p>
+    </footer>
+  </div>
+
+</body>
+</html>
