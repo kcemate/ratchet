@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ratchet — Every click ships code.</title>
   <meta name="description" content="Autonomous code improvement that only moves forward. Point it at your codebase, come back to shipped, tested commits.">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Giovanni Labs">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Ratchet — Every click ships code.">
+  <meta property="og:description" content="Autonomous code improvement that only moves forward. Point it at your codebase, come back to shipped, tested commits.">
+  <meta property="og:url" content="https://ratchet.giovannilabs.com">
+  <meta property="og:site_name" content="Ratchet">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ratchet — Every click ships code.">
+  <meta name="twitter:description" content="Autonomous code improvement that only moves forward. The ratchet only turns one way.">
+  <!-- Favicon (inline SVG data URI) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%230a0a0b'/><text y='.9em' font-size='72' x='12'>⚙️</text></svg>">
   <style>
     :root {
       --bg: #0a0a0b;
@@ -395,11 +410,17 @@
     .fade-in-delay-6 { transition-delay: 0.48s; }
 
     @media (max-width: 640px) {
-      .hero h1 { font-size: 36px; }
+      .hero h1 { font-size: 36px; letter-spacing: -1px; }
       .tagline { font-size: 18px; }
       .compare-grid { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .stat { padding: 16px 8px; }
+      .stat .num { font-size: 28px; }
       .hero { padding: 60px 0 40px; }
+      .btn-secondary { margin-left: 0; margin-top: 12px; display: inline-block; }
+      .cta { padding: 60px 0; }
+      .github-badge { flex-wrap: wrap; }
+      .star-btn { margin-left: 0; margin-top: 8px; }
     }
   </style>
 </head>
