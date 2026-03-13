@@ -58,6 +58,14 @@
       0%, 100% { filter: drop-shadow(0 0 20px rgba(245,158,11,0.4)); }
       50% { filter: drop-shadow(0 0 36px rgba(245,158,11,0.75)); }
     }
+    .gear-spin {
+      transform-origin: 36px 36px;
+      animation: gear-rotate 8s linear infinite;
+    }
+    @keyframes gear-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
     .hero h1 {
       font-size: 56px;
       font-weight: 800;
@@ -302,7 +310,15 @@
 
   <div class="container">
     <section class="hero">
-      <span class="hero-icon">🔧</span>
+      <span class="hero-icon">
+        <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg" class="gear-svg" aria-hidden="true">
+          <g class="gear-spin">
+            <path fill="#f59e0b" d="M36 22a14 14 0 1 0 0 28 14 14 0 0 0 0-28zm0 22a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/>
+            <path fill="#f59e0b" d="M38.8 10h-5.6l-1.1 5.2a18 18 0 0 0-4.4 1.8L23.4 14l-3.9 3.9 3 4.3a18 18 0 0 0-1.8 4.4L15.5 27.8v5.4l5.2 1.1a18 18 0 0 0 1.8 4.4l-3 4.3 3.9 3.9 4.3-3a18 18 0 0 0 4.4 1.8l1.1 5.3h5.6l1.1-5.3a18 18 0 0 0 4.4-1.8l4.3 3 3.9-3.9-3-4.3a18 18 0 0 0 1.8-4.4l5.2-1.1v-5.4l-5.2-1.1a18 18 0 0 0-1.8-4.4l3-4.3L54.6 18l-4.3 3a18 18 0 0 0-4.4-1.8L44.7 14h-5.9z"/>
+          </g>
+          <circle cx="36" cy="36" r="5" fill="#0a0a0b"/>
+        </svg>
+      </span>
       <h1>Meet <span>Ratchet</span></h1>
       <p class="tagline">Autonomous code improvement that only moves forward.</p>
 
