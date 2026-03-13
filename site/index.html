@@ -239,6 +239,52 @@
     .config-block .val { color: var(--green); }
     .config-block .comment { color: #555; }
 
+    /* FAQ Accordion */
+    .faq { display: flex; flex-direction: column; gap: 8px; }
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .faq-item[open] { border-color: var(--accent-dim); }
+    .faq-q {
+      padding: 18px 20px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    .faq-q::-webkit-details-marker { display: none; }
+    .faq-q::after {
+      content: '+';
+      color: var(--accent);
+      font-size: 20px;
+      font-weight: 300;
+      transition: transform 0.25s;
+      flex-shrink: 0;
+    }
+    .faq-item[open] .faq-q::after { transform: rotate(45deg); }
+    .faq-a {
+      padding: 0 20px 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .faq-a code {
+      background: var(--code-bg);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--accent);
+      font-size: 13px;
+    }
+
     /* Testimonials */
     .testimonials {
       display: grid;
@@ -538,6 +584,32 @@
         &nbsp;&nbsp;- <span class="key">path</span>: <span class="val">src/auth/</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">rule</span>: <span class="val">no-modify</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">reason</span>: <span class="val">"Auth architecture is intentional"</span> <span class="comment"># The team decides</span>
+      </div>
+    </section>
+
+    <section class="section fade-in">
+      <h2>Common <span>questions</span></h2>
+      <div class="faq">
+        <details class="faq-item">
+          <summary class="faq-q">Does it work on any codebase?</summary>
+          <p class="faq-a">Yes. Ratchet is language-agnostic. If you can define a test command that exits 0 on green, Ratchet can ratchet. It's been run on Node.js, Python, Go, and Ruby codebases.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">What if the AI breaks something?</summary>
+          <p class="faq-a">That's exactly what the Pawl is for. If tests don't pass, nothing commits. The branch state is restored. Your main branch can only receive changes that pass your test suite — structurally, not by convention.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">How is this different from running Claude directly?</summary>
+          <p class="faq-a">Ratchet is the loop, not the agent. It orchestrates: analyze → propose → build → test → commit → repeat. Running Claude directly gives you one shot. Ratchet gives you sustained, verified iteration without you in the loop.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">Can I scope it to only touch certain files?</summary>
+          <p class="faq-a">Yes — that's what <code>.ratchet.yml</code> is for. Set paths for targets (what to improve) and boundaries (what to never touch). Your auth module stays locked. Your error handling gets tighter.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">How many clicks should I run?</summary>
+          <p class="faq-a">Start with 3–5 to get a feel for it. Production runs are typically 7–14. Each click is one focused change, so 7 clicks means 7 committed, tested improvements — not 7 all-in-one rewrites.</p>
+        </details>
       </div>
     </section>
 
