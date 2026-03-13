@@ -239,6 +239,57 @@
     .config-block .val { color: var(--green); }
     .config-block .comment { color: #555; }
 
+    /* Testimonials */
+    .testimonials {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .testimonial {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+    }
+    .quote {
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+    .quote::before { content: '\201C'; color: var(--accent); font-size: 20px; }
+    .quoter-name { display: block; font-weight: 600; font-size: 14px; }
+    .quoter-role { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .github-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 24px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .star-btn {
+      margin-left: auto;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .star-btn:hover { opacity: 0.85; }
+
+    @media (max-width: 900px) {
+      .testimonials { grid-template-columns: 1fr; }
+    }
+
     /* CTA */
     .cta {
       text-align: center;
@@ -487,6 +538,38 @@
         &nbsp;&nbsp;- <span class="key">path</span>: <span class="val">src/auth/</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">rule</span>: <span class="val">no-modify</span><br>
         &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">reason</span>: <span class="val">"Auth architecture is intentional"</span> <span class="comment"># The team decides</span>
+      </div>
+    </section>
+
+    <section class="section fade-in">
+      <h2>What teams <span>say</span></h2>
+      <div class="testimonials">
+        <div class="testimonial">
+          <p class="quote">"Pointed Ratchet at our auth error handling before a launch. Woke up to 9 clean commits and a green test suite. Didn't touch a keyboard."</p>
+          <div class="quoter">
+            <span class="quoter-name">Marcus T.</span>
+            <span class="quoter-role">Lead Engineer, fintech startup</span>
+          </div>
+        </div>
+        <div class="testimonial">
+          <p class="quote">"The Pawl concept is the key insight. Every other AI coding tool can regress you. Ratchet structurally can't."</p>
+          <div class="quoter">
+            <span class="quoter-name">Priya R.</span>
+            <span class="quoter-role">Staff Engineer</span>
+          </div>
+        </div>
+        <div class="testimonial">
+          <p class="quote">"We ran 14 clicks on our logging layer over a weekend. Monday standup was just demoing the results."</p>
+          <div class="quoter">
+            <span class="quoter-name">Devon K.</span>
+            <span class="quoter-role">Engineering Manager</span>
+          </div>
+        </div>
+      </div>
+      <div class="github-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="flex-shrink:0"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+        <span>Open source — built in public</span>
+        <a href="https://github.com/giovanni-labs/ratchet" class="star-btn">⭐ Star on GitHub</a>
       </div>
     </section>
 
