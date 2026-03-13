@@ -171,7 +171,14 @@
       padding: 20px;
       background: var(--surface);
       border: 1px solid var(--border);
+      border-left: 3px solid var(--accent-dim);
       border-radius: 10px;
+      transition: border-left-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .click-step:hover {
+      border-left-color: var(--accent);
+      transform: translateX(4px);
+      box-shadow: -4px 0 16px rgba(245,158,11,0.08);
     }
     .click-num {
       background: var(--accent);
