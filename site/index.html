@@ -32,11 +32,31 @@
     .hero {
       padding: 100px 0 60px;
       text-align: center;
+      position: relative;
     }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 500px;
+      background: radial-gradient(ellipse at center, rgba(245,158,11,0.13) 0%, rgba(245,158,11,0.04) 45%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero > * { position: relative; z-index: 1; }
     .hero-icon {
       font-size: 64px;
       margin-bottom: 24px;
       display: block;
+      filter: drop-shadow(0 0 24px rgba(245,158,11,0.5));
+      animation: icon-pulse 3s ease-in-out infinite;
+    }
+    @keyframes icon-pulse {
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(245,158,11,0.4)); }
+      50% { filter: drop-shadow(0 0 36px rgba(245,158,11,0.75)); }
     }
     .hero h1 {
       font-size: 56px;
