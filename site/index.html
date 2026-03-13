@@ -386,21 +386,38 @@
     .cta p { color: var(--muted); margin-bottom: 32px; font-size: 18px; }
     .btn {
       display: inline-block;
-      background: var(--accent);
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
       color: var(--bg);
       font-weight: 700;
       font-size: 16px;
       padding: 14px 32px;
       border-radius: 10px;
       text-decoration: none;
-      transition: opacity 0.2s;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+      box-shadow: 0 4px 16px rgba(245,158,11,0.25);
+      letter-spacing: 0.01em;
     }
-    .btn:hover { opacity: 0.85; }
+    .btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 28px rgba(245,158,11,0.4);
+      filter: brightness(1.08);
+    }
+    .btn:active {
+      transform: translateY(0) scale(0.99);
+      box-shadow: 0 2px 8px rgba(245,158,11,0.2);
+    }
     .btn-secondary {
       background: transparent;
+      background-image: none;
       border: 1px solid var(--border);
       color: var(--text);
       margin-left: 12px;
+      box-shadow: none;
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent-dim);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      filter: none;
     }
 
     /* Footer */
