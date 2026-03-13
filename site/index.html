@@ -272,6 +272,23 @@
     }
     footer a { color: var(--accent); text-decoration: none; }
 
+    /* Scroll-in animations */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .fade-in-delay-1 { transition-delay: 0.08s; }
+    .fade-in-delay-2 { transition-delay: 0.16s; }
+    .fade-in-delay-3 { transition-delay: 0.24s; }
+    .fade-in-delay-4 { transition-delay: 0.32s; }
+    .fade-in-delay-5 { transition-delay: 0.40s; }
+    .fade-in-delay-6 { transition-delay: 0.48s; }
+
     @media (max-width: 640px) {
       .hero h1 { font-size: 36px; }
       .tagline { font-size: 18px; }
@@ -333,48 +350,48 @@
       })();
     </script>
 
-    <section class="section">
+    <section class="section fade-in">
       <h2>What is a <span>click</span>?</h2>
       <p style="color: var(--muted); font-size: 17px; margin-bottom: 24px;">
         Every click is one autonomous improvement cycle. Ratchet analyzes your code, picks the highest-impact change, builds it, runs your tests, and commits — all without human intervention. Each click locks in progress. The ratchet only turns one way.
       </p>
       <div class="clicks">
-        <div class="click-step">
+        <div class="click-step fade-in fade-in-delay-1">
           <div class="click-num">1</div>
           <div>
             <h3>Analyze</h3>
             <p>Scan the target area. Identify the highest-impact improvement.</p>
           </div>
         </div>
-        <div class="click-step">
+        <div class="click-step fade-in fade-in-delay-2">
           <div class="click-num">2</div>
           <div>
             <h3>Propose</h3>
             <p>Pick ONE specific change. Not a laundry list — a focused fix.</p>
           </div>
         </div>
-        <div class="click-step">
+        <div class="click-step fade-in fade-in-delay-3">
           <div class="click-num">3</div>
           <div>
             <h3>Build</h3>
             <p>Write the code. Real files, real changes.</p>
           </div>
         </div>
-        <div class="click-step">
+        <div class="click-step fade-in fade-in-delay-4">
           <div class="click-num">4</div>
           <div>
             <h3>Test</h3>
             <p>Run the full test suite. Green or it doesn't ship.</p>
           </div>
         </div>
-        <div class="click-step">
+        <div class="click-step fade-in fade-in-delay-5">
           <div class="click-num">5</div>
           <div>
             <h3>Commit</h3>
             <p>Lock it in. Descriptive message, clean history.</p>
           </div>
         </div>
-        <div class="click-step">
+        <div class="click-step fade-in fade-in-delay-6">
           <div class="click-num">6</div>
           <div>
             <h3>Repeat</h3>
@@ -389,7 +406,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section fade-in">
       <h2>Battle-tested <span>results</span></h2>
       <p style="color: var(--muted); font-size: 17px; margin-bottom: 24px;">
         We built Ratchet internally and ran it on our own production app. These are real numbers.
@@ -410,7 +427,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section fade-in">
       <h2>Why not <span>X</span>?</h2>
       <div class="compare-grid">
         <div class="compare-card">
@@ -436,7 +453,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section fade-in">
       <h2>Boundaries with <span>.ratchet.yml</span></h2>
       <p style="color: var(--muted); font-size: 17px; margin-bottom: 24px;">
         Your team's architectural intent, codified. Tell Ratchet what to improve — and what to leave alone.
@@ -470,5 +487,15 @@
     </footer>
   </div>
 
+  <script>
+    (function() {
+      var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+        });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.fade-in').forEach(function(el) { obs.observe(el); });
+    })();
+  </script>
 </body>
 </html>
