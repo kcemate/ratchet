@@ -593,7 +593,7 @@
         Your team's architectural intent, codified. Tell Ratchet what to improve — and what to leave alone.
       </p>
       <div class="config-block">
-        <span class="key">agent</span>: <span class="val">claude-code</span><br>
+        <span class="key">agent</span>: <span class="val">default</span><br>
         <span class="key">defaults</span>:<br>
         &nbsp;&nbsp;<span class="key">clicks</span>: <span class="val">7</span><br>
         &nbsp;&nbsp;<span class="key">test_command</span>: <span class="val">npm test</span><br>
@@ -620,8 +620,8 @@
           <p class="faq-a">That's exactly what the Pawl is for. If tests don't pass, nothing commits. The branch state is restored. Your main branch can only receive changes that pass your test suite — structurally, not by convention.</p>
         </details>
         <details class="faq-item">
-          <summary class="faq-q">How is this different from running Claude directly?</summary>
-          <p class="faq-a">Ratchet is the loop, not the agent. It orchestrates: analyze → propose → build → test → commit → repeat. Running Claude directly gives you one shot. Ratchet gives you sustained, verified iteration without you in the loop.</p>
+          <summary class="faq-q">How is this different from running an AI coding agent directly?</summary>
+          <p class="faq-a">An AI coding agent gives you one shot at a task. Ratchet is the loop — it orchestrates sustained iteration: analyze → propose → build → test → commit → repeat. Each click verifies before committing. You get compounding improvement, not a single pass.</p>
         </details>
         <details class="faq-item">
           <summary class="faq-q">Can I scope it to only touch certain files?</summary>
