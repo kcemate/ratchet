@@ -106,6 +106,7 @@
     .terminal-body .cmd { color: var(--text); }
     .terminal-body .output { color: var(--muted); }
     .terminal-body .success { color: var(--green); }
+    .terminal-body .cursor { color: var(--accent); font-weight: 300; }
 
     /* How it works */
     .section {
@@ -294,20 +295,43 @@
           <div class="terminal-dot yellow"></div>
           <div class="terminal-dot green"></div>
         </div>
-        <div class="terminal-body">
-          <div><span class="prompt">$</span> <span class="cmd">ratchet torque --target "api-errors" --clicks 7</span></div>
-          <div class="output">🔧 Torquing api-errors (7 clicks)...</div>
-          <div class="output">  Click 1: <span class="success">✓</span> UUID validation on join endpoint</div>
-          <div class="output">  Click 2: <span class="success">✓</span> Input sanitization on timezone route</div>
-          <div class="output">  Click 3: <span class="success">✓</span> Middleware error consistency</div>
-          <div class="output">  Click 4: <span class="success">✓</span> Better 403 messages on membership</div>
-          <div class="output">  Click 5: <span class="success">✓</span> Premium gate hit logging</div>
-          <div class="output">  Click 6: <span class="success">✓</span> Reaction endpoint validation</div>
-          <div class="output">  Click 7: <span class="success">✓</span> Structured error logging</div>
-          <div class="output"><br><span class="success">✅ Tightened. 7/7 clicks shipped. 496 tests passing.</span></div>
+        <div class="terminal-body" id="term-body">
+          <div id="term-cmd-line"><span class="prompt">$</span> <span class="cmd" id="term-cmd"></span><span class="cursor" id="term-cursor">▋</span></div>
+          <div id="term-output" style="display:none">
+            <div class="output">🔧 Torquing api-errors (7 clicks)...</div>
+            <div class="output">  Click 1: <span class="success">✓</span> UUID validation on join endpoint</div>
+            <div class="output">  Click 2: <span class="success">✓</span> Input sanitization on timezone route</div>
+            <div class="output">  Click 3: <span class="success">✓</span> Middleware error consistency</div>
+            <div class="output">  Click 4: <span class="success">✓</span> Better 403 messages on membership</div>
+            <div class="output">  Click 5: <span class="success">✓</span> Premium gate hit logging</div>
+            <div class="output">  Click 6: <span class="success">✓</span> Reaction endpoint validation</div>
+            <div class="output">  Click 7: <span class="success">✓</span> Structured error logging</div>
+            <div class="output"><br><span class="success">✅ Tightened. 7/7 clicks shipped. 496 tests passing.</span></div>
+          </div>
         </div>
       </div>
     </section>
+    <script>
+      (function() {
+        var cmd = 'ratchet torque --target "api-errors" --clicks 7';
+        var el = document.getElementById('term-cmd');
+        var cursor = document.getElementById('term-cursor');
+        var output = document.getElementById('term-output');
+        var i = 0;
+        function type() {
+          if (i < cmd.length) {
+            el.textContent += cmd[i++];
+            setTimeout(type, 38 + Math.random() * 30);
+          } else {
+            cursor.style.display = 'none';
+            setTimeout(function() { output.style.display = 'block'; }, 400);
+          }
+        }
+        setTimeout(type, 800);
+        // blink cursor
+        setInterval(function() { cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0'; }, 530);
+      })();
+    </script>
 
     <section class="section">
       <h2>What is a <span>click</span>?</h2>
