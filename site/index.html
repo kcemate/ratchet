@@ -105,6 +105,11 @@
       max-width: 600px;
       margin: 0 auto 60px;
       overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(245,158,11,0.08), 0 8px 32px rgba(0,0,0,0.5), 0 0 60px rgba(245,158,11,0.07);
+      transition: box-shadow 0.4s ease;
+    }
+    .terminal:hover {
+      box-shadow: 0 0 0 1px rgba(245,158,11,0.18), 0 8px 40px rgba(0,0,0,0.6), 0 0 80px rgba(245,158,11,0.12);
     }
     .terminal-bar {
       background: var(--code-bg);
@@ -130,6 +135,15 @@
     .terminal-body .output { color: var(--muted); }
     .terminal-body .success { color: var(--green); }
     .terminal-body .cursor { color: var(--accent); font-weight: 300; }
+    .term-line {
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .term-line.term-visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
 
     /* How it works */
     .section {
@@ -449,15 +463,15 @@
         <div class="terminal-body" id="term-body">
           <div id="term-cmd-line"><span class="prompt">$</span> <span class="cmd" id="term-cmd"></span><span class="cursor" id="term-cursor">▋</span></div>
           <div id="term-output" style="display:none">
-            <div class="output">🔧 Torquing api-errors (7 clicks)...</div>
-            <div class="output">  Click 1: <span class="success">✓</span> UUID validation on join endpoint</div>
-            <div class="output">  Click 2: <span class="success">✓</span> Input sanitization on timezone route</div>
-            <div class="output">  Click 3: <span class="success">✓</span> Middleware error consistency</div>
-            <div class="output">  Click 4: <span class="success">✓</span> Better 403 messages on membership</div>
-            <div class="output">  Click 5: <span class="success">✓</span> Premium gate hit logging</div>
-            <div class="output">  Click 6: <span class="success">✓</span> Reaction endpoint validation</div>
-            <div class="output">  Click 7: <span class="success">✓</span> Structured error logging</div>
-            <div class="output"><br><span class="success">✅ Tightened. 7/7 clicks shipped. 496 tests passing.</span></div>
+            <div class="output term-line">🔧 Torquing api-errors (7 clicks)...</div>
+            <div class="output term-line">  Click 1: <span class="success">✓</span> UUID validation on join endpoint</div>
+            <div class="output term-line">  Click 2: <span class="success">✓</span> Input sanitization on timezone route</div>
+            <div class="output term-line">  Click 3: <span class="success">✓</span> Middleware error consistency</div>
+            <div class="output term-line">  Click 4: <span class="success">✓</span> Better 403 messages on membership</div>
+            <div class="output term-line">  Click 5: <span class="success">✓</span> Premium gate hit logging</div>
+            <div class="output term-line">  Click 6: <span class="success">✓</span> Reaction endpoint validation</div>
+            <div class="output term-line">  Click 7: <span class="success">✓</span> Structured error logging</div>
+            <div class="output term-line"><br><span class="success">✅ Tightened. 7/7 clicks shipped. 496 tests passing.</span></div>
           </div>
         </div>
       </div>
@@ -475,7 +489,13 @@
             setTimeout(type, 38 + Math.random() * 30);
           } else {
             cursor.style.display = 'none';
-            setTimeout(function() { output.style.display = 'block'; }, 400);
+            setTimeout(function() {
+              output.style.display = 'block';
+              var lines = output.querySelectorAll('.term-line');
+              lines.forEach(function(line, idx) {
+                setTimeout(function() { line.classList.add('term-visible'); }, idx * 120);
+              });
+            }, 400);
           }
         }
         setTimeout(type, 800);
