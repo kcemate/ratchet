@@ -1,0 +1,112 @@
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import type { GitStatus } from '../types.js';
+
+const execFileAsync = promisify(execFile);
+
+async function git(args: string[], cwd: string): Promise<string> {
+  const { stdout } = await execFileAsync('git', args, { cwd });
+  return stdout.trim();
+}
+
+async function gitSafe(args: string[], cwd: string): Promise<string> {
+  try {
+    return await git(args, cwd);
+  } catch {
+    return '';
+  }
+}
+
+export async function currentBranch(cwd: string): Promise<string> {
+  return git(['rev-parse', '--abbrev-ref', 'HEAD'], cwd);
+}
+
+export async function createBranch(name: string, cwd: string): Promise<void> {
+  await git(['checkout', '-b', name], cwd);
+}
+
+export async function checkoutBranch(name: string, cwd: string): Promise<void> {
+  await git(['checkout', name], cwd);
+}
+
+export async function status(cwd: string): Promise<GitStatus> {
+  const branch = await gitSafe(['rev-parse', '--abbrev-ref', 'HEAD'], cwd);
+  const raw = await gitSafe(['status', '--porcelain'], cwd);
+
+  const staged: string[] = [];
+  const unstaged: string[] = [];
+  const untracked: string[] = [];
+
+  for (const line of raw.split('\n').filter(Boolean)) {
+    const x = line[0];
+    const y = line[1];
+    const file = line.slice(3);
+
+    if (x === '?' && y === '?') {
+      untracked.push(file);
+    } else {
+      if (x !== ' ' && x !== '?') staged.push(file);
+      if (y !== ' ' && y !== '?') unstaged.push(file);
+    }
+  }
+
+  return {
+    branch,
+    clean: staged.length === 0 && unstaged.length === 0 && untracked.length === 0,
+    staged,
+    unstaged,
+    untracked,
+  };
+}
+
+export async function stash(cwd: string, message?: string): Promise<void> {
+  const args = message ? ['stash', 'push', '-m', message] : ['stash', 'push'];
+  await git(args, cwd);
+}
+
+export async function stashPop(cwd: string): Promise<void> {
+  await git(['stash', 'pop'], cwd);
+}
+
+export async function addAll(cwd: string): Promise<void> {
+  await git(['add', '-A'], cwd);
+}
+
+export async function commit(message: string, cwd: string): Promise<string> {
+  await git(['add', '-A'], cwd);
+  await git(['commit', '-m', message], cwd);
+  return git(['rev-parse', 'HEAD'], cwd);
+}
+
+export async function revert(cwd: string): Promise<void> {
+  await git(['checkout', '--', '.'], cwd);
+  await git(['clean', '-fd'], cwd);
+}
+
+export async function getLastCommitHash(cwd: string): Promise<string> {
+  return gitSafe(['rev-parse', 'HEAD'], cwd);
+}
+
+export async function getModifiedFiles(cwd: string): Promise<string[]> {
+  const raw = await gitSafe(['diff', '--name-only', 'HEAD'], cwd);
+  return raw.split('\n').filter(Boolean);
+}
+
+export async function isRepo(cwd: string): Promise<boolean> {
+  try {
+    await git(['rev-parse', '--git-dir'], cwd);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function gitDropStash(cwd: string): Promise<void> {
+  await git(['stash', 'drop'], cwd);
+}
+
+export function branchName(target: string): string {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const safe = target.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase();
+  return `ratchet/${safe}-${timestamp}`;
+}
