@@ -17,6 +17,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

@@ -7,6 +7,7 @@ import { join } from 'path';
 import { loadConfig, configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
 import { saveRun } from '../core/history.js';
 import { readFileSync } from 'fs';
+import { checkStaleBinary } from '../core/stale-check.js';
 import { runEngine } from '../core/engine.js';
 import type { ClickPhase, HardenPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
@@ -66,6 +67,12 @@ export function torqueCommand(): Command {
         const cwd = process.cwd();
 
         console.log(chalk.bold('\n⚙  Ratchet Torque\n'));
+
+        // Warn if the compiled binary is stale
+        const staleWarning = checkStaleBinary();
+        if (staleWarning) {
+          console.warn(chalk.yellow(`  ${staleWarning}\n`));
+        }
 
         // Check git repo
         if (!(await isRepo(cwd))) {
