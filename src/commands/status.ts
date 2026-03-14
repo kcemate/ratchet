@@ -5,6 +5,7 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import type { RatchetRun } from '../types.js';
 import { lockFilePath } from '../core/lock.js';
+import { currentBranch } from '../core/git.js';
 
 export const STATE_FILE = '.ratchet-state.json';
 
@@ -89,7 +90,10 @@ export function statusCommand(): Command {
       // A run marked "running" with no active lock means the process was killed.
       const staleRunning = run.status === 'running' && !existsSync(lockFilePath(cwd));
 
+      const branch = await currentBranch(cwd).catch(() => '');
+
       console.log(`  Run ID  : ${chalk.dim(run.id)}`);
+      if (branch) console.log(`  Branch  : ${chalk.cyan(branch)}`);
       console.log(
         `  Target  : ${chalk.cyan(run.target.name)} ${chalk.dim(`(${run.target.path})`)}`,
       );
