@@ -4,6 +4,7 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import type { RatchetRun } from '../types.js';
+import { lockFilePath } from '../core/lock.js';
 
 export const STATE_FILE = '.ratchet-state.json';
 
@@ -34,10 +35,12 @@ function formatDuration(startIso: string, endIso?: string): string {
   return `${mins}m ${secs}s`;
 }
 
-function colorStatus(status: RatchetRun['status']): string {
+function colorStatus(status: RatchetRun['status'], stale = false): string {
   switch (status) {
     case 'running':
-      return chalk.yellow('running ⏳');
+      return stale
+        ? chalk.red('interrupted ✗') + chalk.dim(' (process died — lock released)')
+        : chalk.yellow('running ⏳');
     case 'completed':
       return chalk.green('completed ✓');
     case 'failed':
@@ -83,6 +86,9 @@ export function statusCommand(): Command {
         run.finishedAt as unknown as string | undefined,
       );
 
+      // A run marked "running" with no active lock means the process was killed.
+      const staleRunning = run.status === 'running' && !existsSync(lockFilePath(cwd));
+
       console.log(`  Run ID  : ${chalk.dim(run.id)}`);
       console.log(
         `  Target  : ${chalk.cyan(run.target.name)} ${chalk.dim(`(${run.target.path})`)}`,
@@ -90,7 +96,7 @@ export function statusCommand(): Command {
       if (run.target.description) {
         console.log(`  Desc    : ${chalk.dim(run.target.description)}`);
       }
-      console.log(`  Status  : ${colorStatus(run.status)}`);
+      console.log(`  Status  : ${colorStatus(run.status, staleRunning)}`);
       console.log(
         `  Clicks  : ${chalk.green(String(passedClicks))} passed / ${totalClicks} total`,
       );
