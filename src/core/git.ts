@@ -111,7 +111,9 @@ export async function commit(message: string, cwd: string): Promise<string> {
 }
 
 export async function revert(cwd: string): Promise<void> {
-  await git(['checkout', '--', '.'], cwd);
+  // reset --hard clears both staged and unstaged changes atomically.
+  // checkout -- . only reverts unstaged tracked files, leaving staged changes intact.
+  await git(['reset', '--hard', 'HEAD'], cwd);
   await git(['clean', '-fd'], cwd);
 }
 

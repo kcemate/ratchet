@@ -102,6 +102,21 @@ describe('git extended operations', () => {
       const s = await status(dir);
       expect(s.untracked).not.toContain('untracked.ts');
     });
+
+    it('clears staged changes (reset --hard, not just checkout -- .)', async () => {
+      // Write and stage a new file without committing
+      writeFileSync(join(dir, 'staged.ts'), 'export const staged = true;\n');
+      execFileSync('git', ['add', 'staged.ts'], { cwd: dir });
+      // Verify it's staged before revert
+      const before = await status(dir);
+      expect(before.staged).toContain('staged.ts');
+
+      await revert(dir);
+
+      const after = await status(dir);
+      expect(after.clean).toBe(true);
+      expect(after.staged).not.toContain('staged.ts');
+    });
   });
 
   describe('checkoutBranch', () => {
