@@ -154,3 +154,48 @@ export function findIncompleteTargets(raw: string): string[] {
 export function configFilePath(cwd: string = process.cwd()): string {
   return resolve(join(cwd, CONFIG_FILE));
 }
+
+const VALID_AGENTS: RatchetConfig['agent'][] = ['claude-code', 'codex', 'shell'];
+const VALID_RULES: Boundary['rule'][] = ['no-modify', 'no-delete', 'preserve-pattern'];
+
+/**
+ * Returns human-readable warnings for any invalid or unrecognised field values
+ * in the raw YAML that were silently corrected to defaults.
+ */
+export function getConfigWarnings(raw: string): string[] {
+  let data: RawConfig;
+  try {
+    data = parse(raw) as RawConfig;
+  } catch {
+    return []; // parse errors are handled elsewhere
+  }
+  if (!data || typeof data !== 'object') return [];
+
+  const warnings: string[] = [];
+
+  if (data.agent !== undefined && !VALID_AGENTS.includes(data.agent as RatchetConfig['agent'])) {
+    warnings.push(
+      `Invalid agent "${data.agent}" — expected one of: ${VALID_AGENTS.join(', ')}. Falling back to "${DEFAULT_CONFIG.agent}".`,
+    );
+  }
+
+  const rawClicks = data.defaults?.clicks;
+  if (rawClicks !== undefined && !(Number.isInteger(rawClicks) && rawClicks >= 1)) {
+    warnings.push(
+      `Invalid defaults.clicks "${rawClicks}" — must be a positive integer. Falling back to ${DEFAULT_CONFIG.defaults.clicks}.`,
+    );
+  }
+
+  if (data.boundaries) {
+    for (const b of data.boundaries) {
+      if (b.rule !== undefined && !VALID_RULES.includes(b.rule as Boundary['rule'])) {
+        const where = b.path ? ` for boundary "${b.path}"` : '';
+        warnings.push(
+          `Invalid boundary rule "${b.rule}"${where} — expected one of: ${VALID_RULES.join(', ')}. Falling back to "no-modify".`,
+        );
+      }
+    }
+  }
+
+  return warnings;
+}

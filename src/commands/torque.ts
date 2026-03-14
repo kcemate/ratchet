@@ -4,7 +4,7 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { loadConfig, configFilePath, findTarget, findIncompleteTargets } from '../core/config.js';
+import { loadConfig, configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
 import { readFileSync } from 'fs';
 import { runEngine } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
@@ -91,10 +91,13 @@ export function torqueCommand(): Command {
           process.exit(1);
         }
 
-        // Warn about incomplete targets silently dropped by the parser
+        // Warn about incomplete targets and invalid field values silently dropped by the parser
         try {
           const rawYml = readFileSync(configFilePath(cwd), 'utf-8');
-          const warnings = findIncompleteTargets(rawYml);
+          const warnings = [
+            ...getConfigWarnings(rawYml),
+            ...findIncompleteTargets(rawYml),
+          ];
           for (const w of warnings) {
             console.warn(chalk.yellow(`  ⚠  ${w}`));
           }
