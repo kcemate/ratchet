@@ -38,6 +38,8 @@ export interface Click {
   testsPassed: boolean;
   commitHash?: string;
   timestamp: Date;
+  scoreAfterClick?: number;  // total score after this click
+  issuesFixedCount?: number; // how many issues this click resolved
 }
 
 export interface RatchetRun {

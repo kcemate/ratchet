@@ -1,6 +1,7 @@
 import type { Click, Target, RatchetConfig, BuildResult, HardenPhase } from '../types.js';
 import type { Agent } from './agents/base.js';
 import { createAgentContext } from './agents/base.js';
+import type { IssueTask } from './issue-backlog.js';
 import { runTests } from './runner.js';
 import * as git from './git.js';
 import type { ClickPhase } from './engine.js';
@@ -12,6 +13,7 @@ export interface ClickContext {
   agent: Agent;
   cwd: string;
   hardenPhase?: HardenPhase;
+  issues?: IssueTask[];
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
 }
 
@@ -25,7 +27,7 @@ export interface ClickOutcome {
  * This is the Pawl: on test failure we revert, leaving the codebase only ever better.
  */
 export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
-  const { clickNumber, target, config, agent, cwd, hardenPhase, onPhase } = ctx;
+  const { clickNumber, target, config, agent, cwd, hardenPhase, issues, onPhase } = ctx;
   const timestamp = new Date();
 
   // Stash current state so we can roll back if tests fail.
@@ -45,11 +47,11 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     // 1. Analyze
     await onPhase?.('analyzing');
     const context = createAgentContext(target, clickNumber, hardenPhase);
-    analysis = await agent.analyze(context, hardenPhase);
+    analysis = await agent.analyze(context, hardenPhase, issues);
 
     // 2. Propose
     await onPhase?.('proposing');
-    proposal = await agent.propose(analysis, target, hardenPhase);
+    proposal = await agent.propose(analysis, target, hardenPhase, issues);
 
     if (!proposal.trim()) {
       throw new Error(

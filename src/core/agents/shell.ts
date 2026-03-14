@@ -4,6 +4,8 @@ import { join } from 'path';
 import type { Target, BuildResult, HardenPhase } from '../../types.js';
 import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
+import type { IssueTask } from '../issue-backlog.js';
+import { formatIssuesForPrompt } from '../issue-backlog.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -25,17 +27,27 @@ export class ShellAgent implements Agent {
     this.timeout = config.timeout ?? 300_000; // 5 minutes
   }
 
-  async analyze(context: string, hardenPhase?: HardenPhase): Promise<string> {
-    const prompt = hardenPhase === 'harden:tests'
-      ? buildHardenAnalyzePrompt(context)
-      : buildAnalyzePrompt(context);
+  async analyze(context: string, hardenPhase?: HardenPhase, issues?: IssueTask[]): Promise<string> {
+    let prompt: string;
+    if (hardenPhase === 'harden:tests') {
+      prompt = buildHardenAnalyzePrompt(context);
+    } else if (issues && issues.length > 0) {
+      prompt = buildIssueAnalyzePrompt(context, issues);
+    } else {
+      prompt = buildAnalyzePrompt(context);
+    }
     return this.runPrompt(prompt);
   }
 
-  async propose(analysis: string, target: Target, hardenPhase?: HardenPhase): Promise<string> {
-    const prompt = hardenPhase === 'harden:tests'
-      ? buildHardenProposePrompt(analysis, target)
-      : buildProposePrompt(analysis, target);
+  async propose(analysis: string, target: Target, hardenPhase?: HardenPhase, issues?: IssueTask[]): Promise<string> {
+    let prompt: string;
+    if (hardenPhase === 'harden:tests') {
+      prompt = buildHardenProposePrompt(analysis, target);
+    } else if (issues && issues.length > 0) {
+      prompt = buildIssueProposePrompt(analysis, target, issues);
+    } else {
+      prompt = buildProposePrompt(analysis, target);
+    }
     return this.runPrompt(prompt);
   }
 
@@ -152,6 +164,33 @@ function buildHardenProposePrompt(analysis: string, target: Target): string {
     `2. Which test file to create or modify\n` +
     `3. The exact test code\n\n` +
     `Write comprehensive tests for the target code. Focus on correctness, not style.`
+  );
+}
+
+function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
+  const issueList = formatIssuesForPrompt(issues);
+  return (
+    `You are a code improvement assistant. The following issues were found by automated scanning:\n\n` +
+    `${issueList}\n\n` +
+    `${context}\n\n` +
+    `Focus on the highest-severity issues first. Analyze which of these can be fixed together in one batch. ` +
+    `Be specific about root causes and which files are likely affected.`
+  );
+}
+
+function buildIssueProposePrompt(analysis: string, target: Target, issues: IssueTask[]): string {
+  const issueList = formatIssuesForPrompt(issues);
+  return (
+    `You are a code improvement assistant. Fix ALL of the following related issues in one batch:\n\n` +
+    `${issueList}\n\n` +
+    `Target path: ${target.path}\n` +
+    `Analysis:\n${analysis}\n\n` +
+    `Make all the fixes. The only constraint is that tests must still pass.\n` +
+    `Respond with:\n` +
+    `1. What you're fixing (summary)\n` +
+    `2. Which file(s) to modify\n` +
+    `3. The exact code changes\n\n` +
+    `Fix as many as possible in one pass — batch related fixes together.`
   );
 }
 

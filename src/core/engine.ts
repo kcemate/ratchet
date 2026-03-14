@@ -3,8 +3,12 @@ import { readdirSync } from 'fs';
 import { join } from 'path';
 import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase } from '../types.js';
 import type { Agent } from './agents/base.js';
+import type { IssueTask } from './issue-backlog.js';
+import { buildBacklog, groupBacklogBySubcategory } from './issue-backlog.js';
 import { executeClick } from './click.js';
 import * as git from './git.js';
+import type { ScanResult } from '../commands/scan.js';
+import { runScan } from '../commands/scan.js';
 
 export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
 export type { HardenPhase };
@@ -15,6 +19,8 @@ export interface EngineCallbacks {
   onClickComplete?: (click: Click, rolledBack: boolean) => Promise<void> | void;
   onRunComplete?: (run: RatchetRun) => Promise<void> | void;
   onError?: (err: Error, clickNumber: number) => Promise<void> | void;
+  onScanComplete?: (scan: ScanResult) => Promise<void> | void;
+  onClickScoreUpdate?: (clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number) => Promise<void> | void;
 }
 
 export interface EngineRunOptions {
@@ -26,6 +32,8 @@ export interface EngineRunOptions {
   createBranch?: boolean;
   hardenMode?: boolean;
   callbacks?: EngineCallbacks;
+  /** If provided, skip the initial scan and use this result instead */
+  scanResult?: ScanResult;
 }
 
 const TEST_FILE_PATTERNS = [
@@ -58,9 +66,13 @@ function countTestFiles(dir: string): number {
 /**
  * The Click Loop Engine.
  * Runs N clicks sequentially on a target, applying the Pawl (rollback on failure).
+ *
+ * Scan-driven: at the start, runs a scan to get the current score and build an issue backlog.
+ * Each click is given specific issues to fix (compound click). After each successful click,
+ * re-scans to measure progress and update the backlog.
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, callbacks = {} } = options;
+  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, callbacks = {}, scanResult: providedScan } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -86,6 +98,26 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     await git.createBranch(branch, cwd);
   }
 
+  // --- Scan-driven: get initial scan and build issue backlog ---
+  let currentScan: ScanResult | undefined = providedScan;
+  let backlogGroups: IssueTask[][] = [];
+  let previousTotal = 0;
+
+  if (!currentScan) {
+    try {
+      currentScan = await runScan(cwd);
+    } catch {
+      // Non-fatal — fall back to blind-click mode
+    }
+  }
+
+  if (currentScan) {
+    await callbacks.onScanComplete?.(currentScan);
+    previousTotal = currentScan.total;
+    const backlog = buildBacklog(currentScan);
+    backlogGroups = groupBacklogBySubcategory(backlog);
+  }
+
   // Harden mode: track initial test file count to detect when tests are written
   let initialTestFileCount = 0;
   let phaseTransitioned = false;
@@ -108,6 +140,13 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
       await callbacks.onClickStart?.(i, clicks, hardenPhase);
 
+      // Pop the next group of issues from the backlog
+      // In harden mode, don't use backlog (focus on test writing)
+      let clickIssues: IssueTask[] | undefined;
+      if (!hardenMode && backlogGroups.length > 0) {
+        clickIssues = backlogGroups.shift();
+      }
+
       try {
         const { click, rolled_back } = await executeClick({
           clickNumber: i,
@@ -116,10 +155,38 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           agent,
           cwd,
           hardenPhase,
+          issues: clickIssues,
           onPhase: callbacks.onClickPhase
             ? (phase) => callbacks.onClickPhase!(phase, i)
             : undefined,
         });
+
+        // After a successful click, re-scan for live scoring
+        if (click.testsPassed && !rolled_back && currentScan) {
+          try {
+            const newScan = await runScan(cwd);
+            const newTotal = newScan.total;
+            const delta = newTotal - previousTotal;
+
+            // Count how many issues were resolved
+            const prevIssueCount = currentScan.totalIssuesFound;
+            const newIssueCount = newScan.totalIssuesFound;
+            const issuesFixedCount = Math.max(0, prevIssueCount - newIssueCount);
+
+            click.scoreAfterClick = newTotal;
+            click.issuesFixedCount = issuesFixedCount;
+
+            await callbacks.onClickScoreUpdate?.(i, previousTotal, newTotal, delta);
+
+            // Update backlog from fresh scan
+            previousTotal = newTotal;
+            currentScan = newScan;
+            const newBacklog = buildBacklog(newScan);
+            backlogGroups = groupBacklogBySubcategory(newBacklog);
+          } catch {
+            // Non-fatal — skip live scoring for this click
+          }
+        }
 
         run.clicks.push(click);
         await callbacks.onClickComplete?.(click, rolled_back);

@@ -14,6 +14,7 @@ import { RatchetLogger } from '../core/logger.js';
 import { generateReport, writeReport } from '../core/report.js';
 import { writePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
+import type { ScanResult } from './scan.js';
 import { isRepo, status as gitStatus } from '../core/git.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
@@ -228,6 +229,9 @@ export function torqueCommand(): Command {
         const runStart = Date.now();
         let clickStartTime = 0;
         let currentHardenPhase: HardenPhase | undefined;
+        // Live score tracking
+        let lastKnownScore: number | undefined;
+        let lastKnownDelta: number | undefined;
 
         // Graceful Ctrl+C handler
         const sigintHandler = () => {
@@ -265,7 +269,8 @@ export function torqueCommand(): Command {
         }
 
         // Capture score before the run (non-fatal)
-        let scoreBefore;
+        // This also serves as the initial scan for the engine's scan-driven mode
+        let scoreBefore: ScanResult | undefined;
         try {
           scoreBefore = await runScan(cwd);
         } catch {
@@ -282,7 +287,24 @@ export function torqueCommand(): Command {
             agent,
             createBranch: options.branch && !options.dryRun,
             hardenMode,
+            // Pass the pre-run scan to avoid a redundant re-scan
+            scanResult: scoreBefore,
             callbacks: {
+              onScanComplete: (scan: ScanResult) => {
+                const topIssues = scan.issuesByType.slice(0, 3);
+                const targetStr = topIssues
+                  .map((t) => `${t.subcategory} (${t.count}/${t.count + 1})`)
+                  .join(', ');
+                console.log(
+                  `  📊 Initial scan: ${chalk.bold(`${scan.total}/${scan.maxTotal}`)} (${scan.totalIssuesFound} issues found)`,
+                );
+                if (targetStr) {
+                  console.log(`     Targeting: ${chalk.dim(targetStr)}`);
+                }
+                console.log('');
+                lastKnownScore = scan.total;
+              },
+
               onClickStart: async (clickNumber, total, hardenPhase?: HardenPhase) => {
                 clickStartTime = Date.now();
                 currentHardenPhase = hardenPhase;
@@ -318,14 +340,34 @@ export function torqueCommand(): Command {
                 spinner.text = `  Click ${chalk.bold(String(clickNumber))}/${total}${phaseTag} — ${phaseLabel[phase]}`;
               },
 
+              onClickScoreUpdate: (_clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number) => {
+                lastKnownScore = scoreAfter;
+                lastKnownDelta = delta;
+                // Store for use in onClickComplete
+                void scoreBefore; // used via lastKnownScore tracking
+              },
+
               onClickComplete: async (click: Click, rolledBack: boolean) => {
                 if (spinner) {
                   if (click.testsPassed) {
+                    // Build score suffix if we have data
+                    let scoreSuffix = '';
+                    if (click.scoreAfterClick !== undefined && lastKnownScore !== undefined) {
+                      const before = lastKnownScore - (lastKnownDelta ?? 0);
+                      const after = click.scoreAfterClick;
+                      const delta = after - before;
+                      const deltaStr = delta > 0 ? chalk.green(`+${delta}`) : delta < 0 ? chalk.red(String(delta)) : chalk.dim('±0');
+                      scoreSuffix = ` — Score: ${before} → ${after} (${deltaStr})`;
+                      if (click.issuesFixedCount && click.issuesFixedCount > 0) {
+                        scoreSuffix += chalk.dim(` — ${click.issuesFixedCount} issues fixed`);
+                      }
+                    }
                     spinner.succeed(
                       `  Click ${chalk.bold(String(click.number))} — ${chalk.green('✓ passed')}` +
                         (click.commitHash
                           ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`)
-                          : ''),
+                          : '') +
+                        scoreSuffix,
                     );
                   } else {
                     spinner.warn(
@@ -334,6 +376,8 @@ export function torqueCommand(): Command {
                   }
                   spinner = null;
                 }
+                // Reset per-click tracking
+                lastKnownDelta = undefined;
 
                 if (options.verbose) {
                   const elapsed = formatDuration(Date.now() - clickStartTime);
