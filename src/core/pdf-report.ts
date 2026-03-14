@@ -124,9 +124,9 @@ export function generateReportHTML(options: ReportOptions): string {
 
       <div class="hero-side">
         <div class="hero-label">AFTER</div>
-        <div class="gauge-wrap">
+        <div class="gauge-wrap after-gauge-wrap">
           <div class="gauge-glow"></div>
-          <svg viewBox="0 0 100 100" width="120" height="120" style="display:block;position:relative;z-index:1">
+          <svg viewBox="0 0 100 100" width="160" height="160" style="display:block;position:relative;z-index:1">
             <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e1e28" stroke-width="7"/>
             <circle cx="50" cy="50" r="${r}" fill="none" stroke="url(#amberArc)" stroke-width="7"
               stroke-dasharray="${circ}" stroke-dashoffset="${afterOffset}"
@@ -215,11 +215,11 @@ export function generateReportHTML(options: ReportOptions): string {
 <head>
 <meta charset="UTF-8">
 <style>
-  @page { size: A4; margin: 0; }
+  @page { margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    width: 210mm;
+    width: 794px;
     background: #08080a;
     color: #f1f5f9;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -244,7 +244,7 @@ export function generateReportHTML(options: ReportOptions): string {
   .wrapper {
     position: relative;
     z-index: 1;
-    padding: 36px 46px 30px;
+    padding: 36px 56px 30px;
   }
 
   /* ─── Header ─────────────────────────────────────────── */
@@ -278,7 +278,7 @@ export function generateReportHTML(options: ReportOptions): string {
   .logo-text {
     font-size: 26px;
     font-weight: 800;
-    background: linear-gradient(135deg, #f59e0b 0%, #fcd34d 55%, #f59e0b 100%);
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -303,16 +303,25 @@ export function generateReportHTML(options: ReportOptions): string {
   .summary-bar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 9px;
     margin-bottom: 4px;
-  }
-  .summary-item {
     background: linear-gradient(180deg, #111116 0%, #0d0d10 100%);
     border: 1px solid #1e1e2a;
     border-radius: 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 6px rgba(0,0,0,0.35);
+  }
+  .summary-item {
     padding: 13px 8px 12px;
     text-align: center;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 6px rgba(0,0,0,0.35);
+    position: relative;
+  }
+  .summary-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: rgba(255,255,255,0.1);
   }
   .summary-value {
     font-size: 28px;
@@ -378,6 +387,10 @@ export function generateReportHTML(options: ReportOptions): string {
     width: 120px;
     height: 120px;
   }
+  .after-gauge-wrap {
+    width: 160px;
+    height: 160px;
+  }
   .gauge-glow {
     position: absolute;
     inset: -10px;
@@ -394,13 +407,12 @@ export function generateReportHTML(options: ReportOptions): string {
     justify-content: center;
   }
   .gauge-number {
-    font-size: 36px;
     font-weight: 800;
     line-height: 1;
     letter-spacing: -1.5px;
   }
-  .before-number { color: #4b5563; }
-  .after-number { color: #ffffff; }
+  .before-number { font-size: 80px; color: #4b5563; }
+  .after-number { font-size: 120px; color: #ffffff; text-shadow: 0 0 40px rgba(245,158,11,0.6); }
   .gauge-unit {
     font-size: 9px;
     color: #4b5563;
@@ -417,10 +429,10 @@ export function generateReportHTML(options: ReportOptions): string {
     gap: 10px;
   }
   .delta-badge {
-    font-size: 14px;
+    font-size: 24px;
     font-weight: 800;
     color: #fff;
-    padding: 5px 16px;
+    padding: 8px 24px;
     border-radius: 99px;
     letter-spacing: -0.2px;
   }
@@ -468,7 +480,7 @@ export function generateReportHTML(options: ReportOptions): string {
   .before-mini { background: #2d3748; }
   .after-mini {
     background: linear-gradient(90deg, #d97706, #fbbf24);
-    box-shadow: 0 0 5px rgba(245,158,11,0.45);
+    box-shadow: 0 0 6px rgba(245,158,11,0.5);
   }
   .cat-score {
     font-size: 8.5px;
@@ -585,16 +597,24 @@ export function generateReportHTML(options: ReportOptions): string {
 
   <!-- What improved + What was rolled back -->
   <div class="section-title" style="margin-top:18px;color:#94a3b8">Run Summary</div>
+  ${rolledBack.length > 0 ? `
   <div class="two-col">
     <div class="items-card items-card-green">
       <div class="section-title" style="margin-top:0;margin-bottom:8px;color:#22c55e">&#10003; What improved</div>
       <div class="bullet-list">${improvedItems}</div>
     </div>
-    <div class="items-card ${rolledBack.length > 0 ? 'items-card-red' : 'items-card-neutral'}">
-      <div class="section-title" style="margin-top:0;margin-bottom:8px;color:${rolledBack.length > 0 ? '#ef4444' : '#4b5563'}">&#10007; What was rolled back</div>
+    <div class="items-card items-card-red">
+      <div class="section-title" style="margin-top:0;margin-bottom:8px;color:#ef4444">&#10007; What was rolled back</div>
       <div class="bullet-list">${rolledItems}</div>
     </div>
+  </div>` : `
+  <div class="items-card items-card-green" style="margin-top:4px">
+    <div class="section-title" style="margin-top:0;margin-bottom:8px;color:#22c55e">&#10003; What improved</div>
+    <div class="bullet-list">${improvedItems}</div>
   </div>
+  <div style="margin-top:8px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;color:#4ade80;font-size:10px;font-weight:600;text-align:center">
+    Nothing was rolled back — clean run!
+  </div>`}
 
   <!-- Footer -->
   <div class="footer">
@@ -627,7 +647,7 @@ export async function generatePDF(options: ReportOptions): Promise<Buffer> {
     // Fit page height to actual content to eliminate bottom whitespace
     const contentHeight = await page.evaluate(() => document.body.scrollHeight);
     const pdf = await page.pdf({
-      width: '210mm',
+      width: '794px',
       height: `${contentHeight}px`,
       printBackground: true,
       margin: { top: '0', right: '0', bottom: '0', left: '0' },
