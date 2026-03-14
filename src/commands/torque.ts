@@ -74,11 +74,24 @@ export function torqueCommand(): Command {
         // Resolve target
         const target = findTarget(config, options.target);
         if (!target) {
-          const available = config.targets.map((t) => chalk.cyan(t.name)).join(', ');
-          console.error(
-            chalk.red(`Target "${options.target}" not found in .ratchet.yml.`) +
-              (available ? `\n  Available: ${available}` : '\n  No targets defined yet.'),
-          );
+          if (config.targets.length === 0) {
+            console.error(
+              chalk.red(`  Target "${options.target}" not found — .ratchet.yml has no targets defined.`) +
+                '\n\n  Add a target to .ratchet.yml:\n' +
+                chalk.dim(
+                  '    targets:\n' +
+                  '      - name: my-target\n' +
+                  '        path: src/\n' +
+                  '        description: "Improve code quality in src/"',
+                ) + '\n',
+            );
+          } else {
+            const available = config.targets.map((t) => chalk.cyan(t.name)).join(', ');
+            console.error(
+              chalk.red(`  Target "${options.target}" not found in .ratchet.yml.`) +
+                `\n  Available: ${available}\n`,
+            );
+          }
           process.exit(1);
         }
 
