@@ -52,6 +52,16 @@ describe('parseConfig', () => {
     expect(config.defaults.clicks).toBe(DEFAULT_CONFIG.defaults.clicks);
   });
 
+  it('throws a user-friendly error for malformed YAML', () => {
+    const malformed = 'key: [unclosed bracket\nanother: value';
+    expect(() => parseConfig(malformed)).toThrow('.ratchet.yml contains invalid YAML');
+  });
+
+  it('includes ratchet init hint in YAML parse error', () => {
+    const malformed = '{\nbad yaml: [';
+    expect(() => parseConfig(malformed)).toThrow('ratchet init --force');
+  });
+
   it('returns defaults for missing fields', () => {
     const config = parseConfig('agent: claude-code');
     expect(config.defaults.clicks).toBe(DEFAULT_CONFIG.defaults.clicks);

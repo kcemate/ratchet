@@ -45,7 +45,17 @@ export function loadConfig(cwd: string = process.cwd()): RatchetConfig {
 }
 
 export function parseConfig(raw: string): RatchetConfig {
-  const data = parse(raw) as RawConfig;
+  let data: RawConfig;
+  try {
+    data = parse(raw) as RawConfig;
+  } catch (err: unknown) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `.ratchet.yml contains invalid YAML and could not be parsed.\n` +
+        `  Detail: ${detail}\n` +
+        `  Fix the syntax error and try again, or run: ratchet init --force`,
+    );
+  }
 
   if (!data || typeof data !== 'object') {
     return { ...DEFAULT_CONFIG };
