@@ -158,7 +158,21 @@ export function torqueCommand(): Command {
           console.log(chalk.dim('\n  Run interrupted. Partial progress may be saved in .ratchet-state.json\n'));
           process.exit(130);
         };
+
+        // Graceful SIGTERM handler (kill, CI timeout, Docker stop, systemd)
+        const sigtermHandler = () => {
+          if (spinner) {
+            spinner.fail(chalk.yellow('  Terminated (SIGTERM)'));
+            spinner = null;
+          } else {
+            process.stdout.write('\n');
+          }
+          console.log(chalk.dim('\n  Process terminated. Partial progress may be saved in .ratchet-state.json\n'));
+          process.exit(143); // 128 + 15 (SIGTERM)
+        };
+
         process.once('SIGINT', sigintHandler);
+        process.once('SIGTERM', sigtermHandler);
 
         let run: RatchetRun;
         try {
@@ -241,6 +255,7 @@ export function torqueCommand(): Command {
           process.exit(1);
         } finally {
           process.removeListener('SIGINT', sigintHandler);
+          process.removeListener('SIGTERM', sigtermHandler);
         }
 
         // Finalize log
