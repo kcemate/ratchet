@@ -63,14 +63,15 @@ describe('buildBacklog', () => {
     }
   });
 
-  it('computes priority = severity_weight * count * gap_ratio', () => {
+  it('computes priority = severity_weight * log2(count+1) * gap_ratio', () => {
     const scan = makeScan();
     const backlog = buildBacklog(scan);
 
     const emptyCatches = backlog.find((t) => t.subcategory === 'Empty catches');
     expect(emptyCatches).toBeDefined();
     // severity=high (weight=3), count=6, gap_ratio=(5-0)/5=1.0
-    expect(emptyCatches!.priority).toBeCloseTo(3 * 6 * 1.0, 5);
+    // log2(6+1) ≈ 2.807
+    expect(emptyCatches!.priority).toBeCloseTo(3 * Math.log2(7) * 1.0, 5);
   });
 
   it('maps severity correctly', () => {
@@ -81,7 +82,8 @@ describe('buildBacklog', () => {
     expect(consoleCleaning).toBeDefined();
     expect(consoleCleaning!.severity).toBe('low');
     // severity=low (weight=1), count=15, gap_ratio=(5-2)/5=0.6
-    expect(consoleCleaning!.priority).toBeCloseTo(1 * 15 * 0.6, 5);
+    // log2(15+1) = 4.0
+    expect(consoleCleaning!.priority).toBeCloseTo(1 * Math.log2(16) * 0.6, 5);
   });
 
   it('returns empty array when no issues', () => {
@@ -103,7 +105,8 @@ describe('buildBacklog', () => {
     // Gap ratio defaults to 1 when max=0
     const task = backlog.find((t) => t.subcategory === 'Empty catches');
     expect(task).toBeDefined();
-    expect(task!.priority).toBeCloseTo(3 * 6 * 1, 5);
+    // Gap ratio defaults to 1 when max=0, log2(6+1) ≈ 2.807
+    expect(task!.priority).toBeCloseTo(3 * Math.log2(7) * 1, 5);
   });
 
   it('includes all issue fields', () => {

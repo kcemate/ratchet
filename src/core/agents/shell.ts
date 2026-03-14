@@ -173,24 +173,29 @@ function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
     `You are a code improvement assistant. The following issues were found by automated scanning:\n\n` +
     `${issueList}\n\n` +
     `${context}\n\n` +
-    `Focus on the highest-severity issues first. Analyze which of these can be fixed together in one batch. ` +
-    `Be specific about root causes and which files are likely affected.`
+    `Focus on the highest-severity issues first. Pick at most 2-3 specific files to fix in this pass. ` +
+    `Do NOT try to fix everything — make a small, safe change that will pass all existing tests. ` +
+    `Be specific about which files you will touch and what exact changes you will make.`
   );
 }
 
 function buildIssueProposePrompt(analysis: string, target: Target, issues: IssueTask[]): string {
   const issueList = formatIssuesForPrompt(issues);
   return (
-    `You are a code improvement assistant. Fix ALL of the following related issues in one batch:\n\n` +
+    `You are a code improvement assistant. The following issues were found:\n\n` +
     `${issueList}\n\n` +
     `Target path: ${target.path}\n` +
     `Analysis:\n${analysis}\n\n` +
-    `Make all the fixes. The only constraint is that tests must still pass.\n` +
+    `IMPORTANT CONSTRAINTS:\n` +
+    `- Touch at most 2-3 files in this pass\n` +
+    `- Make minimal, surgical changes — do NOT refactor broadly\n` +
+    `- All existing tests MUST still pass — if unsure, err on the side of smaller changes\n` +
+    `- Do NOT add new dependencies\n` +
+    `- Do NOT change function signatures that other code depends on\n\n` +
     `Respond with:\n` +
-    `1. What you're fixing (summary)\n` +
-    `2. Which file(s) to modify\n` +
-    `3. The exact code changes\n\n` +
-    `Fix as many as possible in one pass — batch related fixes together.`
+    `1. What you're fixing (summary — keep it focused)\n` +
+    `2. Which 1-3 file(s) to modify\n` +
+    `3. The exact code changes`
   );
 }
 

@@ -17,8 +17,12 @@ const SEVERITY_WEIGHT: Record<string, number> = {
 
 /**
  * Build a prioritized backlog of issues from a scan result.
- * Priority = severity_weight * count * gap_ratio
+ * Priority = severity_weight * capped_count * gap_ratio
  * where gap_ratio = (max - score) / max for the parent subcategory.
+ *
+ * Count is log-capped so massive issue counts (e.g. 117 files without tests)
+ * don't monopolize every click over smaller but more fixable issues.
+ * log2(117) ≈ 6.9 vs log2(7) ≈ 2.8 — still prefers larger issues but not 17x more.
  */
 export function buildBacklog(scan: ScanResult): IssueTask[] {
   const tasks: IssueTask[] = [];
@@ -43,7 +47,9 @@ export function buildBacklog(scan: ScanResult): IssueTask[] {
     }
 
     const severityWeight = SEVERITY_WEIGHT[issue.severity] ?? 1;
-    const priority = severityWeight * issue.count * gapRatio;
+    // Cap count influence: log2(count+1) so 117→6.9, 7→3.0, 1→1.0
+    const cappedCount = Math.log2(issue.count + 1);
+    const priority = severityWeight * cappedCount * gapRatio;
 
     tasks.push({
       category: issue.category,
@@ -63,20 +69,32 @@ export function buildBacklog(scan: ScanResult): IssueTask[] {
 
 /**
  * Group tasks by subcategory. Returns groups in priority order (highest first).
+ * Groups are capped at maxPerGroup issues to keep clicks focused and passable.
+ * Overflow spills into additional groups so nothing is lost.
  */
-export function groupBacklogBySubcategory(tasks: IssueTask[]): IssueTask[][] {
-  const groups = new Map<string, IssueTask[]>();
+export function groupBacklogBySubcategory(tasks: IssueTask[], maxPerGroup = 3): IssueTask[][] {
+  const grouped = new Map<string, IssueTask[]>();
 
   for (const task of tasks) {
     const key = `${task.category}::${task.subcategory}`;
-    if (!groups.has(key)) {
-      groups.set(key, []);
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
     }
-    groups.get(key)!.push(task);
+    grouped.get(key)!.push(task);
   }
 
-  // Return as array of groups, preserving the priority order of the first task in each group
-  return Array.from(groups.values());
+  // Chunk each group into maxPerGroup-sized batches
+  const result: IssueTask[][] = [];
+  for (const group of grouped.values()) {
+    for (let i = 0; i < group.length; i += maxPerGroup) {
+      result.push(group.slice(i, i + maxPerGroup));
+    }
+  }
+
+  // Sort batches by highest priority of first task
+  result.sort((a, b) => (b[0]?.priority ?? 0) - (a[0]?.priority ?? 0));
+
+  return result;
 }
 
 /**
