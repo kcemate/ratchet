@@ -105,7 +105,7 @@ Test command is empty or invalid: ""
 
 ---
 
-## Summary
+## Summary (Sprint 1)
 
 | # | Area | Gap | Fix |
 |---|------|-----|-----|
@@ -118,3 +118,125 @@ Test command is empty or invalid: ""
 | 7 | Config validation | Empty test command crashed with TypeError | Early-return guard before `parseCommand` result is used |
 
 **Tests:** 169 → 179 (+10 tests, all green)
+
+---
+
+# Error Handling Iterations — Sprint 2
+
+> 7-click sprint extending error hardening across agent output, git operations, concurrency, and config validation.
+> Agent: Riley · Date: 2026-03-13 · Branch: main
+
+---
+
+## Click 1 — Empty proposal guard
+
+**Gap:** `agent.propose()` can return an empty or whitespace-only string (AI rate-limited, returned nothing, timed out silently). An empty proposal was passed directly to `agent.build()`, giving the AI no useful context — it might invent random changes, or return `success: true` with zero file modifications.
+
+**Fix:** In `executeClick()`, after receiving the proposal, check `proposal.trim()` before calling `build()`. If blank, throw immediately with a clear message and roll back. The build phase is never invoked.
+
+```
+Agent returned an empty proposal — nothing to implement.
+  The agent may be rate-limited, misconfigured, or unresponsive.
+  Check that the agent command works from the command line.
+```
+
+**Files:** `src/core/click.ts`, `tests/click.test.ts`
+**Commit:** `fix: reject empty proposal before build to prevent garbage AI output`
+
+---
+
+## Click 2 — `git.commit()` "nothing to commit" hardening
+
+**Gap:** If the agent's `build()` returns `success: true` but makes no actual file changes, `git add -A` stages nothing and `git commit` exits with code 1: "nothing to commit, working tree clean". This raw git error bubbled through click.ts's catch block as a generic failure, triggering rollback with no explanation — the user couldn't tell whether tests failed or the AI simply changed nothing.
+
+**Fix:** In `git.commit()`, catch the git error and detect the "nothing to commit" / "nothing added to commit" text. Re-throw with a specific, actionable message:
+
+```
+Nothing to commit — the agent reported success but made no file changes.
+  The agent may have returned a no-op or the proposal was too vague to act on.
+```
+
+**Files:** `src/core/git.ts`, `tests/git.test.ts`
+**Commit:** `fix: surface friendly error when agent builds nothing to commit`
+
+---
+
+## Click 3 — Concurrent ratchet runs lockfile
+
+**Gap:** No protection against two concurrent `ratchet torque` processes running on the same repository. Both would try to create branches, stash, commit, and write state simultaneously — a guaranteed git history corruption scenario.
+
+**Fix:** New `src/core/lock.ts` module with `acquireLock()` / `releaseLock()`. At start of `torque`, writes `.ratchet.lock` with the current PID. If a lock file exists: check if the owning PID is still alive (via `process.kill(pid, 0)`); if alive, throw; if dead (stale lock), clean it up and proceed. `releaseLock()` is called in the finally block.
+
+```
+Another ratchet process (PID 12345) is already running in this directory.
+  Concurrent ratchet runs on the same repo can corrupt git history.
+  Wait for it to finish, or remove the lock: rm .ratchet.lock
+```
+
+**Files:** `src/core/lock.ts` (new), `src/commands/torque.ts`, `tests/lock.test.ts` (new)
+**Commit:** `fix: prevent concurrent ratchet runs with a PID lockfile`
+
+---
+
+## Click 4 — Corrupted state file detection
+
+**Gap:** `loadRunState()` wrapped both `readFile()` and `JSON.parse()` in one catch block — if the file was missing it returned `null`, and if it was corrupted (truncated write, disk error during a previous run) it also returned `null`. The user would see "No runs found" instead of a warning about the corrupted file.
+
+**Fix:** Split into two try-catch blocks: the first catches ENOENT (file missing → return `null`); the second catches JSON parse errors and throws a specific error with a recovery command:
+
+```
+.ratchet-state.json exists but could not be parsed — the file may be corrupted.
+  Delete it to reset: rm .ratchet-state.json
+```
+
+**Files:** `src/commands/status.ts`, `tests/commands/status.test.ts`
+**Commit:** `fix: distinguish corrupted state file from missing state file`
+
+---
+
+## Click 5 — Config `clicks` validation
+
+**Gap:** `defaults.clicks: 0`, `clicks: -3`, or `clicks: 0.5` in `.ratchet.yml` produced a silent empty run. The engine's `for (let i = 1; i <= 0; i++)` loop never executes and the run completes "successfully" with zero clicks and zero output. No warning is issued.
+
+**Fix:** In `parseConfig()`, validate that the configured `clicks` value is a positive integer (`Number.isInteger(v) && v >= 1`). Invalid values (zero, negative, float) fall back silently to the default (7).
+
+**Files:** `src/core/config.ts`, `tests/config.test.ts`
+**Commit:** `fix: reject non-positive or fractional clicks in config, fall back to default`
+
+---
+
+## Click 6 — `git.revert()` using `reset --hard HEAD`
+
+**Gap:** `git checkout -- .` only reverts unstaged changes to tracked files. If the agent ran `git add` as part of its build process (staged new files), a rollback using `checkout -- .` would leave those staged changes in the index. The working tree would look clean but the index would be dirty — subsequent clicks would inherit the previous click's partial changes.
+
+**Fix:** Replace `git checkout -- .` with `git reset --hard HEAD`. This atomically clears both staged and unstaged changes in one operation. Combined with the existing `git clean -fd`, it provides a complete reset to the last committed state.
+
+**Files:** `src/core/git.ts`, `tests/git-extended.test.ts`
+**Commit:** `fix: use git reset --hard to clear staged changes during rollback`
+
+---
+
+## Click 7 — Whitespace `testCommand` normalization in config
+
+**Gap:** `test_command: "  npm test  "` (with extra spaces) worked by accident because `parseCommand` splits on spaces. But `test_command: "   "` (whitespace-only) slipped through the non-empty string check, reaching `runTests()` which then showed a confusing error message with raw whitespace in the command display.
+
+**Fix:** In `parseConfig()`, trim the parsed `test_command` string. If it's empty after trimming, fall back to the default test command. This catches both whitespace-only values and values absent from the config.
+
+**Files:** `src/core/config.ts`, `tests/config.test.ts`
+**Commit:** `fix: trim testCommand whitespace in config and fall back to default if blank`
+
+---
+
+## Summary (Sprint 2)
+
+| # | Area | Gap | Fix |
+|---|------|-----|-----|
+| 1 | Agent output | Empty proposal passed to build | Validate `proposal.trim()` non-empty before build |
+| 2 | Git operations | "nothing to commit" gave raw git error | Detect in `git.commit()`, throw friendly message |
+| 3 | Concurrency | No protection against parallel ratchet runs | PID lockfile in `src/core/lock.ts` |
+| 4 | State file | Corrupted JSON indistinguishable from missing | Two-phase read: missing → null, corrupt → throw |
+| 5 | Config validation | `clicks: 0` / negative / float silently empty run | Validate positive integer, fall back to default |
+| 6 | Git operations | `checkout -- .` left staged changes after rollback | Use `reset --hard HEAD` instead |
+| 7 | Config validation | Whitespace `testCommand` slipped through | Trim at parse time, fall back to default if blank |
+
+**Tests:** 179 → 194 (+15 tests, all green)
