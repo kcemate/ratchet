@@ -64,11 +64,15 @@ export function torqueCommand(): Command {
         // Warn about dirty worktree — each click stashes before applying changes,
         // so existing uncommitted work won't be lost, but the user should know.
         const ws = await gitStatus(cwd);
-        const dirtyFiles = ws.staged.length + ws.unstaged.length + ws.untracked.length;
+        const allDirty = [...ws.staged, ...ws.unstaged, ...ws.untracked];
+        const dirtyFiles = allDirty.length;
         if (dirtyFiles > 0) {
           const fileWord = dirtyFiles === 1 ? 'file' : 'files';
+          const shown = allDirty.slice(0, 3).join(', ');
+          const extra = dirtyFiles > 3 ? ` +${dirtyFiles - 3} more` : '';
           console.warn(
-            chalk.yellow(`  ⚠  Dirty worktree: ${dirtyFiles} uncommitted ${fileWord}.`) +
+            chalk.yellow(`  ⚠  Dirty worktree: ${dirtyFiles} uncommitted ${fileWord}`) +
+              chalk.dim(` (${shown}${extra}).`) +
               chalk.dim(' Ratchet will stash these before each click and restore them on rollback.\n'),
           );
         }
