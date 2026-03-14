@@ -1,7 +1,7 @@
 import { execFile, spawn } from 'child_process';
 import { promisify } from 'util';
 import { join } from 'path';
-import type { Target, BuildResult } from '../../types.js';
+import type { Target, BuildResult, HardenPhase } from '../../types.js';
 import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
 
@@ -25,13 +25,17 @@ export class ShellAgent implements Agent {
     this.timeout = config.timeout ?? 300_000; // 5 minutes
   }
 
-  async analyze(context: string): Promise<string> {
-    const prompt = buildAnalyzePrompt(context);
+  async analyze(context: string, hardenPhase?: HardenPhase): Promise<string> {
+    const prompt = hardenPhase === 'harden:tests'
+      ? buildHardenAnalyzePrompt(context)
+      : buildAnalyzePrompt(context);
     return this.runPrompt(prompt);
   }
 
-  async propose(analysis: string, target: Target): Promise<string> {
-    const prompt = buildProposePrompt(analysis, target);
+  async propose(analysis: string, target: Target, hardenPhase?: HardenPhase): Promise<string> {
+    const prompt = hardenPhase === 'harden:tests'
+      ? buildHardenProposePrompt(analysis, target)
+      : buildProposePrompt(analysis, target);
     return this.runPrompt(prompt);
   }
 
@@ -126,6 +130,28 @@ function buildProposePrompt(analysis: string, target: Target): string {
     `2. Which file(s) to modify\n` +
     `3. The exact code change\n\n` +
     `Keep it minimal — one change, one commit.`
+  );
+}
+
+function buildHardenAnalyzePrompt(context: string): string {
+  return (
+    `You are a test-writing assistant. Analyze the following target and identify what test coverage is missing.\n\n` +
+    `${context}\n\n` +
+    `Focus on: untested functions, uncovered edge cases, missing error condition tests. ` +
+    `Be specific and actionable. List the top 3 missing test scenarios.`
+  );
+}
+
+function buildHardenProposePrompt(analysis: string, target: Target): string {
+  return (
+    `You are a test-writing assistant. Based on the following analysis, propose ONE specific set of tests to write.\n\n` +
+    `Target path: ${target.path}\n` +
+    `Analysis:\n${analysis}\n\n` +
+    `Respond with:\n` +
+    `1. The specific test(s) to write (one sentence)\n` +
+    `2. Which test file to create or modify\n` +
+    `3. The exact test code\n\n` +
+    `Write comprehensive tests for the target code. Focus on correctness, not style.`
   );
 }
 

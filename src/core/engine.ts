@@ -1,13 +1,16 @@
 import { randomUUID } from 'crypto';
-import type { RatchetRun, Target, RatchetConfig, Click } from '../types.js';
+import { readdirSync } from 'fs';
+import { join } from 'path';
+import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase } from '../types.js';
 import type { Agent } from './agents/base.js';
 import { executeClick } from './click.js';
 import * as git from './git.js';
 
 export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
+export type { HardenPhase };
 
 export interface EngineCallbacks {
-  onClickStart?: (clickNumber: number, total: number) => Promise<void> | void;
+  onClickStart?: (clickNumber: number, total: number, hardenPhase?: HardenPhase) => Promise<void> | void;
   onClickPhase?: (phase: ClickPhase, clickNumber: number) => Promise<void> | void;
   onClickComplete?: (click: Click, rolledBack: boolean) => Promise<void> | void;
   onRunComplete?: (run: RatchetRun) => Promise<void> | void;
@@ -21,7 +24,35 @@ export interface EngineRunOptions {
   cwd: string;
   agent: Agent;
   createBranch?: boolean;
+  hardenMode?: boolean;
   callbacks?: EngineCallbacks;
+}
+
+const TEST_FILE_PATTERNS = [
+  /\.test\.[a-z]+$/i,
+  /\.spec\.[a-z]+$/i,
+  /^test_.*\.[a-z]+$/i,
+  /.*_test\.[a-z]+$/i,
+];
+
+const IGNORE_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.cache']);
+
+function countTestFiles(dir: string): number {
+  let count = 0;
+  try {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (!IGNORE_DIRS.has(entry.name)) {
+          count += countTestFiles(join(dir, entry.name));
+        }
+      } else if (TEST_FILE_PATTERNS.some((p) => p.test(entry.name))) {
+        count++;
+      }
+    }
+  } catch {
+    // ignore permission errors
+  }
+  return count;
 }
 
 /**
@@ -29,7 +60,7 @@ export interface EngineRunOptions {
  * Runs N clicks sequentially on a target, applying the Pawl (rollback on failure).
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { target, clicks, config, cwd, agent, createBranch = true, callbacks = {} } = options;
+  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, callbacks = {} } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -55,9 +86,27 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     await git.createBranch(branch, cwd);
   }
 
+  // Harden mode: track initial test file count to detect when tests are written
+  let initialTestFileCount = 0;
+  let phaseTransitioned = false;
+
+  if (hardenMode) {
+    initialTestFileCount = countTestFiles(cwd);
+  }
+
   try {
     for (let i = 1; i <= clicks; i++) {
-      await callbacks.onClickStart?.(i, clicks);
+      // Determine harden phase for this click
+      let hardenPhase: HardenPhase | undefined;
+      if (hardenMode) {
+        if (!phaseTransitioned && i <= 3) {
+          hardenPhase = 'harden:tests';
+        } else {
+          hardenPhase = 'improve';
+        }
+      }
+
+      await callbacks.onClickStart?.(i, clicks, hardenPhase);
 
       try {
         const { click, rolled_back } = await executeClick({
@@ -66,6 +115,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           config,
           agent,
           cwd,
+          hardenPhase,
           onPhase: callbacks.onClickPhase
             ? (phase) => callbacks.onClickPhase!(phase, i)
             : undefined,
@@ -77,6 +127,20 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         const error = err instanceof Error ? err : new Error(String(err));
         await callbacks.onError?.(error, i);
         // Continue with next click rather than aborting the whole run
+      }
+
+      // Harden mode: check after click 2 whether test files appeared.
+      // If yes, transition to improve phase. After click 3, always transition.
+      if (hardenMode && !phaseTransitioned) {
+        if (i === 2) {
+          const currentCount = countTestFiles(cwd);
+          if (currentCount > initialTestFileCount) {
+            phaseTransitioned = true;
+          }
+        } else if (i === 3) {
+          // Force transition after 3rd test-writing click regardless of outcome
+          phaseTransitioned = true;
+        }
       }
     }
 

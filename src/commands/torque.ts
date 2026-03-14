@@ -7,7 +7,7 @@ import { join } from 'path';
 import { loadConfig, configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
 import { readFileSync } from 'fs';
 import { runEngine } from '../core/engine.js';
-import type { ClickPhase } from '../core/engine.js';
+import type { ClickPhase, HardenPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
 import { generateReport, writeReport } from '../core/report.js';
@@ -41,6 +41,7 @@ export function torqueCommand(): Command {
     .option('--dry-run', 'Preview mode — analyze and propose without committing any changes', false)
     .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
     .option('--no-branch', 'Run on the current branch instead of creating a ratchet branch', false)
+    .option('--mode <mode>', 'Run mode: "normal" (default) or "harden" (write tests first, then improve)')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -57,6 +58,7 @@ export function torqueCommand(): Command {
         dryRun: boolean;
         verbose: boolean;
         branch: boolean;
+        mode?: string;
       }) => {
         const cwd = process.cwd();
 
@@ -116,6 +118,9 @@ export function torqueCommand(): Command {
             );
           }
         }
+
+        // Resolve harden mode: explicit --mode flag takes precedence, then config default
+        const hardenMode = options.mode === 'harden' || config.defaults.hardenMode === true;
 
         // Warn about incomplete targets and invalid field values silently dropped by the parser
         if (config._source === 'file') {
@@ -202,6 +207,7 @@ export function torqueCommand(): Command {
         console.log(`  Agent  : ${chalk.dim(config.agent)}`);
         console.log(`  Clicks : ${chalk.yellow(String(clickCount))}`);
         console.log(`  Tests  : ${chalk.dim(config.defaults.testCommand)}`);
+        console.log(`  Mode   : ${hardenMode ? chalk.yellow('harden') : chalk.dim('normal')}`);
         if (options.dryRun) {
           console.log('\n' + chalk.yellow('  [DRY RUN] No changes will be committed.'));
         }
@@ -219,6 +225,7 @@ export function torqueCommand(): Command {
         let spinner: ReturnType<typeof ora> | null = null;
         const runStart = Date.now();
         let clickStartTime = 0;
+        let currentHardenPhase: HardenPhase | undefined;
 
         // Graceful Ctrl+C handler
         const sigintHandler = () => {
@@ -272,11 +279,14 @@ export function torqueCommand(): Command {
             cwd,
             agent,
             createBranch: options.branch && !options.dryRun,
+            hardenMode,
             callbacks: {
-              onClickStart: async (clickNumber, total) => {
+              onClickStart: async (clickNumber, total, hardenPhase?: HardenPhase) => {
                 clickStartTime = Date.now();
+                currentHardenPhase = hardenPhase;
+                const phaseTag = hardenPhase ? chalk.dim(` [${hardenPhase}]`) : '';
                 spinner = ora(
-                  `  Click ${chalk.bold(String(clickNumber))}/${total} — analyzing…`,
+                  `  Click ${chalk.bold(String(clickNumber))}/${total}${phaseTag} — analyzing…`,
                 ).start();
 
                 // Init log on first click
@@ -302,7 +312,8 @@ export function torqueCommand(): Command {
                   testing: 'testing…',
                   committing: 'committing…',
                 };
-                spinner.text = `  Click ${chalk.bold(String(clickNumber))}/${total} — ${phaseLabel[phase]}`;
+                const phaseTag = currentHardenPhase ? chalk.dim(` [${currentHardenPhase}]`) : '';
+                spinner.text = `  Click ${chalk.bold(String(clickNumber))}/${total}${phaseTag} — ${phaseLabel[phase]}`;
               },
 
               onClickComplete: async (click: Click, rolledBack: boolean) => {

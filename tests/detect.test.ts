@@ -11,11 +11,13 @@ import {
 vi.mock('fs', () => ({
   existsSync: vi.fn(),
   readFileSync: vi.fn(),
+  readdirSync: vi.fn().mockReturnValue([]),
 }));
 
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 const mockExists = existsSync as ReturnType<typeof vi.fn>;
 const mockRead = readFileSync as ReturnType<typeof vi.fn>;
+const mockReaddir = readdirSync as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -197,6 +199,8 @@ describe('buildAutoConfig', () => {
   it('returns a valid RatchetConfig', () => {
     mockExists.mockImplementation((p: string) => p.endsWith('package.json') || p.endsWith('/src'));
     mockRead.mockReturnValue(JSON.stringify({ scripts: { test: 'vitest run' } }));
+    // Return a test file so countTestFiles > 0, keeping hardenMode false
+    mockReaddir.mockReturnValue([{ name: 'foo.test.ts', isDirectory: () => false }]);
     const config = buildAutoConfig('/project');
     expect(config.agent).toBe('shell');
     expect(config._source).toBe('auto-detected');

@@ -1,3 +1,5 @@
+export type HardenPhase = 'harden:tests' | 'improve';
+
 export interface RatchetConfig {
   agent: 'claude-code' | 'codex' | 'shell';
   model?: string;

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import type { RatchetConfig, Target } from '../types.js';
 
@@ -9,20 +9,50 @@ export interface DetectedProject {
   testCommand: string | null;
   sourcePaths: string[];
   noTestCommand: boolean;
+  testFileCount: number;
 }
 
 const SOURCE_DIRS = ['src', 'lib', 'app', 'pkg', 'internal', 'cmd'];
+
+const TEST_FILE_PATTERNS = [
+  /\.test\.[a-z]+$/i,
+  /\.spec\.[a-z]+$/i,
+  /^test_.*\.[a-z]+$/i,
+  /.*_test\.[a-z]+$/i,
+];
+
+const IGNORE_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.cache']);
+
+export function countTestFiles(dir: string): number {
+  let count = 0;
+  try {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (!IGNORE_DIRS.has(entry.name)) {
+          count += countTestFiles(join(dir, entry.name));
+        }
+      } else if (TEST_FILE_PATTERNS.some((p) => p.test(entry.name))) {
+        count++;
+      }
+    }
+  } catch {
+    // ignore permission errors
+  }
+  return count;
+}
 
 export function detectProject(cwd: string): DetectedProject {
   const type = detectProjectType(cwd);
   const testCommand = detectTestCommand(cwd, type);
   const sourcePaths = detectSourcePaths(cwd);
+  const testFileCount = countTestFiles(cwd);
 
   return {
     type,
     testCommand,
     sourcePaths,
     noTestCommand: testCommand === null,
+    testFileCount,
   };
 }
 
@@ -114,13 +144,15 @@ export function buildAutoConfig(cwd: string): RatchetConfig {
     },
   ];
 
+  const shouldHarden = detected.noTestCommand || detected.testFileCount === 0;
+
   return {
     agent: 'shell',
     defaults: {
       clicks: 7,
       testCommand: detected.testCommand ?? 'npm test',
       autoCommit: true,
-      hardenMode: detected.noTestCommand,
+      hardenMode: shouldHarden,
     },
     targets,
     _source: 'auto-detected',

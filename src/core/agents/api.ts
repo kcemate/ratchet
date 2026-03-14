@@ -1,4 +1,4 @@
-import type { Target, BuildResult } from '../../types.js';
+import type { Target, BuildResult, HardenPhase } from '../../types.js';
 import type { Agent, AgentOptions } from './base.js';
 import type { Provider, ProviderOptions } from '../providers/base.js';
 
@@ -16,12 +16,18 @@ export class APIAgent implements Agent {
     this.providerOptions = config.providerOptions ?? {};
   }
 
-  async analyze(context: string): Promise<string> {
-    return this.provider.sendMessage(buildAnalyzePrompt(context), this.providerOptions);
+  async analyze(context: string, hardenPhase?: HardenPhase): Promise<string> {
+    const prompt = hardenPhase === 'harden:tests'
+      ? buildHardenAnalyzePrompt(context)
+      : buildAnalyzePrompt(context);
+    return this.provider.sendMessage(prompt, this.providerOptions);
   }
 
-  async propose(analysis: string, target: Target): Promise<string> {
-    return this.provider.sendMessage(buildProposePrompt(analysis, target), this.providerOptions);
+  async propose(analysis: string, target: Target, hardenPhase?: HardenPhase): Promise<string> {
+    const prompt = hardenPhase === 'harden:tests'
+      ? buildHardenProposePrompt(analysis, target)
+      : buildProposePrompt(analysis, target);
+    return this.provider.sendMessage(prompt, this.providerOptions);
   }
 
   async build(proposal: string, _cwd: string): Promise<BuildResult> {
@@ -58,6 +64,28 @@ function buildProposePrompt(analysis: string, target: Target): string {
     `2. Which file(s) to modify\n` +
     `3. The exact code change\n\n` +
     `Keep it minimal — one change, one commit.`
+  );
+}
+
+function buildHardenAnalyzePrompt(context: string): string {
+  return (
+    `You are a test-writing assistant. Analyze the following target and identify what test coverage is missing.\n\n` +
+    `${context}\n\n` +
+    `Focus on: untested functions, uncovered edge cases, missing error condition tests. ` +
+    `Be specific and actionable. List the top 3 missing test scenarios.`
+  );
+}
+
+function buildHardenProposePrompt(analysis: string, target: Target): string {
+  return (
+    `You are a test-writing assistant. Based on the following analysis, propose ONE specific set of tests to write.\n\n` +
+    `Target path: ${target.path}\n` +
+    `Analysis:\n${analysis}\n\n` +
+    `Respond with:\n` +
+    `1. The specific test(s) to write (one sentence)\n` +
+    `2. Which test file to create or modify\n` +
+    `3. The exact test code\n\n` +
+    `Write comprehensive tests for the target code. Focus on correctness, not style.`
   );
 }
 

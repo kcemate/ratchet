@@ -1,11 +1,11 @@
-import type { Target, BuildResult } from '../../types.js';
+import type { Target, BuildResult, HardenPhase } from '../../types.js';
 
 export interface Agent {
   /** Analyze the target context and return an analysis string */
-  analyze(context: string): Promise<string>;
+  analyze(context: string, hardenPhase?: HardenPhase): Promise<string>;
 
   /** Given an analysis, propose a single focused improvement */
-  propose(analysis: string, target: Target): Promise<string>;
+  propose(analysis: string, target: Target, hardenPhase?: HardenPhase): Promise<string>;
 
   /** Execute the proposal (make code changes) and return build result */
   build(proposal: string, cwd: string): Promise<BuildResult>;
@@ -19,11 +19,15 @@ export interface AgentOptions {
 
 export type AgentType = 'claude-code' | 'codex' | 'shell';
 
-export function createAgentContext(target: Target, clickNumber: number): string {
-  return [
+export function createAgentContext(target: Target, clickNumber: number, hardenPhase?: HardenPhase): string {
+  const lines = [
     `Target: ${target.name}`,
     `Path: ${target.path}`,
     `Description: ${target.description}`,
     `Click: ${clickNumber}`,
-  ].join('\n');
+  ];
+  if (hardenPhase) {
+    lines.push(`Mode: ${hardenPhase}`);
+  }
+  return lines.join('\n');
 }

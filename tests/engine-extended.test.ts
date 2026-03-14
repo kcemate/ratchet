@@ -99,9 +99,9 @@ describe('runEngine', () => {
       callbacks: { onClickStart },
     });
     expect(onClickStart).toHaveBeenCalledTimes(3);
-    expect(onClickStart).toHaveBeenNthCalledWith(1, 1, 3);
-    expect(onClickStart).toHaveBeenNthCalledWith(2, 2, 3);
-    expect(onClickStart).toHaveBeenNthCalledWith(3, 3, 3);
+    expect(onClickStart).toHaveBeenNthCalledWith(1, 1, 3, undefined);
+    expect(onClickStart).toHaveBeenNthCalledWith(2, 2, 3, undefined);
+    expect(onClickStart).toHaveBeenNthCalledWith(3, 3, 3, undefined);
   });
 
   it('calls onClickComplete for each completed click', async () => {
