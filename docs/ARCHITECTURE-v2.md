@@ -1,12 +1,14 @@
 # Ratchet v2 Architecture — Post-Ratchet Refinement
 
-_Produced by running the Ratchet methodology on our own product proposal. 6 landed, 1 rolled back._
+_Produced by running the Ratchet methodology on our own product proposal. 2 runs, 21 clicks, 16 landed, 3 rolled back._
 
 ## Product Summary
 
 Ratchet is a metered CLI tool that runs autonomous code improvement loops. Customer provides their own AI key and compute. We provide the intelligence layer and charge per result.
 
 **One sentence:** Point it at your codebase, get a PR with tested improvements, pay $1 per landed commit.
+
+**For vibe coders:** "You built it with AI. Now make it real." — `npx ratchet`, no config, $19 to harden your whole app.
 
 ---
 
@@ -68,19 +70,28 @@ Ratchet is a metered CLI tool that runs autonomous code improvement loops. Custo
 - We don't protect prompts as IP — the moat is execution quality, rollback reliability, boundary enforcement, and iteration speed
 - Prompt improvements ship as CLI version bumps
 
-### 3. Pay per result
-- $1 per landed click (commit that passes tests)
-- Rolled-back clicks are free — you only pay for value delivered
-- First 20 clicks free (onboarding)
-- License key validated via lightweight API call per click
+### 3. Zero-config default, YAML for power users
+- `npx ratchet` auto-detects project type, test command, source paths
+- No `.ratchet.yml` required for first run
+- First run prompts for API key if missing, stores in `~/.ratchet/config`
+- `.ratchet.yml` is the power-user customization path
 
-### 4. CLI-first, GitHub Action as wrapper
+### 4. Two-lane AI: BYOK or Credits
+- BYOK: customer uses their own OpenRouter/Anthropic/OpenAI key (cheaper per click)
+- Ratchet Credits: AI included in click price, zero API key setup (higher per click)
+- First-run prompt offers both options
+
+### 5. Pay per result
+- Rolled-back clicks are free — you only pay for value delivered
+- License key validated via signed token at run start (cached, survives server downtime)
+
+### 6. CLI-first, GitHub Action as wrapper
 - `npx ratchet torque` works anywhere — local, any CI, any platform
 - `giovanni-labs/ratchet-action@v1` is a thin GitHub Action wrapper
 - GitLab CI / other platforms get templates later with zero core changes
 - Not locked into GitHub ecosystem
 
-### 5. Multi-provider AI support
+### 7. Multi-provider AI support
 - `OPENROUTER_API_KEY` — recommended (model flexibility, fallbacks)
 - `ANTHROPIC_API_KEY` — direct Anthropic access
 - `OPENAI_API_KEY` — direct OpenAI access
@@ -136,37 +147,44 @@ Teams with 5+ contributors and CI already set up. They don't want to sit with Cl
 
 ## Revenue Model
 
-### Pricing: Prepaid Click Packs
-- **Free tier:** 3 clicks/week, forever. No signup required beyond license key.
-- **Starter:** 50 clicks for $39 (~$0.78/click)
-- **Pro:** 200 clicks for $129 (~$0.65/click)
-- **Team:** 1,000 clicks for $499 (~$0.50/click)
+### Pricing
 
-Rolled-back clicks are always free — you only pay for landed improvements.
+| Plan | Clicks | Price | Per Click | AI Included |
+|------|--------|-------|-----------|-------------|
+| **Try** | 3/week | Free | $0 | BYOK only |
+| **Single Run** | 14 clicks | $19 | $1.36 | ✅ Yes |
+| **Power Pack** | 100 clicks | $79 | $0.79 | ✅ Yes |
+| **BYOK Unlimited** | Unlimited | $29/month | — | ❌ Your key |
 
-### Why Prepaid, Not Subscription
-- No real-time billing dependency — CLI gets a signed token at run start, good for N clicks
-- If our license server is briefly down, cached token keeps working
-- Lower purchase friction than recurring subscription
-- One-time purchase feels like buying a tool, not renting one
+- **Single Run** = the impulse buy for vibe coders. $19 to harden one project.
+- **Power Pack** = repeat users, multiple projects.
+- **BYOK Unlimited** = teams/power users who bring their own AI key.
+- Rolled-back clicks are always free.
 
 ### Unit Economics
-- Revenue per landed click: $0.50–0.78
-- Our cost per click: ~$0.01 (license server API call)
-- Margin: ~98%
+
+**Credits path (Single Run / Power Pack):**
+- Revenue per click: $0.79–1.36
+- AI cost per click: ~$0.25 (Sonnet via OpenRouter on our key)
+- Server cost per click: ~$0.01
+- **Margin: ~67–81%**
+
+**BYOK path:**
+- Revenue: $29/month flat
+- AI cost: $0 (their key)
+- **Margin: ~99%**
 
 ### Customer's Total Cost Per Click
-- Ratchet fee: ~$0.65 (Pro tier)
-- AI cost (their key): ~$0.15–0.30 (Sonnet via OpenRouter)
-- **Total: ~$0.90 per landed improvement**
+- Credits: ~$1.36/click (Single Run) or ~$0.79/click (Power Pack) — all-in
+- BYOK: ~$0.25–0.40/click (just their AI cost) + $29/month
 - Comparable human cost: $50+ (30 min engineer time minimum)
 
 ### Projections (Conservative)
-| Customers | Avg pack/quarter | Quarterly Revenue |
-|-----------|-----------------|-------------------|
-| 50 | Starter ($39) | $1,950 |
-| 200 | Pro ($129) | $25,800 |
-| 500 | Mix | $40,000+ |
+| Customers | Plan Mix | Monthly Revenue |
+|-----------|----------|-----------------|
+| 100 | 70% Single Run, 30% Power Pack | ~$3,700 |
+| 500 | 50% Single, 30% Power, 20% BYOK | ~$14,000 |
+| 2,000 | Mix | ~$45,000+ |
 
 ---
 
@@ -179,6 +197,49 @@ Many codebases have zero tests or weak coverage. Ratchet detects this and adapts
 - First 2-3 clicks: write test coverage for the target area
 - Remaining clicks: improve code against those tests
 - Expands addressable market from "teams with good tests" to "any team"
+- **Critical for vibe coders** — they never have tests
+
+---
+
+## Ratchet Report: Results for Non-Engineers
+
+Every run generates a human-readable summary at the top of the PR:
+
+```markdown
+## 🔧 Ratchet Report
+
+**7 clicks · 6 landed · 1 rolled back · 3m 42s**
+
+### What improved:
+- ✅ Added input validation to 4 API routes (prevents injection attacks)
+- ✅ Replaced 12 `any` types with proper TypeScript types
+- ✅ Added error handling to database calls (was crashing silently)
+- ✅ Moved API key from hardcoded string to environment variable
+- ✅ Added 8 unit tests (you had 0)
+- ✅ Fixed 2 potential memory leaks in WebSocket handlers
+
+### What was rolled back:
+- ↩️ Tried to refactor auth middleware — broke login flow, reverted
+
+### Before/After:
+- Test coverage: 0% → 34%
+- TypeScript strict errors: 47 → 12
+- Security issues: 6 → 1
+```
+
+Vibe coders don't read diffs. They read this and merge. Also great for marketing screenshots.
+
+---
+
+## Distribution Strategy
+
+Vibe coders aren't on npm or GitHub Marketplace. They're on Twitter, YouTube, Reddit, Discord.
+
+1. **Demo video:** Bolt-generated app → `npx ratchet` → show before/after report. 60 seconds.
+2. **Shareable Ratchet Reports:** Post-run card image. "Ratchet found 6 security issues in my vibe-coded app." Tweetable.
+3. **Community seeding:** Cursor, Bolt, v0 Discords. Real examples from real projects.
+4. **"Is your vibe code safe?"** — scare-then-solve landing page.
+5. No paid ads. Content + community only at launch.
 
 ---
 
@@ -188,19 +249,21 @@ Many codebases have zero tests or weak coverage. Ratchet detects this and adapts
 3. Approve Anthropic spend for our own dogfooding/testing
 
 ## What Giovanni Builds
-1. License server (Express + LemonSqueezy API, Railway) — signed token auth, cached validation
-2. CLI updates: metered mode, multi-provider support, license integration, harden mode
-3. GitHub Action: `giovanni-labs/ratchet-action@v1`
-4. GitHub Marketplace listing
-5. Landing page refresh with new pricing/architecture
-6. Docs update
-7. `.ratchet.yml` community templates (Next.js, Express, Django, Rails)
+1. Zero-config auto-detection (`npx ratchet` just works)
+2. Ratchet Credits system (bundled AI, no key needed)
+3. Ratchet Report generator (human-readable PR summary + shareable card)
+4. License server (Express + LemonSqueezy API, Railway) — signed token auth, cached validation
+5. CLI updates: metered mode, multi-provider support, license integration, harden mode
+6. GitHub Action: `giovanni-labs/ratchet-action@v1`
+7. Landing page rewrite for vibe coders ("You built it with AI. Now make it real.")
+8. Demo video script + assets
+9. `.ratchet.yml` community templates (Next.js, Express, Django, Rails)
 
 ## Timeline
-- Week 1: License server + CLI metering integration + signed token caching
-- Week 2: Multi-provider support + harden mode + GitHub Action
-- Week 3: Marketplace listing + landing page + docs + templates
-- Week 4: Dogfood on Deuce Diary, fix edges, ship
+- Week 1: Zero-config mode + multi-provider support + harden mode
+- Week 2: License server + Ratchet Credits + metering
+- Week 3: Ratchet Report + GitHub Action + landing page rewrite
+- Week 4: Dogfood on Deuce Diary, demo video, community seeding, ship
 
 ---
 
@@ -224,5 +287,12 @@ This architecture was produced by running the Ratchet methodology on the origina
 | 12 | ✗ rolled back | Competitive moat analysis — strategy concern, no architectural change |
 | 13 | ✓ landed | Verified full picture post-refinement |
 | 14 | ✓ landed | Primary target = vibe coders, not engineers. "You built it with AI. Now make it real." |
+| 15 | ✓ landed | Zero-config: `npx ratchet` auto-detects everything. No YAML needed. |
+| 16 | ✓ landed | Two-lane AI: BYOK (cheap) or Ratchet Credits (AI included, zero friction) |
+| 17 | ✓ landed | Ratchet Report: human-readable PR summary for people who don't read diffs |
+| 18 | ✓ landed | Pricing: Single Run $19, Power Pack $79, BYOK Unlimited $29/mo |
+| 19 | ✓ landed | Distribution: demo videos, shareable reports, community seeding |
+| 20 | ✗ rolled back | Name change — "Ratchet" is fine. Brand > metaphor. |
+| 21 | ✓ landed | Verified full state post-run 2 |
 
-_11 landed · 2 rolled back · 14 total clicks_
+_16 landed · 3 rolled back · 21 total clicks_
