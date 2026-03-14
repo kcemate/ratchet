@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 import { parse } from 'yaml';
 import type { RatchetConfig, Target, Boundary } from '../types.js';
+import { buildAutoConfig } from './detect.js';
 
 const CONFIG_FILE = '.ratchet.yml';
 
@@ -38,10 +39,12 @@ interface RawConfig {
 export function loadConfig(cwd: string = process.cwd()): RatchetConfig {
   const configPath = resolve(join(cwd, CONFIG_FILE));
   if (!existsSync(configPath)) {
-    return { ...DEFAULT_CONFIG };
+    return buildAutoConfig(cwd);
   }
   const raw = readFileSync(configPath, 'utf8');
-  return parseConfig(raw);
+  const config = parseConfig(raw);
+  config._source = 'file';
+  return config;
 }
 
 export function parseConfig(raw: string): RatchetConfig {

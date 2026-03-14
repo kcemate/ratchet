@@ -5,9 +5,14 @@ export interface RatchetConfig {
     clicks: number;
     testCommand: string;
     autoCommit: boolean;
+    hardenMode?: boolean;
   };
   targets: Target[];
   boundaries?: Boundary[];
+  /** Set to 'auto-detected' when config was generated from project detection, not a .ratchet.yml */
+  _source?: 'file' | 'auto-detected';
+  /** True when no test command was found during auto-detection; harden mode should be enabled */
+  _noTestCommand?: boolean;
 }
 
 export interface Target {

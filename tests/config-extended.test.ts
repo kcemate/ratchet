@@ -21,11 +21,13 @@ describe('loadConfig', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it('returns DEFAULT_CONFIG when .ratchet.yml does not exist', () => {
+  it('returns auto-detected config when .ratchet.yml does not exist', () => {
     const config = loadConfig(dir);
     expect(config.agent).toBe(DEFAULT_CONFIG.agent);
     expect(config.defaults.clicks).toBe(DEFAULT_CONFIG.defaults.clicks);
-    expect(config.targets).toHaveLength(0);
+    // Auto-detection always produces at least one target
+    expect(config.targets.length).toBeGreaterThanOrEqual(1);
+    expect(config._source).toBe('auto-detected');
   });
 
   it('loads config from .ratchet.yml when it exists', () => {

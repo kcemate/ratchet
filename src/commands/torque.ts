@@ -34,7 +34,7 @@ export function torqueCommand(): Command {
         'and writes a live log to docs/<target>-ratchet.md.\n\n' +
         'Each click: analyze → propose → build → test → commit (or revert).',
     )
-    .requiredOption('-t, --target <name>', 'Target name defined in .ratchet.yml')
+    .option('-t, --target <name>', 'Target name defined in .ratchet.yml (omit to use auto-detection)')
     .option('-n, --clicks <number>', 'Number of clicks to run (overrides defaults.clicks in config)')
     .option('--dry-run', 'Preview mode — analyze and propose without committing any changes', false)
     .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
@@ -42,6 +42,7 @@ export function torqueCommand(): Command {
     .addHelpText(
       'after',
       '\nExamples:\n' +
+        '  $ ratchet torque\n' +
         '  $ ratchet torque --target src\n' +
         '  $ ratchet torque --target api --clicks 3\n' +
         '  $ ratchet torque --target src --dry-run\n' +
@@ -49,7 +50,7 @@ export function torqueCommand(): Command {
     )
     .action(
       async (options: {
-        target: string;
+        target?: string;
         clicks?: string;
         dryRun: boolean;
         verbose: boolean;
@@ -100,43 +101,73 @@ export function torqueCommand(): Command {
           process.exit(1);
         }
 
-        // Warn about incomplete targets and invalid field values silently dropped by the parser
-        try {
-          const rawYml = readFileSync(configFilePath(cwd), 'utf-8');
-          const warnings = [
-            ...getConfigWarnings(rawYml),
-            ...findIncompleteTargets(rawYml),
-          ];
-          for (const w of warnings) {
-            console.warn(chalk.yellow(`  ⚠  ${w}`));
+        // If config was auto-detected, show a banner so the user knows
+        if (config._source === 'auto-detected') {
+          console.log(
+            chalk.dim('  ✦ No .ratchet.yml found — running in zero-config mode.') +
+              chalk.dim(' Run ' + chalk.cyan('ratchet init') + ' to create a config.\n'),
+          );
+          if (config._noTestCommand) {
+            console.warn(
+              chalk.yellow('  ⚠  No test command detected — harden mode auto-enabled.') +
+                chalk.dim(' Changes will be validated more conservatively.\n'),
+            );
           }
-          if (warnings.length > 0) console.log('');
-        } catch {
-          // Non-fatal — config file may not exist (already handled above)
+        }
+
+        // Warn about incomplete targets and invalid field values silently dropped by the parser
+        if (config._source === 'file') {
+          try {
+            const rawYml = readFileSync(configFilePath(cwd), 'utf-8');
+            const warnings = [
+              ...getConfigWarnings(rawYml),
+              ...findIncompleteTargets(rawYml),
+            ];
+            for (const w of warnings) {
+              console.warn(chalk.yellow(`  ⚠  ${w}`));
+            }
+            if (warnings.length > 0) console.log('');
+          } catch {
+            // Non-fatal
+          }
         }
 
         // Resolve target
-        const target = findTarget(config, options.target);
-        if (!target) {
-          if (config.targets.length === 0) {
-            console.error(
-              chalk.red(`  Target "${options.target}" not found — .ratchet.yml has no targets defined.`) +
-                '\n\n  Add a target to .ratchet.yml:\n' +
-                chalk.dim(
-                  '    targets:\n' +
-                  '      - name: my-target\n' +
-                  '        path: src/\n' +
-                  '        description: "Improve code quality in src/"',
-                ) + '\n',
-            );
-          } else {
-            const available = config.targets.map((t) => chalk.cyan(t.name)).join(', ');
-            console.error(
-              chalk.red(`  Target "${options.target}" not found in .ratchet.yml.`) +
-                `\n  Available: ${available}\n`,
-            );
+        let target;
+        if (options.target) {
+          target = findTarget(config, options.target);
+          if (!target) {
+            if (config.targets.length === 0) {
+              console.error(
+                chalk.red(`  Target "${options.target}" not found — .ratchet.yml has no targets defined.`) +
+                  '\n\n  Add a target to .ratchet.yml:\n' +
+                  chalk.dim(
+                    '    targets:\n' +
+                    '      - name: my-target\n' +
+                    '        path: src/\n' +
+                    '        description: "Improve code quality in src/"',
+                  ) + '\n',
+              );
+            } else {
+              const available = config.targets.map((t) => chalk.cyan(t.name)).join(', ');
+              console.error(
+                chalk.red(`  Target "${options.target}" not found in .ratchet.yml.`) +
+                  `\n  Available: ${available}\n`,
+              );
+            }
+            process.exit(1);
           }
-          process.exit(1);
+        } else {
+          // No --target flag: use first auto-detected target
+          target = config.targets[0];
+          if (!target) {
+            console.error(
+              chalk.red('  No target specified and none could be auto-detected.') +
+                '\n  Use ' + chalk.cyan('--target <name>') + ' or run ' +
+                chalk.cyan('ratchet init') + ' to create a .ratchet.yml.\n',
+            );
+            process.exit(1);
+          }
         }
 
         // Resolve click count
