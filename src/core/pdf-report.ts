@@ -1,30 +1,18 @@
-import PDFDocument from 'pdfkit';
+import puppeteer from 'puppeteer';
 import { mkdir, writeFile } from 'fs/promises';
 import { dirname, join } from 'path';
-import type { RatchetRun, Click } from '../types.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { Click } from '../types.js';
 
 export type { ReportOptions } from './report.js';
 import type { ReportOptions } from './report.js';
 
-// Color palette matching the landing page
-const BG = '#0a0a0b';
-const AMBER = '#f59e0b';
-const WHITE = '#ffffff';
-const GRAY = '#6b7280';
-const DARK_CARD = '#111113';
-const DARK_BAR = '#1a1a1e';
-const GREEN = '#22c55e';
-const RED = '#ef4444';
-
-// Category dot colors
 const CATEGORY_COLORS: Record<string, string> = {
-  'Testing': '#3b82f6',
+  Testing: '#3b82f6',
   'Error Handling': '#f97316',
-  'Types': '#a855f7',
-  'Security': '#ef4444',
-  'Performance': '#eab308',
-  'Readability': '#22c55e',
+  Types: '#a855f7',
+  Security: '#ef4444',
+  Performance: '#eab308',
+  Readability: '#22c55e',
 };
 
 function formatDuration(ms: number): string {
@@ -43,10 +31,18 @@ function plainEnglishSummary(click: Click): string {
   return raw.slice(0, 120).trimEnd() + (raw.length > 120 ? '...' : '');
 }
 
+function esc(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 /**
- * Generate a polished PDF Buffer from the report data.
+ * Generate a full standalone HTML page for the report.
  */
-export async function generatePDF(options: ReportOptions): Promise<Buffer> {
+export function generateReportHTML(options: ReportOptions): string {
   const { run, scoreBefore, scoreAfter } = options;
   const projectName = (options as any).projectName ?? run.target.name;
   const targetName = run.target.name;
@@ -58,363 +54,302 @@ export async function generatePDF(options: ReportOptions): Promise<Buffer> {
     ? run.finishedAt.getTime() - run.startedAt.getTime()
     : 0;
   const duration = formatDuration(durationMs);
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      size: 'A4',
-      margin: 0,
-      bufferPages: true,
-    });
+  // --- Hero score section ---
+  let heroHtml = '';
+  let categoryHtml = '';
 
-    const chunks: Buffer[] = [];
-    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
+  if (scoreBefore && scoreAfter) {
+    const beforePct = Math.round((scoreBefore.total / scoreBefore.maxTotal) * 100);
+    const afterPct = Math.round((scoreAfter.total / scoreAfter.maxTotal) * 100);
+    const delta = afterPct - beforePct;
+    const deltaStr = delta > 0 ? `+${delta}` : String(delta);
+    const deltaColor = delta > 0 ? '#22c55e' : delta < 0 ? '#ef4444' : '#6b7280';
 
-    const pageWidth = doc.page.width;
-    const pageHeight = doc.page.height;
-    const margin = 48;
-    const contentWidth = pageWidth - margin * 2;
+    heroHtml = `
+    <div class="section-title">Production Readiness Score</div>
+    <div class="hero-card">
+      <div class="hero-side">
+        <div class="hero-label">BEFORE</div>
+        <div class="hero-score before-score">${beforePct}</div>
+        <div class="progress-track">
+          <div class="progress-fill before-fill" style="width:${beforePct}%"></div>
+        </div>
+      </div>
+      <div class="hero-arrow">
+        <div class="arrow-text">→</div>
+        <div class="delta-badge" style="background:${deltaColor}">${esc(deltaStr)}</div>
+      </div>
+      <div class="hero-side">
+        <div class="hero-label">AFTER</div>
+        <div class="hero-score after-score">${afterPct}</div>
+        <div class="progress-track">
+          <div class="progress-fill after-fill" style="width:${afterPct}%"></div>
+        </div>
+      </div>
+    </div>`;
 
-    // --- Full background ---
-    doc.rect(0, 0, pageWidth, pageHeight).fill(BG);
-
-    let y = margin;
-
-    // --- Header ---
-    doc
-      .fontSize(28)
-      .fillColor(AMBER)
-      .font('Helvetica-Bold')
-      .text('Ratchet Report', margin, y);
-
-    y += 34;
-
-    // Date + project/target
-    const dateStr = new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    doc.fontSize(11).fillColor(GRAY).font('Helvetica').text(dateStr, margin, y);
-
-    y += 18;
-
-    doc
-      .fontSize(10)
-      .fillColor(GRAY)
-      .font('Helvetica')
-      .text(`Project: ${projectName} / Target: ${targetName}`, margin, y);
-
-    y += 20;
-
-    // Divider line
-    doc
-      .moveTo(margin, y)
-      .lineTo(pageWidth - margin, y)
-      .strokeColor(AMBER)
-      .lineWidth(1.5)
-      .stroke();
-
-    y += 18;
-
-    // --- Summary bar ---
-    doc
-      .rect(margin, y, contentWidth, 56)
-      .fill(DARK_CARD);
-
-    const summaryItems = [
-      { label: 'CLICKS', value: String(totalClicks) },
-      { label: 'LANDED', value: String(landed.length) },
-      { label: 'ROLLED BACK', value: String(rolledBack.length) },
-      { label: 'DURATION', value: duration },
-    ];
-
-    const colWidth = contentWidth / summaryItems.length;
-    for (let i = 0; i < summaryItems.length; i++) {
-      const item = summaryItems[i]!;
-      const cx = margin + i * colWidth + colWidth / 2;
-
-      doc
-        .fontSize(18)
-        .fillColor(i === 1 ? GREEN : i === 2 && rolledBack.length > 0 ? RED : AMBER)
-        .font('Helvetica-Bold')
-        .text(item.value, cx - 40, y + 8, { width: 80, align: 'center' });
-
-      doc
-        .fontSize(8)
-        .fillColor(GRAY)
-        .font('Helvetica')
-        .text(item.label, cx - 40, y + 36, { width: 80, align: 'center' });
-    }
-
-    y += 70;
-
-    // --- Production Readiness Score (hero — above what improved) ---
-    if (scoreBefore && scoreAfter) {
-      const beforePct = Math.round((scoreBefore.total / scoreBefore.maxTotal) * 100);
-      const afterPct = Math.round((scoreAfter.total / scoreAfter.maxTotal) * 100);
-      const delta = afterPct - beforePct;
-      const deltaStr = delta > 0 ? `+${delta}` : String(delta);
-      const deltaColor = delta > 0 ? GREEN : delta < 0 ? RED : GRAY;
-
-      doc
-        .fontSize(14)
-        .fillColor(AMBER)
-        .font('Helvetica-Bold')
-        .text('Production Readiness Score', margin, y);
-
-      y += 20;
-
-      const cardH = 100;
-      doc.rect(margin, y, contentWidth, cardH).fill(DARK_CARD);
-
-      const sectionW = contentWidth / 3;
-      const barW = sectionW - 28;
-      const barH = 10;
-      const barY = y + 82;
-
-      // Before side
-      const beforeX = margin + 14;
-      doc
-        .fontSize(9)
-        .fillColor(GRAY)
-        .font('Helvetica')
-        .text('BEFORE', beforeX, y + 8, { width: sectionW - 14 });
-
-      doc
-        .fontSize(48)
-        .fillColor(GRAY)
-        .font('Helvetica-Bold')
-        .text(String(beforePct), beforeX, y + 20, { width: sectionW - 14 });
-
-      doc.rect(beforeX, barY, barW, barH).fill(DARK_BAR);
-      const beforeFill = Math.max(3, (beforePct / 100) * barW);
-      doc.rect(beforeX, barY, beforeFill, barH).fill(GRAY);
-
-      // Center: arrow + delta
-      const arrowX = margin + sectionW;
-      doc
-        .fontSize(20)
-        .fillColor(AMBER)
-        .font('Helvetica-Bold')
-        .text('->', arrowX, y + 32, { width: sectionW, align: 'center' });
-
-      const badgeW = 48;
-      const badgeX = arrowX + (sectionW - badgeW) / 2;
-      const badgeY = y + 66;
-      doc.rect(badgeX, badgeY, badgeW, 18).fill(deltaColor);
-      doc
-        .fontSize(10)
-        .fillColor(WHITE)
-        .font('Helvetica-Bold')
-        .text(deltaStr, badgeX, badgeY + 3, { width: badgeW, align: 'center' });
-
-      // After side
-      const afterX = margin + sectionW * 2 + 14;
-      doc
-        .fontSize(9)
-        .fillColor(GRAY)
-        .font('Helvetica')
-        .text('AFTER', afterX, y + 8, { width: sectionW - 14 });
-
-      doc
-        .fontSize(48)
-        .fillColor(WHITE)
-        .font('Helvetica-Bold')
-        .text(String(afterPct), afterX, y + 20, { width: sectionW - 14 });
-
-      doc.rect(afterX, barY, barW, barH).fill(DARK_BAR);
-      const afterFill = Math.max(3, (afterPct / 100) * barW);
-      doc.rect(afterX, barY, afterFill, barH).fill(AMBER);
-
-      y += cardH + 16;
-
-      // --- Category breakdown ---
-      doc
-        .fontSize(14)
-        .fillColor(AMBER)
-        .font('Helvetica-Bold')
-        .text('Category Breakdown', margin, y);
-
-      y += 20;
-
-      // Column positions
-      const dotX = margin;
-      const nameX = margin + 18;
-      const nameW = 148;
-      const miniBarW = 100;
-      const miniBarH = 7;
-      const beforeBarX = margin + 172;
-      const beforeNumX = beforeBarX + miniBarW + 4;
-      const afterBarX = beforeNumX + 36;
-      const afterNumX = afterBarX + miniBarW + 4;
-      const changeX = afterNumX + 36;
-
-      // Table header
-      doc
-        .fontSize(8)
-        .fillColor(GRAY)
-        .font('Helvetica')
-        .text('BEFORE', beforeBarX, y, { width: miniBarW + 36, align: 'center' })
-        .text('AFTER', afterBarX, y, { width: miniBarW + 36, align: 'center' })
-        .text('CHG', changeX, y, { width: 30, align: 'right' });
-
-      y += 12;
-
-      for (let i = 0; i < scoreBefore.categories.length; i++) {
-        const before = scoreBefore.categories[i];
+    const rows = scoreBefore.categories
+      .map((before, i) => {
         const after = scoreAfter.categories[i];
-        if (!before || !after) continue;
-
+        if (!after) return '';
         const catDelta = after.score - before.score;
         const catDeltaStr = catDelta > 0 ? `+${catDelta}` : String(catDelta);
-        const catDeltaColor = catDelta > 0 ? GREEN : catDelta < 0 ? RED : GRAY;
-        const rowBg = i % 2 === 0 ? DARK_CARD : BG;
+        const catDeltaColor = catDelta > 0 ? '#22c55e' : catDelta < 0 ? '#ef4444' : '#6b7280';
+        const dotColor = CATEGORY_COLORS[after.name] ?? '#6b7280';
+        const bPct = before.max > 0 ? (before.score / before.max) * 100 : 0;
+        const aPct = after.max > 0 ? (after.score / after.max) * 100 : 0;
+        const rowBg = i % 2 === 0 ? '#111113' : '#0d0d0f';
+        return `
+        <div class="cat-row" style="background:${rowBg}">
+          <div class="cat-dot" style="background:${dotColor}"></div>
+          <div class="cat-name">${esc(after.name)}</div>
+          <div class="cat-bars">
+            <div class="mini-track"><div class="mini-fill before-mini" style="width:${Math.max(2, bPct)}%"></div></div>
+            <div class="cat-score gray">${before.score}/${before.max}</div>
+          </div>
+          <div class="cat-bars">
+            <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, aPct)}%"></div></div>
+            <div class="cat-score white">${after.score}/${after.max}</div>
+          </div>
+          <div class="cat-delta" style="color:${catDeltaColor}">${esc(catDeltaStr)}</div>
+        </div>`;
+      })
+      .join('');
 
-        doc.rect(margin, y - 2, contentWidth, 24).fill(rowBg);
+    categoryHtml = `
+    <div class="section-title" style="margin-top:16px">Category Breakdown</div>
+    <div class="cat-header">
+      <div style="flex:0 0 140px"></div>
+      <div class="cat-col-label">BEFORE</div>
+      <div class="cat-col-label">AFTER</div>
+      <div class="cat-col-label" style="text-align:right;min-width:36px">CHG</div>
+    </div>
+    <div class="cat-table">${rows}</div>`;
+  }
 
-        // Colored dot instead of emoji
-        const dotColor = CATEGORY_COLORS[after.name] ?? GRAY;
-        doc.circle(dotX + 6, y + 8, 5).fill(dotColor);
+  // --- Bullet lists ---
+  const improvedItems =
+    landed.length === 0
+      ? `<div class="bullet-item"><span class="bullet-dot" style="background:#6b7280"></span><span class="bullet-text" style="color:#6b7280">Nothing landed this run.</span></div>`
+      : landed
+          .map(
+            (click) =>
+              `<div class="bullet-item"><span class="bullet-dot" style="background:#22c55e"></span><span class="bullet-text">Click ${click.number} — ${esc(plainEnglishSummary(click))}</span></div>`,
+          )
+          .join('');
 
-        doc
-          .fontSize(10)
-          .fillColor(WHITE)
-          .font('Helvetica')
-          .text(after.name, nameX, y + 3, { width: nameW });
+  const rolledItems =
+    rolledBack.length === 0
+      ? `<div class="bullet-item"><span class="bullet-dot" style="background:#22c55e"></span><span class="bullet-text" style="color:#22c55e">Nothing rolled back — clean run!</span></div>`
+      : rolledBack
+          .map((click) => {
+            const reason = click.analysis
+              ? (click.analysis.split(/[.!\n]/)[0]?.trim() ?? 'Tests failed')
+              : 'Tests failed';
+            return `<div class="bullet-item"><span class="bullet-dot" style="background:#ef4444"></span><span class="bullet-text">${esc(`Click ${click.number} — ${reason.slice(0, 120)}`)}</span></div>`;
+          })
+          .join('');
 
-        // Before mini bar
-        const rowBarY = y + 5;
-        doc.rect(beforeBarX, rowBarY, miniBarW, miniBarH).fill(DARK_BAR);
-        const beforeBarFill = before.max > 0
-          ? Math.max(2, (before.score / before.max) * miniBarW)
-          : 2;
-        doc.rect(beforeBarX, rowBarY, beforeBarFill, miniBarH).fill(GRAY);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 210mm;
+    min-height: 297mm;
+    background: #0a0a0b;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 297mm;
+    padding: 40px 48px 32px;
+  }
+  .main { flex: 1; }
 
-        doc
-          .fontSize(9)
-          .fillColor(GRAY)
-          .font('Helvetica')
-          .text(`${before.score}/${before.max}`, beforeNumX, y + 3, { width: 32, align: 'right' });
+  /* Header */
+  .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .gear { font-size: 24px; line-height: 1; }
+  .logo-text { font-size: 28px; font-weight: 800; color: #f59e0b; letter-spacing: -0.5px; }
+  .header-meta { font-size: 11px; color: #6b7280; line-height: 1.8; }
+  .header-meta strong { color: #d1d5db; font-weight: 600; }
 
-        // After mini bar
-        doc.rect(afterBarX, rowBarY, miniBarW, miniBarH).fill(DARK_BAR);
-        const afterBarFill = after.max > 0
-          ? Math.max(2, (after.score / after.max) * miniBarW)
-          : 2;
-        doc.rect(afterBarX, rowBarY, afterBarFill, miniBarH).fill(GREEN);
+  /* Divider */
+  .divider { height: 1.5px; background: linear-gradient(90deg, #f59e0b 0%, #f59e0b80 100%); margin: 14px 0 18px; }
 
-        doc
-          .fillColor(WHITE)
-          .text(`${after.score}/${after.max}`, afterNumX, y + 3, { width: 32, align: 'right' });
+  /* Summary bar */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: #111113;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .summary-item { text-align: center; padding: 14px 8px; }
+  .summary-item + .summary-item { border-left: 1px solid #1e1e24; }
+  .summary-value { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 5px; }
+  .summary-label { font-size: 9px; font-weight: 600; color: #6b7280; letter-spacing: 0.8px; text-transform: uppercase; }
 
-        doc
-          .fillColor(catDeltaColor)
-          .font('Helvetica-Bold')
-          .text(catDeltaStr, changeX, y + 3, { width: 30, align: 'right' });
+  /* Section title */
+  .section-title {
+    font-size: 11px; font-weight: 700; color: #f59e0b;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-top: 20px; margin-bottom: 10px;
+  }
 
-        y += 24;
-      }
+  /* Hero card */
+  .hero-card {
+    background: #111113;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    padding: 18px 28px;
+    gap: 0;
+  }
+  .hero-side { flex: 1; }
+  .hero-label { font-size: 9px; font-weight: 600; color: #6b7280; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 2px; }
+  .hero-score { font-size: 68px; font-weight: 800; line-height: 1; margin-bottom: 10px; }
+  .before-score { color: #6b7280; }
+  .after-score { color: #ffffff; }
+  .progress-track { height: 8px; background: #1a1a1e; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; }
+  .before-fill { background: #6b7280; }
+  .after-fill { background: #f59e0b; }
+  .hero-arrow { flex: 0 0 90px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .arrow-text { font-size: 30px; color: #f59e0b; font-weight: 800; }
+  .delta-badge { font-size: 14px; font-weight: 700; color: #fff; padding: 4px 14px; border-radius: 20px; }
 
-      y += 14;
-    }
+  /* Category table */
+  .cat-header { display: flex; align-items: center; padding: 0 12px; margin-bottom: 3px; gap: 8px; }
+  .cat-col-label { font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; text-align: center; }
+  .cat-table { border-radius: 8px; overflow: hidden; }
+  .cat-row { display: flex; align-items: center; padding: 6px 12px; gap: 8px; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .cat-name { font-size: 10px; color: #fff; flex: 0 0 124px; }
+  .cat-bars { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .mini-track { flex: 1; height: 6px; background: #1a1a1e; border-radius: 3px; overflow: hidden; }
+  .mini-fill { height: 100%; border-radius: 3px; }
+  .before-mini { background: #6b7280; }
+  .after-mini { background: #f59e0b; }
+  .cat-score { font-size: 9px; flex: 0 0 32px; text-align: right; }
+  .gray { color: #6b7280; }
+  .white { color: #fff; }
+  .cat-delta { font-size: 10px; font-weight: 700; flex: 0 0 30px; text-align: right; }
 
-    // --- What improved ---
-    doc
-      .fontSize(14)
-      .fillColor(AMBER)
-      .font('Helvetica-Bold')
-      .text('What improved', margin, y);
+  /* Bullets */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 4px; }
+  .bullet-list { display: flex; flex-direction: column; gap: 5px; }
+  .bullet-item { display: flex; align-items: flex-start; gap: 8px; }
+  .bullet-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .bullet-text { font-size: 9.5px; color: #e5e7eb; line-height: 1.5; }
 
-    y += 20;
+  /* Footer */
+  .footer { padding-top: 16px; border-top: 1px solid #1e1e24; margin-top: 20px; }
+  .footer-text { font-size: 9px; color: #4b5563; text-align: center; }
+  .footer-accent { color: #f59e0b; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="main">
 
-    if (landed.length === 0) {
-      doc
-        .fontSize(11)
-        .fillColor(GRAY)
-        .font('Helvetica')
-        .text('Nothing landed this run.', margin + 12, y);
-      y += 18;
-    } else {
-      for (const click of landed) {
-        const summary = plainEnglishSummary(click);
-        const bulletText = `Click ${click.number}  -  ${summary}`;
+    <!-- Header -->
+    <div class="logo-row">
+      <span class="gear">⚙️</span>
+      <span class="logo-text">Ratchet Report</span>
+    </div>
+    <div class="header-meta">
+      <div>${esc(dateStr)}</div>
+      <div>Project: <strong>${esc(projectName)}</strong> &nbsp;·&nbsp; Target: <strong>${esc(targetName)}</strong></div>
+    </div>
 
-        doc
-          .circle(margin + 6, y + 5, 3)
-          .fill(AMBER);
+    <div class="divider"></div>
 
-        doc
-          .fontSize(10)
-          .fillColor(WHITE)
-          .font('Helvetica')
-          .text(bulletText, margin + 18, y, { width: contentWidth - 18 });
+    <!-- Summary bar -->
+    <div class="summary-bar">
+      <div class="summary-item">
+        <div class="summary-value" style="color:#f59e0b">${totalClicks}</div>
+        <div class="summary-label">Clicks</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:#22c55e">${landed.length}</div>
+        <div class="summary-label">Landed</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:${rolledBack.length > 0 ? '#ef4444' : '#f59e0b'}">${rolledBack.length}</div>
+        <div class="summary-label">Rolled Back</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:#f59e0b">${esc(duration)}</div>
+        <div class="summary-label">Duration</div>
+      </div>
+    </div>
 
-        y += doc.heightOfString(bulletText, { width: contentWidth - 18 }) + 6;
-      }
-    }
+    ${heroHtml}
+    ${categoryHtml}
 
-    y += 10;
+    <!-- What improved + What was rolled back -->
+    <div class="two-col">
+      <div>
+        <div class="section-title" style="color:#22c55e">✓ What improved</div>
+        <div class="bullet-list">${improvedItems}</div>
+      </div>
+      <div>
+        <div class="section-title" style="color:${rolledBack.length > 0 ? '#ef4444' : '#6b7280'}">✗ What was rolled back</div>
+        <div class="bullet-list">${rolledItems}</div>
+      </div>
+    </div>
 
-    // --- What was rolled back ---
-    doc
-      .fontSize(14)
-      .fillColor(AMBER)
-      .font('Helvetica-Bold')
-      .text('What was rolled back', margin, y);
+  </div>
 
-    y += 20;
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-text">
+      Generated by <span class="footer-accent">Ratchet</span>
+      &nbsp;—&nbsp;
+      Scan your project free at <span class="footer-accent">ratchetcli.com</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+}
 
-    if (rolledBack.length === 0) {
-      doc
-        .fontSize(11)
-        .fillColor(GREEN)
-        .font('Helvetica')
-        .text('Nothing was rolled back - clean run!', margin + 12, y);
-      y += 18;
-    } else {
-      for (const click of rolledBack) {
-        const reason = click.analysis
-          ? (click.analysis.split(/[.!\n]/)[0]?.trim() ?? 'Tests failed')
-          : 'Tests failed';
-        const bulletText = `Click ${click.number}  -  ${reason.slice(0, 120)}`;
-
-        doc
-          .circle(margin + 6, y + 5, 3)
-          .fill(RED);
-
-        doc
-          .fontSize(10)
-          .fillColor(WHITE)
-          .font('Helvetica')
-          .text(bulletText, margin + 18, y, { width: contentWidth - 18 });
-
-        y += doc.heightOfString(bulletText, { width: contentWidth - 18 }) + 6;
-      }
-    }
-
-    // --- Footer ---
-    const footerY = pageHeight - margin - 20;
-
-    doc
-      .moveTo(margin, footerY - 12)
-      .lineTo(pageWidth - margin, footerY - 12)
-      .strokeColor(GRAY)
-      .lineWidth(0.5)
-      .stroke();
-
-    doc
-      .fontSize(9)
-      .fillColor(GRAY)
-      .font('Helvetica')
-      .text('Generated by Ratchet - Scan your project free at ratchetcli.com', margin, footerY, {
-        width: contentWidth,
-        align: 'center',
-      });
-
-    doc.end();
+/**
+ * Generate a PDF Buffer by rendering the HTML report with Puppeteer.
+ */
+export async function generatePDF(options: ReportOptions): Promise<Buffer> {
+  const html = generateReportHTML(options);
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'load' });
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '0', right: '0', bottom: '0', left: '0' },
+    });
+    return Buffer.from(pdf);
+  } finally {
+    await browser.close();
+  }
 }
 
 /**
