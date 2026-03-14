@@ -63,8 +63,14 @@ export function parseConfig(raw: string): RatchetConfig {
 
   const agent = validateAgent(data.agent);
 
+  const rawClicks = data.defaults?.clicks;
+  const clicks =
+    rawClicks !== undefined && (Number.isInteger(rawClicks) && rawClicks >= 1)
+      ? rawClicks
+      : DEFAULT_CONFIG.defaults.clicks;
+
   const defaults = {
-    clicks: data.defaults?.clicks ?? DEFAULT_CONFIG.defaults.clicks,
+    clicks,
     testCommand: data.defaults?.test_command ?? DEFAULT_CONFIG.defaults.testCommand,
     autoCommit: data.defaults?.auto_commit ?? DEFAULT_CONFIG.defaults.autoCommit,
   };

@@ -74,6 +74,26 @@ describe('parseConfig', () => {
     expect(config.agent).toBe('shell');
   });
 
+  it('falls back to default clicks when clicks is 0', () => {
+    const config = parseConfig('defaults:\n  clicks: 0');
+    expect(config.defaults.clicks).toBe(DEFAULT_CONFIG.defaults.clicks);
+  });
+
+  it('falls back to default clicks when clicks is negative', () => {
+    const config = parseConfig('defaults:\n  clicks: -5');
+    expect(config.defaults.clicks).toBe(DEFAULT_CONFIG.defaults.clicks);
+  });
+
+  it('falls back to default clicks when clicks is a float', () => {
+    const config = parseConfig('defaults:\n  clicks: 3.5');
+    expect(config.defaults.clicks).toBe(DEFAULT_CONFIG.defaults.clicks);
+  });
+
+  it('accepts a valid positive integer for clicks', () => {
+    const config = parseConfig('defaults:\n  clicks: 10');
+    expect(config.defaults.clicks).toBe(10);
+  });
+
   it('accepts all valid agent types', () => {
     for (const agent of ['claude-code', 'codex', 'shell'] as const) {
       const config = parseConfig(`agent: ${agent}`);
