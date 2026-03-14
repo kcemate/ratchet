@@ -70,10 +70,11 @@ describe('loadRunState', () => {
     expect(result!.status).toBe('completed');
   });
 
-  it('returns null for malformed JSON', async () => {
+  it('throws a friendly error for corrupted state file', async () => {
     await writeFile(join(tmp, STATE_FILE), '{ invalid json }', 'utf-8');
-    const result = await loadRunState(tmp);
-    expect(result).toBeNull();
+    await expect(loadRunState(tmp)).rejects.toThrow(
+      '.ratchet-state.json exists but could not be parsed',
+    );
   });
 
   it('preserves click data correctly', async () => {

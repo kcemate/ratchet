@@ -8,11 +8,20 @@ import type { RatchetRun } from '../types.js';
 export const STATE_FILE = '.ratchet-state.json';
 
 export async function loadRunState(cwd: string): Promise<RatchetRun | null> {
+  let raw: string;
   try {
-    const raw = await readFile(join(cwd, STATE_FILE), 'utf-8');
+    raw = await readFile(join(cwd, STATE_FILE), 'utf-8');
+  } catch {
+    return null; // File doesn't exist — normal for a fresh repo
+  }
+
+  try {
     return JSON.parse(raw) as RatchetRun;
   } catch {
-    return null;
+    throw new Error(
+      `.ratchet-state.json exists but could not be parsed — the file may be corrupted.\n` +
+        `  Delete it to reset: rm .ratchet-state.json`,
+    );
   }
 }
 
