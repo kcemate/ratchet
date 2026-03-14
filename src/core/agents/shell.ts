@@ -23,7 +23,12 @@ export class ShellAgent implements Agent {
 
   constructor(config: ShellAgentConfig = {}) {
     this.command = config.command ?? 'claude';
-    this.extraArgs = config.extraArgs ?? ['--print'];
+    const baseArgs = config.extraArgs ?? ['--print', '--permission-mode', 'bypassPermissions'];
+    // Wire up --model if provided and not already in extraArgs
+    if (config.model && !baseArgs.some((a) => a.startsWith('--model'))) {
+      baseArgs.push('--model', config.model);
+    }
+    this.extraArgs = baseArgs;
     this.timeout = config.timeout ?? 300_000; // 5 minutes
   }
 
