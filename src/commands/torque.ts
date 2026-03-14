@@ -10,6 +10,7 @@ import { runEngine } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
 import { isRepo } from '../core/git.js';
+import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
 
 const STATE_FILE = '.ratchet-state.json';
@@ -174,6 +175,14 @@ export function torqueCommand(): Command {
         process.once('SIGINT', sigintHandler);
         process.once('SIGTERM', sigtermHandler);
 
+        // Acquire lock — prevent concurrent ratchet runs on the same repo
+        try {
+          acquireLock(cwd);
+        } catch (err) {
+          console.error(chalk.red('\n  ' + String(err)) + '\n');
+          process.exit(1);
+        }
+
         let run: RatchetRun;
         try {
           run = await runEngine({
@@ -256,6 +265,7 @@ export function torqueCommand(): Command {
         } finally {
           process.removeListener('SIGINT', sigintHandler);
           process.removeListener('SIGTERM', sigtermHandler);
+          releaseLock(cwd);
         }
 
         // Finalize log
