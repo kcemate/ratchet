@@ -8,7 +8,9 @@ Ratchet is a metered CLI tool that runs autonomous code improvement loops. Custo
 
 **One sentence:** Point it at your codebase, get a PR with tested improvements, pay $1 per landed commit.
 
-**For vibe coders:** "You built it with AI. Now make it real." — `npx ratchet`, no config, $19 to harden your whole app.
+**For vibe coders:** "You built it with AI. Now make it real." — `npx ratchet`, no config, $20/month.
+
+**Core differentiator:** Production Readiness Score. Not security scanning (Anthropic owns that). We score and improve overall production readiness — types, error handling, tests, performance, readability, and security as one of six categories.
 
 ---
 
@@ -294,5 +296,8 @@ This architecture was produced by running the Ratchet methodology on the origina
 | 19 | ✓ landed | Distribution: demo videos, shareable reports, community seeding |
 | 20 | ✗ rolled back | Name change — "Ratchet" is fine. Brand > metaphor. |
 | 21 | ✓ landed | Verified full state post-run 2 |
+| 22 | ✓ landed | Free scan + 3-click trial for vibe coders (no BYOK needed) |
+| 23 | ✓ landed | Pricing locked: $20/month, one tier, 20 clicks, rollover 40. Margins 75%. |
+| 24 | ✓ landed | Competitive pivot: Production Readiness Score, not security. Anthropic owns security. |
 
-_16 landed · 3 rolled back · 21 total clicks_
+_19 landed · 3 rolled back · 24 total clicks_
