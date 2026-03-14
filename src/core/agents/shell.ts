@@ -20,6 +20,8 @@ export class ShellAgent implements Agent {
   private command: string;
   private extraArgs: string[];
   private timeout: number;
+  /** Tracks whether current click is issue-driven (single-shot) */
+  private _issueDrivenClick = false;
 
   constructor(config: ShellAgentConfig = {}) {
     this.command = config.command ?? 'claude';
@@ -33,10 +35,12 @@ export class ShellAgent implements Agent {
   }
 
   async analyze(context: string, hardenPhase?: HardenPhase, issues?: IssueTask[]): Promise<string> {
-    // Shell agent collapses analyze+propose into a single call to cut latency
+    // Shell agent collapses analyze+propose+build into a single call for issue-driven clicks
     if (issues && issues.length > 0) {
+      this._issueDrivenClick = true;
       return buildIssuePlanPrompt(context, issues);
     }
+    this._issueDrivenClick = false;
     let prompt: string;
     if (hardenPhase === 'harden:tests') {
       prompt = buildHardenAnalyzePrompt(context);
@@ -61,8 +65,9 @@ export class ShellAgent implements Agent {
   }
 
   async build(proposal: string, cwd: string): Promise<BuildResult> {
-    const prompt = buildBuildPrompt(proposal);
-    const start = Date.now();
+    // Issue-driven clicks: the proposal IS the single-shot prompt — send it directly
+    // without wrapping in buildBuildPrompt (which would double-wrap instructions)
+    const prompt = this._issueDrivenClick ? proposal : buildBuildPrompt(proposal);
 
     try {
       const output = await this.runPromptInDir(prompt, cwd);
@@ -190,7 +195,9 @@ function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
 
 /**
  * Single-shot plan prompt: skips the analyze→propose round-trips.
- * Returns a self-contained build instruction ready for the build step.
+ * Returns a self-contained instruction that is sent DIRECTLY to the agent
+ * (not wrapped in buildBuildPrompt). The agent reads files, makes changes,
+ * and reports what it modified — all in one call.
  */
 function buildIssuePlanPrompt(context: string, issues: IssueTask[]): string {
   const issueList = formatIssuesForPrompt(issues);
@@ -198,15 +205,17 @@ function buildIssuePlanPrompt(context: string, issues: IssueTask[]): string {
   const pathMatch = context.match(/^Path:\s*(.+)$/m);
   const targetPath = pathMatch ? pathMatch[1].trim() : '';
   return (
-    `Fix the following issue in ${targetPath}:\n\n` +
-    `${issueList}\n\n` +
-    `RULES:\n` +
-    `- Modify at most 2 files\n` +
-    `- Surgical change only — do NOT refactor unrelated code\n` +
-    `- All existing tests MUST still pass\n` +
-    `- Do NOT add new dependencies or change public function signatures\n` +
-    `- After making the change, output each modified file as:\n` +
-    `  MODIFIED: <filepath>`
+    `You are a code improvement assistant. Fix the top issue in ${targetPath}.\n\n` +
+    `ISSUES FOUND:\n${issueList}\n\n` +
+    `INSTRUCTIONS:\n` +
+    `1. Read the target file(s) to understand the code\n` +
+    `2. Fix the highest-severity issue first\n` +
+    `3. Make surgical, minimal changes — at most 2-3 files\n` +
+    `4. Do NOT add new dependencies or change public function signatures\n` +
+    `5. Do NOT refactor unrelated code\n` +
+    `6. All existing tests MUST still pass\n\n` +
+    `After making changes, output each modified file on its own line:\n` +
+    `MODIFIED: <filepath>`
   );
 }
 
