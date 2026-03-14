@@ -76,7 +76,7 @@ function readContents(files: string[]): Map<string, string> {
 
 // --- Scorers ---
 
-function scoreTests(files: string[], cwd: string): CategoryResult {
+function scoreTests(files: string[], contents: Map<string, string>, cwd: string): CategoryResult {
   const testFiles = files.filter(isTestFile);
   const sourceFiles = files.filter(f => !isTestFile(f));
 
@@ -84,7 +84,7 @@ function scoreTests(files: string[], cwd: string): CategoryResult {
   const notes: string[] = [];
 
   if (testFiles.length > 0) {
-    score += 6;
+    score += 3;
     notes.push(`${testFiles.length} test file${testFiles.length !== 1 ? 's' : ''}`);
   } else {
     notes.push('no test files');
@@ -103,15 +103,36 @@ function scoreTests(files: string[], cwd: string): CategoryResult {
     } catch { /* ignore */ }
   }
 
-  // Test-to-source ratio
+  // Test case count — weight 100+ tests heavily
+  let testCaseCount = 0;
+  for (const file of testFiles) {
+    const content = contents.get(file) ?? '';
+    testCaseCount += (content.match(/\b(?:it|test)\s*[.(]/g) ?? []).length;
+  }
+  if (testCaseCount >= 100) {
+    score += 5;
+    notes.push(`${testCaseCount} test cases`);
+  } else if (testCaseCount >= 50) {
+    score += 4;
+    notes.push(`${testCaseCount} test cases`);
+  } else if (testCaseCount >= 10) {
+    score += 2;
+    notes.push(`${testCaseCount} test cases`);
+  } else if (testCaseCount > 0) {
+    score += 1;
+    notes.push(`${testCaseCount} test case${testCaseCount !== 1 ? 's' : ''}`);
+  }
+
+  // Test-to-source-file ratio
   const ratio = sourceFiles.length > 0 ? testFiles.length / sourceFiles.length : 0;
   if (ratio >= 0.3) {
-    score += 8;
+    score += 6;
     notes.push(`strong ratio (${Math.round(ratio * 100)}%)`);
   } else if (ratio >= 0.15) {
     score += 4;
     notes.push(`ok ratio (${Math.round(ratio * 100)}%)`);
   } else if (ratio > 0) {
+    score += 2;
     notes.push(`low ratio (${Math.round(ratio * 100)}%)`);
   }
 
@@ -193,8 +214,8 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
     } catch { /* ignore */ }
   }
 
-  // `any` density in source (not test) TS files
-  const srcTsFiles = tsFiles.filter(f => !isTestFile(f));
+  // `any` density in source (not test, not .d.ts) TS files
+  const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
   let anyCount = 0;
   let totalLines = 0;
 
@@ -204,18 +225,22 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
     totalLines += content.split('\n').length;
   }
 
+  // Normalize by codebase size — larger codebases tolerate more any
   const anyPer1k = totalLines > 0 ? (anyCount / totalLines) * 1000 : 0;
   if (anyCount === 0) {
     score += 9;
     notes.push('zero any types');
-  } else if (anyPer1k < 2) {
-    score += 6;
+  } else if (anyPer1k < 3) {
+    score += 7;
     notes.push(`${anyCount} any type${anyCount !== 1 ? 's' : ''}`);
-  } else if (anyPer1k < 5) {
-    score += 3;
+  } else if (anyPer1k < 8) {
+    score += 4;
     notes.push(`${anyCount} any types (moderate)`);
-  } else {
+  } else if (anyPer1k < 15) {
+    score += 2;
     notes.push(`${anyCount} any types (high)`);
+  } else {
+    notes.push(`${anyCount} any types (very high)`);
   }
 
   return { name: 'Types', emoji: '📝', score: Math.min(score, 17), max: 17, summary: notes.join(', ') };
@@ -273,21 +298,29 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
   return { name: 'Security', emoji: '🔒', score: Math.min(score, 16), max: 16, summary: notes.join(', ') };
 }
 
+// Patterns that indicate a real DB query or API call worth flagging in a loop
+const LOOP_DB_API_PATTERN = /\.(find|findOne|findAll|findBy|query|save|update|insert|select|exec|execute|search)\s*[(<]|\.(get|post|put|delete|patch|request)\s*\(|\bfetch\s*\(|\baxios\s*[.(]/;
+
 function scorePerformance(files: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
+  // Exclude scripts/ directories from console.log check — startup messages are intentional
+  const appFiles = srcFiles.filter(f => {
+    const normalized = f.replace(/\\/g, '/');
+    return !normalized.includes('/scripts/');
+  });
   let score = 0;
   const notes: string[] = [];
 
   let awaitInLoopCount = 0;
   let consoleLogCount = 0;
 
-  for (const file of srcFiles) {
+  for (const file of appFiles) {
     const content = contents.get(file) ?? '';
     const lines = content.split('\n');
 
     consoleLogCount += (content.match(/\bconsole\.log\s*\(/g) ?? []).length;
 
-    // Detect await inside for/while loops via line scanning
+    // Detect await inside for/while loops — only flag DB/API patterns (not simple sequential awaits)
     let loopDepth = 0;
     let braceStack: number[] = [];
 
@@ -308,7 +341,8 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
             loopDepth = Math.max(0, loopDepth - 1);
           }
         }
-        if (/\bawait\s+/.test(stripped)) {
+        // Only flag if it looks like a DB query or HTTP/API call — not every sequential await is N+1
+        if (/\bawait\s+/.test(stripped) && LOOP_DB_API_PATTERN.test(stripped)) {
           awaitInLoopCount++;
         }
       }
@@ -316,21 +350,22 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
   }
 
   if (awaitInLoopCount === 0) {
-    score += 8;
+    score += 6;
     notes.push('no await-in-loop');
   } else {
     score += 3;
     notes.push(`${awaitInLoopCount} await-in-loop pattern${awaitInLoopCount !== 1 ? 's' : ''}`);
   }
 
+  // Console.log: only heavy-penalize if truly excessive (>20) in app src
   if (consoleLogCount === 0) {
-    score += 8;
+    score += 10;
     notes.push('no console.log in src');
-  } else if (consoleLogCount <= 5) {
-    score += 5;
+  } else if (consoleLogCount <= 20) {
+    score += 7;
     notes.push(`${consoleLogCount} console.log`);
   } else {
-    score += 2;
+    score += 3;
     notes.push(`${consoleLogCount} console.log calls`);
   }
 
@@ -383,10 +418,13 @@ function scoreReadability(files: string[], contents: Map<string, string>): Categ
   }
 
   const avgLen = fnCount > 0 ? totalFnLength / fnCount : 0;
-  if (avgLen === 0 || avgLen <= 20) {
+  if (avgLen === 0 || avgLen <= 30) {
     score += 6;
     notes.push('short functions');
-  } else if (avgLen <= 40) {
+  } else if (avgLen <= 50) {
+    score += 5;
+    notes.push(`avg ${Math.round(avgLen)}-line functions`);
+  } else if (avgLen <= 80) {
     score += 4;
     notes.push(`avg ${Math.round(avgLen)}-line functions`);
   } else {
@@ -434,7 +472,7 @@ export async function runScan(cwd: string): Promise<ScanResult> {
   const contents = readContents(files);
 
   const categories: CategoryResult[] = [
-    scoreTests(files, cwd),
+    scoreTests(files, contents, cwd),
     scoreErrorHandling(files, contents),
     scoreTypes(files, cwd, contents),
     scoreSecurity(files, contents),
