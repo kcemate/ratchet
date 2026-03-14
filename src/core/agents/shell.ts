@@ -33,11 +33,13 @@ export class ShellAgent implements Agent {
   }
 
   async analyze(context: string, hardenPhase?: HardenPhase, issues?: IssueTask[]): Promise<string> {
+    // Shell agent collapses analyze+propose into a single call to cut latency
+    if (issues && issues.length > 0) {
+      return buildIssuePlanPrompt(context, issues);
+    }
     let prompt: string;
     if (hardenPhase === 'harden:tests') {
       prompt = buildHardenAnalyzePrompt(context);
-    } else if (issues && issues.length > 0) {
-      prompt = buildIssueAnalyzePrompt(context, issues);
     } else {
       prompt = buildAnalyzePrompt(context);
     }
@@ -45,11 +47,13 @@ export class ShellAgent implements Agent {
   }
 
   async propose(analysis: string, target: Target, hardenPhase?: HardenPhase, issues?: IssueTask[]): Promise<string> {
+    // When we already have a plan (issues path), analysis IS the proposal — skip the extra call
+    if (issues && issues.length > 0) {
+      return analysis; // pass straight through to build
+    }
     let prompt: string;
     if (hardenPhase === 'harden:tests') {
       prompt = buildHardenProposePrompt(analysis, target);
-    } else if (issues && issues.length > 0) {
-      prompt = buildIssueProposePrompt(analysis, target, issues);
     } else {
       prompt = buildProposePrompt(analysis, target);
     }
@@ -181,6 +185,28 @@ function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
     `Focus on the highest-severity issues first. Pick at most 2-3 specific files to fix in this pass. ` +
     `Do NOT try to fix everything — make a small, safe change that will pass all existing tests. ` +
     `Be specific about which files you will touch and what exact changes you will make.`
+  );
+}
+
+/**
+ * Single-shot plan prompt: skips the analyze→propose round-trips.
+ * Returns a self-contained build instruction ready for the build step.
+ */
+function buildIssuePlanPrompt(context: string, issues: IssueTask[]): string {
+  const issueList = formatIssuesForPrompt(issues);
+  // Parse path from context (format: "Path: ./server/routes/groups.ts")
+  const pathMatch = context.match(/^Path:\s*(.+)$/m);
+  const targetPath = pathMatch ? pathMatch[1].trim() : '';
+  return (
+    `Fix the following issue in ${targetPath}:\n\n` +
+    `${issueList}\n\n` +
+    `RULES:\n` +
+    `- Modify at most 2 files\n` +
+    `- Surgical change only — do NOT refactor unrelated code\n` +
+    `- All existing tests MUST still pass\n` +
+    `- Do NOT add new dependencies or change public function signatures\n` +
+    `- After making the change, output each modified file as:\n` +
+    `  MODIFIED: <filepath>`
   );
 }
 
