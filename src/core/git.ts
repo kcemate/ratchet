@@ -92,7 +92,21 @@ export async function addAll(cwd: string): Promise<void> {
 
 export async function commit(message: string, cwd: string): Promise<string> {
   await git(['add', '-A'], cwd);
-  await git(['commit', '-m', message], cwd);
+  try {
+    await git(['commit', '-m', message], cwd);
+  } catch (err: unknown) {
+    const error = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string };
+    const output = [error.stdout, error.stderr, (error as Error).message]
+      .filter(Boolean)
+      .join('\n');
+    if (output.includes('nothing to commit') || output.includes('nothing added to commit')) {
+      throw new Error(
+        'Nothing to commit — the agent reported success but made no file changes.\n' +
+          '  The agent may have returned a no-op or the proposal was too vague to act on.',
+      );
+    }
+    throw err;
+  }
   return git(['rev-parse', 'HEAD'], cwd);
 }
 

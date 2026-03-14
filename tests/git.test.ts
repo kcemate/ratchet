@@ -111,6 +111,13 @@ describe('git operations', () => {
       const last = await getLastCommitHash(dir);
       expect(hash).toBe(last);
     });
+
+    it('throws friendly error when nothing to commit', async () => {
+      // Tree is clean — nothing changed since last commit
+      await expect(commit('feat: empty', dir)).rejects.toThrow(
+        'Nothing to commit — the agent reported success but made no file changes.',
+      );
+    });
   });
 
   describe('getModifiedFiles', () => {
