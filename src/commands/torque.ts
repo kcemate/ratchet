@@ -101,7 +101,12 @@ export function torqueCommand(): Command {
           : config.defaults.clicks;
 
         if (isNaN(clickCount) || clickCount < 1) {
-          console.error(chalk.red('--clicks must be a positive integer'));
+          const provided = options.clicks ?? '';
+          console.error(
+            chalk.red(`  Invalid --clicks value: ${chalk.bold(String(provided))}`) +
+              '\n  Must be a positive integer (e.g. ' +
+              chalk.cyan('--clicks 5') + ').\n',
+          );
           process.exit(1);
         }
 
