@@ -70,12 +70,6 @@ export function generateReportHTML(options: ReportOptions): string {
     const delta = afterPct - beforePct;
     const deltaStr = delta > 0 ? `+${delta}` : String(delta);
 
-    // SVG arc gauge helpers
-    const r = 38;
-    const circ = +(2 * Math.PI * r).toFixed(2);
-    const beforeOffset = +((1 - beforePct / 100) * circ).toFixed(2);
-    const afterOffset = +((1 - afterPct / 100) * circ).toFixed(2);
-
     const deltaBg =
       delta > 0
         ? 'linear-gradient(135deg,#16a34a,#22c55e)'
@@ -90,57 +84,30 @@ export function generateReportHTML(options: ReportOptions): string {
           : 'none';
 
     heroHtml = `
-    <div class="section-title">Production Readiness Score</div>
     <div class="hero-card">
-      <div class="hero-side">
-        <div class="hero-label">BEFORE</div>
-        <div class="gauge-wrap">
-          <svg viewBox="0 0 100 100" width="120" height="120" style="display:block">
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e1e28" stroke-width="8"/>
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#374151" stroke-width="8"
-              stroke-dasharray="${circ}" stroke-dashoffset="${beforeOffset}"
-              stroke-linecap="round" transform="rotate(-90 50 50)"/>
-          </svg>
-          <div class="gauge-overlay">
-            <div class="gauge-number before-number">${beforePct}</div>
-            <div class="gauge-unit">/ 100</div>
-          </div>
+      <div class="hero-score-label">PRODUCTION READINESS SCORE</div>
+      <div class="hero-score-row">
+        <div class="hero-score-col">
+          <div class="hero-col-label">BEFORE</div>
+          <div class="hero-num before-num">${beforePct}</div>
+        </div>
+        <div class="hero-arrow-col">→</div>
+        <div class="hero-score-col">
+          <div class="hero-col-label">AFTER</div>
+          <div class="hero-num after-num">${afterPct}</div>
         </div>
       </div>
-
-      <div class="hero-arrow">
+      <div class="hero-delta-row">
         <div class="delta-badge" style="background:${deltaBg};box-shadow:${deltaGlow}">${esc(deltaStr)}</div>
-        <svg width="36" height="12" viewBox="0 0 44 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="arrowGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.2"/>
-              <stop offset="100%" stop-color="#f59e0b" stop-opacity="1"/>
-            </linearGradient>
-          </defs>
-          <line x1="2" y1="8" x2="34" y2="8" stroke="url(#arrowGrad)" stroke-width="2" stroke-linecap="round"/>
-          <polyline points="28,3 38,8 28,13" stroke="#f59e0b" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
       </div>
-
-      <div class="hero-side">
-        <div class="hero-label">AFTER</div>
-        <div class="gauge-wrap after-gauge-wrap">
-          <svg viewBox="0 0 100 100" width="140" height="140" style="display:block;position:relative;z-index:1;overflow:visible">
-            <defs>
-              <linearGradient id="amberArc" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#d97706"/>
-                <stop offset="100%" stop-color="#fbbf24"/>
-              </linearGradient>
-            </defs>
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e1e28" stroke-width="8"/>
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="url(#amberArc)" stroke-width="8"
-              stroke-dasharray="${circ}" stroke-dashoffset="${afterOffset}"
-              stroke-linecap="round" transform="rotate(-90 50 50)"/>
-          </svg>
-          <div class="gauge-overlay">
-            <div class="gauge-number after-number">${afterPct}</div>
-            <div class="gauge-unit after-unit">/ 100</div>
-          </div>
+      <div class="hero-bars">
+        <div class="hero-bar-label">Before ${beforePct}/100</div>
+        <div class="hero-track">
+          <div class="hero-fill before-fill" style="width:${beforePct}%"></div>
+        </div>
+        <div class="hero-bar-label" style="margin-top:8px">After ${afterPct}/100</div>
+        <div class="hero-track">
+          <div class="hero-fill after-fill" style="width:${afterPct}%"></div>
         </div>
       </div>
     </div>`;
@@ -361,77 +328,89 @@ export function generateReportHTML(options: ReportOptions): string {
     background: linear-gradient(180deg, #0f0f13 0%, #0b0b0e 100%);
     border: 1px solid #1e1e2a;
     border-radius: 12px;
+    padding: 32px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .hero-score-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #4b5563;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .hero-score-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 24px 32px 24px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-    overflow: visible;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 20px;
   }
-  .hero-side {
+  .hero-score-col {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    overflow: visible;
+    gap: 4px;
   }
-  .hero-label {
-    font-size: 8px;
+  .hero-col-label {
+    font-size: 9px;
     font-weight: 700;
     color: #4b5563;
     letter-spacing: 1.1px;
     text-transform: uppercase;
   }
-  .gauge-wrap {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    overflow: visible;
-  }
-  .after-gauge-wrap {
-    width: 140px;
-    height: 140px;
-    background: radial-gradient(circle at center, rgba(245,158,11,0.07) 0%, transparent 60%);
-    border-radius: 50%;
-    overflow: visible;
-  }
-  .gauge-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .gauge-number {
+  .hero-num {
     font-weight: 800;
     line-height: 1;
-    letter-spacing: -1.5px;
+    letter-spacing: -2px;
   }
-  .before-number { font-size: 30px; color: #4b5563; }
-  .after-number { font-size: 46px; color: #ffffff; text-shadow: 0 0 24px rgba(245,158,11,0.75); }
-  .gauge-unit {
-    font-size: 9px;
-    color: #4b5563;
-    margin-top: 2px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
+  .before-num { font-size: 64px; color: #6b7280; }
+  .after-num { font-size: 80px; color: #ffffff; text-shadow: 0 0 32px rgba(245,158,11,0.6); }
+  .hero-arrow-col {
+    font-size: 48px;
+    color: #f59e0b;
+    line-height: 1;
+    padding-bottom: 4px;
   }
-  .after-unit { color: #6b7280; }
-
-  .hero-arrow {
+  .hero-delta-row {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
   }
   .delta-badge {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 800;
     color: #fff;
-    padding: 6px 16px;
+    padding: 6px 20px;
     border-radius: 20px;
     letter-spacing: -0.2px;
+  }
+  .hero-bars {
+    width: 100%;
+  }
+  .hero-bar-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #6b7280;
+    letter-spacing: 0.4px;
+    margin-bottom: 4px;
+  }
+  .hero-track {
+    width: 100%;
+    height: 10px;
+    background: #1a1a22;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .hero-fill {
+    height: 100%;
+    border-radius: 5px;
+  }
+  .before-fill { background: #374151; }
+  .after-fill {
+    background: linear-gradient(90deg, #d97706, #fbbf24);
+    box-shadow: 0 0 8px rgba(245,158,11,0.4);
   }
 
   /* ─── Category table ─────────────────────────────────── */
