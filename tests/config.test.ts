@@ -94,6 +94,21 @@ describe('parseConfig', () => {
     expect(config.defaults.clicks).toBe(10);
   });
 
+  it('trims leading/trailing whitespace from testCommand', () => {
+    const config = parseConfig('defaults:\n  test_command: "  npm test  "');
+    expect(config.defaults.testCommand).toBe('npm test');
+  });
+
+  it('falls back to default testCommand when test_command is whitespace-only', () => {
+    const config = parseConfig('defaults:\n  test_command: "   "');
+    expect(config.defaults.testCommand).toBe(DEFAULT_CONFIG.defaults.testCommand);
+  });
+
+  it('falls back to default testCommand when test_command is absent', () => {
+    const config = parseConfig('defaults:\n  clicks: 3');
+    expect(config.defaults.testCommand).toBe(DEFAULT_CONFIG.defaults.testCommand);
+  });
+
   it('accepts all valid agent types', () => {
     for (const agent of ['claude-code', 'codex', 'shell'] as const) {
       const config = parseConfig(`agent: ${agent}`);

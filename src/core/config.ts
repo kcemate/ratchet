@@ -69,9 +69,12 @@ export function parseConfig(raw: string): RatchetConfig {
       ? rawClicks
       : DEFAULT_CONFIG.defaults.clicks;
 
+  const rawTestCommand = (data.defaults?.test_command ?? '').trim();
+  const testCommand = rawTestCommand || DEFAULT_CONFIG.defaults.testCommand;
+
   const defaults = {
     clicks,
-    testCommand: data.defaults?.test_command ?? DEFAULT_CONFIG.defaults.testCommand,
+    testCommand,
     autoCommit: data.defaults?.auto_commit ?? DEFAULT_CONFIG.defaults.autoCommit,
   };
 
