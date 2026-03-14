@@ -25,8 +25,11 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   const { clickNumber, target, config, agent, cwd } = ctx;
   const timestamp = new Date();
 
-  // Stash current state so we can roll back if tests fail
-  await git.stash(cwd, `ratchet-pre-click-${clickNumber}`);
+  // Stash current state so we can roll back if tests fail.
+  // stashCreated tracks whether git actually created a stash entry — if the working tree
+  // was already clean, git exits 0 but creates nothing. Popping a non-existent stash
+  // would silently pop the user's prior saved work.
+  const stashCreated = await git.stash(cwd, `ratchet-pre-click-${clickNumber}`);
 
   let analysis = '';
   let proposal = '';
@@ -47,7 +50,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     buildResult = await agent.build(proposal, cwd);
 
     if (!buildResult.success) {
-      await rollback(cwd, clickNumber);
+      await rollback(cwd, clickNumber, stashCreated);
       rolledBack = true;
     } else {
       // 4. Test (the Pawl)
@@ -59,19 +62,21 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       testsPassed = testResult.passed;
 
       if (!testsPassed) {
-        await rollback(cwd, clickNumber);
+        await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       } else if (config.defaults.autoCommit) {
         // 5. Commit on success
         const message = buildCommitMessage(clickNumber, target, proposal);
         commitHash = await git.commit(message, cwd);
-        // Drop the stash since we committed successfully
-        await git.gitDropStash(cwd).catch(() => {});
+        // Drop the stash since we committed successfully (only if we created one)
+        if (stashCreated) {
+          await git.gitDropStash(cwd).catch(() => {});
+        }
       }
     }
   } catch (err: unknown) {
     // Unexpected error — roll back to be safe
-    await rollback(cwd, clickNumber).catch(() => {});
+    await rollback(cwd, clickNumber, stashCreated).catch(() => {});
     rolledBack = true;
     const error = err as Error;
     buildResult = {
@@ -96,11 +101,16 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   return { click, rolled_back: rolledBack };
 }
 
-async function rollback(cwd: string, clickNumber: number): Promise<void> {
-  try {
-    await git.stashPop(cwd);
-  } catch {
-    // If stash pop fails (nothing stashed), hard reset
+async function rollback(cwd: string, clickNumber: number, stashCreated: boolean): Promise<void> {
+  if (stashCreated) {
+    try {
+      await git.stashPop(cwd);
+    } catch {
+      // stash pop failed — fall back to hard reset
+      await git.revert(cwd).catch(() => {});
+    }
+  } else {
+    // No stash was created (tree was clean before click), use hard reset instead
     await git.revert(cwd).catch(() => {});
   }
 }

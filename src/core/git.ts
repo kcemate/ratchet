@@ -69,9 +69,17 @@ export async function status(cwd: string): Promise<GitStatus> {
   };
 }
 
-export async function stash(cwd: string, message?: string): Promise<void> {
+/**
+ * Stash uncommitted changes.
+ * Returns true if a stash entry was created, false if the working tree was already clean.
+ * This is important: if we return false, callers must NOT call stashPop() — doing so
+ * would pop an unrelated stash and potentially destroy the user's saved work.
+ */
+export async function stash(cwd: string, message?: string): Promise<boolean> {
   const args = message ? ['stash', 'push', '-m', message] : ['stash', 'push'];
-  await git(args, cwd);
+  const output = await git(args, cwd);
+  // git prints "No local changes to save" (exit 0) when the tree is clean
+  return !output.includes('No local changes to save');
 }
 
 export async function stashPop(cwd: string): Promise<void> {
