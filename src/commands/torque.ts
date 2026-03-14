@@ -11,6 +11,7 @@ import type { ClickPhase, HardenPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
 import { generateReport, writeReport } from '../core/report.js';
+import { writePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import { isRepo, status as gitStatus } from '../core/git.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
@@ -384,6 +385,7 @@ export function torqueCommand(): Command {
         }
 
         const reportPath = await writeReport({ run, cwd, scoreBefore, scoreAfter }).catch(() => null);
+        await writePDF({ run, cwd, scoreBefore, scoreAfter }).catch(() => null);
 
         // Persist run state for `ratchet status` / `ratchet tighten`
         try {
