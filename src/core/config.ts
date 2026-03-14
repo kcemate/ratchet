@@ -104,6 +104,34 @@ export function findTarget(config: RatchetConfig, name: string): Target | undefi
   return config.targets.find((t) => t.name === name);
 }
 
+/**
+ * Returns warning strings for any targets in the raw YAML that are missing
+ * required fields (name, path, description) and were silently dropped.
+ */
+export function findIncompleteTargets(raw: string): string[] {
+  let data: RawConfig;
+  try {
+    data = parse(raw) as RawConfig;
+  } catch {
+    return [];
+  }
+  if (!data?.targets) return [];
+
+  const warnings: string[] = [];
+  for (const t of data.targets) {
+    if (!t.name && !t.path && !t.description) continue; // fully empty entry, skip
+    const missing: string[] = [];
+    if (!t.name) missing.push('name');
+    if (!t.path) missing.push('path');
+    if (!t.description) missing.push('description');
+    if (missing.length > 0) {
+      const id = t.name ? `"${t.name}"` : '(unnamed)';
+      warnings.push(`Target ${id} is missing required field(s): ${missing.join(', ')}`);
+    }
+  }
+  return warnings;
+}
+
 export function configFilePath(cwd: string = process.cwd()): string {
   return resolve(join(cwd, CONFIG_FILE));
 }

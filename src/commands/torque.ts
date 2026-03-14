@@ -4,7 +4,8 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { loadConfig, configFilePath, findTarget } from '../core/config.js';
+import { loadConfig, configFilePath, findTarget, findIncompleteTargets } from '../core/config.js';
+import { readFileSync } from 'fs';
 import { runEngine } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
@@ -69,6 +70,18 @@ export function torqueCommand(): Command {
               chalk.dim(`  Run ${chalk.cyan('ratchet init')} to create one.`),
           );
           process.exit(1);
+        }
+
+        // Warn about incomplete targets silently dropped by the parser
+        try {
+          const rawYml = readFileSync(configFilePath(cwd), 'utf-8');
+          const warnings = findIncompleteTargets(rawYml);
+          for (const w of warnings) {
+            console.warn(chalk.yellow(`  ⚠  ${w}`));
+          }
+          if (warnings.length > 0) console.log('');
+        } catch {
+          // Non-fatal — config file may not exist (already handled above)
         }
 
         // Resolve target

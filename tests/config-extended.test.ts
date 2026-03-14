@@ -6,6 +6,7 @@ import {
   loadConfig,
   parseConfig,
   configFilePath,
+  findIncompleteTargets,
   DEFAULT_CONFIG,
 } from '../src/core/config.js';
 
@@ -165,5 +166,60 @@ boundaries:
     const config = parseConfig('just a string');
     expect(config.agent).toBe(DEFAULT_CONFIG.agent);
     expect(config.targets).toHaveLength(0);
+  });
+});
+
+describe('findIncompleteTargets', () => {
+  it('returns empty array when all targets are valid', () => {
+    const yaml = `
+targets:
+  - name: my-target
+    path: src/
+    description: A valid target
+`;
+    expect(findIncompleteTargets(yaml)).toHaveLength(0);
+  });
+
+  it('reports target missing path', () => {
+    const yaml = `
+targets:
+  - name: no-path
+    description: Missing path
+`;
+    const warnings = findIncompleteTargets(yaml);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/no-path/);
+    expect(warnings[0]).toMatch(/path/);
+  });
+
+  it('reports target missing description', () => {
+    const yaml = `
+targets:
+  - name: no-desc
+    path: src/
+`;
+    const warnings = findIncompleteTargets(yaml);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/description/);
+  });
+
+  it('reports multiple missing fields for one target', () => {
+    const yaml = `
+targets:
+  - name: only-name
+`;
+    const warnings = findIncompleteTargets(yaml);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/path/);
+    expect(warnings[0]).toMatch(/description/);
+  });
+
+  it('returns empty array when there are no targets', () => {
+    const yaml = 'agent: shell';
+    expect(findIncompleteTargets(yaml)).toHaveLength(0);
+  });
+
+  it('returns empty array for invalid YAML', () => {
+    expect(findIncompleteTargets('{ bad yaml: [')).toHaveLength(0);
   });
 });
