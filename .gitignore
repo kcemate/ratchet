@@ -5,3 +5,4 @@ dist/
 coverage/
 .env
 *.ratchet.lock
+.ratchet/

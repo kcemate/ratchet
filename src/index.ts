@@ -11,6 +11,7 @@ import { statusCommand } from './commands/status.js';
 import { logCommand } from './commands/log.js';
 import { tightenCommand } from './commands/tighten.js';
 import { scanCommand } from './commands/scan.js';
+import { reportCommand } from './commands/report.js';
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -43,5 +44,6 @@ program.addCommand(statusCommand());
 program.addCommand(logCommand());
 program.addCommand(tightenCommand());
 program.addCommand(scanCommand());
+program.addCommand(reportCommand());
 
 program.parse(process.argv);

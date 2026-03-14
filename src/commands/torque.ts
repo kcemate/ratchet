@@ -5,6 +5,7 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
 import { loadConfig, configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
+import { saveRun } from '../core/history.js';
 import { readFileSync } from 'fs';
 import { runEngine } from '../core/engine.js';
 import type { ClickPhase, HardenPhase } from '../core/engine.js';
@@ -393,6 +394,11 @@ export function torqueCommand(): Command {
         } catch {
           // Non-fatal
         }
+
+        // Persist to run history
+        await saveRun(cwd, run, scoreBefore, scoreAfter).catch(() => {
+          // Non-fatal
+        });
 
         // Final summary
         const passedClicks = run.clicks.filter((c) => c.testsPassed).length;

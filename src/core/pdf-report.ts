@@ -83,6 +83,8 @@ export function generateReportHTML(options: ReportOptions): string {
           ? '0 2px 12px rgba(239,68,68,0.4)'
           : 'none';
 
+    const deltaColor = delta > 0 ? '#22c55e' : delta < 0 ? '#ef4444' : '#9ca3af';
+
     heroHtml = `
     <div class="hero-card">
       <div class="hero-score-label">PRODUCTION READINESS SCORE</div>
@@ -90,24 +92,18 @@ export function generateReportHTML(options: ReportOptions): string {
         <div class="hero-score-col">
           <div class="hero-col-label">BEFORE</div>
           <div class="hero-num before-num">${beforePct}</div>
+          <div class="hero-sub-score">${beforePct} / 100</div>
+          <div class="hero-track"><div class="hero-fill before-fill" style="width:${beforePct}%"></div></div>
         </div>
-        <div class="hero-arrow-col">→</div>
+        <div class="hero-center-col">
+          <div class="hero-arrow">→</div>
+          <div class="hero-delta-inline" style="color:${deltaColor}">${esc(deltaStr)}</div>
+        </div>
         <div class="hero-score-col">
           <div class="hero-col-label">AFTER</div>
           <div class="hero-num after-num">${afterPct}</div>
-        </div>
-      </div>
-      <div class="hero-delta-row">
-        <div class="delta-badge" style="background:${deltaBg};box-shadow:${deltaGlow}">${esc(deltaStr)}</div>
-      </div>
-      <div class="hero-bars">
-        <div class="hero-bar-label">Before ${beforePct}/100</div>
-        <div class="hero-track">
-          <div class="hero-fill before-fill" style="width:${beforePct}%"></div>
-        </div>
-        <div class="hero-bar-label" style="margin-top:8px">After ${afterPct}/100</div>
-        <div class="hero-track">
-          <div class="hero-fill after-fill" style="width:${afterPct}%"></div>
+          <div class="hero-sub-score">${afterPct} / 100</div>
+          <div class="hero-track"><div class="hero-fill after-fill" style="width:${afterPct}%"></div></div>
         </div>
       </div>
     </div>`;
@@ -332,85 +328,84 @@ export function generateReportHTML(options: ReportOptions): string {
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
   }
   .hero-score-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
-    color: #4b5563;
-    letter-spacing: 1.4px;
+    color: #f59e0b;
+    letter-spacing: 1.6px;
     text-transform: uppercase;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
   .hero-score-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    gap: 32px;
-    margin-bottom: 20px;
+    gap: 0;
   }
   .hero-score-col {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
+    flex: 1;
+    max-width: 240px;
   }
   .hero-col-label {
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
-    color: #4b5563;
-    letter-spacing: 1.1px;
+    color: #6b7280;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
+    margin-bottom: 4px;
   }
   .hero-num {
     font-weight: 800;
     line-height: 1;
     letter-spacing: -2px;
+    margin-bottom: 6px;
   }
-  .before-num { font-size: 64px; color: #6b7280; }
-  .after-num { font-size: 80px; color: #ffffff; text-shadow: 0 0 32px rgba(245,158,11,0.6); }
-  .hero-arrow-col {
-    font-size: 48px;
-    color: #f59e0b;
-    line-height: 1;
-    padding-bottom: 4px;
-  }
-  .hero-delta-row {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-  .delta-badge {
-    font-size: 20px;
-    font-weight: 800;
-    color: #fff;
-    padding: 6px 20px;
-    border-radius: 20px;
-    letter-spacing: -0.2px;
-  }
-  .hero-bars {
-    width: 100%;
-  }
-  .hero-bar-label {
-    font-size: 9px;
+  .before-num { font-size: 56px; color: #6b7280; }
+  .after-num { font-size: 56px; color: #ffffff; }
+  .hero-sub-score {
+    font-size: 11px;
     font-weight: 600;
-    color: #6b7280;
-    letter-spacing: 0.4px;
-    margin-bottom: 4px;
+    color: #4b5563;
+    margin-bottom: 8px;
+  }
+  .hero-center-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 28px 0;
+    gap: 6px;
+  }
+  .hero-arrow {
+    font-size: 28px;
+    color: #374151;
+    line-height: 1;
+  }
+  .hero-delta-inline {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.5px;
   }
   .hero-track {
-    width: 100%;
-    height: 10px;
+    width: 80%;
+    height: 6px;
     background: #1a1a22;
-    border-radius: 5px;
+    border-radius: 3px;
     overflow: hidden;
   }
   .hero-fill {
     height: 100%;
-    border-radius: 5px;
+    border-radius: 3px;
   }
   .before-fill { background: #374151; }
   .after-fill {
     background: linear-gradient(90deg, #d97706, #fbbf24);
-    box-shadow: 0 0 8px rgba(245,158,11,0.4);
+    box-shadow: 0 0 6px rgba(245,158,11,0.35);
   }
 
   /* ─── Category table ─────────────────────────────────── */
