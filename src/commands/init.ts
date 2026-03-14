@@ -65,7 +65,8 @@ export function buildConfig(project: DetectedProject, targetDir: string): string
 # Run 'ratchet torque --target ${targetName}' to start the click loop.
 # Docs: https://github.com/ratchet-run/ratchet
 
-agent: shell
+agent: claude-code
+model: claude-sonnet-4-6
 
 defaults:
   clicks: 7
