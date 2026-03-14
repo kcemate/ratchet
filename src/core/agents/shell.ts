@@ -73,7 +73,32 @@ export class ShellAgent implements Agent {
       });
       return [stdout, stderr].filter(Boolean).join('\n').trim();
     } catch (err: unknown) {
-      const error = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string };
+      const error = err as NodeJS.ErrnoException & {
+        stdout?: string;
+        stderr?: string;
+        killed?: boolean;
+        signal?: string;
+      };
+
+      // Timeout: Node kills the process with SIGTERM after the timeout elapses
+      if (error.killed || error.signal === 'SIGTERM') {
+        const timeoutSecs = Math.round(this.timeout / 1000);
+        throw new Error(
+          `Agent timed out after ${timeoutSecs}s — the \`${this.command}\` process did not respond in time.\n` +
+            `  Possible causes: the agent is unresponsive, rate-limited, or the network is slow.\n` +
+            `  Try increasing the timeout or checking that \`${this.command}\` works from the command line.`,
+        );
+      }
+
+      // Command not found
+      if (error.code === 'ENOENT') {
+        throw new Error(
+          `Agent command not found: \`${this.command}\`\n` +
+            `  Make sure the agent CLI is installed and available in your PATH.\n` +
+            `  For the default shell agent: npm install -g @anthropic-ai/claude-code`,
+        );
+      }
+
       // If the command exits non-zero but produced output, still return it
       const output = [error.stdout, error.stderr].filter(Boolean).join('\n').trim();
       if (output) return output;

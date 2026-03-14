@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createAgentContext } from '../src/core/agents/base.js';
 import { ShellAgent, createShellAgent } from '../src/core/agents/shell.js';
 import type { Target } from '../src/types.js';
@@ -65,6 +65,30 @@ describe('ShellAgent', () => {
     it('accepts extraArgs override', () => {
       const agent = new ShellAgent({ extraArgs: ['--verbose', '--print'] });
       expect(agent).toBeDefined();
+    });
+  });
+
+  describe('build error handling', () => {
+    it('returns failed result when command produces no output', async () => {
+      // Use a command that immediately fails with no output
+      const agent = new ShellAgent({ command: 'false', extraArgs: [] });
+      const result = await agent.build('some proposal', process.cwd());
+      expect(result.success).toBe(false);
+    });
+
+    it('returns a friendly timeout error message', async () => {
+      // Use a 1ms timeout so the sleep command definitely exceeds it
+      const agent = new ShellAgent({ command: 'sleep', extraArgs: [], timeout: 1 });
+      const result = await agent.build('proposal', process.cwd());
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/timed out/i);
+    });
+
+    it('returns a friendly ENOENT error message', async () => {
+      const agent = new ShellAgent({ command: 'nonexistent-command-xyz', extraArgs: [] });
+      const result = await agent.build('proposal', process.cwd());
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/not found/i);
     });
   });
 
