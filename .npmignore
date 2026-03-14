@@ -1,0 +1,23 @@
+# Test files
+tests/
+*.test.ts
+
+# Documentation source
+docs/
+site/
+
+# Config files
+tsconfig.json
+vitest.config.ts
+tsup.config.ts
+
+# Runtime state
+.ratchet-state.json
+
+# GitHub Action examples
+action/examples/
+
+# Dev files
+.github/
+node_modules/
+src/
