@@ -10,6 +10,8 @@ import { runEngine } from '../core/engine.js';
 import type { ClickPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
+import { generateReport, writeReport } from '../core/report.js';
+import { runScan } from './scan.js';
 import { isRepo, status as gitStatus } from '../core/git.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
@@ -253,6 +255,14 @@ export function torqueCommand(): Command {
           process.exit(1);
         }
 
+        // Capture score before the run (non-fatal)
+        let scoreBefore;
+        try {
+          scoreBefore = await runScan(cwd);
+        } catch {
+          // Non-fatal — report will omit Before/After
+        }
+
         let run: RatchetRun;
         try {
           run = await runEngine({
@@ -354,6 +364,16 @@ export function torqueCommand(): Command {
         // Finalize log
         await logger.finalizeLog(run).catch(() => {});
 
+        // Capture score after the run and generate report
+        let scoreAfter;
+        try {
+          scoreAfter = await runScan(cwd);
+        } catch {
+          // Non-fatal
+        }
+
+        const reportPath = await writeReport({ run, cwd, scoreBefore, scoreAfter }).catch(() => null);
+
         // Persist run state for `ratchet status` / `ratchet tighten`
         try {
           await writeFile(join(cwd, STATE_FILE), JSON.stringify(run, null, 2), 'utf-8');
@@ -398,12 +418,21 @@ export function torqueCommand(): Command {
           console.log(
             `\n  Log: ${chalk.dim(`docs/${target.name}-ratchet.md`)}`,
           );
+          if (reportPath) {
+            console.log(
+              `  Report: ${chalk.dim(`docs/${target.name}-ratchet-report.md`)}`,
+            );
+          }
           console.log(
             `  Run ${chalk.green('ratchet tighten --pr')} to open a pull request.\n`,
           );
         } else {
           console.log(chalk.dim('\n  No clicks landed. Try adjusting your target description.\n'));
         }
+
+        // Print report summary
+        const report = generateReport({ run, cwd, scoreBefore, scoreAfter });
+        console.log('\n' + report);
 
         // Exit codes: 0 = all passed, 1 = partial, 2 = all failed
         if (run.clicks.length > 0 && passedClicks === 0) {
