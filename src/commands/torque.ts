@@ -38,6 +38,14 @@ export function torqueCommand(): Command {
     .option('--dry-run', 'Preview mode — analyze and propose without committing any changes', false)
     .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
     .option('--no-branch', 'Run on the current branch instead of creating a ratchet branch', false)
+    .addHelpText(
+      'after',
+      '\nExamples:\n' +
+        '  $ ratchet torque --target src\n' +
+        '  $ ratchet torque --target api --clicks 3\n' +
+        '  $ ratchet torque --target src --dry-run\n' +
+        '  $ ratchet torque --target src --verbose --no-branch\n',
+    )
     .action(
       async (options: {
         target: string;

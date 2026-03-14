@@ -23,6 +23,13 @@ export function tightenCommand(): Command {
     )
     .option('--pr', 'Create a GitHub pull request (requires the gh CLI)', false)
     .option('--draft', 'Create the PR as a draft (use with --pr)', false)
+    .addHelpText(
+      'after',
+      '\nExamples:\n' +
+        '  $ ratchet tighten\n' +
+        '  $ ratchet tighten --pr\n' +
+        '  $ ratchet tighten --pr --draft\n',
+    )
     .action(async (options: { pr: boolean; draft: boolean }) => {
       const cwd = process.cwd();
 

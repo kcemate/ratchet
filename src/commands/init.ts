@@ -103,6 +103,13 @@ export function initCommand(): Command {
     )
     .argument('[dir]', 'Directory to initialize (default: current directory)', '.')
     .option('--force', 'Overwrite existing .ratchet.yml', false)
+    .addHelpText(
+      'after',
+      '\nExamples:\n' +
+        '  $ ratchet init\n' +
+        '  $ ratchet init --force\n' +
+        '  $ ratchet init ./my-project\n',
+    )
     .action(async (dir: string, options: { force: boolean }) => {
       const cwd = resolve(dir);
       const configPath = join(cwd, '.ratchet.yml');

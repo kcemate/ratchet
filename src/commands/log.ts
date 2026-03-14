@@ -17,6 +17,13 @@ export function logCommand(): Command {
     )
     .option('-t, --target <name>', 'Target name to show log for (auto-detected if omitted)')
     .option('--raw', 'Print raw markdown without color formatting', false)
+    .addHelpText(
+      'after',
+      '\nExamples:\n' +
+        '  $ ratchet log\n' +
+        '  $ ratchet log --target src\n' +
+        '  $ ratchet log --raw\n',
+    )
     .action(async (options: { target?: string; raw: boolean }) => {
       const cwd = process.cwd();
 
