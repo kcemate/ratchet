@@ -128,6 +128,19 @@ export function torqueCommand(): Command {
         let spinner: ReturnType<typeof ora> | null = null;
         const runStart = Date.now();
 
+        // Graceful Ctrl+C handler
+        const sigintHandler = () => {
+          if (spinner) {
+            spinner.fail(chalk.yellow('  Interrupted by user (Ctrl+C)'));
+            spinner = null;
+          } else {
+            process.stdout.write('\n');
+          }
+          console.log(chalk.dim('\n  Run interrupted. Partial progress may be saved in .ratchet-state.json\n'));
+          process.exit(130);
+        };
+        process.once('SIGINT', sigintHandler);
+
         let run: RatchetRun;
         try {
           run = await runEngine({
@@ -198,6 +211,8 @@ export function torqueCommand(): Command {
           if (spinner) spinner.fail();
           console.error(chalk.red('\nFatal error: ') + String(err));
           process.exit(1);
+        } finally {
+          process.removeListener('SIGINT', sigintHandler);
         }
 
         // Finalize log
