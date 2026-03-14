@@ -326,6 +326,22 @@ export function torqueCommand(): Command {
           ? ` · ${chalk.yellow(String(rolledBack))} rolled back`
           : '';
 
+        // Per-click result table
+        if (run.clicks.length > 0) {
+          console.log('');
+          for (const click of run.clicks) {
+            const icon = click.testsPassed ? chalk.green('✓') : chalk.yellow('✗');
+            const label = click.testsPassed ? chalk.green('passed') : chalk.yellow('rolled back');
+            const hash = click.commitHash
+              ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`)
+              : '';
+            const files = click.filesModified.length > 0
+              ? chalk.dim(` — ${click.filesModified.slice(0, 2).join(', ')}${click.filesModified.length > 2 ? ` +${click.filesModified.length - 2}` : ''}`)
+              : '';
+            console.log(`  ${icon} Click ${chalk.bold(String(click.number))}  ${label}${hash}${files}`);
+          }
+        }
+
         console.log('\n' + chalk.bold('  ' + '─'.repeat(46)));
         console.log(
           `\n  ${chalk.bold('Done.')} ` +
