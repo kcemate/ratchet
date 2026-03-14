@@ -166,6 +166,27 @@ _What needs to be built, in what order, with dependencies._
 
 ---
 
+### Added: Report Delivery
+
+**15. Report web link (tk_jaq6)**
+- Upload report to ratchetcli.com/report/<id> after every run
+- Shareable URL — vibe coders share a link, not a file
+- Needs license server as the backend
+- Dependency: #5 (license server)
+
+**16. Report PDF export (tk_d2ki)**
+- Polished branded PDF with Production Readiness Score, category charts, before/after
+- Auto-generated alongside markdown after every run
+- CLI flag: `--pdf` or always-on for Pro users
+- Dependency: #8 (report generator)
+
+**17. Shareable report card PNG (tk_tlsx)**
+- 1200x630 social card showing score before → after
+- For posting on Twitter/Discord
+- Dependency: #8 (report generator)
+
+---
+
 ## Out of Scope (Not Now)
 
 - ❌ Web dashboard
