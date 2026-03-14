@@ -5,10 +5,10 @@ import { executeClick } from './click.js';
 import * as git from './git.js';
 
 export interface EngineCallbacks {
-  onClickStart?: (clickNumber: number, total: number) => void;
-  onClickComplete?: (click: Click, rolledBack: boolean) => void;
-  onRunComplete?: (run: RatchetRun) => void;
-  onError?: (err: Error, clickNumber: number) => void;
+  onClickStart?: (clickNumber: number, total: number) => Promise<void> | void;
+  onClickComplete?: (click: Click, rolledBack: boolean) => Promise<void> | void;
+  onRunComplete?: (run: RatchetRun) => Promise<void> | void;
+  onError?: (err: Error, clickNumber: number) => Promise<void> | void;
 }
 
 export interface EngineRunOptions {
@@ -54,7 +54,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
   try {
     for (let i = 1; i <= clicks; i++) {
-      callbacks.onClickStart?.(i, clicks);
+      await callbacks.onClickStart?.(i, clicks);
 
       try {
         const { click, rolled_back } = await executeClick({
@@ -66,10 +66,10 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         });
 
         run.clicks.push(click);
-        callbacks.onClickComplete?.(click, rolled_back);
+        await callbacks.onClickComplete?.(click, rolled_back);
       } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error(String(err));
-        callbacks.onError?.(error, i);
+        await callbacks.onError?.(error, i);
         // Continue with next click rather than aborting the whole run
       }
     }
@@ -80,7 +80,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     throw err;
   } finally {
     run.finishedAt = new Date();
-    callbacks.onRunComplete?.(run);
+    await callbacks.onRunComplete?.(run);
   }
 
   return run;
