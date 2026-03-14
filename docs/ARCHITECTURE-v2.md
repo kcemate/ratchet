@@ -109,11 +109,28 @@ Ratchet is a metered CLI tool that runs autonomous code improvement loops. Custo
 
 ---
 
-## Target Customer
+## Target Customers
 
-**Team leads and engineering managers** with repos that have 5+ contributors and CI already set up. They don't want to sit with Claude Code for 2 hours — they want to trigger a run, review a PR, merge. The value isn't "AI writes code for you" — it's "systematic codebase improvement on autopilot."
+### Primary: Vibe Coders
+People who build apps with AI (Cursor, Bolt, v0, Replit Agent) but don't deeply read or understand the generated code. They ship fast but the code is full of `any` types, no error handling, no input validation, hardcoded secrets, SQL injection risks. **They don't know what they don't know.**
 
-Not competing with Claude Code/Cursor (individual tools). Competing with tech debt sprints (team cost).
+Ratchet is their safety net. They point it at their AI-generated app, it hardens everything — adds tests, fixes security holes, improves error handling, tightens types. They get a PR that makes their app production-ready without needing to understand the changes themselves.
+
+**The pitch:** "You built it with AI. Now make it real."
+
+Harden mode is the killer feature for this audience — they definitely don't have tests.
+
+### Secondary: Team Leads / Eng Managers
+Teams with 5+ contributors and CI already set up. They don't want to sit with Claude Code for 2 hours — they want to trigger a run, review a PR, merge. Systematic codebase improvement on autopilot.
+
+**The pitch:** "Automated tech debt sprints that run while your team ships features."
+
+### Why Vibe Coders Are Better Customers
+- Larger and growing market (millions, not thousands)
+- Higher willingness to pay — they can't do this manually at any price
+- Lower support burden — they don't nitpick the AI's code style
+- Stronger word of mouth — "look what Ratchet did to my app" is shareable
+- Harden mode is a must-have, not a nice-to-have
 
 ---
 
@@ -206,5 +223,6 @@ This architecture was produced by running the Ratchet methodology on the origina
 | 11 | ✓ landed | Harden mode: write tests first when coverage is low |
 | 12 | ✗ rolled back | Competitive moat analysis — strategy concern, no architectural change |
 | 13 | ✓ landed | Verified full picture post-refinement |
+| 14 | ✓ landed | Primary target = vibe coders, not engineers. "You built it with AI. Now make it real." |
 
-_10 landed · 2 rolled back · 13 total clicks_
+_11 landed · 2 rolled back · 14 total clicks_
