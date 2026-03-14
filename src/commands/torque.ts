@@ -28,14 +28,16 @@ export function torqueCommand(): Command {
 
   cmd
     .description(
-      'Run the Ratchet click loop — autonomous iterative improvement.\n' +
-        'Creates a branch, runs N analyze→build→test→commit cycles, logs progress.',
+      'Run the Ratchet click loop — autonomous iterative code improvement.\n\n' +
+        'Creates a branch (ratchet/<target>-<timestamp>), runs N clicks,\n' +
+        'and writes a live log to docs/<target>-ratchet.md.\n\n' +
+        'Each click: analyze → propose → build → test → commit (or revert).',
     )
-    .requiredOption('-t, --target <name>', 'Target name from .ratchet.yml')
-    .option('-n, --clicks <number>', 'Number of clicks to run (overrides config default)')
-    .option('--dry-run', 'Preview without making any changes', false)
-    .option('--verbose', 'Show detailed per-click output', false)
-    .option('--no-branch', 'Skip creating a ratchet branch', false)
+    .requiredOption('-t, --target <name>', 'Target name defined in .ratchet.yml')
+    .option('-n, --clicks <number>', 'Number of clicks to run (overrides defaults.clicks in config)')
+    .option('--dry-run', 'Preview mode — analyze and propose without committing any changes', false)
+    .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
+    .option('--no-branch', 'Run on the current branch instead of creating a ratchet branch', false)
     .action(
       async (options: {
         target: string;

@@ -9,8 +9,13 @@ export function logCommand(): Command {
   const cmd = new Command('log');
 
   cmd
-    .description('Display the Ratchet log for a target')
-    .option('-t, --target <name>', 'Target name to show log for')
+    .description(
+      'Display the Ratchet log for a target.\n\n' +
+      'The log lives at docs/<target>-ratchet.md and records every click:\n' +
+      'analysis, proposal, files changed, and commit hash (or rolled back).\n\n' +
+      'Auto-detects target if only one exists in the project.'
+    )
+    .option('-t, --target <name>', 'Target name to show log for (auto-detected if omitted)')
     .option('--raw', 'Print raw markdown without color formatting', false)
     .action(async (options: { target?: string; raw: boolean }) => {
       const cwd = process.cwd();

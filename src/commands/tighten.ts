@@ -16,11 +16,13 @@ export function tightenCommand(): Command {
 
   cmd
     .description(
-      'Finalize a Ratchet run and optionally create a pull request.\n' +
-        'The PR description includes the full ratchet log.',
+      'Finalize a Ratchet run and optionally create a pull request.\n\n' +
+        'The PR title includes the click count, and the PR description includes\n' +
+        'the full ratchet log: every click\'s analysis, proposal, and commit hash.\n\n' +
+        'Reads the last run state from .ratchet-state.json.'
     )
-    .option('--pr', 'Create a GitHub pull request (requires gh CLI)', false)
-    .option('--draft', 'Create PR as a draft (used with --pr)', false)
+    .option('--pr', 'Create a GitHub pull request (requires the gh CLI)', false)
+    .option('--draft', 'Create the PR as a draft (use with --pr)', false)
     .action(async (options: { pr: boolean; draft: boolean }) => {
       const cwd = process.cwd();
 

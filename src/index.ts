@@ -26,9 +26,13 @@ const program = new Command();
 program
   .name('ratchet')
   .description(
-    'Autonomous iterative code improvement CLI.\n' +
-    'Point it at a target — it analyzes → proposes → builds → tests → commits → repeats.\n' +
-    'Every click ships code.'
+    'Autonomous iterative code improvement CLI.\n\n' +
+    'Initialize in your project:\n' +
+    '  ratchet init\n\n' +
+    'Then run improvement clicks on a target:\n' +
+    '  ratchet torque --target <name>\n\n' +
+    'Each click: analyze → propose → build → test → commit (or revert).\n' +
+    'Only improvements that pass tests are kept. Every click ships code.'
   )
   .version(version, '-v, --version', 'print version');
 

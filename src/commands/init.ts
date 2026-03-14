@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { access, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
+import { isRepo } from '../core/git.js';
 
 export type ProjectType = 'node' | 'python' | 'go' | 'rust' | 'make' | 'unknown';
 
@@ -61,10 +62,10 @@ export function buildConfig(project: DetectedProject, targetDir: string): string
   const targetName = safePath.replace(/\/$/, '').replace(/.*\//, '') || 'main';
 
   return `# .ratchet.yml — Ratchet configuration
+# Run 'ratchet torque --target ${targetName}' to start the click loop.
 # Docs: https://github.com/ratchet-run/ratchet
 
-agent: claude-code
-model: claude-sonnet-4-6
+agent: shell
 
 defaults:
   clicks: 7
@@ -76,14 +77,17 @@ targets:
     path: ${safePath}
     description: "Iteratively improve code quality in ${safePath}"
 
-# Boundaries protect sensitive paths from agent modification.
+# Boundaries protect critical paths from agent modification.
 # boundaries:
 #   - path: src/auth/
 #     rule: no-modify
-#     reason: "Auth architecture is intentional — do not touch"
+#     reason: "Auth logic is security-sensitive — do not touch"
 #   - path: "**/*.test.ts"
 #     rule: preserve-pattern
 #     reason: "Test structure follows team convention"
+#   - path: migrations/
+#     rule: no-delete
+#     reason: "Migration files are append-only"
 `;
 }
 
@@ -91,14 +95,28 @@ export function initCommand(): Command {
   const cmd = new Command('init');
 
   cmd
-    .description('Initialize Ratchet in the current project (creates .ratchet.yml)')
-    .argument('[dir]', 'Directory to initialize', '.')
+    .description(
+      'Initialize Ratchet in the current project.\n' +
+      'Auto-detects project type and test command, then writes .ratchet.yml.\n\n' +
+      'Supports: npm, yarn, pnpm, pytest, go test, cargo test, make test'
+    )
+    .argument('[dir]', 'Directory to initialize (default: current directory)', '.')
     .option('--force', 'Overwrite existing .ratchet.yml', false)
     .action(async (dir: string, options: { force: boolean }) => {
       const cwd = resolve(dir);
       const configPath = join(cwd, '.ratchet.yml');
 
       console.log(chalk.bold('\n⚙  Ratchet Init\n'));
+
+      // Warn if not inside a git repo — ratchet torque requires git to function.
+      if (!(await isRepo(cwd))) {
+        console.warn(
+          chalk.yellow('  ⚠  Not a git repository.') +
+            ' Ratchet requires git to track changes and roll back on failure.\n' +
+            '\n  ' + chalk.dim('Initialize git before running ratchet torque:') +
+            '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
+        );
+      }
 
       // Guard: already initialized
       if (await exists(configPath)) {
