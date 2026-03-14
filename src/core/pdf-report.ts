@@ -84,9 +84,9 @@ export function generateReportHTML(options: ReportOptions): string {
           : 'linear-gradient(135deg,#374151,#4b5563)';
     const deltaGlow =
       delta > 0
-        ? '0 0 14px rgba(34,197,94,0.55)'
+        ? '0 2px 12px rgba(34,197,94,0.4)'
         : delta < 0
-          ? '0 0 14px rgba(239,68,68,0.55)'
+          ? '0 2px 12px rgba(239,68,68,0.4)'
           : 'none';
 
     heroHtml = `
@@ -125,7 +125,7 @@ export function generateReportHTML(options: ReportOptions): string {
       <div class="hero-side">
         <div class="hero-label">AFTER</div>
         <div class="gauge-wrap after-gauge-wrap">
-          <svg viewBox="0 0 100 100" width="160" height="160" style="display:block;position:relative;z-index:1">
+          <svg viewBox="0 0 100 100" width="140" height="140" style="display:block;position:relative;z-index:1;overflow:visible">
             <defs>
               <linearGradient id="amberArc" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stop-color="#d97706"/>
@@ -364,14 +364,16 @@ export function generateReportHTML(options: ReportOptions): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 22px 32px 20px;
+    padding: 24px 32px 24px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    overflow: visible;
   }
   .hero-side {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
+    overflow: visible;
   }
   .hero-label {
     font-size: 8px;
@@ -384,12 +386,14 @@ export function generateReportHTML(options: ReportOptions): string {
     position: relative;
     width: 120px;
     height: 120px;
+    overflow: visible;
   }
   .after-gauge-wrap {
-    width: 160px;
-    height: 160px;
+    width: 140px;
+    height: 140px;
     background: radial-gradient(circle at center, rgba(245,158,11,0.07) 0%, transparent 60%);
     border-radius: 50%;
+    overflow: visible;
   }
   .gauge-overlay {
     position: absolute;
@@ -425,8 +429,8 @@ export function generateReportHTML(options: ReportOptions): string {
     font-size: 24px;
     font-weight: 800;
     color: #fff;
-    padding: 8px 24px;
-    border-radius: 99px;
+    padding: 6px 16px;
+    border-radius: 20px;
     letter-spacing: -0.2px;
   }
 
