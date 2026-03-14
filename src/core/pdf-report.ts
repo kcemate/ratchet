@@ -71,7 +71,7 @@ export function generateReportHTML(options: ReportOptions): string {
     const deltaStr = delta > 0 ? `+${delta}` : String(delta);
 
     // SVG arc gauge helpers
-    const r = 40;
+    const r = 38;
     const circ = +(2 * Math.PI * r).toFixed(2);
     const beforeOffset = +((1 - beforePct / 100) * circ).toFixed(2);
     const afterOffset = +((1 - afterPct / 100) * circ).toFixed(2);
@@ -96,8 +96,8 @@ export function generateReportHTML(options: ReportOptions): string {
         <div class="hero-label">BEFORE</div>
         <div class="gauge-wrap">
           <svg viewBox="0 0 100 100" width="120" height="120" style="display:block">
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e1e28" stroke-width="7"/>
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#374151" stroke-width="7"
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e1e28" stroke-width="8"/>
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#374151" stroke-width="8"
               stroke-dasharray="${circ}" stroke-dashoffset="${beforeOffset}"
               stroke-linecap="round" transform="rotate(-90 50 50)"/>
           </svg>
@@ -109,7 +109,8 @@ export function generateReportHTML(options: ReportOptions): string {
       </div>
 
       <div class="hero-arrow">
-        <svg width="44" height="16" viewBox="0 0 44 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div class="delta-badge" style="background:${deltaBg};box-shadow:${deltaGlow}">${esc(deltaStr)}</div>
+        <svg width="36" height="12" viewBox="0 0 44 16" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="arrowGrad" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.2"/>
@@ -119,25 +120,22 @@ export function generateReportHTML(options: ReportOptions): string {
           <line x1="2" y1="8" x2="34" y2="8" stroke="url(#arrowGrad)" stroke-width="2" stroke-linecap="round"/>
           <polyline points="28,3 38,8 28,13" stroke="#f59e0b" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <div class="delta-badge" style="background:${deltaBg};box-shadow:${deltaGlow}">${esc(deltaStr)}</div>
       </div>
 
       <div class="hero-side">
         <div class="hero-label">AFTER</div>
         <div class="gauge-wrap after-gauge-wrap">
-          <div class="gauge-glow"></div>
           <svg viewBox="0 0 100 100" width="160" height="160" style="display:block;position:relative;z-index:1">
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e1e28" stroke-width="7"/>
-            <circle cx="50" cy="50" r="${r}" fill="none" stroke="url(#amberArc)" stroke-width="7"
+            <defs>
+              <linearGradient id="amberArc" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#d97706"/>
+                <stop offset="100%" stop-color="#fbbf24"/>
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e1e28" stroke-width="8"/>
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="url(#amberArc)" stroke-width="8"
               stroke-dasharray="${circ}" stroke-dashoffset="${afterOffset}"
-              stroke-linecap="round" transform="rotate(-90 50 50)">
-              <defs>
-                <linearGradient id="amberArc" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#d97706"/>
-                  <stop offset="100%" stop-color="#fbbf24"/>
-                </linearGradient>
-              </defs>
-            </circle>
+              stroke-linecap="round" transform="rotate(-90 50 50)"/>
           </svg>
           <div class="gauge-overlay">
             <div class="gauge-number after-number">${afterPct}</div>
@@ -164,12 +162,12 @@ export function generateReportHTML(options: ReportOptions): string {
           <div class="cat-dot" style="background:${dotColor}"></div>
           <div class="cat-name">${esc(after.name)}</div>
           <div class="cat-bars">
-            <div class="mini-track"><div class="mini-fill before-mini" style="width:${Math.max(2, bPct)}%"></div></div>
             <div class="cat-score gray">${before.score}/${before.max}</div>
+            <div class="mini-track"><div class="mini-fill before-mini" style="width:${Math.max(2, bPct)}%"></div></div>
           </div>
           <div class="cat-bars">
-            <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, aPct)}%"></div></div>
             <div class="cat-score white">${after.score}/${after.max}</div>
+            <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, aPct)}%"></div></div>
           </div>
           <div class="cat-delta"><span class="delta-pill ${pillClass}">${esc(catDeltaStr)}</span></div>
         </div>`;
@@ -390,13 +388,8 @@ export function generateReportHTML(options: ReportOptions): string {
   .after-gauge-wrap {
     width: 160px;
     height: 160px;
-  }
-  .gauge-glow {
-    position: absolute;
-    inset: -10px;
+    background: radial-gradient(circle at center, rgba(245,158,11,0.07) 0%, transparent 60%);
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 65%);
-    pointer-events: none;
   }
   .gauge-overlay {
     position: absolute;
@@ -411,8 +404,8 @@ export function generateReportHTML(options: ReportOptions): string {
     line-height: 1;
     letter-spacing: -1.5px;
   }
-  .before-number { font-size: 80px; color: #4b5563; }
-  .after-number { font-size: 120px; color: #ffffff; text-shadow: 0 0 40px rgba(245,158,11,0.6); }
+  .before-number { font-size: 30px; color: #4b5563; }
+  .after-number { font-size: 46px; color: #ffffff; text-shadow: 0 0 24px rgba(245,158,11,0.75); }
   .gauge-unit {
     font-size: 9px;
     color: #4b5563;
@@ -484,10 +477,11 @@ export function generateReportHTML(options: ReportOptions): string {
   }
   .cat-score {
     font-size: 8.5px;
-    flex: 0 0 30px;
+    flex: 0 0 34px;
     text-align: right;
     font-variant-numeric: tabular-nums;
     font-weight: 500;
+    white-space: nowrap;
   }
   .gray { color: #374151; }
   .white { color: #cbd5e1; }
@@ -510,6 +504,7 @@ export function generateReportHTML(options: ReportOptions): string {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-top: 4px;
+    align-items: start;
   }
   .items-card {
     background: linear-gradient(180deg, #0f0f13 0%, #0b0b0e 100%);
