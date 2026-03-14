@@ -8,6 +8,7 @@ import { loadConfig, configFilePath, findTarget } from '../core/config.js';
 import { runEngine } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
+import { isRepo } from '../core/git.js';
 import type { Click, RatchetRun } from '../types.js';
 
 const STATE_FILE = '.ratchet-state.json';
@@ -44,6 +45,17 @@ export function torqueCommand(): Command {
         const cwd = process.cwd();
 
         console.log(chalk.bold('\n⚙  Ratchet Torque\n'));
+
+        // Check git repo
+        if (!(await isRepo(cwd))) {
+          console.error(
+            chalk.red('  Not a git repository.') +
+              '\n  Ratchet requires git to track changes and roll back on failure.' +
+              '\n\n  ' + chalk.dim('To initialize a git repo:') +
+              '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
+          );
+          process.exit(1);
+        }
 
         // Load config
         let config;
