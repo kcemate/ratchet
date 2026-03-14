@@ -69,6 +69,17 @@ describe('runTests', () => {
     expect(result.duration).toBeGreaterThanOrEqual(0);
     expect(result.duration).toBeLessThan(10_000);
   });
+
+  it('returns friendly error when binary is not found', async () => {
+    const result = await runTests({
+      command: 'nonexistent-binary-xyz --test',
+      cwd: process.cwd(),
+    });
+    expect(result.passed).toBe(false);
+    expect(result.error).toMatch(/not found/i);
+    expect(result.error).toContain('nonexistent-binary-xyz');
+    expect(result.error).toContain('.ratchet.yml');
+  });
 });
 
 describe('detectTestCommand', () => {

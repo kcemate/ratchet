@@ -28,6 +28,21 @@ export async function runTests(options: RunnerOptions): Promise<TestResult> {
   } catch (err: unknown) {
     const duration = Date.now() - start;
     const error = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string; code?: number };
+
+    // Binary not found — give a clear, actionable message instead of the raw ENOENT
+    if (error.code === 'ENOENT') {
+      const friendlyMessage =
+        `Test command not found: \`${bin}\`\n` +
+        `  Make sure \`${bin}\` is installed and available in your PATH.\n` +
+        `  Check the test_command setting in .ratchet.yml`;
+      return {
+        passed: false,
+        output: friendlyMessage,
+        duration,
+        error: friendlyMessage,
+      };
+    }
+
     const output = [error.stdout, error.stderr].filter(Boolean).join('\n');
     return {
       passed: false,
