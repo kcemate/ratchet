@@ -255,12 +255,18 @@ export function torqueCommand(): Command {
 
         // Final summary
         const passedClicks = run.clicks.filter((c) => c.testsPassed).length;
+        const rolledBack = run.clicks.length - passedClicks;
         const duration = formatDuration(Date.now() - runStart);
+
+        const landedPart = `${chalk.green(String(passedClicks))} landed`;
+        const rolledPart = rolledBack > 0
+          ? ` · ${chalk.yellow(String(rolledBack))} rolled back`
+          : '';
 
         console.log('\n' + chalk.bold('  ' + '─'.repeat(46)));
         console.log(
           `\n  ${chalk.bold('Done.')} ` +
-            `${chalk.green(String(passedClicks))}/${run.clicks.length} clicks landed · ` +
+            `${landedPart}${rolledPart} · ` +
             `${chalk.dim(duration)}`,
         );
 
