@@ -154,6 +154,28 @@ describe('executeClick', () => {
     expect(click.commitHash).toMatch(/^[0-9a-f]{40}$/);
   });
 
+  it('rolls back and errors when agent returns empty proposal', async () => {
+    const agent: Agent = {
+      analyze: vi.fn().mockResolvedValue('Mocked analysis'),
+      propose: vi.fn().mockResolvedValue('   '), // whitespace-only
+      build: vi.fn().mockResolvedValue({ success: true, output: '', filesModified: [] }),
+    };
+    const config = makeConfig({ testCommand: 'node --version', autoCommit: false });
+
+    const { click, rolled_back } = await executeClick({
+      clickNumber: 1,
+      target: makeTarget(),
+      config,
+      agent,
+      cwd: dir,
+    });
+
+    expect(rolled_back).toBe(true);
+    expect(click.testsPassed).toBe(false);
+    expect(agent.build).not.toHaveBeenCalled();
+    expect(click.proposal).toBe('   ');
+  });
+
   it('sets timestamp on click', async () => {
     const before = new Date();
     const agent = makeAgent(true);

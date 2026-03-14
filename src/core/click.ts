@@ -46,6 +46,14 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     // 2. Propose
     proposal = await agent.propose(analysis, target);
 
+    if (!proposal.trim()) {
+      throw new Error(
+        'Agent returned an empty proposal — nothing to implement.\n' +
+          '  The agent may be rate-limited, misconfigured, or unresponsive.\n' +
+          '  Check that the agent command works from the command line.',
+      );
+    }
+
     // 3. Build (apply code change)
     buildResult = await agent.build(proposal, cwd);
 
