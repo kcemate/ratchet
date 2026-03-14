@@ -124,6 +124,15 @@ export function torqueCommand(): Command {
           process.exit(1);
         }
 
+        if (options.clicks && options.clicks.includes('.')) {
+          console.error(
+            chalk.red(`  Invalid --clicks value: ${chalk.bold(options.clicks)}`) +
+              '\n  Fractional clicks are not allowed — must be a whole number (e.g. ' +
+              chalk.cyan('--clicks 5') + ').\n',
+          );
+          process.exit(1);
+        }
+
         // Print run summary
         console.log(`  Target : ${chalk.cyan(target.name)}`);
         console.log(`  Path   : ${chalk.dim(target.path)}`);
