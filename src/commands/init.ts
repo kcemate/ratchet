@@ -131,6 +131,10 @@ export function initCommand(): Command {
       const hasSource = await exists(join(cwd, 'src'));
       const targetDir = hasSource ? 'src' : '.';
 
+      // Derive the target name the same way buildConfig does
+      const safePath = targetDir.endsWith('/') ? targetDir : `${targetDir}/`;
+      const detectedTargetName = safePath.replace(/\/$/, '').replace(/.*\//, '') || 'main';
+
       // Write config
       const writeSpinner = ora('Writing .ratchet.yml…').start();
       try {
@@ -149,7 +153,7 @@ export function initCommand(): Command {
         `  ${chalk.dim('1.')} Edit ${chalk.cyan('.ratchet.yml')} — set your targets and boundaries`,
       );
       console.log(
-        `  ${chalk.dim('2.')} Run ${chalk.green('ratchet torque --target <name>')} to start the loop`,
+        `  ${chalk.dim('2.')} Run ${chalk.green(`ratchet torque --target ${detectedTargetName}`)} to start the loop`,
       );
       console.log('');
     });
