@@ -132,6 +132,7 @@ export function torqueCommand(): Command {
         // Spinner state
         let spinner: ReturnType<typeof ora> | null = null;
         const runStart = Date.now();
+        let clickStartTime = 0;
 
         // Graceful Ctrl+C handler
         const sigintHandler = () => {
@@ -157,6 +158,7 @@ export function torqueCommand(): Command {
             createBranch: options.branch && !options.dryRun,
             callbacks: {
               onClickStart: async (clickNumber, total) => {
+                clickStartTime = Date.now();
                 spinner = ora(
                   `  Click ${chalk.bold(String(clickNumber))}/${total} — analyzing…`,
                 ).start();
@@ -192,6 +194,8 @@ export function torqueCommand(): Command {
                 }
 
                 if (options.verbose) {
+                  const elapsed = formatDuration(Date.now() - clickStartTime);
+                  console.log(chalk.dim(`     time: ${elapsed}`));
                   if (click.proposal) {
                     const preview = click.proposal.length > 120
                       ? click.proposal.slice(0, 120) + '…'
