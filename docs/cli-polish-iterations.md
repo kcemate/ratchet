@@ -84,3 +84,90 @@
 ---
 
 *All 7 clicks landed. 163/163 tests passing throughout.*
+
+---
+
+# CLI Polish Iterations — Sprint 2
+
+*Agent: Riley · Sprint: CLI UX & Error Handling (round 2) · Date: 2026-03-13*
+
+---
+
+## Click 1 — Per-click elapsed time in `--verbose` output
+
+**Issue**: `--verbose` mode showed proposal preview and modified files, but gave no sense of how long each click took. Users had no way to tell whether the agent was fast or slow per click.
+
+**Fix**: Track `clickStartTime = Date.now()` in `onClickStart`. In `onClickComplete`, compute elapsed via `formatDuration` and print `time: 2.4s` as the first verbose line for each click.
+
+**File**: `src/commands/torque.ts`
+**Commit**: `feat(cli): show per-click elapsed time in --verbose output`
+
+---
+
+## Click 2 — Inline code rendering in `ratchet log`
+
+**Issue**: The markdown renderer in `ratchet log` handled headings, blockquotes, and separators, but ignored `` `inline code` `` spans. Commands and file paths in log entries appeared unstyled.
+
+**Fix**: Added `renderInlineCode(line)` helper that replaces `` `text` `` with `chalk.cyan(text)`. Applied to all rendered line types.
+
+**File**: `src/commands/log.ts`
+**Commit**: `feat(cli): render inline backtick code with color in ratchet log`
+
+---
+
+## Click 3 — Config validation warnings for incomplete targets
+
+**Issue**: Targets missing `name`, `path`, or `description` were silently filtered out by `parseConfig`. Users got a confusing "no targets found" error later without knowing what went wrong.
+
+**Fix**: Added `findIncompleteTargets(rawYml)` export to `config.ts` that scans raw YAML for targets with missing required fields. `torque` calls it after loading config and prints a `⚠` warning per incomplete target before continuing.
+
+**Files**: `src/core/config.ts`, `src/commands/torque.ts`, `tests/config-extended.test.ts`
+**Commit**: `feat(cli): warn about incomplete targets silently dropped from config`
+
+---
+
+## Click 4 — `ratchet tighten` shows current git branch
+
+**Issue**: `ratchet tighten` listed commits but didn't tell the user which branch they were on, making it hard to connect the output to the git state.
+
+**Fix**: Call `currentBranch(cwd)` (already exported from `git.ts`) and print `Branch  : ratchet/my-target-2026-03-13T23-25-00` before the clicks summary.
+
+**File**: `src/commands/tighten.ts`
+**Commit**: `feat(cli): show current git branch in ratchet tighten output`
+
+---
+
+## Click 5 — Torque final summary shows explicit rolled-back count
+
+**Issue**: The final summary line said `3/7 clicks landed` — technically accurate but the 4 rolled-back clicks were only implied by subtraction.
+
+**Fix**: When rollbacks occurred, the summary now reads `3 landed · 4 rolled back · 2m 45s`. When all clicks land, the simpler `7 landed · 1m 30s` form is used (no rolled-back term).
+
+**File**: `src/commands/torque.ts`
+**Commit**: `feat(cli): show explicit rolled-back count in torque final summary`
+
+---
+
+## Click 6 — `ratchet status` shows target description
+
+**Issue**: `ratchet status` showed the target name and path but not its description. Users with multiple targets couldn't tell at a glance what the run was actually working on.
+
+**Fix**: Added `Desc    : <description>` line in the status header, shown only when the description field is present.
+
+**File**: `src/commands/status.ts`
+**Commit**: `feat(cli): show target description in ratchet status output`
+
+---
+
+## Click 7 — `ratchet init` uses detected target name in next-step hint
+
+**Issue**: The "Next steps" block after `ratchet init` showed `ratchet torque --target <name>` with a literal `<name>` placeholder. Users had to look inside `.ratchet.yml` to find the actual name.
+
+**Fix**: Derive `detectedTargetName` from the same logic `buildConfig` uses, then interpolate it into the hint: `ratchet torque --target src`.
+
+**File**: `src/commands/init.ts`
+**Commit**: `feat(cli): use detected target name in ratchet init next-step hint`
+
+---
+
+*All 7 clicks landed. 169/169 tests passing throughout.*
