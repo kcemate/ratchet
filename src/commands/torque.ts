@@ -192,6 +192,12 @@ export function torqueCommand(): Command {
                 }
 
                 if (options.verbose) {
+                  if (click.proposal) {
+                    const preview = click.proposal.length > 120
+                      ? click.proposal.slice(0, 120) + '…'
+                      : click.proposal;
+                    console.log(chalk.dim(`     proposal: ${preview}`));
+                  }
                   if (click.filesModified.length > 0) {
                     console.log(
                       chalk.dim(
