@@ -21,6 +21,16 @@ export async function currentBranch(cwd: string): Promise<string> {
   return git(['rev-parse', '--abbrev-ref', 'HEAD'], cwd);
 }
 
+/**
+ * Returns true when git is in detached HEAD state (e.g. after `git checkout <hash>`).
+ * In this state branch-based operations like `git checkout -b` still work but the
+ * user's mental model is likely wrong — surface a clear warning before proceeding.
+ */
+export async function isDetachedHead(cwd: string): Promise<boolean> {
+  const branch = await gitSafe(['rev-parse', '--abbrev-ref', 'HEAD'], cwd);
+  return branch === 'HEAD';
+}
+
 export async function createBranch(name: string, cwd: string): Promise<void> {
   await git(['checkout', '-b', name], cwd);
 }

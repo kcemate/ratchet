@@ -12,6 +12,7 @@ import {
   branchName,
   getLastCommitHash,
   getModifiedFiles,
+  isDetachedHead,
 } from '../src/core/git.js';
 
 function initRepo(dir: string): void {
@@ -56,6 +57,19 @@ describe('git operations', () => {
       const branch = await currentBranch(dir);
       // Could be 'main' or 'master' depending on git config
       expect(branch).toMatch(/^(main|master)$/);
+    });
+  });
+
+  describe('isDetachedHead', () => {
+    it('returns false on a normal branch', async () => {
+      expect(await isDetachedHead(dir)).toBe(false);
+    });
+
+    it('returns true when HEAD is detached', async () => {
+      // Check out by hash to enter detached HEAD state
+      const hash = await getLastCommitHash(dir);
+      execFileSync('git', ['checkout', hash], { cwd: dir, stdio: 'pipe' });
+      expect(await isDetachedHead(dir)).toBe(true);
     });
   });
 

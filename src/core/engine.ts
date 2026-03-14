@@ -36,6 +36,16 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     status: 'running',
   };
 
+  // Guard: detached HEAD means the user checked out a commit hash or tag directly.
+  // Ratchet can still run, but it's likely unintentional — emit a clear error.
+  if (await git.isDetachedHead(cwd)) {
+    throw new Error(
+      'Git repository is in detached HEAD state.\n' +
+        '  Ratchet requires a named branch to track changes safely.\n' +
+        '  Fix: git checkout -b my-branch',
+    );
+  }
+
   // Create a ratchet branch
   if (createBranch) {
     const branch = git.branchName(target.name);
