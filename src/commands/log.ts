@@ -50,6 +50,20 @@ export function logCommand(): Command {
         return;
       }
 
+      // Parse click stats from markdown content
+      const passedCount = (content.match(/## Click \d+ — ✅/g) ?? []).length;
+      const failedCount = (content.match(/## Click \d+ — ❌/g) ?? []).length;
+      const totalCount = passedCount + failedCount;
+      if (totalCount > 0) {
+        console.log(
+          chalk.dim(`  ${totalCount} click${totalCount !== 1 ? 's' : ''} · `) +
+            chalk.green(`${passedCount} passed`) +
+            chalk.dim(' · ') +
+            (failedCount > 0 ? chalk.red(`${failedCount} rolled back`) : chalk.dim('0 rolled back')) +
+            '\n',
+        );
+      }
+
       renderMarkdown(content);
     });
 
