@@ -80,6 +80,20 @@ describe('runTests', () => {
     expect(result.error).toContain('nonexistent-binary-xyz');
     expect(result.error).toContain('.ratchet.yml');
   });
+
+  it('returns friendly error for empty test command', async () => {
+    const result = await runTests({ command: '', cwd: process.cwd() });
+    expect(result.passed).toBe(false);
+    expect(result.error).toMatch(/empty or invalid/i);
+    expect(result.error).toContain('.ratchet.yml');
+    expect(result.duration).toBe(0);
+  });
+
+  it('returns friendly error for whitespace-only test command', async () => {
+    const result = await runTests({ command: '   ', cwd: process.cwd() });
+    expect(result.passed).toBe(false);
+    expect(result.error).toMatch(/empty or invalid/i);
+  });
 });
 
 describe('detectTestCommand', () => {

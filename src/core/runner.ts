@@ -10,7 +10,19 @@ export async function runTests(options: RunnerOptions): Promise<TestResult> {
   const { command, cwd, timeout = DEFAULT_TIMEOUT } = options;
   const start = Date.now();
 
-  const [bin, ...args] = parseCommand(command);
+  const parts = parseCommand(command);
+  if (parts.length === 0) {
+    const friendlyMessage =
+      `Test command is empty or invalid: ${JSON.stringify(command)}\n` +
+      `  Set a valid test_command in .ratchet.yml (e.g. test_command: npm test)`;
+    return {
+      passed: false,
+      output: friendlyMessage,
+      duration: 0,
+      error: friendlyMessage,
+    };
+  }
+  const [bin, ...args] = parts;
 
   try {
     const { stdout, stderr } = await execFileAsync(bin, args, {
