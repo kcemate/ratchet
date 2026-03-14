@@ -1,0 +1,46 @@
+name: Ratchet — Auto-Improve
+
+on:
+  # Run on a schedule (weekly)
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 09:00 UTC
+  # Or trigger manually
+  workflow_dispatch:
+    inputs:
+      clicks:
+        description: 'Number of improvement iterations'
+        required: false
+        default: '7'
+      mode:
+        description: 'Mode: normal or harden'
+        required: false
+        default: 'normal'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ratchet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Ratchet
+        id: ratchet
+        uses: ratchet-dev/ratchet@v1
+        with:
+          api-key: ${{ secrets.OPENROUTER_API_KEY }}
+          clicks: ${{ github.event.inputs.clicks || '7' }}
+          mode: ${{ github.event.inputs.mode || 'normal' }}
+          create-pr: 'true'
+
+      - name: Print Results
+        run: |
+          echo "Score before: ${{ steps.ratchet.outputs.score-before }}"
+          echo "Score after:  ${{ steps.ratchet.outputs.score-after }}"
+          echo "Clicks landed: ${{ steps.ratchet.outputs.clicks-landed }}"
+          echo "PR: ${{ steps.ratchet.outputs.pr-url }}"
