@@ -69,27 +69,80 @@ export function generateReportHTML(options: ReportOptions): string {
     const afterPct = Math.round((scoreAfter.total / scoreAfter.maxTotal) * 100);
     const delta = afterPct - beforePct;
     const deltaStr = delta > 0 ? `+${delta}` : String(delta);
-    const deltaColor = delta > 0 ? '#22c55e' : delta < 0 ? '#ef4444' : '#6b7280';
+
+    // SVG arc gauge helpers
+    const r = 40;
+    const circ = +(2 * Math.PI * r).toFixed(2);
+    const beforeOffset = +((1 - beforePct / 100) * circ).toFixed(2);
+    const afterOffset = +((1 - afterPct / 100) * circ).toFixed(2);
+
+    const deltaBg =
+      delta > 0
+        ? 'linear-gradient(135deg,#16a34a,#22c55e)'
+        : delta < 0
+          ? 'linear-gradient(135deg,#dc2626,#ef4444)'
+          : 'linear-gradient(135deg,#374151,#4b5563)';
+    const deltaGlow =
+      delta > 0
+        ? '0 0 14px rgba(34,197,94,0.55)'
+        : delta < 0
+          ? '0 0 14px rgba(239,68,68,0.55)'
+          : 'none';
 
     heroHtml = `
     <div class="section-title">Production Readiness Score</div>
     <div class="hero-card">
       <div class="hero-side">
         <div class="hero-label">BEFORE</div>
-        <div class="hero-score before-score">${beforePct}</div>
-        <div class="progress-track">
-          <div class="progress-fill before-fill" style="width:${beforePct}%"></div>
+        <div class="gauge-wrap">
+          <svg viewBox="0 0 100 100" width="120" height="120" style="display:block">
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e1e28" stroke-width="7"/>
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#374151" stroke-width="7"
+              stroke-dasharray="${circ}" stroke-dashoffset="${beforeOffset}"
+              stroke-linecap="round" transform="rotate(-90 50 50)"/>
+          </svg>
+          <div class="gauge-overlay">
+            <div class="gauge-number before-number">${beforePct}</div>
+            <div class="gauge-unit">/ 100</div>
+          </div>
         </div>
       </div>
+
       <div class="hero-arrow">
-        <div class="arrow-text">→</div>
-        <div class="delta-badge" style="background:${deltaColor}">${esc(deltaStr)}</div>
+        <svg width="44" height="16" viewBox="0 0 44 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="arrowGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#f59e0b" stop-opacity="1"/>
+            </linearGradient>
+          </defs>
+          <line x1="2" y1="8" x2="34" y2="8" stroke="url(#arrowGrad)" stroke-width="2" stroke-linecap="round"/>
+          <polyline points="28,3 38,8 28,13" stroke="#f59e0b" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="delta-badge" style="background:${deltaBg};box-shadow:${deltaGlow}">${esc(deltaStr)}</div>
       </div>
+
       <div class="hero-side">
         <div class="hero-label">AFTER</div>
-        <div class="hero-score after-score">${afterPct}</div>
-        <div class="progress-track">
-          <div class="progress-fill after-fill" style="width:${afterPct}%"></div>
+        <div class="gauge-wrap">
+          <div class="gauge-glow"></div>
+          <svg viewBox="0 0 100 100" width="120" height="120" style="display:block;position:relative;z-index:1">
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="#1e1e28" stroke-width="7"/>
+            <circle cx="50" cy="50" r="${r}" fill="none" stroke="url(#amberArc)" stroke-width="7"
+              stroke-dasharray="${circ}" stroke-dashoffset="${afterOffset}"
+              stroke-linecap="round" transform="rotate(-90 50 50)">
+              <defs>
+                <linearGradient id="amberArc" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#d97706"/>
+                  <stop offset="100%" stop-color="#fbbf24"/>
+                </linearGradient>
+              </defs>
+            </circle>
+          </svg>
+          <div class="gauge-overlay">
+            <div class="gauge-number after-number">${afterPct}</div>
+            <div class="gauge-unit after-unit">/ 100</div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -100,11 +153,12 @@ export function generateReportHTML(options: ReportOptions): string {
         if (!after) return '';
         const catDelta = after.score - before.score;
         const catDeltaStr = catDelta > 0 ? `+${catDelta}` : String(catDelta);
-        const catDeltaColor = catDelta > 0 ? '#22c55e' : catDelta < 0 ? '#ef4444' : '#6b7280';
+        const pillClass =
+          catDelta > 0 ? 'delta-pill-pos' : catDelta < 0 ? 'delta-pill-neg' : 'delta-pill-neu';
         const dotColor = CATEGORY_COLORS[after.name] ?? '#6b7280';
         const bPct = before.max > 0 ? (before.score / before.max) * 100 : 0;
         const aPct = after.max > 0 ? (after.score / after.max) * 100 : 0;
-        const rowBg = i % 2 === 0 ? '#111113' : '#0d0d0f';
+        const rowBg = i % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'transparent';
         return `
         <div class="cat-row" style="background:${rowBg}">
           <div class="cat-dot" style="background:${dotColor}"></div>
@@ -117,7 +171,7 @@ export function generateReportHTML(options: ReportOptions): string {
             <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, aPct)}%"></div></div>
             <div class="cat-score white">${after.score}/${after.max}</div>
           </div>
-          <div class="cat-delta" style="color:${catDeltaColor}">${esc(catDeltaStr)}</div>
+          <div class="cat-delta"><span class="delta-pill ${pillClass}">${esc(catDeltaStr)}</span></div>
         </div>`;
       })
       .join('');
@@ -125,10 +179,10 @@ export function generateReportHTML(options: ReportOptions): string {
     categoryHtml = `
     <div class="section-title" style="margin-top:16px">Category Breakdown</div>
     <div class="cat-header">
-      <div style="flex:0 0 140px"></div>
+      <div style="flex:0 0 138px"></div>
       <div class="cat-col-label">BEFORE</div>
       <div class="cat-col-label">AFTER</div>
-      <div class="cat-col-label" style="text-align:right;min-width:36px">CHG</div>
+      <div class="cat-col-label" style="text-align:right;flex:0 0 50px">CHG</div>
     </div>
     <div class="cat-table">${rows}</div>`;
   }
@@ -136,23 +190,23 @@ export function generateReportHTML(options: ReportOptions): string {
   // --- Bullet lists ---
   const improvedItems =
     landed.length === 0
-      ? `<div class="bullet-item"><span class="bullet-dot" style="background:#6b7280"></span><span class="bullet-text" style="color:#6b7280">Nothing landed this run.</span></div>`
+      ? `<div class="bullet-item"><span class="bullet-dot" style="background:#4b5563"></span><span class="bullet-text" style="color:#6b7280">Nothing landed this run.</span></div>`
       : landed
           .map(
             (click) =>
-              `<div class="bullet-item"><span class="bullet-dot" style="background:#22c55e"></span><span class="bullet-text">Click ${click.number} — ${esc(plainEnglishSummary(click))}</span></div>`,
+              `<div class="bullet-item"><span class="bullet-dot" style="background:#22c55e"></span><span class="bullet-text"><strong style="color:#f1f5f9">Click ${click.number}</strong> — ${esc(plainEnglishSummary(click))}</span></div>`,
           )
           .join('');
 
   const rolledItems =
     rolledBack.length === 0
-      ? `<div class="bullet-item"><span class="bullet-dot" style="background:#22c55e"></span><span class="bullet-text" style="color:#22c55e">Nothing rolled back — clean run!</span></div>`
+      ? `<div class="bullet-item"><span class="bullet-dot" style="background:#22c55e"></span><span class="bullet-text" style="color:#4ade80">Nothing rolled back — clean run!</span></div>`
       : rolledBack
           .map((click) => {
             const reason = click.analysis
               ? (click.analysis.split(/[.!\n]/)[0]?.trim() ?? 'Tests failed')
               : 'Tests failed';
-            return `<div class="bullet-item"><span class="bullet-dot" style="background:#ef4444"></span><span class="bullet-text">${esc(`Click ${click.number} — ${reason.slice(0, 120)}`)}</span></div>`;
+            return `<div class="bullet-item"><span class="bullet-dot" style="background:#ef4444"></span><span class="bullet-text"><strong style="color:#f1f5f9">Click ${click.number}</strong> — ${esc(reason.slice(0, 120))}</span></div>`;
           })
           .join('');
 
@@ -163,157 +217,383 @@ export function generateReportHTML(options: ReportOptions): string {
 <style>
   @page { size: A4; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
   body {
     width: 210mm;
-    min-height: 297mm;
-    background: #0a0a0b;
-    color: #fff;
+    background: #08080a;
+    color: #f1f5f9;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    position: relative;
   }
+
+  /* Subtle grain texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 300px 300px;
+  }
+
   .wrapper {
-    display: flex;
-    flex-direction: column;
-    min-height: 297mm;
-    padding: 40px 48px 32px;
+    position: relative;
+    z-index: 1;
+    padding: 36px 46px 30px;
   }
-  .main { flex: 1; }
 
-  /* Header */
-  .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-  .gear { font-size: 24px; line-height: 1; }
-  .logo-text { font-size: 28px; font-weight: 800; color: #f59e0b; letter-spacing: -0.5px; }
-  .header-meta { font-size: 11px; color: #6b7280; line-height: 1.8; }
-  .header-meta strong { color: #d1d5db; font-weight: 600; }
+  /* ─── Header ─────────────────────────────────────────── */
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 7px;
+  }
+  .gear-wrap {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .gear-glow {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,158,11,0.30) 0%, transparent 65%);
+  }
+  .gear {
+    font-size: 22px;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+  }
+  .logo-text {
+    font-size: 26px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #f59e0b 0%, #fcd34d 55%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+  .header-meta {
+    font-size: 10.5px;
+    color: #6b7280;
+    line-height: 1.75;
+    margin-left: 1px;
+  }
+  .header-meta strong { color: #cbd5e1; font-weight: 600; }
 
-  /* Divider */
-  .divider { height: 1.5px; background: linear-gradient(90deg, #f59e0b 0%, #f59e0b80 100%); margin: 14px 0 18px; }
+  /* Amber accent line below header */
+  .header-accent {
+    height: 1.5px;
+    background: linear-gradient(90deg, #f59e0b 0%, rgba(245,158,11,0.25) 55%, transparent 100%);
+    margin: 13px 0 16px;
+  }
 
-  /* Summary bar */
+  /* ─── Summary Bar ────────────────────────────────────── */
   .summary-bar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    background: #111113;
-    border-radius: 10px;
-    overflow: hidden;
+    gap: 9px;
     margin-bottom: 4px;
   }
-  .summary-item { text-align: center; padding: 14px 8px; }
-  .summary-item + .summary-item { border-left: 1px solid #1e1e24; }
-  .summary-value { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 5px; }
-  .summary-label { font-size: 9px; font-weight: 600; color: #6b7280; letter-spacing: 0.8px; text-transform: uppercase; }
-
-  /* Section title */
-  .section-title {
-    font-size: 11px; font-weight: 700; color: #f59e0b;
-    text-transform: uppercase; letter-spacing: 0.8px;
-    margin-top: 20px; margin-bottom: 10px;
+  .summary-item {
+    background: linear-gradient(180deg, #111116 0%, #0d0d10 100%);
+    border: 1px solid #1e1e2a;
+    border-radius: 10px;
+    padding: 13px 8px 12px;
+    text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 6px rgba(0,0,0,0.35);
+  }
+  .summary-value {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 5px;
+    letter-spacing: -0.5px;
+  }
+  .summary-label {
+    font-size: 8px;
+    font-weight: 700;
+    color: #4b5563;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
   }
 
-  /* Hero card */
-  .hero-card {
-    background: #111113;
-    border-radius: 10px;
+  /* ─── Section title ──────────────────────────────────── */
+  .section-title {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #f59e0b;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    margin-top: 18px;
+    margin-bottom: 9px;
     display: flex;
     align-items: center;
-    padding: 18px 28px;
-    gap: 0;
+    gap: 8px;
   }
-  .hero-side { flex: 1; }
-  .hero-label { font-size: 9px; font-weight: 600; color: #6b7280; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 2px; }
-  .hero-score { font-size: 68px; font-weight: 800; line-height: 1; margin-bottom: 10px; }
-  .before-score { color: #6b7280; }
-  .after-score { color: #ffffff; }
-  .progress-track { height: 8px; background: #1a1a1e; border-radius: 4px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 4px; }
-  .before-fill { background: #6b7280; }
-  .after-fill { background: #f59e0b; }
-  .hero-arrow { flex: 0 0 90px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-  .arrow-text { font-size: 30px; color: #f59e0b; font-weight: 800; }
-  .delta-badge { font-size: 14px; font-weight: 700; color: #fff; padding: 4px 14px; border-radius: 20px; }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(245,158,11,0.18) 0%, transparent 100%);
+  }
 
-  /* Category table */
-  .cat-header { display: flex; align-items: center; padding: 0 12px; margin-bottom: 3px; gap: 8px; }
-  .cat-col-label { font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; text-align: center; }
-  .cat-table { border-radius: 8px; overflow: hidden; }
-  .cat-row { display: flex; align-items: center; padding: 6px 12px; gap: 8px; }
-  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .cat-name { font-size: 10px; color: #fff; flex: 0 0 124px; }
+  /* ─── Hero card ──────────────────────────────────────── */
+  .hero-card {
+    background: linear-gradient(180deg, #0f0f13 0%, #0b0b0e 100%);
+    border: 1px solid #1e1e2a;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 32px 20px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .hero-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-label {
+    font-size: 8px;
+    font-weight: 700;
+    color: #4b5563;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+  }
+  .gauge-wrap {
+    position: relative;
+    width: 120px;
+    height: 120px;
+  }
+  .gauge-glow {
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .gauge-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .gauge-number {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1.5px;
+  }
+  .before-number { color: #4b5563; }
+  .after-number { color: #ffffff; }
+  .gauge-unit {
+    font-size: 9px;
+    color: #4b5563;
+    margin-top: 2px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .after-unit { color: #6b7280; }
+
+  .hero-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .delta-badge {
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    padding: 5px 16px;
+    border-radius: 99px;
+    letter-spacing: -0.2px;
+  }
+
+  /* ─── Category table ─────────────────────────────────── */
+  .cat-header {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    margin-bottom: 4px;
+    gap: 8px;
+  }
+  .cat-col-label {
+    font-size: 8px;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+  }
+  .cat-table {
+    border-radius: 9px;
+    overflow: hidden;
+    border: 1px solid #18181f;
+  }
+  .cat-row {
+    display: flex;
+    align-items: center;
+    padding: 7px 12px;
+    gap: 8px;
+  }
+  .cat-row:not(:last-child) { border-bottom: 1px solid #111116; }
+  .cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .cat-name { font-size: 9.5px; color: #d1d5db; flex: 0 0 122px; font-weight: 500; }
   .cat-bars { display: flex; align-items: center; gap: 6px; flex: 1; }
-  .mini-track { flex: 1; height: 6px; background: #1a1a1e; border-radius: 3px; overflow: hidden; }
-  .mini-fill { height: 100%; border-radius: 3px; }
-  .before-mini { background: #6b7280; }
-  .after-mini { background: #f59e0b; }
-  .cat-score { font-size: 9px; flex: 0 0 32px; text-align: right; }
-  .gray { color: #6b7280; }
-  .white { color: #fff; }
-  .cat-delta { font-size: 10px; font-weight: 700; flex: 0 0 30px; text-align: right; }
+  .mini-track {
+    flex: 1;
+    height: 5px;
+    background: #1a1a22;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .mini-fill { height: 100%; border-radius: 99px; }
+  .before-mini { background: #2d3748; }
+  .after-mini {
+    background: linear-gradient(90deg, #d97706, #fbbf24);
+    box-shadow: 0 0 5px rgba(245,158,11,0.45);
+  }
+  .cat-score {
+    font-size: 8.5px;
+    flex: 0 0 30px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+  .gray { color: #374151; }
+  .white { color: #cbd5e1; }
+  .cat-delta { flex: 0 0 50px; text-align: right; }
+  .delta-pill {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  .delta-pill-pos { background: rgba(34,197,94,0.14); color: #4ade80; }
+  .delta-pill-neg { background: rgba(239,68,68,0.14); color: #f87171; }
+  .delta-pill-neu { background: rgba(107,114,128,0.12); color: #9ca3af; }
 
-  /* Bullets */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 4px; }
-  .bullet-list { display: flex; flex-direction: column; gap: 5px; }
-  .bullet-item { display: flex; align-items: flex-start; gap: 8px; }
-  .bullet-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
-  .bullet-text { font-size: 9.5px; color: #e5e7eb; line-height: 1.5; }
+  /* ─── Improved / Rolled Back ─────────────────────────── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .items-card {
+    background: linear-gradient(180deg, #0f0f13 0%, #0b0b0e 100%);
+    border: 1px solid #1e1e2a;
+    border-radius: 10px;
+    padding: 11px 11px 10px;
+    overflow: hidden;
+  }
+  .items-card-green { border-left: 3px solid rgba(34,197,94,0.6); }
+  .items-card-red   { border-left: 3px solid rgba(239,68,68,0.6); }
+  .items-card-neutral { border-left: 3px solid #1e1e2a; }
+  .bullet-list { display: flex; flex-direction: column; gap: 4px; }
+  .bullet-item {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 6px;
+    padding: 5px 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+  }
+  .bullet-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .bullet-text { font-size: 8.5px; color: #94a3b8; line-height: 1.55; }
 
-  /* Footer */
-  .footer { padding-top: 16px; border-top: 1px solid #1e1e24; margin-top: 20px; }
-  .footer-text { font-size: 9px; color: #4b5563; text-align: center; }
-  .footer-accent { color: #f59e0b; font-weight: 600; }
+  /* ─── Footer ─────────────────────────────────────────── */
+  .footer {
+    padding-top: 11px;
+    border-top: 1px solid #111116;
+    margin-top: 16px;
+  }
+  .footer-text {
+    font-size: 8px;
+    color: #2d3748;
+    text-align: center;
+    letter-spacing: 0.2px;
+  }
+  .footer-accent { color: #92400e; font-weight: 600; }
 </style>
 </head>
 <body>
 <div class="wrapper">
-  <div class="main">
 
-    <!-- Header -->
-    <div class="logo-row">
+  <!-- Header -->
+  <div class="logo-row">
+    <div class="gear-wrap">
+      <div class="gear-glow"></div>
       <span class="gear">⚙️</span>
-      <span class="logo-text">Ratchet Report</span>
     </div>
-    <div class="header-meta">
-      <div>${esc(dateStr)}</div>
-      <div>Project: <strong>${esc(projectName)}</strong> &nbsp;·&nbsp; Target: <strong>${esc(targetName)}</strong></div>
+    <span class="logo-text">Ratchet Report</span>
+  </div>
+  <div class="header-meta">
+    <div>${esc(dateStr)}</div>
+    <div>Project: <strong>${esc(projectName)}</strong> &nbsp;·&nbsp; Target: <strong>${esc(targetName)}</strong></div>
+  </div>
+  <div class="header-accent"></div>
+
+  <!-- Summary bar -->
+  <div class="summary-bar">
+    <div class="summary-item">
+      <div class="summary-value" style="color:#f59e0b">${totalClicks}</div>
+      <div class="summary-label">Clicks</div>
     </div>
-
-    <div class="divider"></div>
-
-    <!-- Summary bar -->
-    <div class="summary-bar">
-      <div class="summary-item">
-        <div class="summary-value" style="color:#f59e0b">${totalClicks}</div>
-        <div class="summary-label">Clicks</div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-value" style="color:#22c55e">${landed.length}</div>
-        <div class="summary-label">Landed</div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-value" style="color:${rolledBack.length > 0 ? '#ef4444' : '#f59e0b'}">${rolledBack.length}</div>
-        <div class="summary-label">Rolled Back</div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-value" style="color:#f59e0b">${esc(duration)}</div>
-        <div class="summary-label">Duration</div>
-      </div>
+    <div class="summary-item">
+      <div class="summary-value" style="color:#22c55e">${landed.length}</div>
+      <div class="summary-label">Landed</div>
     </div>
-
-    ${heroHtml}
-    ${categoryHtml}
-
-    <!-- What improved + What was rolled back -->
-    <div class="two-col">
-      <div>
-        <div class="section-title" style="color:#22c55e">✓ What improved</div>
-        <div class="bullet-list">${improvedItems}</div>
-      </div>
-      <div>
-        <div class="section-title" style="color:${rolledBack.length > 0 ? '#ef4444' : '#6b7280'}">✗ What was rolled back</div>
-        <div class="bullet-list">${rolledItems}</div>
-      </div>
+    <div class="summary-item">
+      <div class="summary-value" style="color:${rolledBack.length > 0 ? '#ef4444' : '#22c55e'}">${rolledBack.length}</div>
+      <div class="summary-label">Rolled Back</div>
     </div>
+    <div class="summary-item">
+      <div class="summary-value" style="color:#f59e0b">${esc(duration)}</div>
+      <div class="summary-label">Duration</div>
+    </div>
+  </div>
 
+  ${heroHtml}
+  ${categoryHtml}
+
+  <!-- What improved + What was rolled back -->
+  <div class="section-title" style="margin-top:18px;color:#94a3b8">Run Summary</div>
+  <div class="two-col">
+    <div class="items-card items-card-green">
+      <div class="section-title" style="margin-top:0;margin-bottom:8px;color:#22c55e">&#10003; What improved</div>
+      <div class="bullet-list">${improvedItems}</div>
+    </div>
+    <div class="items-card ${rolledBack.length > 0 ? 'items-card-red' : 'items-card-neutral'}">
+      <div class="section-title" style="margin-top:0;margin-bottom:8px;color:${rolledBack.length > 0 ? '#ef4444' : '#4b5563'}">&#10007; What was rolled back</div>
+      <div class="bullet-list">${rolledItems}</div>
+    </div>
   </div>
 
   <!-- Footer -->
@@ -324,6 +604,7 @@ export function generateReportHTML(options: ReportOptions): string {
       Scan your project free at <span class="footer-accent">ratchetcli.com</span>
     </div>
   </div>
+
 </div>
 </body>
 </html>`;
@@ -340,9 +621,14 @@ export async function generatePDF(options: ReportOptions): Promise<Buffer> {
   });
   try {
     const page = await browser.newPage();
+    // Set viewport to A4 width at 96dpi
+    await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
     await page.setContent(html, { waitUntil: 'load' });
+    // Fit page height to actual content to eliminate bottom whitespace
+    const contentHeight = await page.evaluate(() => document.body.scrollHeight);
     const pdf = await page.pdf({
-      format: 'A4',
+      width: '210mm',
+      height: `${contentHeight}px`,
       printBackground: true,
       margin: { top: '0', right: '0', bottom: '0', left: '0' },
     });
