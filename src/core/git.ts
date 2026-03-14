@@ -139,6 +139,15 @@ export async function gitDropStash(cwd: string): Promise<void> {
   await git(['stash', 'drop'], cwd);
 }
 
+/**
+ * Returns true if the repo has at least one configured remote.
+ * Used to gate operations like `gh pr create` that require a remote.
+ */
+export async function hasRemote(cwd: string): Promise<boolean> {
+  const out = await gitSafe(['remote'], cwd);
+  return out.trim().length > 0;
+}
+
 export function branchName(target: string): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const safe = target.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase();

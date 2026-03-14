@@ -7,7 +7,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 
 import { loadRunState } from './status.js';
-import { currentBranch } from '../core/git.js';
+import { currentBranch, hasRemote } from '../core/git.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -81,6 +81,18 @@ export function tightenCommand(): Command {
             ' to open a pull request.\n',
         );
         return;
+      }
+
+      // Guard: gh pr create requires a remote to push to
+      if (!(await hasRemote(cwd))) {
+        console.error(
+          chalk.red('  No git remote configured.') +
+            '\n  A remote is required to create a pull request.\n' +
+            '\n  ' + chalk.dim('Add one with:') +
+            '\n    ' + chalk.cyan('git remote add origin <url>') +
+            '\n    ' + chalk.cyan('git push -u origin HEAD') + '\n',
+        );
+        process.exit(1);
       }
 
       // Create PR
