@@ -328,6 +328,13 @@ export function torqueCommand(): Command {
         } else {
           console.log(chalk.dim('\n  No clicks landed. Try adjusting your target description.\n'));
         }
+
+        // Exit codes: 0 = all passed, 1 = partial, 2 = all failed
+        if (run.clicks.length > 0 && passedClicks === 0) {
+          process.exit(2);
+        } else if (run.clicks.length > 0 && rolledBack > 0) {
+          process.exit(1);
+        }
       },
     );
 
