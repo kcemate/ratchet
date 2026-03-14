@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import type { RatchetRun } from '../types.js';
 
 export const STATE_FILE = '.ratchet-state.json';
@@ -48,11 +49,21 @@ export function statusCommand(): Command {
       const run = await loadRunState(cwd);
 
       if (!run) {
-        console.log(
-          chalk.dim('  No runs found. Run ') +
-            chalk.cyan('ratchet torque --target <name>') +
-            chalk.dim(' to start.\n'),
-        );
+        const hasConfig = existsSync(join(cwd, '.ratchet.yml'));
+        if (!hasConfig) {
+          console.log(
+            chalk.dim('  No runs found and no .ratchet.yml detected.\n') +
+              '  Get started:\n' +
+              `    ${chalk.cyan('ratchet init')}               — create .ratchet.yml\n` +
+              `    ${chalk.cyan('ratchet torque --target <name>')} — start the click loop\n`,
+          );
+        } else {
+          console.log(
+            chalk.dim('  No runs found. Run ') +
+              chalk.cyan('ratchet torque --target <name>') +
+              chalk.dim(' to start.\n'),
+          );
+        }
         return;
       }
 
