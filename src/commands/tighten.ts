@@ -7,6 +7,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 
 import { loadRunState } from './status.js';
+import { currentBranch } from '../core/git.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -45,8 +46,11 @@ export function tightenCommand(): Command {
       const passedClicks = run.clicks.filter((c) => c.testsPassed).length;
       const totalClicks = run.clicks.length;
 
+      const branch = await currentBranch(cwd).catch(() => '');
+
       console.log(`  Target  : ${chalk.cyan(run.target.name)}`);
       console.log(`  Run ID  : ${chalk.dim(run.id)}`);
+      if (branch) console.log(`  Branch  : ${chalk.cyan(branch)}`);
       console.log(`  Clicks  : ${chalk.green(String(passedClicks))} passed / ${totalClicks} total`);
       console.log(
         `  Status  : ${run.status === 'completed' ? chalk.green('completed') : chalk.red('failed')}`,
