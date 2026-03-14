@@ -7,6 +7,7 @@ import { join } from 'path';
 import { loadConfig, configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
 import { readFileSync } from 'fs';
 import { runEngine } from '../core/engine.js';
+import type { ClickPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
 import { isRepo, status as gitStatus } from '../core/git.js';
@@ -248,6 +249,19 @@ export function torqueCommand(): Command {
                   };
                   await logger.initLog(partialRun).catch(() => {});
                 }
+              },
+
+              onClickPhase: (phase: ClickPhase, clickNumber: number) => {
+                if (!spinner) return;
+                const total = clickCount;
+                const phaseLabel: Record<ClickPhase, string> = {
+                  analyzing: 'analyzing…',
+                  proposing: 'proposing…',
+                  building: 'building…',
+                  testing: 'testing…',
+                  committing: 'committing…',
+                };
+                spinner.text = `  Click ${chalk.bold(String(clickNumber))}/${total} — ${phaseLabel[phase]}`;
               },
 
               onClickComplete: async (click: Click, rolledBack: boolean) => {

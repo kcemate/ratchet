@@ -4,8 +4,11 @@ import type { Agent } from './agents/base.js';
 import { executeClick } from './click.js';
 import * as git from './git.js';
 
+export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
+
 export interface EngineCallbacks {
   onClickStart?: (clickNumber: number, total: number) => Promise<void> | void;
+  onClickPhase?: (phase: ClickPhase, clickNumber: number) => Promise<void> | void;
   onClickComplete?: (click: Click, rolledBack: boolean) => Promise<void> | void;
   onRunComplete?: (run: RatchetRun) => Promise<void> | void;
   onError?: (err: Error, clickNumber: number) => Promise<void> | void;
@@ -63,6 +66,9 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           config,
           agent,
           cwd,
+          onPhase: callbacks.onClickPhase
+            ? (phase) => callbacks.onClickPhase!(phase, i)
+            : undefined,
         });
 
         run.clicks.push(click);

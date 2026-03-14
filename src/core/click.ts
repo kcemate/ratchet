@@ -3,6 +3,7 @@ import type { Agent } from './agents/base.js';
 import { createAgentContext } from './agents/base.js';
 import { runTests } from './runner.js';
 import * as git from './git.js';
+import type { ClickPhase } from './engine.js';
 
 export interface ClickContext {
   clickNumber: number;
@@ -10,6 +11,7 @@ export interface ClickContext {
   config: RatchetConfig;
   agent: Agent;
   cwd: string;
+  onPhase?: (phase: ClickPhase) => void | Promise<void>;
 }
 
 export interface ClickOutcome {
@@ -22,7 +24,7 @@ export interface ClickOutcome {
  * This is the Pawl: on test failure we revert, leaving the codebase only ever better.
  */
 export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
-  const { clickNumber, target, config, agent, cwd } = ctx;
+  const { clickNumber, target, config, agent, cwd, onPhase } = ctx;
   const timestamp = new Date();
 
   // Stash current state so we can roll back if tests fail.
@@ -40,10 +42,12 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
 
   try {
     // 1. Analyze
+    await onPhase?.('analyzing');
     const context = createAgentContext(target, clickNumber);
     analysis = await agent.analyze(context);
 
     // 2. Propose
+    await onPhase?.('proposing');
     proposal = await agent.propose(analysis, target);
 
     if (!proposal.trim()) {
@@ -55,6 +59,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     }
 
     // 3. Build (apply code change)
+    await onPhase?.('building');
     buildResult = await agent.build(proposal, cwd);
 
     if (!buildResult.success) {
@@ -62,6 +67,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       rolledBack = true;
     } else {
       // 4. Test (the Pawl)
+      await onPhase?.('testing');
       const testResult = await runTests({
         command: config.defaults.testCommand,
         cwd,
@@ -74,6 +80,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         rolledBack = true;
       } else if (config.defaults.autoCommit) {
         // 5. Commit on success
+        await onPhase?.('committing');
         const message = buildCommitMessage(clickNumber, target, proposal);
         commitHash = await git.commit(message, cwd);
         // Drop the stash since we committed successfully (only if we created one)
