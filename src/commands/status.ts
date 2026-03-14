@@ -78,6 +78,9 @@ export function statusCommand(): Command {
       console.log(
         `  Target  : ${chalk.cyan(run.target.name)} ${chalk.dim(`(${run.target.path})`)}`,
       );
+      if (run.target.description) {
+        console.log(`  Desc    : ${chalk.dim(run.target.description)}`);
+      }
       console.log(`  Status  : ${colorStatus(run.status)}`);
       console.log(
         `  Clicks  : ${chalk.green(String(passedClicks))} passed / ${totalClicks} total`,
