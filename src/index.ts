@@ -10,6 +10,7 @@ import { torqueCommand } from './commands/torque.js';
 import { statusCommand } from './commands/status.js';
 import { logCommand } from './commands/log.js';
 import { tightenCommand } from './commands/tighten.js';
+import { scanCommand } from './commands/scan.js';
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -41,5 +42,6 @@ program.addCommand(torqueCommand());
 program.addCommand(statusCommand());
 program.addCommand(logCommand());
 program.addCommand(tightenCommand());
+program.addCommand(scanCommand());
 
 program.parse(process.argv);
