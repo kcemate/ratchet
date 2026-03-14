@@ -9,7 +9,7 @@ import { readFileSync } from 'fs';
 import { runEngine } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
-import { isRepo } from '../core/git.js';
+import { isRepo, status as gitStatus } from '../core/git.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
 
@@ -57,6 +57,18 @@ export function torqueCommand(): Command {
               '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
           );
           process.exit(1);
+        }
+
+        // Warn about dirty worktree — each click stashes before applying changes,
+        // so existing uncommitted work won't be lost, but the user should know.
+        const ws = await gitStatus(cwd);
+        const dirtyFiles = ws.staged.length + ws.unstaged.length + ws.untracked.length;
+        if (dirtyFiles > 0) {
+          const fileWord = dirtyFiles === 1 ? 'file' : 'files';
+          console.warn(
+            chalk.yellow(`  ⚠  Dirty worktree: ${dirtyFiles} uncommitted ${fileWord}.`) +
+              chalk.dim(' Ratchet will stash these before each click and restore them on rollback.\n'),
+          );
         }
 
         // Load config
