@@ -100,6 +100,14 @@ export function generateReport(options: ReportOptions): string {
     const deltaStr = delta > 0 ? `+${delta}` : String(delta);
     const icon = scoreLabel(scoreAfter.total, scoreAfter.maxTotal);
 
+    // Issues fixed metric
+    const issuesBefore = scoreBefore.totalIssuesFound ?? 0;
+    const issuesAfter = scoreAfter.totalIssuesFound ?? 0;
+    const issuesFixed = issuesBefore - issuesAfter;
+
+    lines.push(`**Score: ${beforePct} → ${afterPct}${issuesBefore > 0 ? `  |  Issues: ${issuesBefore} → ${issuesAfter}${issuesFixed > 0 ? ` (${issuesFixed} fixed)` : ''}` : ''}**`);
+    lines.push('');
+
     lines.push(`| | Before | After | Change |`);
     lines.push(`|---|---|---|---|`);
     lines.push(
@@ -115,8 +123,63 @@ export function generateReport(options: ReportOptions): string {
       lines.push(
         `| ${after.emoji} ${after.name} | ${before.score}/${before.max} | ${after.score}/${after.max} | ${catDeltaStr} |`,
       );
+
+      // Show subcategories if available
+      if (after.subcategories && before.subcategories) {
+        for (let j = 0; j < after.subcategories.length; j++) {
+          const subBefore = before.subcategories[j];
+          const subAfter = after.subcategories[j];
+          if (!subBefore || !subAfter) continue;
+          const subDelta = subAfter.score - subBefore.score;
+          const subDeltaStr = subDelta > 0 ? `+${subDelta}` : String(subDelta);
+          lines.push(
+            `| &nbsp;&nbsp;&nbsp;&nbsp;↳ ${subAfter.name} | ${subBefore.score}/${subBefore.max} | ${subAfter.score}/${subAfter.max} | ${subDeltaStr} |`,
+          );
+        }
+      }
     }
     lines.push('');
+
+    // Issues Fixed section
+    if (issuesBefore > 0 && scoreAfter.issuesByType) {
+      lines.push('## Issues Fixed:');
+      lines.push('');
+
+      const beforeIssues = new Map<string, number>();
+      if (scoreBefore.issuesByType) {
+        for (const issue of scoreBefore.issuesByType) {
+          beforeIssues.set(`${issue.category}::${issue.subcategory}`, issue.count);
+        }
+      }
+
+      let hasIssues = false;
+      for (const afterIssue of scoreAfter.issuesByType) {
+        const key = `${afterIssue.category}::${afterIssue.subcategory}`;
+        const beforeCount = beforeIssues.get(key) ?? 0;
+        const fixed = beforeCount - afterIssue.count;
+        if (fixed > 0) {
+          lines.push(`- ✅ **${fixed} ${afterIssue.description} fixed** (${beforeCount} → ${afterIssue.count})`);
+          hasIssues = true;
+        }
+      }
+
+      // Issues that were completely resolved
+      if (scoreBefore.issuesByType) {
+        const afterKeys = new Set(scoreAfter.issuesByType.map(i => `${i.category}::${i.subcategory}`));
+        for (const beforeIssue of scoreBefore.issuesByType) {
+          const key = `${beforeIssue.category}::${beforeIssue.subcategory}`;
+          if (!afterKeys.has(key) && beforeIssue.count > 0) {
+            lines.push(`- ✅ **All ${beforeIssue.count} ${beforeIssue.description} resolved**`);
+            hasIssues = true;
+          }
+        }
+      }
+
+      if (!hasIssues) {
+        lines.push('- No issue count changes detected.');
+      }
+      lines.push('');
+    }
   }
 
   // --- Footer ---

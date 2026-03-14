@@ -5,12 +5,30 @@ import { join, extname } from 'path';
 
 // --- Types ---
 
+export interface SubCategory {
+  name: string;
+  score: number;
+  max: number;
+  summary: string;
+  issuesFound: number;   // discrete countable issues (e.g., "7 empty catches")
+  issuesDescription?: string; // e.g., "empty catch blocks"
+}
+
 export interface CategoryResult {
   name: string;
   emoji: string;
   score: number;
   max: number;
   summary: string;
+  subcategories: SubCategory[];
+}
+
+export interface IssueType {
+  category: string;
+  subcategory: string;
+  count: number;
+  description: string;  // e.g., "empty catch blocks", "any types", "functions >50 lines"
+  severity: 'low' | 'medium' | 'high';
 }
 
 export interface ScanResult {
@@ -18,6 +36,9 @@ export interface ScanResult {
   total: number;
   maxTotal: number;
   categories: CategoryResult[];
+  // Aggregate issues metric
+  totalIssuesFound: number;
+  issuesByType: IssueType[];
 }
 
 // --- File discovery ---
@@ -76,145 +97,341 @@ function readContents(files: string[]): Map<string, string> {
 
 // --- Scorers ---
 
+// Testing (20 points)
+// ├─ Coverage ratio ......... /8
+// ├─ Edge case depth ........ /6
+// └─ Test quality ........... /6
 function scoreTests(files: string[], contents: Map<string, string>, cwd: string): CategoryResult {
   const testFiles = files.filter(isTestFile);
   const sourceFiles = files.filter(f => !isTestFile(f));
 
-  let score = 0;
-  const notes: string[] = [];
+  // --- Coverage ratio /8 ---
+  let coverageScore = 0;
+  let coverageSummary = '';
+  let coverageIssues = 0;
 
-  if (testFiles.length > 0) {
-    score += 3;
-    notes.push(`${testFiles.length} test file${testFiles.length !== 1 ? 's' : ''}`);
-  } else {
-    notes.push('no test files');
-  }
+  const ratio = sourceFiles.length > 0 ? testFiles.length / sourceFiles.length : 0;
+  const ratioStr = `${testFiles.length} test files, ${Math.round(ratio * 100)}% ratio`;
 
-  // Test script in package.json
+  // Also check for test script in package.json
+  let hasTestScript = false;
   const pkgPath = join(cwd, 'package.json');
   if (existsSync(pkgPath)) {
     try {
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { scripts?: Record<string, string> };
       const testScript = pkg.scripts?.test ?? '';
       if (testScript && !testScript.includes('no test') && !testScript.includes('echo "Error')) {
-        score += 3;
-        notes.push('test script configured');
+        hasTestScript = true;
       }
     } catch { /* ignore */ }
   }
 
-  // Test case count — weight 100+ tests heavily
-  let testCaseCount = 0;
+  if (testFiles.length === 0) {
+    coverageScore = 0;
+    coverageSummary = 'no test files';
+    coverageIssues = sourceFiles.length; // all src files uncovered
+  } else if (ratio >= 0.5) {
+    coverageScore = 8;
+    coverageSummary = ratioStr;
+  } else if (ratio >= 0.3) {
+    coverageScore = hasTestScript ? 7 : 6;
+    coverageSummary = ratioStr;
+  } else if (ratio >= 0.15) {
+    coverageScore = hasTestScript ? 5 : 4;
+    coverageSummary = ratioStr;
+    coverageIssues = Math.floor(sourceFiles.length * (1 - ratio));
+  } else if (ratio > 0) {
+    coverageScore = hasTestScript ? 3 : 2;
+    coverageSummary = ratioStr;
+    coverageIssues = Math.floor(sourceFiles.length * (1 - ratio));
+  } else {
+    coverageScore = hasTestScript ? 2 : 0;
+    coverageSummary = hasTestScript ? 'test script configured, no test files' : 'no test files';
+    coverageIssues = sourceFiles.length;
+  }
+
+  // --- Edge case depth /6 ---
+  let edgeCaseScore = 0;
+  let edgeCaseSummary = '';
+  const edgePatterns = /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
+  let edgeCaseCount = 0;
+  let totalTestCases = 0;
+
   for (const file of testFiles) {
     const content = contents.get(file) ?? '';
-    testCaseCount += (content.match(/\b(?:it|test)\s*[.(]/g) ?? []).length;
-  }
-  if (testCaseCount >= 100) {
-    score += 5;
-    notes.push(`${testCaseCount} test cases`);
-  } else if (testCaseCount >= 50) {
-    score += 4;
-    notes.push(`${testCaseCount} test cases`);
-  } else if (testCaseCount >= 10) {
-    score += 2;
-    notes.push(`${testCaseCount} test cases`);
-  } else if (testCaseCount > 0) {
-    score += 1;
-    notes.push(`${testCaseCount} test case${testCaseCount !== 1 ? 's' : ''}`);
+    edgeCaseCount += (content.match(edgePatterns) ?? []).length;
+    totalTestCases += (content.match(/\b(?:it|test)\s*[.(]/g) ?? []).length;
   }
 
-  // Test-to-source-file ratio
-  const ratio = sourceFiles.length > 0 ? testFiles.length / sourceFiles.length : 0;
-  if (ratio >= 0.3) {
-    score += 6;
-    notes.push(`strong ratio (${Math.round(ratio * 100)}%)`);
-  } else if (ratio >= 0.15) {
-    score += 4;
-    notes.push(`ok ratio (${Math.round(ratio * 100)}%)`);
-  } else if (ratio > 0) {
-    score += 2;
-    notes.push(`low ratio (${Math.round(ratio * 100)}%)`);
+  if (edgeCaseCount >= 50) {
+    edgeCaseScore = 6;
+    edgeCaseSummary = `${edgeCaseCount} edge/error test cases`;
+  } else if (edgeCaseCount >= 20) {
+    edgeCaseScore = 5;
+    edgeCaseSummary = `${edgeCaseCount} edge/error test cases`;
+  } else if (edgeCaseCount >= 10) {
+    edgeCaseScore = 4;
+    edgeCaseSummary = `${edgeCaseCount} edge/error test cases`;
+  } else if (edgeCaseCount >= 3) {
+    edgeCaseScore = 2;
+    edgeCaseSummary = `${edgeCaseCount} edge/error test cases`;
+  } else if (edgeCaseCount > 0) {
+    edgeCaseScore = 1;
+    edgeCaseSummary = `${edgeCaseCount} edge/error test case${edgeCaseCount !== 1 ? 's' : ''}`;
+  } else {
+    edgeCaseScore = 0;
+    edgeCaseSummary = 'no edge case tests detected';
   }
 
-  return { name: 'Testing', emoji: '🧪', score: Math.min(score, 17), max: 17, summary: notes.join(', ') };
+  // --- Test quality /6 ---
+  let testQualityScore = 0;
+  let testQualitySummary = '';
+
+  let assertCount = 0;
+  let describeCount = 0;
+
+  for (const file of testFiles) {
+    const content = contents.get(file) ?? '';
+    assertCount += (content.match(/\b(?:expect|assert)\s*[.(]/g) ?? []).length;
+    describeCount += (content.match(/\bdescribe\s*[.(]/g) ?? []).length;
+  }
+
+  const assertsPerTest = totalTestCases > 0 ? assertCount / totalTestCases : 0;
+  const hasDescribe = describeCount > 0;
+
+  if (totalTestCases >= 50 && assertsPerTest >= 2 && hasDescribe) {
+    testQualityScore = 6;
+    testQualitySummary = `${assertsPerTest.toFixed(1)} assertions per test`;
+  } else if (totalTestCases >= 10 && assertsPerTest >= 1.5 && hasDescribe) {
+    testQualityScore = 5;
+    testQualitySummary = `${assertsPerTest.toFixed(1)} assertions per test`;
+  } else if (totalTestCases >= 5 && assertsPerTest >= 1) {
+    testQualityScore = 4;
+    testQualitySummary = `${assertsPerTest.toFixed(1)} assertions per test`;
+  } else if (totalTestCases > 0) {
+    testQualityScore = 2;
+    testQualitySummary = `${totalTestCases} test case${totalTestCases !== 1 ? 's' : ''}, low assertion density`;
+  } else {
+    testQualityScore = 0;
+    testQualitySummary = 'no test cases found';
+  }
+
+  const score = coverageScore + edgeCaseScore + testQualityScore;
+  const summary = [coverageSummary, edgeCaseSummary].filter(Boolean).join(', ');
+
+  return {
+    name: 'Testing',
+    emoji: '🧪',
+    score: Math.min(score, 20),
+    max: 20,
+    summary,
+    subcategories: [
+      { name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: coverageIssues, issuesDescription: 'source files without tests' },
+      { name: 'Edge case depth', score: edgeCaseScore, max: 6, summary: edgeCaseSummary, issuesFound: edgeCaseCount === 0 ? 1 : 0, issuesDescription: 'no edge case tests' },
+      { name: 'Test quality', score: testQualityScore, max: 6, summary: testQualitySummary, issuesFound: 0 },
+    ],
+  };
 }
 
-function scoreErrorHandling(files: string[], contents: Map<string, string>): CategoryResult {
+// Security (16 points)
+// ├─ Secrets & env vars ..... /4
+// ├─ Input validation ....... /6
+// └─ Auth & rate limiting ... /6
+function scoreSecurity(files: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
-  let score = 0;
-  const notes: string[] = [];
 
-  let tryCatchTotal = 0;
-  let emptyCatchTotal = 0;
-  let asyncTotal = 0;
+  // --- Secrets & env vars /4 ---
+  const SECRET_PATTERNS = [
+    /(?:api[_-]?key|apikey|secret|password|passwd|token)\s*=\s*['"][^'"]{8,}['"]/gi,
+    /(?:sk-|pk-live_|ghp_|gho_|ghs_|AKIA)[A-Za-z0-9]{16,}/g,
+    /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/g,
+  ];
+
+  let secretCount = 0;
+  let usesEnvVars = false;
 
   for (const file of srcFiles) {
     const content = contents.get(file) ?? '';
-    tryCatchTotal += (content.match(/\btry\s*\{/g) ?? []).length;
-    emptyCatchTotal += (content.match(/\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g) ?? []).length;
-    asyncTotal += (content.match(/\basync\s+function\b|\basync\s*\(/g) ?? []).length;
+    for (const pattern of SECRET_PATTERNS) {
+      secretCount += (content.match(pattern) ?? []).length;
+    }
+    if (/\bprocess\.env\b|\bos\.environ\b|\bos\.getenv\b/.test(content)) {
+      usesEnvVars = true;
+    }
   }
 
-  if (tryCatchTotal > 0) {
-    score += 6;
-    notes.push(`${tryCatchTotal} try/catch block${tryCatchTotal !== 1 ? 's' : ''}`);
+  let secretsScore = 0;
+  let secretsSummary = '';
+  if (secretCount === 0 && usesEnvVars) {
+    secretsScore = 4;
+    secretsSummary = 'no hardcoded secrets, uses env vars';
+  } else if (secretCount === 0) {
+    secretsScore = 3;
+    secretsSummary = 'no hardcoded secrets';
   } else {
-    notes.push('no try/catch found');
+    secretsScore = 0;
+    secretsSummary = `${secretCount} potential secret${secretCount !== 1 ? 's' : ''}`;
   }
 
-  if (emptyCatchTotal === 0) {
-    score += 5;
-    notes.push('no empty catch blocks');
+  // --- Input validation /6 ---
+  let inputValScore = 0;
+  let inputValSummary = '';
+  let inputValIssues = 0;
+
+  let validationFileCount = 0;
+  let routeFileCount = 0;
+
+  for (const file of srcFiles) {
+    const content = contents.get(file) ?? '';
+    // Zod/Joi imports or usage
+    const hasZodJoi = /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content);
+    // UUID validation
+    const hasUuidValidation = /\buuid\b.*\bvalidate\b|\bvalidate.*uuid\b|isUUID|uuidv[1-5]/i.test(content);
+    // Param validation in route handlers
+    const hasParamValidation = /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(content);
+    // Route file detection
+    const isRouteFile = /(?:router\.|app\.(?:get|post|put|patch|delete)|@(?:Get|Post|Put|Patch|Delete))/i.test(content);
+
+    if (isRouteFile) routeFileCount++;
+    if (hasZodJoi || hasUuidValidation || hasParamValidation) validationFileCount++;
+  }
+
+  const totalCheckableFiles = Math.max(routeFileCount, validationFileCount, 1);
+  const validationRatio = validationFileCount / totalCheckableFiles;
+
+  if (validationFileCount >= 3 && validationRatio >= 0.6) {
+    inputValScore = 6;
+    inputValSummary = `validation on ${validationFileCount} files`;
+  } else if (validationFileCount >= 2) {
+    inputValScore = 4;
+    inputValSummary = `Zod/validation on ${validationFileCount} files`;
+    inputValIssues = routeFileCount > validationFileCount ? routeFileCount - validationFileCount : 0;
+  } else if (validationFileCount === 1) {
+    inputValScore = 2;
+    inputValSummary = 'minimal input validation detected';
+    inputValIssues = Math.max(0, routeFileCount - 1);
   } else {
-    notes.push(`${emptyCatchTotal} empty catch${emptyCatchTotal !== 1 ? 'es' : ''}`);
+    inputValScore = 0;
+    inputValSummary = 'no input validation detected';
+    inputValIssues = routeFileCount;
   }
 
-  // Async coverage
-  if (asyncTotal === 0 || tryCatchTotal >= asyncTotal * 0.5) {
-    score += 6;
-    if (asyncTotal > 0) notes.push('async fns covered');
+  // --- Auth & rate limiting /6 ---
+  let authScore = 0;
+  let authSummary = '';
+  let authIssues = 0;
+
+  let hasAuthMiddleware = false;
+  let hasRateLimit = false;
+  let hasCors = false;
+
+  for (const file of srcFiles) {
+    const content = contents.get(file) ?? '';
+    if (/\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i.test(content)) {
+      hasAuthMiddleware = true;
+    }
+    if (/\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i.test(content)) {
+      hasRateLimit = true;
+    }
+    if (/\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i.test(content)) {
+      hasCors = true;
+    }
+  }
+
+  const authChecks = [hasAuthMiddleware, hasRateLimit, hasCors].filter(Boolean).length;
+  if (authChecks >= 3) {
+    authScore = 6;
+    authSummary = 'auth middleware, rate limiting, CORS configured';
+  } else if (authChecks === 2) {
+    authScore = 4;
+    const found: string[] = [];
+    if (hasAuthMiddleware) found.push('auth middleware');
+    if (hasRateLimit) found.push('rate limiting');
+    if (hasCors) found.push('CORS');
+    authSummary = found.join(', ');
+    authIssues = 3 - authChecks;
+  } else if (authChecks === 1) {
+    authScore = 2;
+    if (hasAuthMiddleware) authSummary = 'auth middleware only';
+    else if (hasRateLimit) authSummary = 'rate limiting only';
+    else authSummary = 'CORS only';
+    authIssues = 3 - authChecks;
   } else {
-    const pct = Math.round((tryCatchTotal / asyncTotal) * 100);
-    const pts = Math.round((pct / 100) * 6);
-    score += pts;
-    notes.push(`${pct}% async coverage`);
+    authScore = 0;
+    authSummary = 'no auth/rate-limit/CORS detected';
+    authIssues = 3;
   }
 
-  return { name: 'Error Handling', emoji: '⚠️ ', score: Math.min(score, 17), max: 17, summary: notes.join(', ') };
+  const score = secretsScore + inputValScore + authScore;
+  const summary = [secretsSummary, inputValSummary].filter(Boolean).join(', ');
+
+  return {
+    name: 'Security',
+    emoji: '🔒',
+    score: Math.min(score, 16),
+    max: 16,
+    summary,
+    subcategories: [
+      { name: 'Secrets & env vars', score: secretsScore, max: 4, summary: secretsSummary, issuesFound: secretCount, issuesDescription: 'hardcoded secrets' },
+      { name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary, issuesFound: inputValIssues, issuesDescription: 'route files without validation' },
+      { name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary, issuesFound: authIssues, issuesDescription: 'missing auth/security controls' },
+    ],
+  };
 }
 
+// Type Safety (12 points)
+// ├─ Strict config .......... /4
+// └─ Any type count ......... /8
 function scoreTypes(files: string[], cwd: string, contents: Map<string, string>): CategoryResult {
   const tsFiles = files.filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
-  let score = 0;
-  const notes: string[] = [];
 
   if (tsFiles.length === 0) {
-    return { name: 'Types', emoji: '📝', score: 0, max: 17, summary: 'JavaScript only — no static types' };
+    return {
+      name: 'Type Safety',
+      emoji: '📝',
+      score: 0,
+      max: 12,
+      summary: 'JavaScript only — no static types',
+      subcategories: [
+        { name: 'Strict config', score: 0, max: 4, summary: 'JavaScript only', issuesFound: 1, issuesDescription: 'no TypeScript' },
+        { name: 'Any type count', score: 0, max: 8, summary: 'JavaScript only', issuesFound: 0 },
+      ],
+    };
   }
 
-  score += 3;
-  notes.push('TypeScript');
-
-  // Strict mode in tsconfig
+  // --- Strict config /4 ---
+  let strictScore = 0;
+  let strictSummary = 'TypeScript (no strict config)';
   const tsconfigPath = join(cwd, 'tsconfig.json');
+
   if (existsSync(tsconfigPath)) {
     try {
       const tsconfig = JSON.parse(readFileSync(tsconfigPath, 'utf-8')) as {
-        compilerOptions?: { strict?: boolean; noImplicitAny?: boolean };
+        compilerOptions?: { strict?: boolean; noImplicitAny?: boolean; strictNullChecks?: boolean };
       };
       if (tsconfig.compilerOptions?.strict) {
-        score += 5;
-        notes.push('strict mode');
+        strictScore = 4;
+        strictSummary = 'strict mode enabled';
+      } else if (tsconfig.compilerOptions?.noImplicitAny && tsconfig.compilerOptions?.strictNullChecks) {
+        strictScore = 3;
+        strictSummary = 'noImplicitAny + strictNullChecks';
       } else if (tsconfig.compilerOptions?.noImplicitAny) {
-        score += 3;
-        notes.push('noImplicitAny');
+        strictScore = 2;
+        strictSummary = 'noImplicitAny';
       } else {
-        notes.push('no strict mode');
+        strictScore = 1;
+        strictSummary = 'TypeScript, no strict flags';
       }
-    } catch { /* ignore */ }
+    } catch {
+      strictScore = 1;
+      strictSummary = 'TypeScript (tsconfig parse error)';
+    }
+  } else {
+    strictScore = 1;
+    strictSummary = 'TypeScript, no tsconfig found';
   }
 
-  // `any` density in source (not test, not .d.ts) TS files
+  // --- Any type count /8 ---
   const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
   let anyCount = 0;
   let totalLines = 0;
@@ -225,91 +442,151 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
     totalLines += content.split('\n').length;
   }
 
-  // Normalize by codebase size — larger codebases tolerate more any
   const anyPer1k = totalLines > 0 ? (anyCount / totalLines) * 1000 : 0;
+  let anyScore = 0;
+  let anySummary = '';
+
   if (anyCount === 0) {
-    score += 9;
-    notes.push('zero any types');
+    anyScore = 8;
+    anySummary = 'zero any types';
   } else if (anyPer1k < 3) {
-    score += 7;
-    notes.push(`${anyCount} any type${anyCount !== 1 ? 's' : ''}`);
+    anyScore = 6;
+    anySummary = `${anyCount} any type${anyCount !== 1 ? 's' : ''} (low density)`;
   } else if (anyPer1k < 8) {
-    score += 4;
-    notes.push(`${anyCount} any types (moderate)`);
+    anyScore = 4;
+    anySummary = `${anyCount} any types (moderate)`;
   } else if (anyPer1k < 15) {
-    score += 2;
-    notes.push(`${anyCount} any types (high)`);
+    anyScore = 2;
+    anySummary = `${anyCount} any types (high)`;
   } else {
-    notes.push(`${anyCount} any types (very high)`);
+    anyScore = 0;
+    anySummary = `${anyCount} any types (very high)`;
   }
 
-  return { name: 'Types', emoji: '📝', score: Math.min(score, 17), max: 17, summary: notes.join(', ') };
+  const score = strictScore + anyScore;
+  const summary = [strictSummary, anySummary].filter(Boolean).join(', ');
+
+  return {
+    name: 'Type Safety',
+    emoji: '📝',
+    score: Math.min(score, 12),
+    max: 12,
+    summary,
+    subcategories: [
+      { name: 'Strict config', score: strictScore, max: 4, summary: strictSummary, issuesFound: strictScore < 4 ? 1 : 0, issuesDescription: 'missing strict TypeScript config' },
+      { name: 'Any type count', score: anyScore, max: 8, summary: anySummary, issuesFound: anyCount, issuesDescription: 'any types' },
+    ],
+  };
 }
 
-function scoreSecurity(files: string[], contents: Map<string, string>): CategoryResult {
+// Error Handling (14 points)
+// ├─ Coverage ............... /5
+// ├─ Empty catches .......... /5
+// └─ Structured logging ..... /4
+function scoreErrorHandling(files: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
-  let score = 0;
-  const notes: string[] = [];
 
-  const SECRET_PATTERNS = [
-    /(?:api[_-]?key|apikey|secret|password|passwd|token)\s*=\s*['"][^'"]{8,}['"]/gi,
-    /(?:sk-|pk-live_|ghp_|gho_|ghs_|AKIA)[A-Za-z0-9]{16,}/g,
-    /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/g,
-  ];
-
-  let secretCount = 0;
-  let usesEnvVars = false;
-  let usesEval = false;
+  let tryCatchTotal = 0;
+  let emptyCatchTotal = 0;
+  let asyncTotal = 0;
+  let consoleErrorCount = 0;
+  let structuredLogCount = 0;
 
   for (const file of srcFiles) {
     const content = contents.get(file) ?? '';
-    for (const pattern of SECRET_PATTERNS) {
-      secretCount += (content.match(pattern) ?? []).length;
-    }
-    if (/\bprocess\.env\b|\bos\.environ\b|\bos\.getenv\b/.test(content)) {
-      usesEnvVars = true;
-    }
-    if (/\beval\s*\(/.test(content)) {
-      usesEval = true;
-    }
+    tryCatchTotal += (content.match(/\btry\s*\{/g) ?? []).length;
+    emptyCatchTotal += (content.match(/\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g) ?? []).length;
+    asyncTotal += (content.match(/\basync\s+function\b|\basync\s*\(/g) ?? []).length;
+    consoleErrorCount += (content.match(/\bconsole\.(?:error|warn|log)\s*\(/g) ?? []).length;
+    structuredLogCount += (content.match(/\b(?:logger|winston|pino|bunyan|log4js)\./g) ?? []).length;
   }
 
-  if (secretCount === 0) {
-    score += 6;
-    notes.push('no hardcoded secrets');
+  // --- Coverage /5 ---
+  let coverageScore = 0;
+  let coverageSummary = '';
+
+  if (tryCatchTotal === 0) {
+    coverageScore = 0;
+    coverageSummary = 'no try/catch found';
+  } else if (asyncTotal === 0 || tryCatchTotal >= asyncTotal * 0.6) {
+    coverageScore = 5;
+    coverageSummary = `${tryCatchTotal} try/catch block${tryCatchTotal !== 1 ? 's' : ''}`;
   } else {
-    notes.push(`${secretCount} potential secret${secretCount !== 1 ? 's' : ''}`);
+    const pct = Math.round((tryCatchTotal / asyncTotal) * 100);
+    coverageScore = Math.round((pct / 100) * 5);
+    coverageSummary = `${tryCatchTotal} try/catch (${pct}% async coverage)`;
   }
 
-  if (usesEnvVars) {
-    score += 4;
-    notes.push('uses env vars');
+  // --- Empty catches /5 ---
+  let emptyCatchScore = 0;
+  let emptyCatchSummary = '';
+
+  if (emptyCatchTotal === 0) {
+    emptyCatchScore = 5;
+    emptyCatchSummary = 'no empty catch blocks';
+  } else if (emptyCatchTotal <= 2) {
+    emptyCatchScore = 3;
+    emptyCatchSummary = `${emptyCatchTotal} empty catch${emptyCatchTotal !== 1 ? 'es' : ''}`;
+  } else if (emptyCatchTotal <= 5) {
+    emptyCatchScore = 1;
+    emptyCatchSummary = `${emptyCatchTotal} empty catches`;
   } else {
-    notes.push('no env var usage');
+    emptyCatchScore = 0;
+    emptyCatchSummary = `${emptyCatchTotal} empty catches`;
   }
 
-  if (!usesEval) {
-    score += 6;
-    notes.push('no eval()');
+  // --- Structured logging /4 ---
+  let loggingScore = 0;
+  let loggingSummary = '';
+
+  if (structuredLogCount > 0 && consoleErrorCount === 0) {
+    loggingScore = 4;
+    loggingSummary = `structured logger only (${structuredLogCount} calls)`;
+  } else if (structuredLogCount > 0 && consoleErrorCount <= 5) {
+    loggingScore = 3;
+    loggingSummary = `structured logger + ${consoleErrorCount} console calls`;
+  } else if (structuredLogCount > 0) {
+    loggingScore = 2;
+    loggingSummary = `logger (${structuredLogCount}) + console (${consoleErrorCount})`;
+  } else if (consoleErrorCount > 0) {
+    loggingScore = 1;
+    loggingSummary = `${consoleErrorCount} console.error/warn calls (no structured logger)`;
   } else {
-    notes.push('eval() found');
+    loggingScore = 0;
+    loggingSummary = 'no error logging detected';
   }
 
-  return { name: 'Security', emoji: '🔒', score: Math.min(score, 16), max: 16, summary: notes.join(', ') };
+  const score = coverageScore + emptyCatchScore + loggingScore;
+  const summary = [coverageSummary, emptyCatchSummary].filter(Boolean).join(', ');
+
+  return {
+    name: 'Error Handling',
+    emoji: '⚠️ ',
+    score: Math.min(score, 14),
+    max: 14,
+    summary,
+    subcategories: [
+      { name: 'Coverage', score: coverageScore, max: 5, summary: coverageSummary, issuesFound: Math.max(0, asyncTotal - tryCatchTotal), issuesDescription: 'async functions without error handling' },
+      { name: 'Empty catches', score: emptyCatchScore, max: 5, summary: emptyCatchSummary, issuesFound: emptyCatchTotal, issuesDescription: 'empty catch blocks' },
+      { name: 'Structured logging', score: loggingScore, max: 4, summary: loggingSummary, issuesFound: structuredLogCount === 0 ? 1 : 0, issuesDescription: 'no structured logger' },
+    ],
+  };
 }
 
 // Patterns that indicate a real DB query or API call worth flagging in a loop
 const LOOP_DB_API_PATTERN = /\.(find|findOne|findAll|findBy|query|save|update|insert|select|exec|execute|search)\s*[(<]|\.(get|post|put|delete|patch|request)\s*\(|\bfetch\s*\(|\baxios\s*[.(]/;
 
+// Performance (14 points)
+// ├─ Async patterns ......... /5
+// ├─ Console cleanup ........ /5
+// └─ Import hygiene ......... /4
 function scorePerformance(files: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
-  // Exclude scripts/ directories from console.log check — startup messages are intentional
+  // Exclude scripts/ directories from console.log check
   const appFiles = srcFiles.filter(f => {
     const normalized = f.replace(/\\/g, '/');
     return !normalized.includes('/scripts/');
   });
-  let score = 0;
-  const notes: string[] = [];
 
   let awaitInLoopCount = 0;
   let consoleLogCount = 0;
@@ -320,13 +597,12 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
 
     consoleLogCount += (content.match(/\bconsole\.log\s*\(/g) ?? []).length;
 
-    // Detect await inside for/while loops — only flag DB/API patterns (not simple sequential awaits)
+    // Detect await inside for/while loops — only flag DB/API patterns
     let loopDepth = 0;
     let braceStack: number[] = [];
 
     for (const line of lines) {
       const stripped = line.trim();
-      // Detect loop start
       if (/^\s*(?:for|while)\s*\(/.test(line) || /^\s*for\s+\w+/.test(line)) {
         loopDepth++;
         braceStack.push(0);
@@ -341,7 +617,6 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
             loopDepth = Math.max(0, loopDepth - 1);
           }
         }
-        // Only flag if it looks like a DB query or HTTP/API call — not every sequential await is N+1
         if (/\bawait\s+/.test(stripped) && LOOP_DB_API_PATTERN.test(stripped)) {
           awaitInLoopCount++;
         }
@@ -349,54 +624,123 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
     }
   }
 
+  // --- Async patterns /5 ---
+  let asyncScore = 0;
+  let asyncSummary = '';
+
   if (awaitInLoopCount === 0) {
-    score += 6;
-    notes.push('no await-in-loop');
+    asyncScore = 5;
+    asyncSummary = 'no await-in-loop';
+  } else if (awaitInLoopCount <= 2) {
+    asyncScore = 3;
+    asyncSummary = `${awaitInLoopCount} await-in-loop pattern${awaitInLoopCount !== 1 ? 's' : ''}`;
   } else {
-    score += 3;
-    notes.push(`${awaitInLoopCount} await-in-loop pattern${awaitInLoopCount !== 1 ? 's' : ''}`);
+    asyncScore = 1;
+    asyncSummary = `${awaitInLoopCount} await-in-loop patterns`;
   }
 
-  // Console.log: only heavy-penalize if truly excessive (>20) in app src
+  // --- Console cleanup /5 ---
+  let consoleScore = 0;
+  let consoleSummary = '';
+
   if (consoleLogCount === 0) {
-    score += 10;
-    notes.push('no console.log in src');
+    consoleScore = 5;
+    consoleSummary = 'no console.log in src';
+  } else if (consoleLogCount <= 5) {
+    consoleScore = 4;
+    consoleSummary = `${consoleLogCount} console.log`;
   } else if (consoleLogCount <= 20) {
-    score += 7;
-    notes.push(`${consoleLogCount} console.log`);
+    consoleScore = 2;
+    consoleSummary = `${consoleLogCount} console.log calls`;
   } else {
-    score += 3;
-    notes.push(`${consoleLogCount} console.log calls`);
+    consoleScore = 0;
+    consoleSummary = `${consoleLogCount} console.log calls (excessive)`;
   }
 
-  return { name: 'Performance', emoji: '⚡', score: Math.min(score, 16), max: 16, summary: notes.join(', ') };
+  // --- Import hygiene /4 ---
+  // Heuristic: check for self-imports and suspicious circular patterns
+  let importIssues = 0;
+  let importHygieneSummary = '';
+
+  for (const file of appFiles) {
+    const content = contents.get(file) ?? '';
+    // Self-imports (importing from same file path)
+    const basename = file.replace(/\\/g, '/').split('/').pop()?.replace(/\.tsx?$/, '') ?? '';
+    if (basename && new RegExp(`from ['"].*/${basename}['"]`).test(content)) {
+      importIssues++;
+    }
+    // Detect wildcard re-exports that might cause barrel file issues
+    const wildcardExports = (content.match(/export \* from/g) ?? []).length;
+    if (wildcardExports > 5) importIssues++;
+  }
+
+  let importScore = 0;
+  if (importIssues === 0) {
+    importScore = 4;
+    importHygieneSummary = 'clean imports';
+  } else if (importIssues <= 2) {
+    importScore = 2;
+    importHygieneSummary = `${importIssues} import issue${importIssues !== 1 ? 's' : ''} detected`;
+  } else {
+    importScore = 0;
+    importHygieneSummary = `${importIssues} import issues detected`;
+  }
+
+  const score = asyncScore + consoleScore + importScore;
+  const summary = [asyncSummary, consoleSummary].filter(Boolean).join(', ');
+
+  return {
+    name: 'Performance',
+    emoji: '⚡',
+    score: Math.min(score, 14),
+    max: 14,
+    summary,
+    subcategories: [
+      { name: 'Async patterns', score: asyncScore, max: 5, summary: asyncSummary, issuesFound: awaitInLoopCount, issuesDescription: 'await-in-loop patterns' },
+      { name: 'Console cleanup', score: consoleScore, max: 5, summary: consoleSummary, issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src' },
+      { name: 'Import hygiene', score: importScore, max: 4, summary: importHygieneSummary, issuesFound: importIssues, issuesDescription: 'import issues' },
+    ],
+  };
 }
 
-function scoreReadability(files: string[], contents: Map<string, string>): CategoryResult {
+// Code Quality (24 points)
+// ├─ Function length ........ /6
+// ├─ Line length ............ /6
+// ├─ Dead code .............. /6
+// └─ Duplication ............ /6
+function scoreCodeQuality(files: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
-  let score = 0;
-  const notes: string[] = [];
 
   let totalFnLength = 0;
   let fnCount = 0;
+  let longFnCount = 0;
   let longLineCount = 0;
   let commentedCodeCount = 0;
+  let todoCount = 0;
+
+  // For duplication: collect all source lines
+  const lineFrequency = new Map<string, number>();
 
   for (const file of srcFiles) {
     const content = contents.get(file) ?? '';
     const lines = content.split('\n');
 
     longLineCount += lines.filter(l => l.length > 120).length;
+
+    // Count commented-out code (lines that look like code inside comments)
     commentedCodeCount += lines.filter(l =>
       /^\s*\/\/\s*(?:const|let|var|function|return|if\s*\(|for\s*\(|while\s*\(|import|export)\b/.test(l),
     ).length;
+
+    // Count TODO/FIXME
+    todoCount += lines.filter(l => /\b(?:TODO|FIXME|HACK|XXX)\b/.test(l)).length;
 
     // Estimate function lengths via brace tracking
     let fnStart = -1;
     let depth = 0;
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+      const line = lines[i] ?? '';
       const isFnDecl =
         /\bfunction\s+\w+\s*\(/.test(line) ||
         /\b(?:const|let)\s+\w+\s*=\s*(?:async\s+)?\(/.test(line) ||
@@ -408,51 +752,197 @@ function scoreReadability(files: string[], contents: Map<string, string>): Categ
       } else if (fnStart !== -1) {
         depth += (line.match(/\{/g) ?? []).length - (line.match(/\}/g) ?? []).length;
         if (depth <= 0) {
+          const fnLen = i - fnStart;
           fnCount++;
-          totalFnLength += i - fnStart;
+          totalFnLength += fnLen;
+          if (fnLen > 50) longFnCount++;
           fnStart = -1;
           depth = 0;
         }
       }
+
+      // Track line frequency for duplication detection (ignore blank/comment lines)
+      const stripped = line.trim();
+      if (stripped.length > 10 && !stripped.startsWith('//') && !stripped.startsWith('*')) {
+        lineFrequency.set(stripped, (lineFrequency.get(stripped) ?? 0) + 1);
+      }
     }
   }
 
+  // --- Function length /6 ---
   const avgLen = fnCount > 0 ? totalFnLength / fnCount : 0;
-  if (avgLen === 0 || avgLen <= 30) {
-    score += 6;
-    notes.push('short functions');
+  let fnLenScore = 0;
+  let fnLenSummary = '';
+
+  if (fnCount === 0 || avgLen <= 20) {
+    fnLenScore = 6;
+    fnLenSummary = fnCount === 0 ? 'no functions detected' : 'short functions';
+  } else if (avgLen <= 30) {
+    fnLenScore = 6;
+    fnLenSummary = `avg ${Math.round(avgLen)}-line functions`;
   } else if (avgLen <= 50) {
-    score += 5;
-    notes.push(`avg ${Math.round(avgLen)}-line functions`);
+    fnLenScore = 5;
+    fnLenSummary = `avg ${Math.round(avgLen)}-line functions`;
   } else if (avgLen <= 80) {
-    score += 4;
-    notes.push(`avg ${Math.round(avgLen)}-line functions`);
+    fnLenScore = 3;
+    fnLenSummary = `avg ${Math.round(avgLen)}-line functions`;
   } else {
-    score += 2;
-    notes.push(`long avg (${Math.round(avgLen)} lines)`);
+    fnLenScore = 1;
+    fnLenSummary = `long avg (${Math.round(avgLen)} lines)`;
   }
+
+  // --- Line length /6 ---
+  let lineLenScore = 0;
+  let lineLenSummary = '';
 
   if (longLineCount === 0) {
-    score += 5;
-    notes.push('no long lines');
-  } else if (longLineCount <= 10) {
-    score += 3;
-    notes.push(`${longLineCount} long line${longLineCount !== 1 ? 's' : ''}`);
+    lineLenScore = 6;
+    lineLenSummary = 'no long lines';
+  } else if (longLineCount <= 5) {
+    lineLenScore = 5;
+    lineLenSummary = `${longLineCount} long line${longLineCount !== 1 ? 's' : ''}`;
+  } else if (longLineCount <= 15) {
+    lineLenScore = 3;
+    lineLenSummary = `${longLineCount} long lines`;
+  } else if (longLineCount <= 30) {
+    lineLenScore = 1;
+    lineLenSummary = `${longLineCount} long lines`;
   } else {
-    notes.push(`${longLineCount} long lines`);
+    lineLenScore = 0;
+    lineLenSummary = `${longLineCount} long lines`;
   }
 
-  if (commentedCodeCount === 0) {
-    score += 6;
-    notes.push('no dead code');
-  } else if (commentedCodeCount <= 5) {
-    score += 3;
-    notes.push(`${commentedCodeCount} commented-out lines`);
+  // --- Dead code /6 ---
+  const deadCodeTotal = commentedCodeCount + todoCount;
+  let deadCodeScore = 0;
+  let deadCodeSummary = '';
+
+  if (deadCodeTotal === 0) {
+    deadCodeScore = 6;
+    deadCodeSummary = 'no dead code detected';
+  } else if (commentedCodeCount === 0 && todoCount <= 3) {
+    deadCodeScore = 5;
+    deadCodeSummary = `${todoCount} TODO${todoCount !== 1 ? 's' : ''}`;
+  } else if (commentedCodeCount <= 3 && todoCount <= 5) {
+    deadCodeScore = 4;
+    deadCodeSummary = `${commentedCodeCount} commented-out, ${todoCount} TODOs`;
+  } else if (commentedCodeCount <= 10) {
+    deadCodeScore = 2;
+    deadCodeSummary = `${commentedCodeCount} commented-out lines, ${todoCount} TODOs`;
   } else {
-    notes.push(`${commentedCodeCount} commented-out lines`);
+    deadCodeScore = 0;
+    deadCodeSummary = `${commentedCodeCount} commented-out lines, ${todoCount} TODOs`;
   }
 
-  return { name: 'Readability', emoji: '📖', score: Math.min(score, 17), max: 17, summary: notes.join(', ') };
+  // --- Duplication /6 ---
+  // Count lines that appear 3+ times across the codebase
+  let duplicatedLines = 0;
+  for (const [, count] of lineFrequency) {
+    if (count >= 3) duplicatedLines++;
+  }
+
+  let dupScore = 0;
+  let dupSummary = '';
+
+  if (duplicatedLines === 0) {
+    dupScore = 6;
+    dupSummary = 'no significant duplication';
+  } else if (duplicatedLines <= 10) {
+    dupScore = 5;
+    dupSummary = `${duplicatedLines} repeated lines`;
+  } else if (duplicatedLines <= 30) {
+    dupScore = 3;
+    dupSummary = `${duplicatedLines} repeated lines`;
+  } else if (duplicatedLines <= 60) {
+    dupScore = 1;
+    dupSummary = `${duplicatedLines} repeated lines`;
+  } else {
+    dupScore = 0;
+    dupSummary = `${duplicatedLines} repeated lines (high duplication)`;
+  }
+
+  const score = fnLenScore + lineLenScore + deadCodeScore + dupScore;
+  const summary = [fnLenSummary, lineLenSummary].filter(Boolean).join(', ');
+
+  return {
+    name: 'Code Quality',
+    emoji: '📖',
+    score: Math.min(score, 24),
+    max: 24,
+    summary,
+    subcategories: [
+      { name: 'Function length', score: fnLenScore, max: 6, summary: fnLenSummary, issuesFound: longFnCount, issuesDescription: 'functions >50 lines' },
+      { name: 'Line length', score: lineLenScore, max: 6, summary: lineLenSummary, issuesFound: longLineCount, issuesDescription: 'lines >120 chars' },
+      { name: 'Dead code', score: deadCodeScore, max: 6, summary: deadCodeSummary, issuesFound: deadCodeTotal, issuesDescription: 'dead code indicators (TODO, commented code)' },
+      { name: 'Duplication', score: dupScore, max: 6, summary: dupSummary, issuesFound: duplicatedLines, issuesDescription: 'repeated code lines' },
+    ],
+  };
+}
+
+// --- Aggregate issues from categories ---
+
+function aggregateIssues(categories: CategoryResult[]): { totalIssuesFound: number; issuesByType: IssueType[] } {
+  const issuesByType: IssueType[] = [];
+  let totalIssuesFound = 0;
+
+  const SEVERITY_MAP: Record<string, Record<string, 'low' | 'medium' | 'high'>> = {
+    'Testing': {
+      'Coverage ratio': 'high',
+      'Edge case depth': 'medium',
+      'Test quality': 'low',
+    },
+    'Security': {
+      'Secrets & env vars': 'high',
+      'Input validation': 'high',
+      'Auth & rate limiting': 'medium',
+    },
+    'Type Safety': {
+      'Strict config': 'medium',
+      'Any type count': 'medium',
+    },
+    'Error Handling': {
+      'Coverage': 'high',
+      'Empty catches': 'high',
+      'Structured logging': 'low',
+    },
+    'Performance': {
+      'Async patterns': 'medium',
+      'Console cleanup': 'low',
+      'Import hygiene': 'low',
+    },
+    'Code Quality': {
+      'Function length': 'medium',
+      'Line length': 'low',
+      'Dead code': 'low',
+      'Duplication': 'medium',
+    },
+  };
+
+  for (const cat of categories) {
+    for (const sub of cat.subcategories) {
+      if (sub.issuesFound > 0 && sub.issuesDescription) {
+        const severity = SEVERITY_MAP[cat.name]?.[sub.name] ?? 'low';
+        issuesByType.push({
+          category: cat.name,
+          subcategory: sub.name,
+          count: sub.issuesFound,
+          description: sub.issuesDescription,
+          severity,
+        });
+        totalIssuesFound += sub.issuesFound;
+      }
+    }
+  }
+
+  // Sort by severity then count
+  const severityOrder = { high: 0, medium: 1, low: 2 };
+  issuesByType.sort((a, b) => {
+    const sevDiff = severityOrder[a.severity] - severityOrder[b.severity];
+    if (sevDiff !== 0) return sevDiff;
+    return b.count - a.count;
+  });
+
+  return { totalIssuesFound, issuesByType };
 }
 
 // --- Main scan logic ---
@@ -473,20 +963,22 @@ export async function runScan(cwd: string): Promise<ScanResult> {
 
   const categories: CategoryResult[] = [
     scoreTests(files, contents, cwd),
-    scoreErrorHandling(files, contents),
-    scoreTypes(files, cwd, contents),
     scoreSecurity(files, contents),
+    scoreTypes(files, cwd, contents),
+    scoreErrorHandling(files, contents),
     scorePerformance(files, contents),
-    scoreReadability(files, contents),
+    scoreCodeQuality(files, contents),
   ];
 
   const total = categories.reduce((sum, c) => sum + c.score, 0);
   const maxTotal = categories.reduce((sum, c) => sum + c.max, 0);
 
-  return { projectName, total, maxTotal, categories };
+  const { totalIssuesFound, issuesByType } = aggregateIssues(categories);
+
+  return { projectName, total, maxTotal, categories, totalIssuesFound, issuesByType };
 }
 
-function scoreColor(score: number, max: number): chalk.Chalk {
+function scoreColor(score: number, max: number): typeof chalk {
   const pct = score / max;
   if (pct >= 0.8) return chalk.green;
   if (pct >= 0.5) return chalk.yellow;
@@ -501,14 +993,40 @@ function renderScan(result: ScanResult): void {
 
   const pct = result.total / result.maxTotal;
   const totalColor = pct >= 0.8 ? chalk.green : pct >= 0.5 ? chalk.yellow : chalk.red;
-  console.log(`Score:    ${totalColor.bold(`${result.total}/${result.maxTotal}`)}`);
+  const issuesStr = result.totalIssuesFound > 0
+    ? chalk.dim(`  |  Issues: ${result.totalIssuesFound} found`)
+    : '';
+  console.log(`Score:    ${totalColor.bold(`${result.total}/${result.maxTotal}`)}${issuesStr}`);
   console.log('');
 
   for (const cat of result.categories) {
     const color = scoreColor(cat.score, cat.max);
     const label = `${cat.emoji} ${cat.name}`.padEnd(22);
-    const score = color(`${cat.score}/${cat.max}`).padEnd(color === chalk.green ? 9 : color === chalk.yellow ? 9 : 9);
-    console.log(`  ${label} ${score}  ${chalk.dim(cat.summary)}`);
+    const scoreStr = `${cat.score}/${cat.max}`;
+    console.log(`  ${label} ${color.bold(scoreStr)}`);
+
+    // Print subcategories
+    for (const sub of cat.subcategories) {
+      const subColor = scoreColor(sub.score, sub.max);
+      const subLabel = sub.name.padEnd(24);
+      const subScore = `${sub.score}/${sub.max}`.padEnd(6);
+      console.log(`     ${chalk.dim(subLabel)} ${subColor(`${subScore}`)}  ${chalk.dim(sub.summary)}`);
+    }
+  }
+
+  // Print issues section
+  if (result.issuesByType.length > 0) {
+    console.log('');
+    console.log(`  ${chalk.bold(`📋 Issues Found: ${result.totalIssuesFound}`)}`);
+    const topIssues = result.issuesByType.slice(0, 8);
+    for (const issue of topIssues) {
+      const sevColor = issue.severity === 'high' ? chalk.red : issue.severity === 'medium' ? chalk.yellow : chalk.dim;
+      const sev = sevColor(`(${issue.severity})`);
+      console.log(`     ${issue.count} ${issue.description} ${sev}`);
+    }
+    if (result.issuesByType.length > 8) {
+      console.log(chalk.dim(`     ... and ${result.issuesByType.length - 8} more issue type${result.issuesByType.length - 8 !== 1 ? 's' : ''}`));
+    }
   }
 
   console.log('');
@@ -524,7 +1042,7 @@ export function scanCommand(): Command {
   cmd
     .description(
       'Scan the project and generate a Production Readiness Score (0-100).\n' +
-      'Analyzes testing, error handling, types, security, performance, and readability.',
+      'Analyzes testing, security, types, error handling, performance, and code quality.',
     )
     .argument('[dir]', 'Directory to scan (default: current directory)', '.')
     .addHelpText(

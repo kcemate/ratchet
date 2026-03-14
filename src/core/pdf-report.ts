@@ -70,6 +70,10 @@ export function generateReportHTML(options: ReportOptions): string {
     const delta = afterPct - beforePct;
     const deltaStr = delta > 0 ? `+${delta}` : String(delta);
 
+    const issuesBefore = scoreBefore.totalIssuesFound ?? 0;
+    const issuesAfter = scoreAfter.totalIssuesFound ?? 0;
+    const issuesFixed = issuesBefore - issuesAfter;
+
     const deltaBg =
       delta > 0
         ? 'linear-gradient(135deg,#16a34a,#22c55e)'
@@ -84,6 +88,16 @@ export function generateReportHTML(options: ReportOptions): string {
           : 'none';
 
     const deltaColor = delta > 0 ? '#22c55e' : delta < 0 ? '#ef4444' : '#9ca3af';
+
+    const issuesHeroHtml = issuesBefore > 0
+      ? `<div class="hero-issues-row">
+          <span class="hero-issues-label">Issues: </span>
+          <span class="hero-issues-before">${issuesBefore}</span>
+          <span class="hero-issues-arrow"> → </span>
+          <span class="hero-issues-after">${issuesAfter}</span>
+          ${issuesFixed > 0 ? `<span class="hero-issues-fixed"> (${issuesFixed} fixed)</span>` : ''}
+        </div>`
+      : '';
 
     heroHtml = `
     <div class="hero-card">
@@ -106,6 +120,7 @@ export function generateReportHTML(options: ReportOptions): string {
           <div class="hero-track"><div class="hero-fill after-fill" style="width:${afterPct}%"></div></div>
         </div>
       </div>
+      ${issuesHeroHtml}
     </div>`;
 
     const rows = scoreBefore.categories
@@ -120,6 +135,32 @@ export function generateReportHTML(options: ReportOptions): string {
         const bPct = before.max > 0 ? (before.score / before.max) * 100 : 0;
         const aPct = after.max > 0 ? (after.score / after.max) * 100 : 0;
         const rowBg = i % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'transparent';
+
+        // Subcategory rows
+        const subRows = (after.subcategories ?? []).map((subAfter, j) => {
+          const subBefore = (before.subcategories ?? [])[j];
+          if (!subBefore) return '';
+          const subDelta = subAfter.score - subBefore.score;
+          const subDeltaStr = subDelta > 0 ? `+${subDelta}` : String(subDelta);
+          const subPillClass = subDelta > 0 ? 'delta-pill-pos' : subDelta < 0 ? 'delta-pill-neg' : 'delta-pill-neu';
+          const sbPct = subBefore.max > 0 ? (subBefore.score / subBefore.max) * 100 : 0;
+          const saPct = subAfter.max > 0 ? (subAfter.score / subAfter.max) * 100 : 0;
+          return `
+          <div class="cat-row sub-row">
+            <div class="cat-dot" style="background:transparent;border:1px solid ${dotColor};opacity:0.5"></div>
+            <div class="cat-name sub-name">↳ ${esc(subAfter.name)}</div>
+            <div class="cat-bars">
+              <div class="cat-score gray">${subBefore.score}/${subBefore.max}</div>
+              <div class="mini-track"><div class="mini-fill before-mini" style="width:${Math.max(2, sbPct)}%"></div></div>
+            </div>
+            <div class="cat-bars">
+              <div class="cat-score white">${subAfter.score}/${subAfter.max}</div>
+              <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, saPct)}%"></div></div>
+            </div>
+            <div class="cat-delta"><span class="delta-pill ${subPillClass}">${esc(subDeltaStr)}</span></div>
+          </div>`;
+        }).join('');
+
         return `
         <div class="cat-row" style="background:${rowBg}">
           <div class="cat-dot" style="background:${dotColor}"></div>
@@ -133,7 +174,7 @@ export function generateReportHTML(options: ReportOptions): string {
             <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, aPct)}%"></div></div>
           </div>
           <div class="cat-delta"><span class="delta-pill ${pillClass}">${esc(catDeltaStr)}</span></div>
-        </div>`;
+        </div>${subRows}`;
       })
       .join('');
 
@@ -372,6 +413,17 @@ export function generateReportHTML(options: ReportOptions): string {
     color: #4b5563;
     margin-bottom: 8px;
   }
+  .hero-issues-row {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 11px;
+    color: #9ca3af;
+  }
+  .hero-issues-label { color: #6b7280; }
+  .hero-issues-before { color: #6b7280; font-weight: 700; }
+  .hero-issues-arrow { color: #374151; }
+  .hero-issues-after { color: #f1f5f9; font-weight: 700; }
+  .hero-issues-fixed { color: #22c55e; font-weight: 700; }
   .hero-center-col {
     display: flex;
     flex-direction: column;
@@ -439,6 +491,8 @@ export function generateReportHTML(options: ReportOptions): string {
   .cat-row:not(:last-child) { border-bottom: 1px solid #111116; }
   .cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .cat-name { font-size: 9.5px; color: #d1d5db; flex: 0 0 122px; font-weight: 500; }
+  .sub-row { padding: 4px 12px 4px 20px; }
+  .sub-name { font-size: 8.5px; color: #9ca3af; flex: 0 0 122px; font-weight: 400; }
   .cat-bars { display: flex; align-items: center; gap: 6px; flex: 1; }
   .mini-track {
     flex: 1;
