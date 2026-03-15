@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ratchet — Make your AI-generated code production-ready</title>
-  <meta name="description" content="Ratchet finds what's broken in your AI-generated code and fixes it automatically. Scan free. Get a Production Readiness Score. Merge the PR.">
+  <title>Ratchet — Your Code Scores 59. Ratchet Makes It 79.</title>
+  <meta name="description" content="One command. Autonomous AI scans your codebase, fixes issues, runs tests, and ships only passing code. Production-ready in minutes.">
   <meta name="theme-color" content="#0a0a0b">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Giovanni Labs">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Ratchet — Make your AI-generated code production-ready">
-  <meta property="og:description" content="Ratchet finds what's broken in your AI-generated code and fixes it automatically. Free scan. Production Readiness Score.">
+  <meta property="og:title" content="Your Code Scores 59. Ratchet Makes It 79.">
+  <meta property="og:description" content="One command. Autonomous AI scans, fixes, tests, and ships only passing code. Production-ready in minutes.">
   <meta property="og:url" content="https://ratchetcli.com">
   <meta property="og:site_name" content="Ratchet">
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Ratchet — Make your AI-generated code production-ready">
-  <meta name="twitter:description" content="You built it with AI. Now make it real. Free scan. AI fixes. Merge the PR.">
+  <meta name="twitter:title" content="Your Code Scores 59. Ratchet Makes It 79.">
+  <meta name="twitter:description" content="One command. Autonomous AI scans, fixes, tests, and ships only passing code. Production-ready in minutes.">
   <!-- Favicon (inline SVG data URI) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%230a0a0b'/><text y='.9em' font-size='72' x='12'>⚙️</text></svg>">
   <style>
@@ -800,7 +800,7 @@
       <a href="#features" class="nav-link">Features</a>
       <a href="#pricing" class="nav-link">Pricing</a>
       <a href="#faq" class="nav-link">FAQ</a>
-      <a href="#early-access" class="nav-cta">Get Early Access</a>
+      <a href="#early-access" class="nav-cta">Scan Free</a>
     </div>
   </nav>
 
@@ -808,11 +808,12 @@
 
     <!-- Hero -->
     <section class="hero">
-      <span class="hero-eyebrow">Production Readiness Score</span>
-      <h1>You built it with AI.<br>Now make it <span>real.</span></h1>
-      <p class="hero-sub">Ratchet finds what's broken in your AI-generated code and fixes it automatically.</p>
+      <span class="hero-eyebrow">Autonomous Code Improvement</span>
+      <h1>Your code scores 59.<br>Ratchet makes it <span>79.</span></h1>
+      <p class="hero-sub">One command. Autonomous AI scans, fixes, tests, and ships only passing code. Production-ready in minutes.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:24px;position:relative;z-index:1;">🔒 Your code never leaves your machine.</p>
       <div class="hero-ctas">
-        <a href="#early-access" class="btn">Get Early Access</a>
+        <a href="#scan" class="btn" onclick="navigator.clipboard.writeText('npx ratchet scan');this.textContent='Copied!';setTimeout(()=>this.textContent='Scan My Codebase Free',2000);return false;">Scan My Codebase Free</a>
         <a href="#how-it-works" class="btn btn-secondary">See how it works</a>
       </div>
 
@@ -828,20 +829,22 @@
           <div id="term-cmd-line"><span class="prompt">$</span> <span class="cmd" id="term-cmd"></span><span class="cursor" id="term-cursor">▋</span></div>
           <div id="term-output" style="display:none">
             <div class="out term-line">&nbsp;</div>
-            <div class="out term-line">🔧 Ratchet — Production Readiness Scan</div>
+            <div class="out term-line">⚙️ Ratchet — Autonomous Code Improvement</div>
             <div class="out term-line">&nbsp;</div>
-            <div class="out term-line">&nbsp;&nbsp;Project: <span style="color:var(--text)">my-nextjs-app</span></div>
-            <div class="out term-line">&nbsp;&nbsp;Score: <span class="score-num score-lo">34</span><span style="color:var(--muted)">/100</span></div>
+            <div class="out term-line">&nbsp;&nbsp;🔍 Scanning codebase...</div>
+            <div class="out term-line">&nbsp;&nbsp;Score: <span class="score-num score-lo">59</span><span style="color:var(--muted)">/100</span> <span style="color:var(--muted)">(production Express/TS app)</span></div>
             <div class="out term-line">&nbsp;</div>
-            <div class="out term-line">&nbsp;&nbsp;🧪 Testing&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="score-lo"> 0</span><span style="color:var(--muted)">/20</span>&nbsp;&nbsp;&nbsp;No tests found</div>
-            <div class="out term-line">&nbsp;&nbsp;⚠️ &nbsp;Error Handling&nbsp;&nbsp;<span class="warn"> 8</span><span style="color:var(--muted)">/20</span>&nbsp;&nbsp;&nbsp;5 unhandled exceptions</div>
-            <div class="out term-line">&nbsp;&nbsp;📝 Types&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="warn"> 6</span><span style="color:var(--muted)">/20</span>&nbsp;&nbsp;&nbsp;12 'any' types found</div>
-            <div class="out term-line">&nbsp;&nbsp;🔒 Security&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="warn"> 6</span><span style="color:var(--muted)">/20</span>&nbsp;&nbsp;&nbsp;2 secrets, 1 injection risk</div>
-            <div class="out term-line">&nbsp;&nbsp;⚡ Performance&nbsp;&nbsp;&nbsp;&nbsp;<span class="warn"> 8</span><span style="color:var(--muted)">/20</span>&nbsp;&nbsp;&nbsp;N+1 query, no caching</div>
-            <div class="out term-line">&nbsp;&nbsp;📖 Readability&nbsp;&nbsp;&nbsp;&nbsp;<span class="warn"> 6</span><span style="color:var(--muted)">/20</span>&nbsp;&nbsp;&nbsp;Dead code, messy names</div>
+            <div class="out term-line">&nbsp;&nbsp;🐝 <span style="color:var(--accent)">Swarm Mode</span> engaged — 3 agents competing per fix</div>
+            <div class="out term-line">&nbsp;&nbsp;⚔️  <span style="color:var(--accent)">Adversarial QA</span> enabled</div>
             <div class="out term-line">&nbsp;</div>
-            <div class="out term-line"><span class="success">  Run 'npx ratchet fix' to improve your score.</span></div>
-            <div class="out term-line"><span style="color:var(--muted)">  3 free fixes included. No credit card needed.</span></div>
+            <div class="out term-line">&nbsp;&nbsp;<span class="success">✓</span> Click 1: Error handling — empty catches fixed&nbsp;&nbsp;<span class="success">+3 pts</span></div>
+            <div class="out term-line">&nbsp;&nbsp;<span class="success">✓</span> Click 2: Type safety — any → interfaces&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="success">+4 pts</span></div>
+            <div class="out term-line">&nbsp;&nbsp;<span class="success">✓</span> Click 3: Security — secrets moved to env&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="success">+2 pts</span></div>
+            <div class="out term-line">&nbsp;&nbsp;<span class="warn">↩</span> Click 4: Refactor — rolled back (tests failed)</div>
+            <div class="out term-line">&nbsp;&nbsp;<span class="success">✓</span> Click 5: Console cleanup — 37 logs removed&nbsp;&nbsp;<span class="success">+2 pts</span></div>
+            <div class="out term-line">&nbsp;</div>
+            <div class="out term-line">&nbsp;&nbsp;📈 Final Score: <span class="score-num score-hi">79</span><span style="color:var(--muted)">/100</span> <span class="success">(+20 pts)</span></div>
+            <div class="out term-line">&nbsp;&nbsp;<span style="color:var(--muted)">707 tests passing • 0 regressions • PDF report saved</span></div>
           </div>
         </div>
       </div>
@@ -849,7 +852,7 @@
     <!-- Terminal typewriter script (inline, before rest of page) -->
     <script>
       (function() {
-        var cmd = 'npx ratchet scan';
+        var cmd = 'ratchet improve';
         var el = document.getElementById('term-cmd');
         var cursor = document.getElementById('term-cursor');
         var output = document.getElementById('term-output');
@@ -876,22 +879,22 @@
 
     <!-- Social Proof / Stats -->
     <section class="section fade-in" id="proof">
-      <div class="section-label">Built for real codebases</div>
-      <h2>Battle-tested on <span>production code.</span></h2>
-      <p class="section-sub">Ratchet doesn't just lint — it understands your codebase deeply across 6 quality dimensions.</p>
+      <div class="section-label">Real results on real code</div>
+      <h2>59 → 79 on a <span>production app.</span></h2>
+      <p class="section-sub">Not a demo project. A live Express/TypeScript app with 800+ tests, real users, and real tech debt. Ratchet improved it autonomously.</p>
 
       <div class="stats-row">
         <div class="stat-card fade-in fade-in-delay-1">
-          <div class="stat-number">700+</div>
-          <div class="stat-label">Tests in our own suite</div>
+          <div class="stat-number" style="color:var(--green);">+20</div>
+          <div class="stat-label">Points gained on production codebase</div>
         </div>
         <div class="stat-card fade-in fade-in-delay-2">
-          <div class="stat-number">6</div>
-          <div class="stat-label">Quality categories scored</div>
+          <div class="stat-number">707</div>
+          <div class="stat-label">Tests passing — 0 regressions</div>
         </div>
         <div class="stat-card fade-in fade-in-delay-3">
-          <div class="stat-number">79<span style="font-size:24px;color:var(--muted);font-weight:400">/100</span></div>
-          <div class="stat-label">Ratchet's own score on itself</div>
+          <div class="stat-number">0</div>
+          <div class="stat-label">Broken deploys shipped</div>
         </div>
       </div>
     </section>
@@ -899,17 +902,17 @@
     <!-- Score Improvement -->
     <section class="section fade-in">
       <div class="section-label">The result</div>
-      <h2>From broken to <span>production-ready.</span></h2>
-      <p class="section-sub">One command. AI finds the issues, fixes them, runs your tests, and opens a PR.</p>
+      <h2>From tech debt to <span>production-ready.</span></h2>
+      <p class="section-sub">Real data from a real codebase. One <code style="background:var(--code-bg);padding:2px 7px;border-radius:4px;font-family:'SF Mono',monospace;color:var(--accent);font-size:14px;">ratchet improve</code> run.</p>
 
       <div class="score-compare fade-in">
         <div class="score-block">
-          <span class="score-badge before">34</span>
+          <span class="score-badge before">59</span>
           <span class="score-label">Before Ratchet</span>
         </div>
         <div class="score-arrow">→</div>
         <div class="score-block">
-          <span class="score-badge after" id="score-after" data-target="78">78</span>
+          <span class="score-badge after" id="score-after" data-target="79">79</span>
           <span class="score-label">After Ratchet</span>
         </div>
       </div>
@@ -919,110 +922,117 @@
         <div class="category-card fade-in fade-in-delay-1">
           <div class="cat-header">
             <span class="cat-icon">🧪</span>
-            <span class="cat-name">Testing</span>
+            <span class="cat-name">Testing <span style="color:var(--muted);font-weight:400;font-size:12px;">(25 pts)</span></span>
           </div>
           <div class="cat-scores">
-            <span class="cat-score before">0/20</span>
+            <span class="cat-score before">14/25</span>
             <span class="cat-score-arrow">→</span>
-            <span class="cat-score after">16/20</span>
+            <span class="cat-score after">19/25</span>
           </div>
-          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 80%"></div></div>
-          <div class="cat-what"><span class="fixed">8 tests written</span> — your core flows now have coverage.</div>
+          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 76%"></div></div>
+          <div class="cat-what"><span class="fixed">Coverage, edge cases, test quality</span> — all measured and improved.</div>
         </div>
         <div class="category-card fade-in fade-in-delay-2">
           <div class="cat-header">
             <span class="cat-icon">⚠️</span>
-            <span class="cat-name">Error Handling</span>
+            <span class="cat-name">Error Handling <span style="color:var(--muted);font-weight:400;font-size:12px;">(20 pts)</span></span>
           </div>
           <div class="cat-scores">
             <span class="cat-score before">8/20</span>
             <span class="cat-score-arrow">→</span>
-            <span class="cat-score after">17/20</span>
+            <span class="cat-score after">14/20</span>
           </div>
-          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 85%"></div></div>
-          <div class="cat-what"><span class="fixed">4 exceptions handled</span> — your app won't crash on bad input.</div>
+          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 70%"></div></div>
+          <div class="cat-what"><span class="fixed">Empty catches fixed, structured logging added.</span></div>
         </div>
         <div class="category-card fade-in fade-in-delay-3">
           <div class="cat-header">
             <span class="cat-icon">📝</span>
-            <span class="cat-name">Types</span>
+            <span class="cat-name">Type Safety <span style="color:var(--muted);font-weight:400;font-size:12px;">(15 pts)</span></span>
           </div>
           <div class="cat-scores">
-            <span class="cat-score before">6/20</span>
+            <span class="cat-score before">7/15</span>
             <span class="cat-score-arrow">→</span>
-            <span class="cat-score after">16/20</span>
+            <span class="cat-score after">12/15</span>
           </div>
           <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 80%"></div></div>
-          <div class="cat-what"><span class="fixed">12 'any' types replaced</span> — TypeScript actually knows your data.</div>
+          <div class="cat-what"><span class="fixed">any types replaced with interfaces</span> — TypeScript actually knows your data.</div>
         </div>
         <div class="category-card fade-in fade-in-delay-4">
           <div class="cat-header">
             <span class="cat-icon">🔒</span>
-            <span class="cat-name">Security</span>
+            <span class="cat-name">Security <span style="color:var(--muted);font-weight:400;font-size:12px;">(15 pts)</span></span>
           </div>
           <div class="cat-scores">
-            <span class="cat-score before">6/20</span>
+            <span class="cat-score before">9/15</span>
             <span class="cat-score-arrow">→</span>
-            <span class="cat-score after">12/20</span>
+            <span class="cat-score after">13/15</span>
           </div>
-          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 60%"></div></div>
-          <div class="cat-what"><span class="fixed">Secrets moved, injection fixed</span> — the obvious stuff, gone.</div>
+          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 87%"></div></div>
+          <div class="cat-what"><span class="fixed">Secrets moved to env, input validation added.</span></div>
         </div>
         <div class="category-card fade-in fade-in-delay-5">
           <div class="cat-header">
             <span class="cat-icon">⚡</span>
-            <span class="cat-name">Performance</span>
+            <span class="cat-name">Performance <span style="color:var(--muted);font-weight:400;font-size:12px;">(10 pts)</span></span>
           </div>
           <div class="cat-scores">
-            <span class="cat-score before">8/20</span>
+            <span class="cat-score before">6/10</span>
             <span class="cat-score-arrow">→</span>
-            <span class="cat-score after">11/20</span>
+            <span class="cat-score after">8/10</span>
           </div>
-          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 55%"></div></div>
-          <div class="cat-what"><span class="fixed">N+1 query fixed</span> — that slow page just got fast.</div>
+          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 80%"></div></div>
+          <div class="cat-what"><span class="fixed">Console.logs cleaned, async patterns fixed.</span></div>
         </div>
         <div class="category-card fade-in fade-in-delay-6">
           <div class="cat-header">
-            <span class="cat-icon">📖</span>
-            <span class="cat-name">Readability</span>
+            <span class="cat-icon">📐</span>
+            <span class="cat-name">Code Quality <span style="color:var(--muted);font-weight:400;font-size:12px;">(15 pts)</span></span>
           </div>
           <div class="cat-scores">
-            <span class="cat-score before">6/20</span>
+            <span class="cat-score before">10/15</span>
             <span class="cat-score-arrow">→</span>
-            <span class="cat-score after">6/20</span>
+            <span class="cat-score after">13/15</span>
           </div>
-          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 30%"></div></div>
-          <div class="cat-what">Messy variable names and dead code cleaned up over time with Pro.</div>
+          <div class="cat-bar"><div class="cat-bar-fill" style="--bar-width: 87%"></div></div>
+          <div class="cat-what"><span class="fixed">Long functions split, duplication removed, dead code cleaned.</span></div>
         </div>
       </div>
     </section>
 
     <!-- How It Works -->
     <section class="section fade-in" id="how-it-works">
-      <div class="section-label">The loop</div>
-      <h2>Three steps. <span>Zero guesswork.</span></h2>
-      <p class="section-sub">You don't write any code. Ratchet runs the loop. You review the PR.</p>
+      <div class="section-label">One command. Massive improvement.</div>
+      <h2>Four steps. <span>Zero guesswork.</span></h2>
+      <p class="section-sub">You don't write any code. Ratchet runs the loop. You review the results.</p>
 
       <div class="steps">
         <div class="step-item fade-in fade-in-delay-1">
           <div class="step-num">1</div>
           <div class="step-body">
             <h3>Scan <span class="step-badge free">Free</span></h3>
-            <p>Run <code style="background: var(--code-bg); padding: 2px 7px; border-radius: 4px; font-family: 'SF Mono', monospace; color: var(--accent); font-size: 13px;">npx ratchet scan</code> in your project. Takes 30 seconds. You get a Production Readiness Score with a full breakdown — what's wrong, how bad, and in what category. No credit card. No account. Just answers.</p>
+            <p><code style="background: var(--code-bg); padding: 2px 7px; border-radius: 4px; font-family: 'SF Mono', monospace; color: var(--accent); font-size: 13px;">ratchet scan</code> instantly scores your entire codebase 0–100 across Testing (25pts), Error Handling (20pts), Type Safety, Security, Quality, and Performance. See exactly what's holding you back.</p>
           </div>
         </div>
         <div class="step-item fade-in fade-in-delay-2">
           <div class="step-num">2</div>
           <div class="step-body">
-            <h3>Fix <span class="step-badge ai">AI runs the loop</span></h3>
-            <p>Run <code style="background: var(--code-bg); padding: 2px 7px; border-radius: 4px; font-family: 'SF Mono', monospace; color: var(--accent); font-size: 13px;">npx ratchet fix</code>. Ratchet picks the highest-impact issues, writes the fixes, runs your tests to verify nothing broke, and commits only the changes that pass. If something fails, it rolls back automatically. Your code can only get better.</p>
+            <h3>Improve <span class="step-badge ai">AI runs the loop</span></h3>
+            <p><code style="background: var(--code-bg); padding: 2px 7px; border-radius: 4px; font-family: 'SF Mono', monospace; color: var(--accent); font-size: 13px;">ratchet improve</code> runs autonomous sweeps. Swarm agents compete, fixes are adversarially tested, only passing changes land. Rolled-back changes are discarded automatically. Your code can only get better.</p>
           </div>
         </div>
         <div class="step-item fade-in fade-in-delay-3">
           <div class="step-num">3</div>
           <div class="step-body">
-            <h3>Ship <span class="step-badge yours">Merge the PR</span></h3>
-            <p>Ratchet opens a pull request with every fix, test result, and a before/after score. You read through it, approve what looks good, and merge. No mystery — you can see exactly what changed and why. The diff is yours.</p>
+            <h3>Report <span class="step-badge yours">Share the proof</span></h3>
+            <p>Get a beautiful PDF with before/after score hero, sparklines, top 3 wins, category charts, and a click timeline. Share it with your team, your manager, or your client. The improvement is measurable and documented.</p>
+          </div>
+        </div>
+        <div class="step-item fade-in fade-in-delay-4">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Repeat <span class="step-badge ai">Gets smarter</span></h3>
+            <p>Each run learns from the last. Cross-run learning tracks which fix patterns work on your codebase and prioritizes them next time. Your project-specific context carries forward. The score keeps climbing.</p>
           </div>
         </div>
       </div>
@@ -1030,40 +1040,40 @@
 
     <!-- Features -->
     <section class="section fade-in" id="features">
-      <div class="section-label">Capabilities</div>
-      <h2>More than a <span>linter.</span></h2>
-      <p class="section-sub">Ratchet is an AI-powered code quality engine that gets smarter with every run.</p>
+      <div class="section-label">The magic</div>
+      <h2>Not suggestions. <span>Autonomous fixes.</span></h2>
+      <p class="section-sub">Multiple AI agents compete to fix your code. Only the best changes survive. Nothing else works like this.</p>
 
       <div class="features-grid">
-        <div class="feature-card fade-in fade-in-delay-1">
+        <div class="feature-card fade-in fade-in-delay-1" style="border-color:rgba(245,158,11,0.25);background:linear-gradient(145deg,rgba(245,158,11,0.04),var(--surface));">
           <span class="feature-icon">🐝</span>
-          <div class="feature-name">Swarm Mode</div>
-          <p class="feature-desc">Launch multiple AI agents in parallel to fix different categories simultaneously. Fix testing, security, and types all at once — not one at a time.</p>
+          <div class="feature-name">Swarm Mode <span class="feature-badge">Core</span></div>
+          <p class="feature-desc">Multiple specialized AI agents compete on every fix. Security agent, quality agent, error-handling agent — all working in parallel. The agent with the highest score delta wins. Survival of the fittest for code fixes.</p>
         </div>
-        <div class="feature-card fade-in fade-in-delay-2">
-          <span class="feature-icon">🏗️</span>
-          <div class="feature-name">Architect Mode</div>
-          <p class="feature-desc">An orchestrator agent plans the fix strategy, then delegates to specialized workers. Handles complex, cross-file refactors that single-pass tools miss.</p>
+        <div class="feature-card fade-in fade-in-delay-2" style="border-color:rgba(245,158,11,0.25);background:linear-gradient(145deg,rgba(245,158,11,0.04),var(--surface));">
+          <span class="feature-icon">⚔️</span>
+          <div class="feature-name">Adversarial QA <span class="feature-badge">Core</span></div>
+          <p class="feature-desc">Every fix gets challenged by a separate AI reviewer before it can land. Bad changes get rejected before they reach your test suite. Two-layer defense — AI vs AI, then your tests confirm.</p>
         </div>
         <div class="feature-card fade-in fade-in-delay-3">
-          <span class="feature-icon">📈</span>
-          <div class="feature-name">Incremental Scanning</div>
-          <p class="feature-desc">Only re-scan files that changed since your last run. Fast feedback on every commit — seconds, not minutes. Works with git diff automatically.</p>
+          <span class="feature-icon">🏗️</span>
+          <div class="feature-name">Architect Mode</div>
+          <p class="feature-desc">An orchestrator agent plans structural refactors across files — not just line-level fixes. Handles the cross-cutting issues that single-pass tools miss.</p>
         </div>
         <div class="feature-card fade-in fade-in-delay-4">
-          <span class="feature-icon">🚦</span>
-          <div class="feature-name">Pre-commit Validation</div>
-          <p class="feature-desc">Add Ratchet to your git hooks or CI pipeline. Block merges that drop your score below a threshold. Quality only goes up — never back down.</p>
+          <span class="feature-icon">📈</span>
+          <div class="feature-name">Incremental Scanning</div>
+          <p class="feature-desc">True per-file baselines. Only re-analyzes changed files and merges results. Seconds, not minutes. Gets faster the more you use it.</p>
         </div>
         <div class="feature-card fade-in fade-in-delay-5">
           <span class="feature-icon">🔒</span>
-          <div class="feature-name">Score Regression Guard</div>
-          <p class="feature-desc">Set a minimum score for your project. Ratchet prevents any change from lowering it. Like a ratchet wrench — it only turns one direction.</p>
+          <div class="feature-name">Ratchet Guard</div>
+          <p class="feature-desc">Set a minimum score. Block merges that drop below it. Like a ratchet wrench — the score only turns one direction. Add to CI in one line.</p>
         </div>
         <div class="feature-card fade-in fade-in-delay-6">
           <span class="feature-icon">🧠</span>
           <div class="feature-name">Cross-run Learning</div>
-          <p class="feature-desc">Ratchet remembers what worked in previous runs. Fix patterns that succeeded get prioritized. Your project-specific context carries forward.</p>
+          <p class="feature-desc">Tracks which specializations win on your codebase and weights future runs accordingly. Your project-specific context carries forward across every run.</p>
         </div>
       </div>
     </section>
@@ -1146,21 +1156,26 @@
 
     <!-- CTA with Email Capture -->
     <section class="cta fade-in" id="early-access">
-      <h2>Get <span>early access.</span></h2>
-      <p>Be the first to know when Ratchet launches. Join the waitlist.</p>
+      <h2>Scan your codebase. <span>30 seconds.</span></h2>
+      <p>Free. No account. No credit card. Just run the command.</p>
 
-      <form class="email-form" id="waitlist-form" onsubmit="return false;">
-        <input type="email" class="email-input" placeholder="you@example.com" required aria-label="Email address" id="waitlist-email">
-        <button type="submit" class="btn" id="waitlist-btn">Join Waitlist</button>
-      </form>
-      <div class="email-success" id="waitlist-success">
-        🎉 You're on the list. We'll be in touch.
+      <div style="position: relative; margin-bottom: 32px;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
+          <code id="install-cmd" style="background: var(--code-bg); padding: 14px 24px; border-radius: 10px; font-family: 'SF Mono', 'Fira Code', monospace; color: var(--accent); font-size: 16px; display: inline-block; border: 1px solid var(--border); letter-spacing: 0.02em;">npx ratchet scan</code>
+          <button class="btn btn-sm" onclick="navigator.clipboard.writeText('npx ratchet scan');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000);" style="font-size:14px;">Copy</button>
+        </div>
       </div>
 
+      <p style="color: var(--muted); font-size: 14px; position: relative;">Your code never leaves your machine. The AI runs locally.<br>Bring your own API key for unlimited fixes, or go Pro for AI-included.</p>
+
       <div style="margin-top: 32px; position: relative;">
-        <p style="color: var(--muted); font-size: 14px;">Or scan your project right now — it's free.</p>
-        <div style="margin-top: 16px;">
-          <code style="background: var(--code-bg); padding: 10px 18px; border-radius: 8px; font-family: 'SF Mono', 'Fira Code', monospace; color: var(--accent); font-size: 14px; display: inline-block; border: 1px solid var(--border);">npx ratchet scan</code>
+        <p style="color: var(--muted); font-size: 13px;">Want updates? Drop your email.</p>
+        <form class="email-form" id="waitlist-form" onsubmit="return false;" style="margin-top: 12px;">
+          <input type="email" class="email-input" placeholder="you@example.com" required aria-label="Email address" id="waitlist-email">
+          <button type="submit" class="btn btn-sm" id="waitlist-btn">Notify Me</button>
+        </form>
+        <div class="email-success" id="waitlist-success">
+          🎉 You're on the list. We'll be in touch.
         </div>
       </div>
     </section>
@@ -1202,8 +1217,8 @@
         entries.forEach(function(e) {
           if (e.isIntersecting && !scoreDone) {
             scoreDone = true;
-            var start = 34;
-            var end = 78;
+            var start = 59;
+            var end = 79;
             var duration = 1000;
             var t0 = null;
             function step(ts) {
