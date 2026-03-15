@@ -70,20 +70,20 @@ export function debateCommand(): Command {
 
           const result = await engine.run();
           spinner.succeed(`  Debate complete — ${roundCount} rounds, ${agentCount} agents`);
-          console.log('');
+          process.stdout.write('\n');
 
           const { synthesis } = result;
 
-          console.log(chalk.bold('  Recommendation'));
-          console.log(`  ${synthesis.recommendation.slice(0, 300)}${synthesis.recommendation.length > 300 ? '…' : ''}`);
-          console.log('');
+          process.stdout.write(chalk.bold('  Recommendation') + '\n');
+          process.stdout.write(`  ${synthesis.recommendation.slice(0, 300)}${synthesis.recommendation.length > 300 ? '…' : ''}\n`);
+          process.stdout.write('\n');
 
           printBulletList('Tradeoffs:', synthesis.tradeoffs, chalk.yellow);
           printBulletList('Action Items:', synthesis.actionItems, chalk.green);
           printBulletList('Dissenting Opinions:', synthesis.dissent, chalk.red, 3);
 
-          console.log(`  Consensus: ${chalk.bold(String(synthesis.consensus))}%`);
-          console.log('');
+          process.stdout.write(`  Consensus: ${chalk.bold(String(synthesis.consensus))}%\n`);
+          process.stdout.write('\n');
 
           if (options.output) {
             await writeOutputFile(options.output, formatDebateReport(result));
