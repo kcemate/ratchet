@@ -538,10 +538,16 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
   if (emptyCatchTotal === 0) {
     emptyCatchScore = 5;
     emptyCatchSummary = 'no empty catch blocks';
-  } else if (emptyCatchTotal <= 2) {
+  } else if (emptyCatchTotal === 1) {
+    emptyCatchScore = 4;
+    emptyCatchSummary = '1 empty catch';
+  } else if (emptyCatchTotal <= 3) {
     emptyCatchScore = 3;
-    emptyCatchSummary = `${emptyCatchTotal} empty catch${emptyCatchTotal !== 1 ? 'es' : ''}`;
+    emptyCatchSummary = `${emptyCatchTotal} empty catches`;
   } else if (emptyCatchTotal <= 5) {
+    emptyCatchScore = 2;
+    emptyCatchSummary = `${emptyCatchTotal} empty catches`;
+  } else if (emptyCatchTotal <= 10) {
     emptyCatchScore = 1;
     emptyCatchSummary = `${emptyCatchTotal} empty catches`;
   } else {
@@ -645,9 +651,15 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
   if (awaitInLoopCount === 0) {
     asyncScore = 5;
     asyncSummary = 'no await-in-loop';
-  } else if (awaitInLoopCount <= 2) {
+  } else if (awaitInLoopCount === 1) {
+    asyncScore = 4;
+    asyncSummary = '1 await-in-loop pattern';
+  } else if (awaitInLoopCount <= 3) {
     asyncScore = 3;
-    asyncSummary = `${awaitInLoopCount} await-in-loop pattern${awaitInLoopCount !== 1 ? 's' : ''}`;
+    asyncSummary = `${awaitInLoopCount} await-in-loop patterns`;
+  } else if (awaitInLoopCount <= 6) {
+    asyncScore = 2;
+    asyncSummary = `${awaitInLoopCount} await-in-loop patterns`;
   } else {
     asyncScore = 1;
     asyncSummary = `${awaitInLoopCount} await-in-loop patterns`;
@@ -660,11 +672,17 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
   if (consoleLogCount === 0) {
     consoleScore = 5;
     consoleSummary = 'no console.log in src';
-  } else if (consoleLogCount <= 5) {
+  } else if (consoleLogCount <= 3) {
     consoleScore = 4;
     consoleSummary = `${consoleLogCount} console.log`;
-  } else if (consoleLogCount <= 20) {
+  } else if (consoleLogCount <= 10) {
+    consoleScore = 3;
+    consoleSummary = `${consoleLogCount} console.log calls`;
+  } else if (consoleLogCount <= 25) {
     consoleScore = 2;
+    consoleSummary = `${consoleLogCount} console.log calls`;
+  } else if (consoleLogCount <= 50) {
+    consoleScore = 1;
     consoleSummary = `${consoleLogCount} console.log calls`;
   } else {
     consoleScore = 0;
@@ -794,11 +812,17 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
   } else if (avgLen <= 30) {
     fnLenScore = 6;
     fnLenSummary = `avg ${Math.round(avgLen)}-line functions`;
-  } else if (avgLen <= 50) {
+  } else if (avgLen <= 40) {
     fnLenScore = 5;
     fnLenSummary = `avg ${Math.round(avgLen)}-line functions`;
-  } else if (avgLen <= 80) {
+  } else if (avgLen <= 50) {
+    fnLenScore = 4;
+    fnLenSummary = `avg ${Math.round(avgLen)}-line functions`;
+  } else if (avgLen <= 65) {
     fnLenScore = 3;
+    fnLenSummary = `avg ${Math.round(avgLen)}-line functions`;
+  } else if (avgLen <= 80) {
+    fnLenScore = 2;
     fnLenSummary = `avg ${Math.round(avgLen)}-line functions`;
   } else {
     fnLenScore = 1;
@@ -816,14 +840,20 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
     lineLenScore = 5;
     lineLenSummary = `${longLineCount} long line${longLineCount !== 1 ? 's' : ''}`;
   } else if (longLineCount <= 15) {
+    lineLenScore = 4;
+    lineLenSummary = `${longLineCount} long lines`;
+  } else if (longLineCount <= 50) {
     lineLenScore = 3;
     lineLenSummary = `${longLineCount} long lines`;
-  } else if (longLineCount <= 30) {
+  } else if (longLineCount <= 150) {
+    lineLenScore = 2;
+    lineLenSummary = `${longLineCount} long lines`;
+  } else if (longLineCount <= 500) {
     lineLenScore = 1;
     lineLenSummary = `${longLineCount} long lines`;
   } else {
     lineLenScore = 0;
-    lineLenSummary = `${longLineCount} long lines`;
+    lineLenSummary = `${longLineCount} long lines (excessive)`;
   }
 
   // --- Dead code /6 ---
@@ -865,14 +895,20 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
     dupScore = 5;
     dupSummary = `${duplicatedLines} repeated lines`;
   } else if (duplicatedLines <= 30) {
+    dupScore = 4;
+    dupSummary = `${duplicatedLines} repeated lines`;
+  } else if (duplicatedLines <= 100) {
     dupScore = 3;
     dupSummary = `${duplicatedLines} repeated lines`;
-  } else if (duplicatedLines <= 60) {
-    dupScore = 1;
+  } else if (duplicatedLines <= 300) {
+    dupScore = 2;
     dupSummary = `${duplicatedLines} repeated lines`;
+  } else if (duplicatedLines <= 700) {
+    dupScore = 1;
+    dupSummary = `${duplicatedLines} repeated lines (high duplication)`;
   } else {
     dupScore = 0;
-    dupSummary = `${duplicatedLines} repeated lines (high duplication)`;
+    dupSummary = `${duplicatedLines} repeated lines (excessive)`;
   }
 
   const score = fnLenScore + lineLenScore + deadCodeScore + dupScore;
