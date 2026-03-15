@@ -13,6 +13,7 @@ import { tightenCommand } from './commands/tighten.js';
 import { scanCommand } from './commands/scan.js';
 import { reportCommand } from './commands/report.js';
 import { buildCommand } from './commands/build.js';
+import { simulateCommand } from './commands/simulate.js';
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -47,5 +48,6 @@ program.addCommand(tightenCommand());
 program.addCommand(scanCommand());
 program.addCommand(reportCommand());
 program.addCommand(buildCommand());
+program.addCommand(simulateCommand());
 
 program.parse(process.argv);
