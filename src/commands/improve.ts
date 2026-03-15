@@ -23,6 +23,7 @@ import { readFileSync } from 'fs';
 import { LearningStore } from '../core/learning.js';
 import { SimulationEngine, aggregateResults } from '../core/simulate.js';
 import type { SimulationResult } from '../core/simulate.js';
+import { allocateClicks } from '../core/allocator.js';
 
 const STATE_FILE = '.ratchet-state.json';
 
@@ -494,8 +495,12 @@ export function improveCommand(): Command {
       const useAdversarial = options.adversarial !== false;
       const useArchitect = options.architect !== false;
 
-      const architectClicks = useArchitect ? Math.ceil(clickCount / 2) : 0;
-      const surgicalClicks = clickCount - architectClicks;
+      const allocation = allocateClicks(scoreBefore, clickCount);
+      const architectClicks = useArchitect ? allocation.architectClicks : 0;
+      const surgicalClicks = useArchitect ? allocation.surgicalClicks : clickCount;
+      if (useArchitect) {
+        process.stdout.write(chalk.dim(`  Allocation: ${allocation.reasoning}\n`));
+      }
 
       if (useSwarm) {
         config.swarm = {

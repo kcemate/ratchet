@@ -11,6 +11,8 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
 import { getImpact } from './gitnexus.js';
+import { prevalidate } from './prevalidate.js';
+import type { PrevalidateResult } from './prevalidate.js';
 
 export interface ClickContext {
   clickNumber: number;
@@ -119,6 +121,31 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       }
+
+      if (!rolledBack) {
+      // 3.5. Pre-commit validation (runs before tests to catch bad changes early)
+      let prevalidateResult: PrevalidateResult | undefined;
+      try {
+        prevalidateResult = await prevalidate(cwd, config.model);
+        if (prevalidateResult.concerns.length > 0) {
+          console.error(`[ratchet] Prevalidate click ${clickNumber}: confidence=${prevalidateResult.confidence.toFixed(2)}, recommendation=${prevalidateResult.recommendation}`);
+          for (const concern of prevalidateResult.concerns.slice(0, 3)) {
+            console.error(`[ratchet]   concern: ${concern}`);
+          }
+        }
+      } catch {
+        // Non-fatal — if prevalidation errors, proceed
+      }
+
+      if (prevalidateResult?.recommendation === 'reject') {
+        console.error(`[ratchet] Click ${clickNumber} REJECTED by prevalidate (confidence=${prevalidateResult.confidence.toFixed(2)}) — rolling back without tests`);
+        await rollback(cwd, clickNumber, stashCreated);
+        rolledBack = true;
+      } else if (prevalidateResult?.recommendation === 'escalate-swarm') {
+        // Signal swarm escalation — tests will still run, but caller will know
+        console.error(`[ratchet] Prevalidate: escalating click ${clickNumber} to swarm (confidence=${prevalidateResult.confidence.toFixed(2)})`);
+      }
+      } // end prevalidate block
 
       if (!rolledBack) {
       // 4. Test (the Pawl)

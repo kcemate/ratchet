@@ -13,6 +13,7 @@ import type { ScanResult } from '../commands/scan.js';
 import { runScan } from '../commands/scan.js';
 import type { LearningStore } from './learning.js';
 import { clearCache as clearGitNexusCache } from './gitnexus.js';
+import { IncrementalScanner } from './scan-cache.js';
 
 export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
 export type { HardenPhase };
@@ -121,6 +122,9 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
   // Clear GitNexus cache at the start of each run for fresh data
   clearGitNexusCache();
+
+  // Incremental scanner — used for re-scans after each successful click
+  const incrementalScanner = new IncrementalScanner(cwd);
 
   if (currentScan) {
     await callbacks.onScanComplete?.(currentScan);
@@ -256,10 +260,10 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           console.error(`[ratchet] click ${i} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
         }
 
-        // After a successful click, re-scan for live scoring
+        // After a successful click, re-scan for live scoring (incremental for speed)
         if (click.testsPassed && !rolled_back && currentScan) {
           try {
-            const newScan = await runScan(cwd);
+            const newScan = await incrementalScanner.incrementalScan(currentScan);
             const newTotal = newScan.total;
             const delta = newTotal - previousTotal;
 
