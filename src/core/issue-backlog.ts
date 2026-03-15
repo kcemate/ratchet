@@ -1,5 +1,6 @@
 import type { ScanResult } from '../commands/scan.js';
 import { assessFileRisk, getDependencyClusters } from './gitnexus.js';
+import { SEVERITY_WEIGHT } from './taxonomy.js';
 
 export interface IssueTask {
   category: string;
@@ -13,12 +14,6 @@ export interface IssueTask {
   /** If set, this task carries a pre-built architect prompt to use verbatim */
   architectPrompt?: string;
 }
-
-const SEVERITY_WEIGHT: Record<string, number> = {
-  high: 3,
-  medium: 2,
-  low: 1,
-};
 
 /**
  * Build a prioritized backlog of issues from a scan result.

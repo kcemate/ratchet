@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { readFileSync, existsSync, statSync, readdirSync } from 'fs';
 import { join, extname } from 'path';
+import type { IssueSubcategory, IssueCategoryName } from '../core/taxonomy.js';
 
 // --- Types ---
 

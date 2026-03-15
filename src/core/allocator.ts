@@ -1,41 +1,15 @@
 import type { ScanResult } from '../commands/scan.js';
+import {
+  STRUCTURAL_SUBCATEGORIES,
+  LOCAL_SUBCATEGORIES,
+  SEVERITY_WEIGHT,
+} from './taxonomy.js';
 
 export interface ClickAllocation {
   architectClicks: number;
   surgicalClicks: number;
   reasoning: string;
 }
-
-/**
- * Structural issue subcategories — these represent problems that require
- * cross-cutting refactoring (architect mode) rather than local fixes.
- */
-const STRUCTURAL_SUBCATEGORIES = new Set([
-  'Duplication',
-  'Function length',
-  'Dead code',
-  'Coverage ratio', // structural gap in test architecture
-]);
-
-/**
- * Local issue subcategories — these are surgical fixes that don't require
- * broad architectural changes.
- */
-const LOCAL_SUBCATEGORIES = new Set([
-  'Console cleanup',
-  'Any type count',
-  'Empty catches',
-  'Line length',
-  'Import hygiene',
-  'Strict config',
-  'Structured logging',
-]);
-
-const SEVERITY_WEIGHT: Record<string, number> = {
-  high: 3,
-  medium: 2,
-  low: 1,
-};
 
 /**
  * Dynamically allocate clicks between architect (structural) and surgical (local) phases.
