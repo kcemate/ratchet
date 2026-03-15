@@ -70,12 +70,6 @@ function getChangedFiles(cwd: string): string[] {
   }
 }
 
-/** Narrow re-scan: run runScan but only for a specific file list */
-async function scanFiles(cwd: string, changedAbsPaths: string[]): Promise<ScanResult> {
-  // We delegate to a full runScan; the incremental merge happens in mergeScans
-  return runScan(cwd);
-}
-
 /**
  * Build a hash map for the current tracked files.
  * Uses git blob hashes — fast and cheap.
