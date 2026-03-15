@@ -99,7 +99,7 @@ export function debateCommand(): Command {
         if (options.model) {
           console.log(`  Model  : ${chalk.dim(options.model)}`);
         }
-        console.log('');
+        process.stdout.write('\n');
 
         const spinner = ora('  Round 1 — agents stating positions…').start();
 
@@ -121,21 +121,21 @@ export function debateCommand(): Command {
         try {
           const result = await engine.run();
           spinner.succeed(`  Debate complete — ${roundCount} rounds, ${agentCount} agents`);
-          console.log('');
+          process.stdout.write('\n');
 
           // Print synthesis to console
           const { synthesis } = result;
 
           console.log(chalk.bold('  Recommendation'));
           console.log(`  ${synthesis.recommendation.slice(0, 300)}${synthesis.recommendation.length > 300 ? '…' : ''}`);
-          console.log('');
+          process.stdout.write('\n');
 
           if (synthesis.tradeoffs.length > 0) {
             console.log(chalk.bold('  Tradeoffs:'));
             for (const t of synthesis.tradeoffs.slice(0, 5)) {
               console.log(`    ${chalk.yellow('•')} ${t}`);
             }
-            console.log('');
+            process.stdout.write('\n');
           }
 
           if (synthesis.actionItems.length > 0) {
@@ -143,7 +143,7 @@ export function debateCommand(): Command {
             for (const a of synthesis.actionItems.slice(0, 5)) {
               console.log(`    ${chalk.green('•')} ${a}`);
             }
-            console.log('');
+            process.stdout.write('\n');
           }
 
           if (synthesis.dissent.length > 0) {
@@ -151,11 +151,11 @@ export function debateCommand(): Command {
             for (const d of synthesis.dissent.slice(0, 3)) {
               console.log(`    ${chalk.red('•')} ${d}`);
             }
-            console.log('');
+            process.stdout.write('\n');
           }
 
           console.log(`  Consensus: ${chalk.bold(String(synthesis.consensus))}%`);
-          console.log('');
+          process.stdout.write('\n');
 
           // Write report if --output specified
           if (options.output) {
