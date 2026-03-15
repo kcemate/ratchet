@@ -15,16 +15,16 @@ export function buildCommand(): Command {
       const distDir = dirname(thisFile);
       const packageRoot = dirname(distDir);
 
-      console.log(chalk.bold('\n🔨 Rebuilding ratchet…\n'));
+      process.stdout.write(chalk.bold('\n🔨 Rebuilding ratchet…\n'));
 
       try {
-        console.log(chalk.dim('  npm run build'));
+        process.stdout.write(chalk.dim('  npm run build') + '\n');
         execSync('npm run build', { cwd: packageRoot, stdio: 'inherit' });
 
-        console.log(chalk.dim('\n  npm link'));
+        process.stdout.write(chalk.dim('\n  npm link') + '\n');
         execSync('npm link', { cwd: packageRoot, stdio: 'inherit' });
 
-        console.log(chalk.green('\n  ✓ Binary rebuilt and linked successfully.\n'));
+        process.stdout.write(chalk.green('\n  ✓ Binary rebuilt and linked successfully.\n'));
       } catch (err) {
         console.error(chalk.red('\n  ✗ Build failed.') + '\n');
         process.exit(1);
