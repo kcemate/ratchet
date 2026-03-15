@@ -28,14 +28,27 @@ export function formatUser(user: any): string {
 }
 
 export function parseConfig(raw: any): Record<string, any> {
-  // TODO: add validation
+  // TODO: add validation here
+  // FIXME: handle parse errors
   console.log('Parsing config');
   return JSON.parse(raw);
 }
 
 export function processItems(items: any[]): void {
-  // FIXME: this is slow
+  // TODO: optimize this
   for (const item of items) {
     console.log('Processing:', item);
   }
+}
+
+export async function saveUser(user: any): Promise<void> {
+  try {
+    await fetch('/api/users', { method: 'POST', body: JSON.stringify(user) });
+  } catch {}
+  console.log('Saved user');
+}
+
+export function transform(data: any): any {
+  console.log('transforming', data);
+  return data;
 }

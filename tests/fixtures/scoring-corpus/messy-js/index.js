@@ -1,6 +1,6 @@
 // Messy JavaScript project — intentionally bad code for scoring fixture
-const API_KEY = 'sk-proj-abcdefghijklmnopqrstuvwxyz1234567890';
-const DB_PASSWORD = 'password = "supersecret12345678"';
+const apiKey = 'sk-abcdefghijklmnopqrstuvwxyz1234567890';
+const secret = 'AKIA1234567890ABCDEF';
 
 function processUserData(data) {
   console.log('Starting to process user data...');
@@ -17,10 +17,37 @@ function processUserData(data) {
   console.log('Step 8 done');
   console.log('Step 9 done');
   console.log('Step 10 done');
+  console.log('Step 11 done');
+  console.log('Step 12 done');
+  console.log('Step 13 done');
+  console.log('Step 14 done');
+  console.log('Step 15 done');
+  console.log('Step 16 done');
+  console.log('Step 17 done');
+  console.log('Step 18 done');
+  console.log('Step 19 done');
+  console.log('Step 20 done');
 
   // TODO: refactor this entire function
   // FIXME: this is terrible
   // HACK: temporary workaround
+  // TODO: remove this
+  // FIXME: cleanup needed
+  // TODO: add validation
+
+  // const oldHandler = require('./old-handler');
+  // const deprecated = require('./deprecated');
+  // return oldHandler(req);
+  // let result = deprecated.process(req);
+  // if (result) return result;
+  // const temp = doSomething(req);
+  // const debug = true;
+  // if (debug) console.log(temp);
+  // const unused = calculateStuff();
+  // return unused;
+  // const backup = req.clone();
+  // import { something } from './old';
+  // const legacy = legacyFunction(req);
 
   if (data && data.name) {
     console.log('Has name');
@@ -47,19 +74,6 @@ function handleRequest(req) {
   console.log('URL:', req.url);
   console.log('Headers:', req.headers);
   console.log('Body:', req.body);
-  // const oldHandler = require('./old-handler');
-  // const deprecated = require('./deprecated');
-  // return oldHandler(req);
-  // let result = deprecated.process(req);
-  // if (result) return result;
-  // const temp = doSomething(req);
-  // const debug = true;
-  // if (debug) console.log(temp);
-  // const unused = calculateStuff();
-  // return unused;
-  // const backup = req.clone();
-  // import { something } from './old';
-  // const legacy = legacyFunction(req);
   try {
     const result = processUserData(req.body);
     return result;
