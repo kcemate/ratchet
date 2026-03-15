@@ -114,7 +114,7 @@ export function initCommand(): Command {
       const cwd = resolve(dir);
       const configPath = join(cwd, '.ratchet.yml');
 
-      console.log(chalk.bold('\n⚙  Ratchet Init\n'));
+      process.stdout.write(chalk.bold('\n⚙  Ratchet Init\n'));
 
       // Warn if not inside a git repo — ratchet torque requires git to function.
       if (!(await isRepo(cwd))) {
@@ -129,13 +129,10 @@ export function initCommand(): Command {
       // Guard: already initialized
       if (await exists(configPath)) {
         if (!options.force) {
-          console.log(
-            chalk.yellow('  .ratchet.yml already exists.') +
-              chalk.dim(' Use --force to overwrite.'),
-          );
+          process.stdout.write(chalk.yellow('  .ratchet.yml already exists.') + chalk.dim(' Use --force to overwrite.') + '\n');
           process.exit(1);
         }
-        console.log(chalk.dim('  Overwriting existing .ratchet.yml…'));
+        process.stdout.write(chalk.dim('  Overwriting existing .ratchet.yml…') + '\n');
       }
 
       // Detect project
@@ -173,15 +170,7 @@ export function initCommand(): Command {
         process.exit(1);
       }
 
-      console.log('');
-      console.log(chalk.bold('Next steps:'));
-      console.log(
-        `  ${chalk.dim('1.')} Edit ${chalk.cyan('.ratchet.yml')} — set your targets and boundaries`,
-      );
-      console.log(
-        `  ${chalk.dim('2.')} Run ${chalk.green(`ratchet torque --target ${detectedTargetName}`)} to start the loop`,
-      );
-      console.log('');
+      process.stdout.write(`\n${chalk.bold('Next steps:')}\n  ${chalk.dim('1.')} Edit ${chalk.cyan('.ratchet.yml')} — set your targets and boundaries\n  ${chalk.dim('2.')} Run ${chalk.green(`ratchet torque --target ${detectedTargetName}`)} to start the loop\n\n`);
     });
 
   return cmd;
