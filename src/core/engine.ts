@@ -6,6 +6,7 @@ import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
 import { buildBacklog, groupBacklogBySubcategory } from './issue-backlog.js';
 import { executeClick } from './click.js';
+import { SwarmExecutor } from './swarm.js';
 import * as git from './git.js';
 import type { ScanResult } from '../commands/scan.js';
 import { runScan } from '../commands/scan.js';
@@ -31,6 +32,7 @@ export interface EngineRunOptions {
   agent: Agent;
   createBranch?: boolean;
   hardenMode?: boolean;
+  adversarial?: boolean;
   callbacks?: EngineCallbacks;
   /** If provided, skip the initial scan and use this result instead */
   scanResult?: ScanResult;
@@ -72,7 +74,7 @@ function countTestFiles(dir: string): number {
  * re-scans to measure progress and update the backlog.
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, callbacks = {}, scanResult: providedScan } = options;
+  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -149,18 +151,62 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
       try {
         const clickStartMs = Date.now();
-        const { click, rolled_back } = await executeClick({
-          clickNumber: i,
-          target,
-          config,
-          agent,
-          cwd,
-          hardenPhase,
-          issues: clickIssues,
-          onPhase: callbacks.onClickPhase
-            ? (phase) => callbacks.onClickPhase!(phase, i)
-            : undefined,
-        });
+
+        let click: Click;
+        let rolled_back: boolean;
+
+        if (config.swarm?.enabled) {
+          // Swarm mode: run N agents in parallel worktrees, pick best
+          const swarm = new SwarmExecutor(config.swarm);
+          const clickCtx = {
+            clickNumber: i,
+            target,
+            config,
+            agent,
+            cwd,
+            hardenPhase,
+            issues: clickIssues,
+            onPhase: callbacks.onClickPhase
+              ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
+              : undefined,
+          };
+          const swarmResult = await swarm.execute(clickCtx, cwd);
+
+          if (swarmResult.winner) {
+            click = swarmResult.winner.click;
+            rolled_back = swarmResult.winner.rolled_back;
+          } else {
+            // All agents failed — create a dummy failed click
+            click = {
+              number: i,
+              target: target.name,
+              analysis: '',
+              proposal: 'swarm: all agents failed',
+              filesModified: [],
+              testsPassed: false,
+              timestamp: new Date(),
+            };
+            rolled_back = true;
+          }
+        } else {
+          // Normal single-agent mode
+          const result = await executeClick({
+            clickNumber: i,
+            target,
+            config,
+            agent,
+            cwd,
+            hardenPhase,
+            adversarial,
+            issues: clickIssues,
+            onPhase: callbacks.onClickPhase
+              ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
+              : undefined,
+          });
+          click = result.click;
+          rolled_back = result.rolled_back;
+        }
+
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
 
         if (rolled_back) {

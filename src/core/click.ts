@@ -5,6 +5,10 @@ import type { IssueTask } from './issue-backlog.js';
 import { runTests } from './runner.js';
 import * as git from './git.js';
 import type { ClickPhase } from './engine.js';
+import { RedTeamAgent, detectTestFile, getOriginalCode } from './adversarial.js';
+import type { RedTeamResult } from './adversarial.js';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 
 export interface ClickContext {
   clickNumber: number;
@@ -14,6 +18,7 @@ export interface ClickContext {
   cwd: string;
   hardenPhase?: HardenPhase;
   issues?: IssueTask[];
+  adversarial?: boolean;
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
 }
 
@@ -66,9 +71,17 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     buildResult = await agent.build(proposal, cwd);
 
     if (!buildResult.success) {
+      console.error(`[DEBUG] Build failed. Output: ${buildResult.output?.slice(0, 500)}`);
       await rollback(cwd, clickNumber, stashCreated);
       rolledBack = true;
     } else {
+      // DEBUG: Capture git diff before testing
+      try {
+        const { execFileSync } = await import('child_process');
+        const diff = execFileSync('git', ['diff', '--stat'], { cwd, encoding: 'utf8' });
+        console.error(`[DEBUG] Files changed after build:\n${diff || '(no changes)'}`);
+      } catch { /* ignore */ }
+
       // 4. Test (the Pawl)
       await onPhase?.('testing');
       const testResult = await runTests({
@@ -79,6 +92,8 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       testsPassed = testResult.passed;
 
       if (!testsPassed) {
+        console.error(`[DEBUG] Tests FAILED. Exit output (last 500 chars): ${testResult.output?.slice(-500)}`);
+        console.error(`[DEBUG] Test error: ${testResult.error}`);
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       } else if (config.defaults.autoCommit) {
@@ -89,6 +104,27 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         // Drop the stash since we committed successfully (only if we created one)
         if (stashCreated) {
           await git.gitDropStash(cwd).catch(() => {});
+        }
+
+        // 6. Adversarial QA — challenge the committed change
+        if (ctx.adversarial && commitHash && buildResult.filesModified.length > 0) {
+          const redTeamResult = await runAdversarialChallenge(
+            buildResult.filesModified,
+            cwd,
+            config,
+          );
+
+          if (redTeamResult?.rollbackRecommended) {
+            console.error(
+              `[ratchet] Red team challenge FAILED — reverting commit ${commitHash.slice(0, 7)}`,
+            );
+            console.error(`[ratchet] Reason: ${redTeamResult.reasoning}`);
+            // Revert the commit (soft reset to undo the commit, then hard reset to undo changes)
+            await git.revert(cwd).catch(() => {});
+            rolledBack = true;
+            testsPassed = false;
+            commitHash = undefined;
+          }
         }
       }
     }
@@ -137,4 +173,33 @@ function buildCommitMessage(clickNumber: number, target: Target, proposal: strin
   // Trim proposal to first 60 chars for commit subject
   const subject = proposal.split('\n')[0].slice(0, 60).trim();
   return `ratchet(${target.name}): click ${clickNumber} — ${subject}`;
+}
+
+/**
+ * Run adversarial challenge against the first modified file that has a matching test file.
+ */
+async function runAdversarialChallenge(
+  filesModified: string[],
+  cwd: string,
+  config: RatchetConfig,
+): Promise<RedTeamResult | undefined> {
+  const redTeam = new RedTeamAgent({ model: config.model });
+
+  for (const file of filesModified) {
+    const testFile = await detectTestFile(file, cwd);
+    if (!testFile) continue;
+
+    const originalCode = await getOriginalCode(file, cwd);
+    let newCode: string;
+    try {
+      newCode = await readFile(join(cwd, file), 'utf-8');
+    } catch {
+      continue;
+    }
+
+    return redTeam.challenge(originalCode, newCode, testFile, cwd);
+  }
+
+  // No test files found for any modified file — skip silently
+  return undefined;
 }

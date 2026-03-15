@@ -11,6 +11,8 @@ import { checkStaleBinary } from '../core/stale-check.js';
 import { runEngine } from '../core/engine.js';
 import type { ClickPhase, HardenPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
+import { buildSwarmConfig } from '../core/swarm.js';
+import { isValidSpecialization } from '../core/agents/specialized.js';
 import { RatchetLogger } from '../core/logger.js';
 import { generateReport, writeReport } from '../core/report.js';
 import { writePDF } from '../core/pdf-report.js';
@@ -46,6 +48,10 @@ export function torqueCommand(): Command {
     .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
     .option('--no-branch', 'Run on the current branch instead of creating a ratchet branch', false)
     .option('--mode <mode>', 'Run mode: "normal" (default) or "harden" (write tests first, then improve)')
+    .option('--swarm', 'Enable swarm mode — N agents compete per click, best change wins', false)
+    .option('--agents <number>', 'Number of competing agents in swarm mode (default: 3)')
+    .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
+    .option('--adversarial', 'Enable adversarial QA — red team tests each landed change for regressions', false)
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -63,6 +69,10 @@ export function torqueCommand(): Command {
         verbose: boolean;
         branch: boolean;
         mode?: string;
+        swarm: boolean;
+        agents?: string;
+        focus?: string;
+        adversarial: boolean;
       }) => {
         const cwd = process.cwd();
 
@@ -131,6 +141,37 @@ export function torqueCommand(): Command {
 
         // Resolve harden mode: explicit --mode flag takes precedence, then config default
         const hardenMode = options.mode === 'harden' || config.defaults.hardenMode === true;
+
+        // Resolve swarm mode
+        if (options.swarm) {
+          const agentCount = options.agents ? parseInt(options.agents, 10) : 3;
+          if (isNaN(agentCount) || agentCount < 1 || agentCount > 5) {
+            console.error(
+              chalk.red(`  Invalid --agents value: ${chalk.bold(String(options.agents))}`) +
+                '\n  Must be 1-5.\n',
+            );
+            process.exit(1);
+          }
+
+          let focusSpecs: string[] | undefined;
+          if (options.focus) {
+            focusSpecs = options.focus.split(',').map((s) => s.trim());
+            const invalid = focusSpecs.filter((s) => !isValidSpecialization(s));
+            if (invalid.length > 0) {
+              console.error(
+                chalk.red(`  Invalid --focus specialization(s): ${invalid.join(', ')}`) +
+                  '\n  Valid: security, performance, quality, errors, types\n',
+              );
+              process.exit(1);
+            }
+          }
+
+          config.swarm = buildSwarmConfig({
+            swarm: true,
+            agents: agentCount,
+            focus: focusSpecs,
+          });
+        }
 
         // Warn about incomplete targets and invalid field values silently dropped by the parser
         if (config._source === 'file') {
@@ -218,6 +259,13 @@ export function torqueCommand(): Command {
         console.log(`  Clicks : ${chalk.yellow(String(clickCount))}`);
         console.log(`  Tests  : ${chalk.dim(config.defaults.testCommand)}`);
         console.log(`  Mode   : ${hardenMode ? chalk.yellow('harden') : chalk.dim('normal')}`);
+        if (options.adversarial) {
+          console.log(`  QA     : ${chalk.yellow('adversarial')}`);
+        }
+        if (config.swarm?.enabled) {
+          const specs = config.swarm.specializations.join(', ');
+          console.log(`  Swarm  : ${chalk.yellow(`${config.swarm.agentCount} agents`)} ${chalk.dim(`(${specs})`)}`);
+        }
         if (options.dryRun) {
           console.log('\n' + chalk.yellow('  [DRY RUN] No changes will be committed.'));
         }
@@ -294,6 +342,7 @@ export function torqueCommand(): Command {
             agent,
             createBranch: options.branch && !options.dryRun,
             hardenMode,
+            adversarial: options.adversarial,
             // Pass the pre-run scan to avoid a redundant re-scan
             scanResult: scoreBefore,
             callbacks: {
