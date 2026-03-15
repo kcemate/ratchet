@@ -1062,9 +1062,9 @@ function scoreColor(score: number, max: number): typeof chalk {
 }
 
 function renderScan(result: ScanResult): void {
-  console.log('');
+  process.stdout.write('\n');
   console.log(chalk.bold('🔧 Ratchet Scan — Production Readiness'));
-  console.log('');
+  process.stdout.write('\n');
   console.log(`Your app: ${chalk.cyan(result.projectName)}`);
 
   const pct = result.total / result.maxTotal;
@@ -1073,7 +1073,7 @@ function renderScan(result: ScanResult): void {
     ? chalk.dim(`  |  Issues: ${result.totalIssuesFound} found`)
     : '';
   console.log(`Score:    ${totalColor.bold(`${result.total}/${result.maxTotal}`)}${issuesStr}`);
-  console.log('');
+  process.stdout.write('\n');
 
   for (const cat of result.categories) {
     const color = scoreColor(cat.score, cat.max);
@@ -1092,7 +1092,7 @@ function renderScan(result: ScanResult): void {
 
   // Print issues section
   if (result.issuesByType.length > 0) {
-    console.log('');
+    process.stdout.write('\n');
     console.log(`  ${chalk.bold(`📋 Issues Found: ${result.totalIssuesFound}`)}`);
     const topIssues = result.issuesByType.slice(0, 8);
     for (const issue of topIssues) {
@@ -1105,9 +1105,9 @@ function renderScan(result: ScanResult): void {
     }
   }
 
-  console.log('');
+  process.stdout.write('\n');
   console.log(chalk.dim("Run 'npx ratchet fix' to improve your score."));
-  console.log('');
+  process.stdout.write('\n');
 }
 
 // --- Command ---
