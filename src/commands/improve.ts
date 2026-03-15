@@ -571,9 +571,15 @@ export function improveCommand(): Command {
       const target = { name: 'improve', path: '.', description: 'Improve all issue types across the codebase' };
       config.guards = { maxLinesChanged: 40, maxFilesChanged: 10 };
 
-      const useSwarm = options.swarm !== false;
+      const baseScore = scoreBefore.total;
+      // Smart swarm: auto-disable on high-score codebases (>75) unless explicitly requested
+      const useSwarm = options.swarm !== false && baseScore <= 75;
       const useAdversarial = options.adversarial !== false;
       const useArchitect = options.architect !== false;
+
+      if (options.swarm !== false && baseScore > 75) {
+        process.stdout.write(chalk.dim(`  Auto-skipping swarm (score ${baseScore}/100 > 75 — diminishing returns)\n`));
+      }
 
       const allocation = allocateClicks(scoreBefore, clickCount);
       const architectClicks = useArchitect ? allocation.architectClicks : 0;
@@ -601,7 +607,17 @@ export function improveCommand(): Command {
       }
       printFields(modeFields);
 
-      const agent = new ShellAgent({ model: config.model, cwd });
+      // Model tiering: architect phase gets the configured (expensive) model,
+      // surgical phase uses sonnet for mechanical fixes (70%+ cost reduction)
+      const architectModel = config.model; // Opus or whatever is configured
+      const surgicalModel = config.model?.includes('opus') ? config.model.replace('opus', 'sonnet') : config.model;
+      const architectAgent = new ShellAgent({ model: architectModel, cwd });
+      const surgicalAgent = new ShellAgent({ model: surgicalModel, cwd });
+      if (surgicalModel !== architectModel) {
+        process.stdout.write(chalk.dim(`  Model tiering: architect=${architectModel || 'default'}, surgical=${surgicalModel || 'default'}\n`));
+      }
+      // Legacy alias for phases that don't need tiering
+      const agent = architectAgent;
       const logger = new RatchetLogger(target.name, cwd);
 
       const learningStore = new LearningStore(cwd);
@@ -675,14 +691,14 @@ export function improveCommand(): Command {
           }
         }
 
-        // Phase 2: Surgical sweep (cleanup)
+        // Phase 2: Surgical sweep (cleanup) — uses cheaper model
         process.stdout.write(chalk.green('  ◆ Surgical phase\n'));
         const surgicalRun = await runSweepEngine({
           target,
           clicks: surgicalClicks,
           config,
           cwd,
-          agent,
+          agent: surgicalAgent,
           createBranch: architectClicks === 0, // only create branch if no architect phase
           adversarial: useAdversarial,
           scanResult: scanAfterArchitect,

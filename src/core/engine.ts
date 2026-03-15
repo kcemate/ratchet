@@ -368,7 +368,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
  * Re-scans after each successful click to measure impact and refresh the prompt.
  */
 export async function runArchitectEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true } = options;
+  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -523,7 +523,7 @@ export function chunk<T>(arr: T[], size: number): T[][] {
  * Finds the highest-priority sweepable issue and runs clicks against each batch of files.
  */
 export async function runSweepEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true } = options;
+  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
