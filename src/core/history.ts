@@ -33,6 +33,17 @@ export async function saveRun(
   await writeFile(filePath, JSON.stringify(entry, null, 2), 'utf-8');
 }
 
+function hydrateDates(entry: HistoryEntry): HistoryEntry {
+  const run = entry.run;
+  if (run.startedAt && typeof run.startedAt === 'string') {
+    run.startedAt = new Date(run.startedAt);
+  }
+  if (run.finishedAt && typeof run.finishedAt === 'string') {
+    run.finishedAt = new Date(run.finishedAt);
+  }
+  return entry;
+}
+
 export async function loadRun(cwd: string, runId: string): Promise<HistoryEntry | null> {
   const filePath = join(cwd, RUNS_DIR, `${runId}.json`);
   let raw: string;
@@ -43,7 +54,7 @@ export async function loadRun(cwd: string, runId: string): Promise<HistoryEntry 
   }
 
   try {
-    return JSON.parse(raw) as HistoryEntry;
+    return hydrateDates(JSON.parse(raw) as HistoryEntry);
   } catch {
     throw new Error(`History entry ${runId}.json could not be parsed — the file may be corrupted.`);
   }
@@ -66,7 +77,7 @@ export async function listRuns(cwd: string): Promise<HistoryEntry[]> {
     const filePath = join(runsDir, file);
     try {
       const raw = await readFile(filePath, 'utf-8');
-      entries.push(JSON.parse(raw) as HistoryEntry);
+      entries.push(hydrateDates(JSON.parse(raw) as HistoryEntry));
     } catch {
       // Skip corrupted files
     }
@@ -99,8 +110,14 @@ export async function loadLatestRun(cwd: string): Promise<HistoryEntry | null> {
   }
 
   try {
-    const run = JSON.parse(raw) as RatchetRun;
-    return { run, savedAt: (run.finishedAt ?? run.startedAt) as unknown as string };
+    const parsed = JSON.parse(raw) as RatchetRun;
+    if (parsed.startedAt && typeof parsed.startedAt === 'string') {
+      parsed.startedAt = new Date(parsed.startedAt);
+    }
+    if (parsed.finishedAt && typeof parsed.finishedAt === 'string') {
+      parsed.finishedAt = new Date(parsed.finishedAt);
+    }
+    return { run: parsed, savedAt: (parsed.finishedAt ?? parsed.startedAt) as unknown as string };
   } catch {
     return null;
   }
