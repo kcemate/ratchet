@@ -419,7 +419,7 @@ export function improveCommand(): Command {
     .action(async (options: { clicks: string; out?: string; swarm: boolean; adversarial: boolean; simulate: boolean }) => {
       const cwd = process.cwd();
 
-      console.log(chalk.bold('\n⚙  Ratchet Improve\n'));
+      process.stdout.write(chalk.bold('\n⚙  Ratchet Improve\n') + '\n');
 
       const staleWarning = checkStaleBinary();
       if (staleWarning) console.warn(chalk.yellow(`  ${staleWarning}\n`));
@@ -456,10 +456,7 @@ export function improveCommand(): Command {
 
       const outPath = options.out ?? join(cwd, 'docs', 'improve-report.pdf');
 
-      console.log(`  Clicks : ${chalk.yellow(String(clickCount))}`);
-      console.log(`  Tests  : ${chalk.dim(config.defaults.testCommand)}`);
-      console.log(`  Output : ${chalk.dim(outPath)}`);
-      console.log('');
+      process.stdout.write(`  Clicks : ${chalk.yellow(String(clickCount))}\n  Tests  : ${chalk.dim(config.defaults.testCommand)}\n  Output : ${chalk.dim(outPath)}\n\n`);
 
       // ── Step 1: Scan (before) ──
       const scanSpinner = ora('  Scanning codebase…').start();
@@ -475,16 +472,15 @@ export function improveCommand(): Command {
       }
 
       // Print issue breakdown
-      console.log('');
-      console.log(chalk.dim('  Issues to fix:'));
+      process.stdout.write('\n' + chalk.dim('  Issues to fix:') + '\n');
       (scoreBefore.issuesByType || [])
         .filter(i => i.count > 0)
         .slice(0, 8)
         .forEach(i => {
           const sev = i.severity === 'high' ? chalk.red('●') : i.severity === 'medium' ? chalk.yellow('●') : chalk.dim('●');
-          console.log(`    ${sev} ${chalk.bold(String(i.count))} ${chalk.dim(i.description)}`);
+          process.stdout.write(`    ${sev} ${chalk.bold(String(i.count))} ${chalk.dim(i.description)}\n`);
         });
-      console.log('');
+      process.stdout.write('\n');
 
       // ── Step 2: Fix (sweep all issue types) ──
       const target = { name: 'improve', path: '.', description: 'Improve all issue types across the codebase' };
@@ -502,12 +498,11 @@ export function improveCommand(): Command {
           parallel: true,
           worktreeDir: '/tmp/ratchet-swarm',
         };
-        console.log(`  Swarm : ${chalk.green('on')} ${chalk.dim('(3 agents)')}`);
+        process.stdout.write(`  Swarm : ${chalk.green('on')} ${chalk.dim('(3 agents)')}\n`);
       } else {
-        console.log(`  Swarm : ${chalk.dim('off')}`);
+        process.stdout.write(`  Swarm : ${chalk.dim('off')}\n`);
       }
-      console.log(`  Adversarial : ${useAdversarial ? chalk.green('on') : chalk.dim('off')}`);
-      console.log('');
+      process.stdout.write(`  Adversarial : ${useAdversarial ? chalk.green('on') : chalk.dim('off')}\n\n`);
 
       const agent = new ShellAgent({ model: config.model, cwd });
       const logger = new RatchetLogger(target.name, cwd);
@@ -673,7 +668,7 @@ export function improveCommand(): Command {
       process.stdout.write(`\n${chalk.bold('  ' + '─'.repeat(46))}\n\n  ${chalk.bold('Done.')}\n  Score:  ${scoreBefore.total} → ${chalk.bold(String(scoreAfter.total))} (${scoreDelta > 0 ? chalk.green(`+${scoreDelta}`) : chalk.yellow(String(scoreDelta))})\n  Issues: ${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}${issuesFixed > 0 ? chalk.green(` (${issuesFixed} fixed)`) : ''}\n  Clicks: ${landed.length} landed · ${rolledBack.length} rolled back\n  Time:   ${duration}\n  PDF:    ${chalk.cyan(outPath)}\n\n`);
 
       if (landed.length > 0) {
-        console.log(chalk.dim(`  Run ${chalk.cyan('ratchet tighten --pr')} to open a pull request.\n`));
+        process.stdout.write(chalk.dim(`  Run ${chalk.cyan('ratchet tighten --pr')} to open a pull request.\n`) + '\n');
       }
     });
 
