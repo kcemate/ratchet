@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { readFileSync, existsSync, statSync, readdirSync } from 'fs';
 import { join, extname } from 'path';
 import type { IssueSubcategory, IssueCategoryName } from '../core/taxonomy.js';
+import { printHeader, severityColor } from '../lib/cli.js';
 
 // --- Types ---
 
@@ -1064,9 +1065,7 @@ function scoreColor(score: number, max: number): typeof chalk {
 }
 
 function renderScan(result: ScanResult): void {
-  process.stdout.write('\n');
-  console.log(chalk.bold('🔧 Ratchet Scan — Production Readiness'));
-  process.stdout.write('\n');
+  printHeader('🔧 Ratchet Scan — Production Readiness');
   console.log(`Your app: ${chalk.cyan(result.projectName)}`);
 
   const pct = result.total / result.maxTotal;
@@ -1098,7 +1097,7 @@ function renderScan(result: ScanResult): void {
     console.log(`  ${chalk.bold(`📋 Issues Found: ${result.totalIssuesFound}`)}`);
     const topIssues = result.issuesByType.slice(0, 8);
     for (const issue of topIssues) {
-      const sevColor = issue.severity === 'high' ? chalk.red : issue.severity === 'medium' ? chalk.yellow : chalk.dim;
+      const sevColor = severityColor(issue.severity);
       const sev = sevColor(`(${issue.severity})`);
       console.log(`     ${issue.count} ${issue.description} ${sev}`);
     }

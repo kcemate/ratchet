@@ -11,6 +11,7 @@ import { generatePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { RatchetRun } from '../types.js';
 import type { ScanResult } from './scan.js';
+import { printHeader, exitWithError } from '../lib/cli.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -124,16 +125,12 @@ export function reportCommand(): Command {
       if (opts.run) {
         entry = await loadRun(cwd, opts.run);
         if (!entry) {
-          console.error(chalk.red(`✗ Run not found: ${opts.run}`));
-          console.error(chalk.dim(`  Use 'ratchet report --list' to see available runs.`));
-          process.exit(1);
+          exitWithError(`✗ Run not found: ${opts.run}\n  Use 'ratchet report --list' to see available runs.`);
         }
       } else {
         entry = await loadLatestRun(cwd);
         if (!entry) {
-          console.error(chalk.red('✗ No runs found.'));
-          console.error(chalk.dim(`  Run 'ratchet torque' first, then generate a report.`));
-          process.exit(1);
+          exitWithError(`✗ No runs found.\n  Run 'ratchet torque' first, then generate a report.`);
         }
       }
 
@@ -157,7 +154,7 @@ export function reportCommand(): Command {
       let markdownPath: string | null = null;
       let pdfPath: string | null = null;
 
-      process.stdout.write('\n' + chalk.bold('⚙  Ratchet Report') + '\n\n');
+      printHeader('⚙  Ratchet Report');
 
       // Generate markdown
       if (format === 'markdown' || format === 'both') {

@@ -4,6 +4,7 @@ import ora from 'ora';
 import { access, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { isRepo } from '../core/git.js';
+import { printHeader } from '../lib/cli.js';
 
 export type ProjectType = 'node' | 'python' | 'go' | 'rust' | 'make' | 'unknown';
 
@@ -114,7 +115,7 @@ export function initCommand(): Command {
       const cwd = resolve(dir);
       const configPath = join(cwd, '.ratchet.yml');
 
-      process.stdout.write(chalk.bold('\n⚙  Ratchet Init\n'));
+      printHeader('⚙  Ratchet Init');
 
       // Warn if not inside a git repo — ratchet torque requires git to function.
       if (!(await isRepo(cwd))) {

@@ -4,6 +4,7 @@ import { readFile, readdir } from 'fs/promises';
 import { join } from 'path';
 import { loadConfig, configFilePath } from '../core/config.js';
 import { existsSync } from 'fs';
+import { printHeader, exitWithError } from '../lib/cli.js';
 
 export function logCommand(): Command {
   const cmd = new Command('log');
@@ -27,7 +28,7 @@ export function logCommand(): Command {
     .action(async (options: { target?: string; raw: boolean }) => {
       const cwd = process.cwd();
 
-      console.log(chalk.bold('\n⚙  Ratchet Log\n'));
+      printHeader('⚙  Ratchet Log');
 
       let targetName = options.target;
 
@@ -35,12 +36,10 @@ export function logCommand(): Command {
       if (!targetName) {
         targetName = await inferTarget(cwd) ?? undefined;
         if (!targetName) {
-          console.error(
-            chalk.red('  No target specified and none could be inferred.') +
-              '\n  Use ' +
+          exitWithError(
+            '  No target specified and none could be inferred.\n  Use ' +
               chalk.cyan('ratchet log --target <name>'),
           );
-          process.exit(1);
         }
       }
 
@@ -50,11 +49,9 @@ export function logCommand(): Command {
       try {
         content = await readFile(logPath, 'utf-8');
       } catch {
-        console.error(
-          chalk.red(`  No log found for target "${targetName}".`) +
-            `\n  Expected: ${chalk.dim(logPath)}`,
+        exitWithError(
+          `  No log found for target "${targetName}".\n  Expected: ${chalk.dim(logPath)}`,
         );
-        process.exit(1);
       }
 
       if (options.raw) {
@@ -92,11 +89,9 @@ async function inferTarget(cwd: string): Promise<string | null> {
       }
       if (config.targets.length > 1) {
         const names = config.targets.map((t) => chalk.cyan(t.name)).join(', ');
-        console.error(
-          chalk.yellow('  Multiple targets in .ratchet.yml. Specify one with --target.') +
-            `\n  Available: ${names}`,
+        exitWithError(
+          `  Multiple targets in .ratchet.yml. Specify one with --target.\n  Available: ${names}`,
         );
-        process.exit(1);
       }
     } catch {
       // ignore
@@ -115,11 +110,9 @@ async function inferTarget(cwd: string): Promise<string | null> {
       const names = logFiles
         .map((f) => chalk.cyan(f.replace(/-ratchet\.md$/, '')))
         .join(', ');
-      console.error(
-        chalk.yellow('  Multiple log files found. Specify one with --target.') +
-          `\n  Available: ${names}`,
+      exitWithError(
+        `  Multiple log files found. Specify one with --target.\n  Available: ${names}`,
       );
-      process.exit(1);
     }
   } catch {
     // docs dir doesn't exist

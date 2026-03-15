@@ -4,7 +4,7 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { loadConfig } from '../core/config.js';
+import { printHeader, exitWithError, validateInt, loadConfigOrExit, severityColor } from '../lib/cli.js';
 import { saveRun } from '../core/history.js';
 import { checkStaleBinary } from '../core/stale-check.js';
 import { runSweepEngine, runArchitectEngine } from '../core/engine.js';
@@ -508,14 +508,13 @@ export function improveCommand(): Command {
     .action(async (options: { clicks: string; out?: string; swarm: boolean; adversarial: boolean; simulate: boolean; architect: boolean }) => {
       const cwd = process.cwd();
 
-      process.stdout.write(chalk.bold('\n⚙  Ratchet Improve\n') + '\n');
+      printHeader('⚙  Ratchet Improve');
 
       const staleWarning = checkStaleBinary();
       if (staleWarning) console.warn(chalk.yellow(`  ${staleWarning}\n`));
 
       if (!(await isRepo(cwd))) {
-        console.error(chalk.red('  Not a git repository. Ratchet requires git.\n'));
-        process.exit(1);
+        exitWithError('  Not a git repository. Ratchet requires git.');
       }
 
       const ws = await gitStatus(cwd);
@@ -529,19 +528,9 @@ export function improveCommand(): Command {
         );
       }
 
-      let config;
-      try {
-        config = loadConfig(cwd);
-      } catch (err) {
-        console.error(chalk.red('Error loading .ratchet.yml: ') + String(err));
-        process.exit(1);
-      }
+      const config = loadConfigOrExit(cwd);
 
-      const clickCount = parseInt(options.clicks, 10);
-      if (isNaN(clickCount) || clickCount < 1) {
-        console.error(chalk.red(`  Invalid --clicks value: ${options.clicks}\n`));
-        process.exit(1);
-      }
+      const clickCount = validateInt(options.clicks, 'clicks', 1);
 
       const outPath = options.out ?? join(cwd, 'docs', 'improve-report.pdf');
 
@@ -566,7 +555,7 @@ export function improveCommand(): Command {
         .filter(i => i.count > 0)
         .slice(0, 8)
         .forEach(i => {
-          const sev = i.severity === 'high' ? chalk.red('●') : i.severity === 'medium' ? chalk.yellow('●') : chalk.dim('●');
+          const sev = severityColor(i.severity)('●');
           process.stdout.write(`    ${sev} ${chalk.bold(String(i.count))} ${chalk.dim(i.description)}\n`);
         });
       process.stdout.write('\n');

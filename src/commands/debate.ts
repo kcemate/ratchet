@@ -9,6 +9,7 @@ import {
   MAX_AGENTS,
   MAX_ROUNDS,
 } from '../core/debate.js';
+import { printHeader, validateInt } from '../lib/cli.js';
 
 export function debateCommand(): Command {
   const cmd = new Command('debate');
@@ -44,53 +45,11 @@ export function debateCommand(): Command {
       }) => {
         const cwd = process.cwd();
 
-        process.stdout.write(chalk.bold('\n⚔  Ratchet Debate\n') + '\n');
+        printHeader('⚔  Ratchet Debate');
 
-        // Parse and validate agent count
-        const agentCount = parseInt(options.agents, 10);
-        if (isNaN(agentCount) || agentCount < 1) {
-          console.error(
-            chalk.red(`  Invalid --agents value: ${chalk.bold(options.agents)}`) +
-              '\n  Must be a positive integer (e.g. ' +
-              chalk.cyan('--agents 4') + ').\n',
-          );
-          process.exit(1);
-        }
-        if (agentCount > MAX_AGENTS) {
-          console.error(
-            chalk.red(`  Too many agents: ${agentCount}`) +
-              `\n  Maximum is ${MAX_AGENTS}.\n`,
-          );
-          process.exit(1);
-        }
-
-        // Parse and validate round count
-        const roundCount = parseInt(options.rounds, 10);
-        if (isNaN(roundCount) || roundCount < 1) {
-          console.error(
-            chalk.red(`  Invalid --rounds value: ${chalk.bold(options.rounds)}`) +
-              '\n  Must be a positive integer (e.g. ' +
-              chalk.cyan('--rounds 3') + ').\n',
-          );
-          process.exit(1);
-        }
-        if (roundCount > MAX_ROUNDS) {
-          console.error(
-            chalk.red(`  Too many rounds: ${roundCount}`) +
-              `\n  Maximum is ${MAX_ROUNDS}.\n`,
-          );
-          process.exit(1);
-        }
-
-        // Parse timeout
-        const timeout = parseInt(options.timeout, 10);
-        if (isNaN(timeout) || timeout < 1000) {
-          console.error(
-            chalk.red(`  Invalid --timeout value: ${chalk.bold(options.timeout)}`) +
-              '\n  Must be at least 1000 (1 second).\n',
-          );
-          process.exit(1);
-        }
+        const agentCount = validateInt(options.agents, 'agents', 1, MAX_AGENTS);
+        const roundCount = validateInt(options.rounds, 'rounds', 1, MAX_ROUNDS);
+        const timeout = validateInt(options.timeout, 'timeout', 1000);
 
         // Print run summary
         process.stdout.write(`  Topic  : ${chalk.cyan(options.topic)}\n`);
