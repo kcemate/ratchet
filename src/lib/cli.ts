@@ -2,11 +2,13 @@
  * Shared CLI presentation utilities.
  * Centralises repeated patterns from command files:
  * printHeader, exitWithError, validateInt, loadConfigOrExit,
- * writeOutputFile, printBulletList.
+ * writeOutputFile, printBulletList, withSpinner.
  */
 import chalk from 'chalk';
+import ora, { type Ora } from 'ora';
 import { writeFile } from 'fs/promises';
 import { loadConfig } from '../core/config.js';
+import { toErrorMessage } from '../core/utils.js';
 
 /** Print a bold command header line, e.g. printHeader('⚙  Ratchet Improve') */
 export function printHeader(text: string): void {
@@ -111,4 +113,32 @@ export function printBulletList(
     console.log(`    ${color('•')} ${item}`);
   }
   console.log('');
+}
+
+/**
+ * Run an async operation inside an ora spinner with unified error handling.
+ * The callback receives the spinner so it can call spinner.succeed() on success.
+ * On any thrown error, fails the spinner and exits the process.
+ *
+ * @param text      - initial spinner text
+ * @param fn        - async work; receives the Ora spinner instance
+ * @param failLabel - short label for spinner.fail() (e.g. 'Debate failed')
+ *                    If omitted, the error message is used directly.
+ */
+export async function withSpinner<T>(
+  text: string,
+  fn: (spinner: Ora) => Promise<T>,
+  failLabel?: string,
+): Promise<T> {
+  const spinner = ora(text).start();
+  try {
+    return await fn(spinner);
+  } catch (err) {
+    const label = failLabel ? `  ${failLabel}` : `  ${toErrorMessage(err)}`;
+    spinner.fail(chalk.red(label));
+    if (failLabel) {
+      console.error(chalk.red(`\n  ${toErrorMessage(err)}`) + '\n');
+    }
+    process.exit(1);
+  }
 }

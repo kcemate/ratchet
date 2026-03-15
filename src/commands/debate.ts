@@ -1,6 +1,5 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import ora from 'ora';
 
 import {
   DebateEngine,
@@ -8,8 +7,7 @@ import {
   MAX_AGENTS,
   MAX_ROUNDS,
 } from '../core/debate.js';
-import { printHeader, validateInt, writeOutputFile, printBulletList, printFields } from '../lib/cli.js';
-import { toErrorMessage } from '../core/utils.js';
+import { printHeader, validateInt, writeOutputFile, printBulletList, printFields, withSpinner } from '../lib/cli.js';
 
 export function debateCommand(): Command {
   const cmd = new Command('debate');
@@ -60,11 +58,8 @@ export function debateCommand(): Command {
         if (options.model) fields.push(['Model', chalk.dim(options.model)]);
         printFields(fields);
 
-        const spinner = ora('  Round 1 — agents stating positions…').start();
-
-        let engine: DebateEngine;
-        try {
-          engine = new DebateEngine({
+        await withSpinner('  Round 1 — agents stating positions…', async (spinner) => {
+          const engine = new DebateEngine({
             topic: options.topic,
             agents: agentCount,
             rounds: roundCount,
@@ -72,12 +67,7 @@ export function debateCommand(): Command {
             model: options.model,
             timeout,
           });
-        } catch (err) {
-          spinner.fail(chalk.red(`  ${toErrorMessage(err)}`));
-          process.exit(1);
-        }
 
-        try {
           const result = await engine.run();
           spinner.succeed(`  Debate complete — ${roundCount} rounds, ${agentCount} agents`);
           console.log('');
@@ -98,11 +88,7 @@ export function debateCommand(): Command {
           if (options.output) {
             await writeOutputFile(options.output, formatDebateReport(result));
           }
-        } catch (err) {
-          spinner.fail(chalk.red('  Debate failed'));
-          console.error(chalk.red(`\n  ${toErrorMessage(err)}`) + '\n');
-          process.exit(1);
-        }
+        }, 'Debate failed');
       },
     );
 
