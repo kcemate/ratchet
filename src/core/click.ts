@@ -1,4 +1,4 @@
-import type { Click, Target, RatchetConfig, BuildResult, HardenPhase } from '../types.js';
+import type { Click, Target, RatchetConfig, BuildResult, HardenPhase, ClickGuards } from '../types.js';
 import type { Agent } from './agents/base.js';
 import { createAgentContext } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
@@ -9,6 +9,7 @@ import { RedTeamAgent, detectTestFile, getOriginalCode } from './adversarial.js'
 import type { RedTeamResult } from './adversarial.js';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { execFileSync } from 'child_process';
 
 export interface ClickContext {
   clickNumber: number;
@@ -75,13 +76,16 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       await rollback(cwd, clickNumber, stashCreated);
       rolledBack = true;
     } else {
-      // DEBUG: Capture git diff before testing
-      try {
-        const { execFileSync } = await import('child_process');
-        const diff = execFileSync('git', ['diff', '--stat'], { cwd, encoding: 'utf8' });
-        console.error(`[DEBUG] Files changed after build:\n${diff || '(no changes)'}`);
-      } catch { /* ignore */ }
+      // Click guards: reject over-aggressive changes before running tests
+      const guardResult = checkClickGuards(cwd, config.guards);
+      if (!guardResult.passed) {
+        console.error(`[ratchet] Click ${clickNumber} REJECTED by guards: ${guardResult.reason}`);
+        console.error(`[ratchet]   ${guardResult.detail}`);
+        await rollback(cwd, clickNumber, stashCreated);
+        rolledBack = true;
+      }
 
+      if (!rolledBack) {
       // 4. Test (the Pawl)
       await onPhase?.('testing');
       const testResult = await runTests({
@@ -127,6 +131,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
           }
         }
       }
+      } // end if (!rolledBack) — click guards
     }
   } catch (err: unknown) {
     // Unexpected error — roll back to be safe
@@ -153,6 +158,79 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   };
 
   return { click, rolled_back: rolledBack };
+}
+
+interface GuardResult {
+  passed: boolean;
+  reason?: string;
+  detail?: string;
+  linesChanged?: number;
+  filesChanged?: number;
+}
+
+const DEFAULT_GUARDS: ClickGuards = {
+  maxLinesChanged: 40,
+  maxFilesChanged: 3,
+};
+
+/**
+ * Check click guards: reject over-aggressive changes before running tests.
+ * Measures actual git diff to count lines and files changed.
+ */
+function checkClickGuards(cwd: string, guards?: ClickGuards): GuardResult {
+  const { maxLinesChanged, maxFilesChanged } = { ...DEFAULT_GUARDS, ...guards };
+
+  try {
+    // Count files changed
+    const diffStat = execFileSync('git', ['diff', '--stat', '--cached'], { cwd, encoding: 'utf8' }).trim();
+    const unstagedStat = execFileSync('git', ['diff', '--stat'], { cwd, encoding: 'utf8' }).trim();
+    const combinedStat = [diffStat, unstagedStat].filter(Boolean).join('\n');
+
+    // Count lines changed (insertions + deletions)
+    const numstatStaged = execFileSync('git', ['diff', '--numstat', '--cached'], { cwd, encoding: 'utf8' }).trim();
+    const numstatUnstaged = execFileSync('git', ['diff', '--numstat'], { cwd, encoding: 'utf8' }).trim();
+    const allNumstat = [numstatStaged, numstatUnstaged].filter(Boolean).join('\n');
+
+    let totalLines = 0;
+    const filesSet = new Set<string>();
+
+    for (const line of allNumstat.split('\n')) {
+      if (!line.trim()) continue;
+      const parts = line.split('\t');
+      if (parts.length < 3) continue;
+      const added = parseInt(parts[0], 10) || 0;
+      const removed = parseInt(parts[1], 10) || 0;
+      totalLines += added + removed;
+      filesSet.add(parts[2]);
+    }
+
+    const filesChanged = filesSet.size;
+
+    if (totalLines > maxLinesChanged) {
+      return {
+        passed: false,
+        reason: `Too many lines changed: ${totalLines} > ${maxLinesChanged} max`,
+        detail: `Agent changed ${totalLines} lines across ${filesChanged} file(s). This is too aggressive for a single click. The change was rolled back to prevent test failures from broad refactors.`,
+        linesChanged: totalLines,
+        filesChanged,
+      };
+    }
+
+    if (filesChanged > maxFilesChanged) {
+      return {
+        passed: false,
+        reason: `Too many files changed: ${filesChanged} > ${maxFilesChanged} max`,
+        detail: `Agent modified ${filesChanged} files (${totalLines} lines). Clicks should be surgical — ${maxFilesChanged} files max.`,
+        linesChanged: totalLines,
+        filesChanged,
+      };
+    }
+
+    return { passed: true, linesChanged: totalLines, filesChanged };
+  } catch {
+    // If git diff fails, allow the click to proceed (don't block on guard errors)
+    return { passed: true };
+  }
 }
 
 async function rollback(cwd: string, clickNumber: number, stashCreated: boolean): Promise<void> {

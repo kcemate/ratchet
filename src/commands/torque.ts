@@ -45,6 +45,8 @@ export function torqueCommand(): Command {
     .option('--agents <number>', 'Number of competing agents in swarm mode (default: 3)')
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
     .option('--adversarial', 'Enable adversarial QA — red team tests each landed change for regressions', false)
+    .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (default: 40)')
+    .option('--max-files <number>', 'Max files changed per click before auto-rollback (default: 3)')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -66,6 +68,8 @@ export function torqueCommand(): Command {
         agents?: string;
         focus?: string;
         adversarial: boolean;
+        maxLines?: string;
+        maxFiles?: string;
       }) => {
         const cwd = process.cwd();
 
@@ -248,9 +252,15 @@ export function torqueCommand(): Command {
         // Print run summary
         console.log(`  Target : ${chalk.cyan(target.name)}`);
         console.log(`  Path   : ${chalk.dim(target.path)}`);
+        // Set up click guards
+        const maxLines = options.maxLines ? parseInt(options.maxLines, 10) : 40;
+        const maxFiles = options.maxFiles ? parseInt(options.maxFiles, 10) : 3;
+        config.guards = { maxLinesChanged: maxLines, maxFilesChanged: maxFiles };
+
         console.log(`  Agent  : ${chalk.dim(config.agent)}`);
         console.log(`  Clicks : ${chalk.yellow(String(clickCount))}`);
         console.log(`  Tests  : ${chalk.dim(config.defaults.testCommand)}`);
+        console.log(`  Guards : ${chalk.dim(`≤${maxLines} lines, ≤${maxFiles} files per click`)}`);
         console.log(`  Mode   : ${hardenMode ? chalk.yellow('harden') : chalk.dim('normal')}`);
         if (options.adversarial) {
           console.log(`  QA     : ${chalk.yellow('adversarial')}`);

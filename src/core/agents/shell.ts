@@ -243,13 +243,19 @@ function buildIssuePlanPrompt(context: string, issues: IssueTask[]): string {
   return (
     `You are a code improvement assistant. Fix the top issue in ${targetPath}.\n\n` +
     `ISSUES FOUND:\n${issueList}\n\n` +
+    `HARD CONSTRAINTS (violating these will cause rollback):\n` +
+    `- Change AT MOST 30 lines total (insertions + deletions combined)\n` +
+    `- Modify AT MOST 2 files\n` +
+    `- Do NOT refactor, restructure, or rewrite functions\n` +
+    `- Do NOT rename variables, extract helpers, or "improve" unrelated code\n` +
+    `- Do NOT add new dependencies or change public function signatures\n` +
+    `- Do NOT change formatting, whitespace, or style in untouched lines\n` +
+    `- All existing tests MUST still pass\n\n` +
     `INSTRUCTIONS:\n` +
-    `1. Read the target file(s) to understand the code\n` +
-    `2. Fix the highest-severity issue first\n` +
-    `3. Make surgical, minimal changes — at most 2-3 files\n` +
-    `4. Do NOT add new dependencies or change public function signatures\n` +
-    `5. Do NOT refactor unrelated code\n` +
-    `6. All existing tests MUST still pass\n\n` +
+    `1. Read the target file to understand the code\n` +
+    `2. Fix ONLY the single highest-severity issue\n` +
+    `3. Make the smallest possible change that fixes it\n` +
+    `4. If the fix would require changing more than 30 lines, pick a smaller sub-issue instead\n\n` +
     `After making changes, output each modified file on its own line:\n` +
     `MODIFIED: <filepath>`
   );

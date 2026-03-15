@@ -12,6 +12,13 @@ export interface SwarmConfig {
   worktreeDir: string;
 }
 
+export interface ClickGuards {
+  /** Max lines changed per click — reject before testing if exceeded (default: 40) */
+  maxLinesChanged: number;
+  /** Max files changed per click — reject before testing if exceeded (default: 3) */
+  maxFilesChanged: number;
+}
+
 export interface RatchetConfig {
   agent: 'claude-code' | 'codex' | 'shell';
   model?: string;
@@ -24,6 +31,8 @@ export interface RatchetConfig {
   targets: Target[];
   boundaries?: Boundary[];
   swarm?: SwarmConfig;
+  /** Click scope guards — reject over-aggressive changes before running tests */
+  guards?: ClickGuards;
   /** Set to 'auto-detected' when config was generated from project detection, not a .ratchet.yml */
   _source?: 'file' | 'auto-detected';
   /** True when no test command was found during auto-detection; harden mode should be enabled */
