@@ -670,13 +670,7 @@ export function improveCommand(): Command {
       const scoreDelta = scoreAfter.total - scoreBefore.total;
       const issuesFixed = scoreBefore.totalIssuesFound - scoreAfter.totalIssuesFound;
 
-      console.log('\n' + chalk.bold('  ' + '─'.repeat(46)));
-      console.log(`\n  ${chalk.bold('Done.')}`);
-      console.log(`  Score:  ${scoreBefore.total} → ${chalk.bold(String(scoreAfter.total))} (${scoreDelta > 0 ? chalk.green(`+${scoreDelta}`) : chalk.yellow(String(scoreDelta))})`);
-      console.log(`  Issues: ${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}${issuesFixed > 0 ? chalk.green(` (${issuesFixed} fixed)`) : ''}`);
-      console.log(`  Clicks: ${landed.length} landed · ${rolledBack.length} rolled back`);
-      console.log(`  Time:   ${duration}`);
-      console.log(`  PDF:    ${chalk.cyan(outPath)}\n`);
+      process.stdout.write(`\n${chalk.bold('  ' + '─'.repeat(46))}\n\n  ${chalk.bold('Done.')}\n  Score:  ${scoreBefore.total} → ${chalk.bold(String(scoreAfter.total))} (${scoreDelta > 0 ? chalk.green(`+${scoreDelta}`) : chalk.yellow(String(scoreDelta))})\n  Issues: ${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}${issuesFixed > 0 ? chalk.green(` (${issuesFixed} fixed)`) : ''}\n  Clicks: ${landed.length} landed · ${rolledBack.length} rolled back\n  Time:   ${duration}\n  PDF:    ${chalk.cyan(outPath)}\n\n`);
 
       if (landed.length > 0) {
         console.log(chalk.dim(`  Run ${chalk.cyan('ratchet tighten --pr')} to open a pull request.\n`));
