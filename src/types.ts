@@ -62,6 +62,12 @@ export interface Click {
   timestamp: Date;
   scoreAfterClick?: number;  // total score after this click
   issuesFixedCount?: number; // how many issues this click resolved
+  swarmSpecialization?: string; // which swarm agent won (e.g. 'security', 'quality')
+  adversarialResult?: {
+    challenged: boolean;
+    passed: boolean;
+    reasoning: string;
+  };
 }
 
 export interface RatchetRun {

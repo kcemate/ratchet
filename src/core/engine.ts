@@ -10,6 +10,7 @@ import { SwarmExecutor } from './swarm.js';
 import * as git from './git.js';
 import type { ScanResult } from '../commands/scan.js';
 import { runScan } from '../commands/scan.js';
+import type { LearningStore } from './learning.js';
 
 export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
 export type { HardenPhase };
@@ -37,6 +38,8 @@ export interface EngineRunOptions {
   callbacks?: EngineCallbacks;
   /** If provided, skip the initial scan and use this result instead */
   scanResult?: ScanResult;
+  /** If provided, record outcomes for cross-run learning */
+  learningStore?: LearningStore;
 }
 
 const TEST_FILE_PATTERNS = [
@@ -75,7 +78,7 @@ function countTestFiles(dir: string): number {
  * re-scans to measure progress and update the backlog.
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan } = options;
+  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -176,6 +179,13 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           if (swarmResult.winner) {
             click = swarmResult.winner.click;
             rolled_back = swarmResult.winner.rolled_back;
+            // Attach winning specialization metadata
+            const winnerAgent = swarmResult.allResults.find(
+              r => !r.outcome.rolled_back && r.outcome.click.testsPassed,
+            );
+            if (winnerAgent) {
+              click.swarmSpecialization = winnerAgent.specialization;
+            }
           } else {
             // All agents failed — create a dummy failed click
             click = {
@@ -382,28 +392,77 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
 
       try {
         const clickStartMs = Date.now();
-        const result = await executeClick({
-          clickNumber,
-          target: options.target,
-          config,
-          agent,
-          cwd,
-          sweepMode: true,
-          issues: [batchTask],
-          onPhase: callbacks.onClickPhase
-            ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, clickNumber)
-            : undefined,
-        });
+
+        let click: Click;
+        let rolled_back: boolean;
+
+        if (config.swarm?.enabled) {
+          // Swarm mode: run N agents in parallel worktrees, pick best
+          const swarm = new SwarmExecutor(config.swarm);
+          const clickCtx = {
+            clickNumber,
+            target: options.target,
+            config,
+            agent,
+            cwd,
+            sweepMode: true,
+            issues: [batchTask],
+            onPhase: callbacks.onClickPhase
+              ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, clickNumber)
+              : undefined,
+          };
+          const swarmResult = await swarm.execute(clickCtx, cwd);
+
+          if (swarmResult.winner) {
+            click = swarmResult.winner.click;
+            rolled_back = swarmResult.winner.rolled_back;
+            // Attach winning specialization metadata
+            const winnerAgent = swarmResult.allResults.find(
+              r => !r.outcome.rolled_back && r.outcome.click.testsPassed,
+            );
+            if (winnerAgent) {
+              click.swarmSpecialization = winnerAgent.specialization;
+            }
+          } else {
+            click = {
+              number: clickNumber,
+              target: options.target.name,
+              analysis: '',
+              proposal: 'swarm: all agents failed',
+              filesModified: [],
+              testsPassed: false,
+              timestamp: new Date(),
+            };
+            rolled_back = true;
+          }
+        } else {
+          // Normal single-agent mode
+          const result = await executeClick({
+            clickNumber,
+            target: options.target,
+            config,
+            agent,
+            cwd,
+            sweepMode: true,
+            adversarial: options.adversarial,
+            issues: [batchTask],
+            onPhase: callbacks.onClickPhase
+              ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, clickNumber)
+              : undefined,
+          });
+          click = result.click;
+          rolled_back = result.rolled_back;
+        }
 
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
-        if (result.rolled_back) {
+        if (rolled_back) {
           console.error(`[ratchet] sweep click ${clickNumber} ROLLED BACK (${elapsedSec}s)`);
         } else {
           console.error(`[ratchet] sweep click ${clickNumber} LANDED (${elapsedSec}s)`);
         }
 
-        run.clicks.push(result.click);
-        await callbacks.onClickComplete?.(result.click, result.rolled_back);
+        run.clicks.push(click);
+        await callbacks.onClickComplete?.(click, rolled_back);
       } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error(String(err));
         await callbacks.onError?.(error, clickNumber);
