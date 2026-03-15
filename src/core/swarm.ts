@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import { join } from 'path';
 import { mkdirSync, existsSync, symlinkSync } from 'fs';
 import type { SwarmConfig, SwarmResult, SwarmAgentResult, RatchetConfig } from '../types.js';
+import type { LearningStore } from './learning.js';
 import type { ClickContext, ClickOutcome } from './click.js';
 import { executeClick } from './click.js';
 import { createSpecializedAgent } from './agents/specialized.js';
@@ -32,7 +33,7 @@ export class SwarmExecutor {
   private readonly parallel: boolean;
   private readonly worktreeDir: string;
 
-  constructor(config: Partial<SwarmConfig> = {}) {
+  constructor(config: Partial<SwarmConfig> = {}, learningStore?: LearningStore) {
     this.agentCount = config.agentCount ?? 3;
     this.parallel = config.parallel ?? true;
     this.worktreeDir = config.worktreeDir ?? '/tmp/ratchet-swarm';
@@ -48,6 +49,18 @@ export class SwarmExecutor {
     while (this.specializations.length < this.agentCount) {
       const next = DEFAULT_SPECIALIZATIONS[this.specializations.length % DEFAULT_SPECIALIZATIONS.length];
       this.specializations.push(next);
+    }
+
+    // Weight toward historically-winning specializations
+    if (learningStore) {
+      const weights = learningStore.getSpecializationWeights();
+      if (weights.size > 0) {
+        this.specializations.sort((a, b) => {
+          const wA = weights.get(a) ?? 1.0;
+          const wB = weights.get(b) ?? 1.0;
+          return wB - wA; // higher weight first
+        });
+      }
     }
   }
 
@@ -209,6 +222,8 @@ export class SwarmExecutor {
       ...clickCtx,
       agent,
       cwd: worktreePath,
+      // Worktrees don't have .gitnexus — use the main repo for GitNexus lookups
+      gitnexusCwd: clickCtx.gitnexusCwd ?? clickCtx.cwd,
       // Don't auto-commit in worktrees — we apply the winning diff to main
       config: {
         ...clickCtx.config,

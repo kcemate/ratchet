@@ -20,6 +20,9 @@ import type { Click, RatchetRun, SwarmConfig } from '../types.js';
 import { formatDuration } from '../core/utils.js';
 import puppeteer from 'puppeteer';
 import { readFileSync } from 'fs';
+import { LearningStore } from '../core/learning.js';
+import { SimulationEngine, aggregateResults } from '../core/simulate.js';
+import type { SimulationResult } from '../core/simulate.js';
 
 const STATE_FILE = '.ratchet-state.json';
 
@@ -110,6 +113,7 @@ function buildResultsPDF(before: ScanResult, after: ScanResult, runMeta: {
     swarmSpecialization?: string;
     adversarialResult?: { challenged: boolean; passed: boolean; reasoning: string };
   }>;
+  simulationResult?: SimulationResult | null;
 }): string {
   const scoreBefore = before.total;
   const scoreAfter = after.total;
@@ -336,6 +340,59 @@ function buildResultsPDF(before: ScanResult, after: ScanResult, runMeta: {
   <div class="watermark">ratchet — autonomous code improvement</div>
 </div>
 
+${runMeta.simulationResult ? `
+<!-- PAGE 5: USER IMPACT ASSESSMENT ────────────────────── -->
+<div class="page">
+  <div class="section-title">User Impact Assessment</div>
+  <div class="section-sub">Persona simulation — how real users would experience these changes</div>
+
+  <div class="score-block" style="margin-bottom:20px;">
+    <div class="score-label" style="margin-bottom:12px;">OVERALL SENTIMENT</div>
+    <div style="font-size:16px; line-height:1.6;">${esc(runMeta.simulationResult.summary.overallSentiment)}</div>
+  </div>
+
+  ${runMeta.simulationResult.summary.topPainPoints.length > 0 ? `
+  <div style="margin-bottom:20px;">
+    <div style="font-size:14px; font-weight:700; margin-bottom:8px;">Top Pain Points</div>
+    ${runMeta.simulationResult.summary.topPainPoints.slice(0, 5).map(p =>
+      '<div style="font-size:12px; color:#f59e0b; padding:4px 0;">• ' + esc(p) + '</div>'
+    ).join('')}
+  </div>` : ''}
+
+  ${runMeta.simulationResult.summary.topSuggestions.length > 0 ? `
+  <div style="margin-bottom:20px;">
+    <div style="font-size:14px; font-weight:700; margin-bottom:8px;">Top Suggestions</div>
+    ${runMeta.simulationResult.summary.topSuggestions.slice(0, 5).map(s =>
+      '<div style="font-size:12px; color:#22c55e; padding:4px 0;">• ' + esc(s) + '</div>'
+    ).join('')}
+  </div>` : ''}
+
+  ${runMeta.simulationResult.summary.criticalDropoffs.length > 0 ? `
+  <div style="margin-bottom:20px;">
+    <div style="font-size:14px; font-weight:700; margin-bottom:8px;">Critical Drop-offs</div>
+    ${runMeta.simulationResult.summary.criticalDropoffs.slice(0, 3).map(d =>
+      '<div style="font-size:12px; color:#ef4444; padding:4px 0;">• ' + esc(d) + '</div>'
+    ).join('')}
+  </div>` : ''}
+
+  <div style="margin-top:16px;">
+    <div style="font-size:14px; font-weight:700; margin-bottom:12px;">Persona Results</div>
+    ${runMeta.simulationResult.personas.map(p => {
+      const sentColor = p.sentiment === 'positive' ? '#22c55e' : p.sentiment === 'negative' ? '#ef4444' : '#71717a';
+      return '<div class="click-row" style="margin-bottom:8px;">' +
+        '<div class="click-head">' +
+        '<span class="click-label">' + esc(p.persona.name) + '</span>' +
+        '<span style="font-size:11px; color:#71717a;">(' + esc(p.persona.type) + ')</span>' +
+        '<span class="pill" style="margin-left:auto; background:#151518; color:' + sentColor + ';">' + esc(p.sentiment) + '</span>' +
+        '</div>' +
+        (p.droppedAt ? '<div style="font-size:11px; color:#ef4444; margin-top:4px;">Dropped at: ' + esc(p.droppedAt) + '</div>' : '') +
+        '</div>';
+    }).join('')}
+  </div>
+
+  <div class="watermark">ratchet — autonomous code improvement</div>
+</div>` : ''}
+
 </body>
 </html>`;
 }
@@ -357,8 +414,9 @@ export function improveCommand(): Command {
     .option('--out <path>', 'Output PDF path (default: docs/improve-report.pdf)')
     .option('--no-swarm', 'Disable swarm mode (swarm is on by default)')
     .option('--no-adversarial', 'Disable adversarial QA (adversarial is on by default)')
-    .addHelpText('after', '\nExample:\n  $ ratchet improve\n  $ ratchet improve --clicks 15\n  $ ratchet improve --no-swarm --no-adversarial\n')
-    .action(async (options: { clicks: string; out?: string; swarm: boolean; adversarial: boolean }) => {
+    .option('--no-simulate', 'Disable post-run persona simulation')
+    .addHelpText('after', '\nExample:\n  $ ratchet improve\n  $ ratchet improve --clicks 15\n  $ ratchet improve --no-swarm --no-adversarial --no-simulate\n')
+    .action(async (options: { clicks: string; out?: string; swarm: boolean; adversarial: boolean; simulate: boolean }) => {
       const cwd = process.cwd();
 
       console.log(chalk.bold('\n⚙  Ratchet Improve\n'));
@@ -454,6 +512,10 @@ export function improveCommand(): Command {
       const agent = new ShellAgent({ model: config.model, cwd });
       const logger = new RatchetLogger(target.name, cwd);
 
+      // Initialize learning store for cross-run learning
+      const learningStore = new LearningStore(cwd);
+      await learningStore.load();
+
       acquireLock(cwd);
 
       let run: RatchetRun;
@@ -469,6 +531,7 @@ export function improveCommand(): Command {
           createBranch: true,
           adversarial: useAdversarial,
           scanResult: scoreBefore,
+          learningStore,
           callbacks: {
             onScanComplete: () => {},
             onClickStart: async (n, total) => {
@@ -528,9 +591,36 @@ export function improveCommand(): Command {
         scoreAfter = scoreBefore; // fallback to before
       }
 
+      // ── Step 3.5: Persona simulation (opt-out with --no-simulate) ──
+      const landed = run.clicks.filter(c => c.testsPassed);
+      let simResult: SimulationResult | null = null;
+      const useSimulate = options.simulate !== false;
+      if (useSimulate && landed.length > 0) {
+        const simSpinner = ora('  Running persona simulation…').start();
+        try {
+          const modifiedFiles = run.clicks
+            .filter(c => c.testsPassed)
+            .flatMap(c => c.filesModified || [])
+            .filter((v, i, a) => a.indexOf(v) === i)
+            .slice(0, 10);
+          const scenario = `Use the features that were just modified: ${modifiedFiles.map(f => f.split('/').pop()).join(', ')}`;
+
+          const simEngine = new SimulationEngine({
+            personas: 3,
+            scenario,
+            cwd,
+            model: config.model,
+            timeout: 60_000,
+          });
+          simResult = await simEngine.run();
+          simSpinner.succeed(`  Simulation complete: ${simResult.summary.overallSentiment}`);
+        } catch {
+          simSpinner.warn('  Simulation skipped (timed out or failed)');
+        }
+      }
+
       // ── Step 4: Generate PDF ──
       const pdfSpinner = ora('  Generating results PDF…').start();
-      const landed = run.clicks.filter(c => c.testsPassed);
       const rolledBack = run.clicks.filter(c => !c.testsPassed);
       const duration = run.finishedAt
         ? formatDuration(run.finishedAt.getTime() - run.startedAt.getTime())
@@ -549,6 +639,7 @@ export function improveCommand(): Command {
           swarmSpecialization: c.swarmSpecialization,
           adversarialResult: c.adversarialResult,
         })),
+        simulationResult: simResult,
       });
 
       try {

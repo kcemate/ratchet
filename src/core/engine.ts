@@ -4,13 +4,14 @@ import { join } from 'path';
 import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase } from '../types.js';
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
-import { buildBacklog, groupBacklogBySubcategory } from './issue-backlog.js';
+import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
 import { executeClick } from './click.js';
 import { SwarmExecutor } from './swarm.js';
 import * as git from './git.js';
 import type { ScanResult } from '../commands/scan.js';
 import { runScan } from '../commands/scan.js';
 import type { LearningStore } from './learning.js';
+import { clearCache as clearGitNexusCache } from './gitnexus.js';
 
 export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
 export type { HardenPhase };
@@ -117,10 +118,15 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     }
   }
 
+  // Clear GitNexus cache at the start of each run for fresh data
+  clearGitNexusCache();
+
   if (currentScan) {
     await callbacks.onScanComplete?.(currentScan);
     previousTotal = currentScan.total;
     const backlog = buildBacklog(currentScan);
+    // Enrich backlog with blast-radius risk scores from GitNexus
+    enrichBacklogWithRisk(backlog, cwd);
     backlogGroups = groupBacklogBySubcategory(backlog);
   }
 
@@ -161,7 +167,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         if (config.swarm?.enabled) {
           // Swarm mode: run N agents in parallel worktrees, pick best
-          const swarm = new SwarmExecutor(config.swarm);
+          const swarm = new SwarmExecutor(config.swarm, learningStore ?? options.learningStore);
           const clickCtx = {
             clickNumber: i,
             target,
@@ -214,8 +220,31 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
               : undefined,
           });
-          click = result.click;
-          rolled_back = result.rolled_back;
+
+          // Risk gate escalation: if single-agent was blocked, retry with swarm
+          if (result.requiresSwarm) {
+            console.error(`[ratchet] Escalating click ${i} to swarm mode (risk gate triggered)`);
+            const swarm = new SwarmExecutor({ agentCount: 3, parallel: true }, learningStore);
+            const swarmResult = await swarm.execute({
+              clickNumber: i, target, config, agent, cwd, hardenPhase,
+              issues: clickIssues,
+              onPhase: callbacks.onClickPhase
+                ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
+                : undefined,
+            }, cwd);
+
+            if (swarmResult.winner) {
+              click = swarmResult.winner.click;
+              rolled_back = swarmResult.winner.rolled_back;
+              click.riskScore = result.click.riskScore;
+            } else {
+              click = result.click;
+              rolled_back = true;
+            }
+          } else {
+            click = result.click;
+            rolled_back = result.rolled_back;
+          }
         }
 
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
@@ -255,6 +284,33 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         run.clicks.push(click);
         await callbacks.onClickComplete?.(click, rolled_back);
+
+        // Cross-run learning: record the outcome for future recommendations
+        if (learningStore && clickIssues && clickIssues.length > 0) {
+          const elapsedMs = Date.now() - clickStartMs;
+          const scoreDelta = click.scoreAfterClick != null ? click.scoreAfterClick - previousTotal : 0;
+          const specName = config.swarm?.enabled
+            ? (config.swarm.specializations?.[0] ?? 'default')
+            : 'default';
+          for (const issue of clickIssues) {
+            const files = issue.sweepFiles ?? click.filesModified;
+            for (const file of files) {
+              try {
+                await learningStore.recordOutcome({
+                  issueType: issue.subcategory || issue.category,
+                  filePath: file,
+                  specialization: specName,
+                  success: click.testsPassed && !rolled_back,
+                  fixTimeMs: elapsedMs,
+                  scoreDelta,
+                  failureReason: rolled_back ? 'click rolled back' : undefined,
+                });
+              } catch {
+                // Non-fatal — don't let learning failures break the engine
+              }
+            }
+          }
+        }
       } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error(String(err));
         await callbacks.onError?.(error, i);
@@ -359,8 +415,12 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
     const scanResult = options.scanResult ?? await runScan(cwd);
     await callbacks.onScanComplete?.(scanResult);
 
-    // 2. Build backlog
+    // Clear GitNexus cache for fresh data
+    clearGitNexusCache();
+
+    // 2. Build backlog and enrich with risk scores
     const backlog = buildBacklog(scanResult);
+    enrichBacklogWithRisk(backlog, cwd);
 
     // 3. Filter to sweepable tasks
     const sweepable = backlog.filter(t => t.sweepFiles && t.sweepFiles.length > 0);
@@ -377,8 +437,9 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
     const task = sweepable[0]!;
     console.error(`[ratchet] Sweep target: ${task.description} (${task.sweepFiles!.length} files)`);
 
-    // 5. Chunk files into batches of 6
-    const batches = chunk(task.sweepFiles!, 6);
+    // 5. Group files by dependency cluster (tightly-coupled files together),
+    // falling back to plain chunking if GitNexus is not available
+    const batches = groupByDependencyCluster(task.sweepFiles!, cwd, 6);
     const clicksToRun = Math.min(clicks, batches.length);
 
     for (let i = 0; i < clicksToRun; i++) {
@@ -398,7 +459,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
 
         if (config.swarm?.enabled) {
           // Swarm mode: run N agents in parallel worktrees, pick best
-          const swarm = new SwarmExecutor(config.swarm);
+          const swarm = new SwarmExecutor(config.swarm, learningStore ?? options.learningStore);
           const clickCtx = {
             clickNumber,
             target: options.target,
@@ -463,6 +524,27 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
 
         run.clicks.push(click);
         await callbacks.onClickComplete?.(click, rolled_back);
+
+        // Cross-run learning: record sweep outcome
+        if (options.learningStore) {
+          const elapsedMs = Date.now() - clickStartMs;
+          const specName = click.swarmSpecialization ?? 'default';
+          for (const file of batch) {
+            try {
+              await options.learningStore.recordOutcome({
+                issueType: task.subcategory || task.category,
+                filePath: file,
+                specialization: specName,
+                success: click.testsPassed && !rolled_back,
+                fixTimeMs: elapsedMs,
+                scoreDelta: 0,
+                failureReason: rolled_back ? 'sweep click rolled back' : undefined,
+              });
+            } catch {
+              // Non-fatal
+            }
+          }
+        }
       } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error(String(err));
         await callbacks.onError?.(error, clickNumber);
