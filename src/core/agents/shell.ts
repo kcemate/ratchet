@@ -1,13 +1,10 @@
-import { execFile, spawn } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import { join } from 'path';
 import type { Target, BuildResult, HardenPhase } from '../../types.js';
 import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
-
-const execFileAsync = promisify(execFile);
 
 export interface ShellAgentConfig extends AgentOptions {
   /** Command to run for analysis/proposal (defaults to: claude --print) */
@@ -92,48 +89,87 @@ export class ShellAgent implements Agent {
     return this.runPromptInDir(prompt, process.cwd());
   }
 
-  private async runPromptInDir(prompt: string, cwd: string): Promise<string> {
+  private runPromptInDir(prompt: string, cwd: string): Promise<string> {
     const args = [...this.extraArgs, prompt];
-    try {
-      const { stdout, stderr } = await execFileAsync(this.command, args, {
+    const maxBuffer = 10 * 1024 * 1024; // 10MB
+
+    return new Promise((resolve, reject) => {
+      const child = spawn(this.command, args, {
         cwd,
-        timeout: this.timeout,
-        maxBuffer: 10 * 1024 * 1024,
         env: { ...process.env },
+        stdio: ['ignore', 'pipe', 'pipe'],
       });
-      return [stdout, stderr].filter(Boolean).join('\n').trim();
-    } catch (err: unknown) {
-      const error = err as NodeJS.ErrnoException & {
-        stdout?: string;
-        stderr?: string;
-        killed?: boolean;
-        signal?: string;
-      };
 
-      // Timeout: Node kills the process with SIGTERM after the timeout elapses
-      if (error.killed || error.signal === 'SIGTERM') {
-        const timeoutSecs = Math.round(this.timeout / 1000);
-        throw new Error(
-          `Agent timed out after ${timeoutSecs}s — the \`${this.command}\` process did not respond in time.\n` +
-            `  Possible causes: the agent is unresponsive, rate-limited, or the network is slow.\n` +
-            `  Try increasing the timeout or checking that \`${this.command}\` works from the command line.`,
-        );
-      }
+      let stdoutBuf = '';
+      let stderrBuf = '';
+      let totalBytes = 0;
+      let timedOut = false;
 
-      // Command not found
-      if (error.code === 'ENOENT') {
-        throw new Error(
-          `Agent command not found: \`${this.command}\`\n` +
+      const timer = setTimeout(() => {
+        timedOut = true;
+        child.kill('SIGTERM');
+      }, this.timeout);
+
+      child.stdout.on('data', (chunk: Buffer) => {
+        totalBytes += chunk.length;
+        if (totalBytes > maxBuffer) {
+          child.kill('SIGTERM');
+          return;
+        }
+        stdoutBuf += chunk.toString();
+      });
+
+      child.stderr.on('data', (chunk: Buffer) => {
+        totalBytes += chunk.length;
+        if (totalBytes > maxBuffer) {
+          child.kill('SIGTERM');
+          return;
+        }
+        stderrBuf += chunk.toString();
+      });
+
+      child.on('error', (err: NodeJS.ErrnoException) => {
+        clearTimeout(timer);
+        if (err.code === 'ENOENT') {
+          reject(new Error(
+            `Agent command not found: \`${this.command}\`\n` +
             `  Make sure the agent CLI is installed and available in your PATH.\n` +
             `  For the default shell agent: npm install -g @anthropic-ai/claude-code`,
-        );
-      }
+          ));
+        } else {
+          reject(err);
+        }
+      });
 
-      // If the command exits non-zero but produced output, still return it
-      const output = [error.stdout, error.stderr].filter(Boolean).join('\n').trim();
-      if (output) return output;
-      throw error;
-    }
+      child.on('close', (code: number | null) => {
+        clearTimeout(timer);
+
+        if (timedOut || totalBytes > maxBuffer) {
+          const timeoutSecs = Math.round(this.timeout / 1000);
+          reject(new Error(
+            `Agent timed out after ${timeoutSecs}s — the \`${this.command}\` process did not respond in time.\n` +
+            `  Possible causes: the agent is unresponsive, rate-limited, or the network is slow.\n` +
+            `  Try increasing the timeout or checking that \`${this.command}\` works from the command line.`,
+          ));
+          return;
+        }
+
+        const output = [stdoutBuf, stderrBuf].filter(Boolean).join('\n').trim();
+
+        if (code === 0) {
+          resolve(output);
+          return;
+        }
+
+        // Non-zero exit but produced output — still return it
+        if (output) {
+          resolve(output);
+          return;
+        }
+
+        reject(new Error(`Agent exited with code ${code}`));
+      });
+    });
   }
 }
 

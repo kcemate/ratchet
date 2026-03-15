@@ -1,8 +1,5 @@
-import { execFile } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import type { TestResult, RunnerOptions } from '../types.js';
-
-const execFileAsync = promisify(execFile);
 
 const DEFAULT_TIMEOUT = 120_000; // 2 minutes
 
@@ -24,45 +21,61 @@ export async function runTests(options: RunnerOptions): Promise<TestResult> {
   }
   const [bin, ...args] = parts;
 
-  try {
-    const { stdout, stderr } = await execFileAsync(bin, args, {
+  return new Promise((resolve) => {
+    const child = spawn(bin, args, {
       cwd,
-      timeout,
-      maxBuffer: 10 * 1024 * 1024, // 10MB
       env: { ...process.env },
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
-    const duration = Date.now() - start;
-    return {
-      passed: true,
-      output: [stdout, stderr].filter(Boolean).join('\n'),
-      duration,
-    };
-  } catch (err: unknown) {
-    const duration = Date.now() - start;
-    const error = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string; code?: number };
 
-    // Binary not found — give a clear, actionable message instead of the raw ENOENT
-    if (error.code === 'ENOENT') {
-      const friendlyMessage =
-        `Test command not found: \`${bin}\`\n` +
-        `  Make sure \`${bin}\` is installed and available in your PATH.\n` +
-        `  Check the test_command setting in .ratchet.yml`;
-      return {
-        passed: false,
-        output: friendlyMessage,
-        duration,
-        error: friendlyMessage,
-      };
-    }
+    let stdoutBuf = '';
+    let stderrBuf = '';
+    let totalBytes = 0;
+    const maxBuffer = 10 * 1024 * 1024; // 10MB
+    let timedOut = false;
 
-    const output = [error.stdout, error.stderr].filter(Boolean).join('\n');
-    return {
-      passed: false,
-      output,
-      duration,
-      error: error.message,
-    };
-  }
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+    }, timeout);
+
+    child.stdout.on('data', (chunk: Buffer) => {
+      totalBytes += chunk.length;
+      if (totalBytes <= maxBuffer) stdoutBuf += chunk.toString();
+    });
+
+    child.stderr.on('data', (chunk: Buffer) => {
+      totalBytes += chunk.length;
+      if (totalBytes <= maxBuffer) stderrBuf += chunk.toString();
+    });
+
+    child.on('error', (err: NodeJS.ErrnoException) => {
+      clearTimeout(timer);
+      const duration = Date.now() - start;
+      if (err.code === 'ENOENT') {
+        const friendlyMessage =
+          `Test command not found: \`${bin}\`\n` +
+          `  Make sure \`${bin}\` is installed and available in your PATH.\n` +
+          `  Check the test_command setting in .ratchet.yml`;
+        resolve({ passed: false, output: friendlyMessage, duration, error: friendlyMessage });
+      } else {
+        resolve({ passed: false, output: err.message, duration, error: err.message });
+      }
+    });
+
+    child.on('close', (code: number | null) => {
+      clearTimeout(timer);
+      const duration = Date.now() - start;
+      const output = [stdoutBuf, stderrBuf].filter(Boolean).join('\n');
+
+      if (timedOut) {
+        resolve({ passed: false, output, duration, error: `Test command timed out after ${timeout}ms` });
+        return;
+      }
+
+      resolve({ passed: code === 0, output, duration, error: code !== 0 ? `Exited with code ${code}` : undefined });
+    });
+  });
 }
 
 export function parseCommand(command: string): string[] {
