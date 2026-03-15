@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import { writeFile } from 'fs/promises';
 
 import {
   DebateEngine,
@@ -9,7 +8,8 @@ import {
   MAX_AGENTS,
   MAX_ROUNDS,
 } from '../core/debate.js';
-import { printHeader, validateInt } from '../lib/cli.js';
+import { printHeader, validateInt, writeOutputFile, printBulletList } from '../lib/cli.js';
+import { toErrorMessage } from '../core/utils.js';
 
 export function debateCommand(): Command {
   const cmd = new Command('debate');
@@ -73,59 +73,34 @@ export function debateCommand(): Command {
             timeout,
           });
         } catch (err) {
-          spinner.fail(chalk.red(`  ${err instanceof Error ? err.message : String(err)}`));
+          spinner.fail(chalk.red(`  ${toErrorMessage(err)}`));
           process.exit(1);
         }
 
         try {
           const result = await engine.run();
           spinner.succeed(`  Debate complete — ${roundCount} rounds, ${agentCount} agents`);
-          process.stdout.write('\n');
+          console.log('');
 
-          // Print synthesis to console
           const { synthesis } = result;
 
-          process.stdout.write(chalk.bold('  Recommendation') + '\n');
-          process.stdout.write(`  ${synthesis.recommendation.slice(0, 300)}${synthesis.recommendation.length > 300 ? '…' : ''}\n`);
-          process.stdout.write('\n');
+          console.log(chalk.bold('  Recommendation'));
+          console.log(`  ${synthesis.recommendation.slice(0, 300)}${synthesis.recommendation.length > 300 ? '…' : ''}`);
+          console.log('');
 
-          if (synthesis.tradeoffs.length > 0) {
-            process.stdout.write(chalk.bold('  Tradeoffs:') + '\n');
-            for (const t of synthesis.tradeoffs.slice(0, 5)) {
-              console.log(`    ${chalk.yellow('•')} ${t}`);
-            }
-            process.stdout.write('\n');
-          }
-
-          if (synthesis.actionItems.length > 0) {
-            console.log(chalk.bold('  Action Items:'));
-            for (const a of synthesis.actionItems.slice(0, 5)) {
-              console.log(`    ${chalk.green('•')} ${a}`);
-            }
-            process.stdout.write('\n');
-          }
-
-          if (synthesis.dissent.length > 0) {
-            console.log(chalk.bold('  Dissenting Opinions:'));
-            for (const d of synthesis.dissent.slice(0, 3)) {
-              console.log(`    ${chalk.red('•')} ${d}`);
-            }
-            process.stdout.write('\n');
-          }
+          printBulletList('Tradeoffs:', synthesis.tradeoffs, chalk.yellow);
+          printBulletList('Action Items:', synthesis.actionItems, chalk.green);
+          printBulletList('Dissenting Opinions:', synthesis.dissent, chalk.red, 3);
 
           console.log(`  Consensus: ${chalk.bold(String(synthesis.consensus))}%`);
-          process.stdout.write('\n');
+          console.log('');
 
-          // Write report if --output specified
           if (options.output) {
-            const report = formatDebateReport(result);
-            const outputPath = options.output.endsWith('.md') ? options.output : `${options.output}.md`;
-            await writeFile(outputPath, report, 'utf-8');
-            console.log(`  Report saved: ${chalk.dim(outputPath)}\n`);
+            await writeOutputFile(options.output, formatDebateReport(result));
           }
         } catch (err) {
           spinner.fail(chalk.red('  Debate failed'));
-          console.error(chalk.red('\n  ' + (err instanceof Error ? err.message : String(err))) + '\n');
+          console.error(chalk.red(`\n  ${toErrorMessage(err)}`) + '\n');
           process.exit(1);
         }
       },

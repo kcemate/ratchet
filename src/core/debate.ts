@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { toErrorMessage } from './utils.js';
 
 // ── Philosophy types ─────────────────────────────────────────────────
 
@@ -614,7 +615,7 @@ export class DebateEngine {
       } catch (err) {
         return {
           agent,
-          position: `(Agent error: ${err instanceof Error ? err.message : String(err)})`,
+          position: `(Agent error: ${toErrorMessage(err)})`,
           evidence: [],
           counters: [],
           confidence: 0,

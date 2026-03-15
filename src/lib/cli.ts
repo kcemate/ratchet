@@ -1,9 +1,11 @@
 /**
  * Shared CLI presentation utilities.
  * Centralises repeated patterns from command files:
- * printHeader, exitWithError, validateInt, loadConfigOrExit.
+ * printHeader, exitWithError, validateInt, loadConfigOrExit,
+ * writeOutputFile, printBulletList.
  */
 import chalk from 'chalk';
+import { writeFile } from 'fs/promises';
 import { loadConfig } from '../core/config.js';
 
 /** Print a bold command header line, e.g. printHeader('⚙  Ratchet Improve') */
@@ -54,4 +56,37 @@ export function severityColor(severity: string): typeof chalk.red {
   if (severity === 'high') return chalk.red;
   if (severity === 'medium') return chalk.yellow;
   return chalk.dim;
+}
+
+/**
+ * Write content to a file, appending `.md` if the path lacks that extension.
+ * Logs the saved path to stdout. Shared by simulate and debate commands.
+ */
+export async function writeOutputFile(outputPath: string, content: string): Promise<void> {
+  const resolved = outputPath.endsWith('.md') ? outputPath : `${outputPath}.md`;
+  await writeFile(resolved, content, 'utf-8');
+  console.log(`  Report saved: ${chalk.dim(resolved)}\n`);
+}
+
+/**
+ * Print a titled bullet list to stdout with a given chalk color function.
+ * Shared by simulate, debate, and improve commands.
+ *
+ * @param title  - bold heading
+ * @param items  - array of strings to render as bullets
+ * @param color  - chalk color fn applied to the bullet character
+ * @param limit  - max items to show (default: 5)
+ */
+export function printBulletList(
+  title: string,
+  items: string[],
+  color: (s: string) => string,
+  limit = 5,
+): void {
+  if (items.length === 0) return;
+  console.log(chalk.bold(`  ${title}`));
+  for (const item of items.slice(0, limit)) {
+    console.log(`    ${color('•')} ${item}`);
+  }
+  console.log('');
 }

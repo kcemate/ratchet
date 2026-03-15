@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { toErrorMessage } from './utils.js';
 
 // ── Persona types ──────────────────────────────────────────────────────
 
@@ -586,7 +587,7 @@ export class SimulationEngine {
       } catch (err) {
         return {
           persona,
-          journey: `(Agent error: ${err instanceof Error ? err.message : String(err)})`,
+          journey: `(Agent error: ${toErrorMessage(err)})`,
           painPoints: [],
           suggestions: [],
           sentiment: 'neutral',

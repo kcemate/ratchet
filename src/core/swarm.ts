@@ -7,6 +7,7 @@ import type { LearningStore } from './learning.js';
 import type { ClickContext, ClickOutcome } from './click.js';
 import { executeClick } from './click.js';
 import { createSpecializedAgent } from './agents/specialized.js';
+import { toErrorMessage } from './utils.js';
 import type { Specialization } from './agents/specialized.js';
 import { DEFAULT_SPECIALIZATIONS, isValidSpecialization } from './agents/specialized.js';
 import { runTests } from './runner.js';
@@ -129,7 +130,7 @@ export class SwarmExecutor {
             const outcome = await this.runAgentInWorktree(task.spec, task.worktree, clickCtx);
             outcomes.push({ spec: task.spec, worktree: task.worktree, outcome });
           } catch (err: unknown) {
-            const error = err instanceof Error ? err.message : String(err);
+            const error = toErrorMessage(err);
             outcomes.push({ spec: task.spec, worktree: task.worktree, outcome: null, error });
           }
         }

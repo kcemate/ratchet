@@ -3,6 +3,7 @@ import { resolve, join } from 'path';
 import { parse } from 'yaml';
 import type { RatchetConfig, Target, Boundary } from '../types.js';
 import { buildAutoConfig } from './detect.js';
+import { toErrorMessage } from './utils.js';
 
 const CONFIG_FILE = '.ratchet.yml';
 
@@ -52,7 +53,7 @@ export function parseConfig(raw: string): RatchetConfig {
   try {
     data = parse(raw) as RawConfig;
   } catch (err: unknown) {
-    const detail = err instanceof Error ? err.message : String(err);
+    const detail = toErrorMessage(err);
     throw new Error(
       `.ratchet.yml contains invalid YAML and could not be parsed.\n` +
         `  Detail: ${detail}\n` +
