@@ -1,7 +1,7 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { join } from 'path';
-import { mkdirSync, existsSync } from 'fs';
+import { mkdirSync, existsSync, symlinkSync } from 'fs';
 import type { SwarmConfig, SwarmResult, SwarmAgentResult, RatchetConfig } from '../types.js';
 import type { ClickContext, ClickOutcome } from './click.js';
 import { executeClick } from './click.js';
@@ -71,6 +71,14 @@ export class SwarmExecutor {
         const branchName = `ratchet-swarm-${timestamp}-${spec}-${i}`;
 
         await git(['worktree', 'add', '-b', branchName, worktreePath, 'HEAD'], cwd);
+
+        // Symlink node_modules so test commands (vitest, jest, etc.) resolve
+        const srcModules = join(cwd, 'node_modules');
+        const dstModules = join(worktreePath, 'node_modules');
+        if (existsSync(srcModules) && !existsSync(dstModules)) {
+          symlinkSync(srcModules, dstModules, 'junction');
+        }
+
         worktrees.push(worktreePath);
       }
 
