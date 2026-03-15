@@ -2,6 +2,19 @@ import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 import { join, basename } from 'path';
 
+// ── Per-run caches ──────────────────────────────────────────
+// getImpact and queryFlows can be slow (spawns CLI). Cache per target+cwd.
+const impactCache = new Map<string, GitNexusImpact | null>();
+const flowsCache = new Map<string, string[]>();
+const contextCache = new Map<string, GitNexusContext | null>();
+
+/** Clear all GitNexus caches. Call between runs or in tests. */
+export function clearCache(): void {
+  impactCache.clear();
+  flowsCache.clear();
+  contextCache.clear();
+}
+
 /**
  * Run gitnexus CLI and return the JSON output.
  * GitNexus sometimes writes JSON to stderr instead of stdout,
@@ -61,6 +74,9 @@ function getRepoName(cwd: string): string {
 export function getImpact(target: string, cwd: string): GitNexusImpact | null {
   if (!isIndexed(cwd)) return null;
 
+  const cacheKey = `${cwd}::${target}`;
+  if (impactCache.has(cacheKey)) return impactCache.get(cacheKey)!;
+
   try {
     const fileName = basename(target);
     const args = ['impact', fileName, '--repo', getRepoName(cwd)];
@@ -93,14 +109,17 @@ export function getImpact(target: string, cwd: string): GitNexusImpact | null {
       }
     }
 
-    return {
+    const result: GitNexusImpact = {
       target,
       directCallers,
       affectedFiles,
       riskLevel: parsed.risk_level ?? parsed.riskLevel ?? 'unknown',
       raw,
     };
+    impactCache.set(cacheKey, result);
+    return result;
   } catch {
+    impactCache.set(cacheKey, null);
     return null;
   }
 }
@@ -111,6 +130,9 @@ export function getImpact(target: string, cwd: string): GitNexusImpact | null {
  */
 export function getContext(fileOrSymbol: string, cwd: string): GitNexusContext | null {
   if (!isIndexed(cwd)) return null;
+
+  const cacheKey = `${cwd}::${fileOrSymbol}`;
+  if (contextCache.has(cacheKey)) return contextCache.get(cacheKey)!;
 
   try {
     const fileName = basename(fileOrSymbol);
@@ -124,13 +146,16 @@ export function getContext(fileOrSymbol: string, cwd: string): GitNexusContext |
     const parsed = JSON.parse(raw);
     if (parsed.status === 'not_found' || parsed.error) return null;
 
-    return {
+    const result: GitNexusContext = {
       symbol: parsed.symbol?.name ?? fileOrSymbol,
       incoming: parsed.incoming ?? {},
       outgoing: parsed.outgoing ?? {},
       raw,
     };
+    contextCache.set(cacheKey, result);
+    return result;
   } catch {
+    contextCache.set(cacheKey, null);
     return null;
   }
 }
@@ -142,6 +167,9 @@ export function getContext(fileOrSymbol: string, cwd: string): GitNexusContext |
 export function queryFlows(concept: string, cwd: string, limit = 5): string[] {
   if (!isIndexed(cwd)) return [];
 
+  const cacheKey = `${cwd}::${concept}::${limit}`;
+  if (flowsCache.has(cacheKey)) return flowsCache.get(cacheKey)!;
+
   try {
     const raw = runGitNexus(['query', concept, '--repo', getRepoName(cwd)], cwd);
 
@@ -149,11 +177,14 @@ export function queryFlows(concept: string, cwd: string, limit = 5): string[] {
     const processes = parsed.processes ?? parsed;
     if (!Array.isArray(processes)) return [];
 
-    return processes
+    const result = processes
       .slice(0, limit)
       .map((p: { summary?: string; id?: string }) => p.summary ?? p.id ?? '')
       .filter(Boolean);
+    flowsCache.set(cacheKey, result);
+    return result;
   } catch {
+    flowsCache.set(cacheKey, []);
     return [];
   }
 }
@@ -202,4 +233,78 @@ export function buildIntelligenceBriefing(targetPath: string, cwd: string): stri
   lines.push('    check that all callers still work. If you move/rename exports, update all importers.');
 
   return lines.join('\n');
+}
+
+/**
+ * Assess risk score for a file based on blast radius (number of dependents).
+ * Returns 0–1: 0 = isolated, 1 = very high impact (≥10 dependents).
+ * Gracefully returns 0 if GitNexus is not indexed.
+ */
+export function assessFileRisk(filePath: string, cwd: string): number {
+  const impact = getImpact(filePath, cwd);
+  if (!impact) return 0;
+  const dependentCount = impact.directCallers.length + impact.affectedFiles.length;
+  return Math.min(1, dependentCount / 10);
+}
+
+/**
+ * Group files into dependency clusters — files that share imports are grouped together.
+ * Useful for sweep mode: fixing tightly-coupled files in the same click.
+ * Returns the original list as a single cluster if GitNexus is not indexed.
+ */
+export function getDependencyClusters(files: string[], cwd: string): string[][] {
+  if (!isIndexed(cwd) || files.length === 0) return files.length > 0 ? [files] : [];
+
+  // Collect dependency sets per file
+  const fileDeps = new Map<string, Set<string>>();
+  for (const file of files) {
+    const normalized = file.replace(/^\.\//, '');
+    const ctx = getContext(normalized, cwd);
+    if (!ctx) continue;
+    const deps = new Set<string>();
+    for (const imp of ctx.outgoing['imports'] ?? []) deps.add(imp.filePath);
+    for (const imp of ctx.incoming['imports'] ?? []) deps.add(imp.filePath);
+    fileDeps.set(file, deps);
+  }
+
+  // Union-find: cluster files that share at least one dependency
+  const parent = new Map<string, string>();
+  const find = (x: string): string => {
+    if (!parent.has(x)) parent.set(x, x);
+    while (parent.get(x) !== x) {
+      parent.set(x, parent.get(parent.get(x)!)!);
+      x = parent.get(x)!;
+    }
+    return x;
+  };
+  const union = (a: string, b: string): void => {
+    parent.set(find(a), find(b));
+  };
+
+  for (const file of files) {
+    if (!parent.has(file)) parent.set(file, file);
+  }
+
+  for (let i = 0; i < files.length; i++) {
+    for (let j = i + 1; j < files.length; j++) {
+      const depsA = fileDeps.get(files[i]!) ?? new Set();
+      const depsB = fileDeps.get(files[j]!) ?? new Set();
+      for (const d of depsA) {
+        if (depsB.has(d)) {
+          union(files[i]!, files[j]!);
+          break;
+        }
+      }
+    }
+  }
+
+  // Group by root
+  const clusters = new Map<string, string[]>();
+  for (const file of files) {
+    const root = find(file);
+    if (!clusters.has(root)) clusters.set(root, []);
+    clusters.get(root)!.push(file);
+  }
+
+  return [...clusters.values()];
 }

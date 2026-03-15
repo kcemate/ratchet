@@ -10,6 +10,7 @@ import type { RedTeamResult } from './adversarial.js';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
+import { getImpact } from './gitnexus.js';
 
 export interface ClickContext {
   clickNumber: number;
@@ -21,12 +22,16 @@ export interface ClickContext {
   issues?: IssueTask[];
   adversarial?: boolean;
   sweepMode?: boolean;
+  /** Main repo cwd for GitNexus lookups (worktrees don't have .gitnexus) */
+  gitnexusCwd?: string;
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
 }
 
 export interface ClickOutcome {
   click: Click;
   rolled_back: boolean;
+  /** True if the risk gate determined this file needs swarm mode */
+  requiresSwarm?: boolean;
 }
 
 /**
@@ -36,6 +41,29 @@ export interface ClickOutcome {
 export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   const { clickNumber, target, config, agent, cwd, hardenPhase, issues, onPhase } = ctx;
   const timestamp = new Date();
+
+  // Pre-click risk gate: if file has >10 direct dependents and change is structural,
+  // signal that swarm mode is required instead of single-agent
+  if (!config.swarm?.enabled && !ctx.sweepMode) {
+    const riskGate = checkRiskGate(target.path, ctx.gitnexusCwd ?? cwd);
+    if (riskGate.requiresSwarm) {
+      console.error(`[ratchet] Risk gate: ${target.path} has ${riskGate.dependentCount} dependents — escalating to swarm`);
+      return {
+        click: {
+          number: clickNumber,
+          target: target.name,
+          analysis: '',
+          proposal: `risk-gate: ${riskGate.dependentCount} dependents require swarm mode`,
+          filesModified: [],
+          testsPassed: false,
+          riskScore: riskGate.riskScore,
+          timestamp,
+        },
+        rolled_back: false,
+        requiresSwarm: true,
+      };
+    }
+  }
 
   // Stash current state so we can roll back if tests fail.
   // stashCreated tracks whether git actually created a stash entry — if the working tree
@@ -51,6 +79,11 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   let rolledBack = false;
 
   try {
+    // Pass GitNexus cwd to the agent so worktree agents can look up intelligence
+    if (ctx.gitnexusCwd && 'gitnexusCwd' in agent) {
+      (agent as { gitnexusCwd?: string }).gitnexusCwd = ctx.gitnexusCwd;
+    }
+
     // 1. Analyze
     await onPhase?.('analyzing');
     const context = createAgentContext(target, clickNumber, hardenPhase);
@@ -210,12 +243,13 @@ function checkClickGuards(cwd: string, guards?: ClickGuards, sweepMode?: boolean
       totalLines += fileLines;
       filesSet.add(parts[2]);
 
-      // Sweep mode: enforce per-file line limit of 10
-      if (sweepMode && fileLines > 10) {
+      // Sweep mode: enforce per-file line limit of 30 (cross-cutting fixes like replacing
+      // `any` types can legitimately touch 15-25 lines in a single file)
+      if (sweepMode && fileLines > 30) {
         return {
           passed: false,
           reason: `Single file changed too many lines in sweep mode`,
-          detail: `File ${parts[2]} changed ${fileLines} lines (added=${added}, removed=${removed}). Sweep mode allows at most 10 lines per file.`,
+          detail: `File ${parts[2]} changed ${fileLines} lines (added=${added}, removed=${removed}). Sweep mode allows at most 30 lines per file.`,
           linesChanged: totalLines,
           filesChanged: filesSet.size,
         };
@@ -248,6 +282,36 @@ function checkClickGuards(cwd: string, guards?: ClickGuards, sweepMode?: boolean
   } catch {
     // If git diff fails, allow the click to proceed (don't block on guard errors)
     return { passed: true };
+  }
+}
+
+interface RiskGateResult {
+  requiresSwarm: boolean;
+  riskScore: number;
+  dependentCount: number;
+}
+
+const RISK_GATE_THRESHOLD = 10; // >10 direct dependents → require swarm
+
+/**
+ * Check if a target file has too many dependents for safe single-agent editing.
+ * Returns requiresSwarm=true if the file has >10 direct dependents.
+ */
+export function checkRiskGate(targetPath: string, cwd: string): RiskGateResult {
+  try {
+    const impact = getImpact(targetPath.replace(/^\.\//, ''), cwd);
+    if (!impact) return { requiresSwarm: false, riskScore: 0, dependentCount: 0 };
+
+    const dependentCount = impact.directCallers.length;
+    const riskScore = Math.min(1, dependentCount / 10);
+
+    return {
+      requiresSwarm: dependentCount > RISK_GATE_THRESHOLD,
+      riskScore,
+      dependentCount,
+    };
+  } catch {
+    return { requiresSwarm: false, riskScore: 0, dependentCount: 0 };
   }
 }
 

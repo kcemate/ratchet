@@ -5,7 +5,7 @@ import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
-import { buildIntelligenceBriefing } from '../gitnexus.js';
+import { buildIntelligenceBriefing, queryFlows } from '../gitnexus.js';
 
 export interface ShellAgentConfig extends AgentOptions {
   /** Command to run for analysis/proposal (defaults to: claude --print) */
@@ -22,6 +22,8 @@ export class ShellAgent implements Agent {
   private _issueDrivenClick = false;
   /** Working directory — set during build(), used for GitNexus lookups */
   private _cwd: string = process.cwd();
+  /** Override cwd for GitNexus lookups (worktrees don't have .gitnexus) */
+  gitnexusCwd?: string;
 
   constructor(config: ShellAgentConfig = {}) {
     this.command = config.command ?? 'claude';
@@ -31,7 +33,7 @@ export class ShellAgent implements Agent {
       baseArgs.push('--model', config.model);
     }
     this.extraArgs = baseArgs;
-    this.timeout = config.timeout ?? 300_000; // 5 minutes
+    this.timeout = config.timeout ?? 600_000; // 10 minutes
     if (config.cwd) this._cwd = config.cwd;
   }
 
@@ -39,7 +41,7 @@ export class ShellAgent implements Agent {
     // Shell agent collapses analyze+propose+build into a single call for issue-driven clicks
     if (issues && issues.length > 0) {
       this._issueDrivenClick = true;
-      return buildIssuePlanPrompt(context, issues, this._cwd);
+      return buildIssuePlanPrompt(context, issues, this.gitnexusCwd ?? this._cwd);
     }
     this._issueDrivenClick = false;
     let prompt: string;
@@ -254,10 +256,18 @@ function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string
   const pathMatch = context.match(/^Path:\s*(.+)$/m);
   const targetPath = pathMatch ? pathMatch[1].trim() : '';
 
-  // GitNexus intelligence: dependency graph + blast radius
+  // GitNexus intelligence: dependency graph + blast radius + execution flows
   let graphIntel = '';
   if (cwd && targetPath) {
     graphIntel = buildIntelligenceBriefing(targetPath, cwd);
+
+    // Execution flows: HOW is this code used end-to-end?
+    const flows = queryFlows(targetPath, cwd, 3);
+    if (flows.length > 0) {
+      graphIntel += (graphIntel ? '\n\n' : '') +
+        'EXECUTION FLOWS (how this code is used):\n' +
+        flows.map((f, i) => `  ${i + 1}. ${f}`).join('\n');
+    }
   }
 
   return (

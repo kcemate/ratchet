@@ -62,6 +62,7 @@ export interface Click {
   timestamp: Date;
   scoreAfterClick?: number;  // total score after this click
   issuesFixedCount?: number; // how many issues this click resolved
+  riskScore?: number; // 0–1 blast radius risk from GitNexus (0=isolated, 1=high-impact)
   swarmSpecialization?: string; // which swarm agent won (e.g. 'security', 'quality')
   adversarialResult?: {
     challenged: boolean;

@@ -1,4 +1,5 @@
 import type { ScanResult } from '../commands/scan.js';
+import { assessFileRisk, getDependencyClusters } from './gitnexus.js';
 
 export interface IssueTask {
   category: string;
@@ -8,6 +9,7 @@ export interface IssueTask {
   severity: 'low' | 'medium' | 'high';
   priority: number; // computed: severity_weight * count * gap_ratio
   sweepFiles?: string[];
+  riskScore?: number; // 0–1 blast radius risk from GitNexus
 }
 
 const SEVERITY_WEIGHT: Record<string, number> = {
@@ -96,6 +98,66 @@ export function groupBacklogBySubcategory(tasks: IssueTask[], maxPerGroup = 3): 
   // Sort batches by highest priority of first task
   result.sort((a, b) => (b[0]?.priority ?? 0) - (a[0]?.priority ?? 0));
 
+  return result;
+}
+
+/**
+ * Enrich backlog tasks with blast-radius risk scores from GitNexus.
+ * High-impact files (many dependents) get LOWER priority for risky changes
+ * and HIGHER priority for test coverage fixes.
+ * Gracefully no-ops if GitNexus is not indexed.
+ */
+export function enrichBacklogWithRisk(tasks: IssueTask[], cwd: string): IssueTask[] {
+  for (const task of tasks) {
+    if (!task.sweepFiles || task.sweepFiles.length === 0) continue;
+
+    // Average risk across sweep files (sample first 5 to avoid slowness)
+    const sample = task.sweepFiles.slice(0, 5);
+    let totalRisk = 0;
+    for (const file of sample) {
+      totalRisk += assessFileRisk(file, cwd);
+    }
+    const avgRisk = sample.length > 0 ? totalRisk / sample.length : 0;
+    task.riskScore = avgRisk;
+
+    // Adjust priority: high-risk files should be deprioritized for structural changes
+    // but prioritized for test coverage (safety-first)
+    const isTestCoverage = task.subcategory.toLowerCase().includes('test') ||
+      task.subcategory.toLowerCase().includes('coverage');
+
+    if (isTestCoverage) {
+      // High-impact code NEEDS tests more — boost priority
+      task.priority *= (1 + avgRisk);
+    } else {
+      // High-impact code is RISKIER to change — reduce priority
+      task.priority *= (1 - avgRisk * 0.5);
+    }
+  }
+
+  // Re-sort after risk adjustment
+  tasks.sort((a, b) => b.priority - a.priority);
+  return tasks;
+}
+
+/**
+ * Group sweep files into dependency clusters using GitNexus.
+ * Tightly-coupled files (shared imports) are grouped together so a sweep click
+ * can fix related files in the same pass. Falls back to chunking if GitNexus is unavailable.
+ */
+export function groupByDependencyCluster(
+  files: string[],
+  cwd: string,
+  maxPerCluster = 6,
+): string[][] {
+  const clusters = getDependencyClusters(files, cwd);
+
+  // Split large clusters into chunks of maxPerCluster
+  const result: string[][] = [];
+  for (const cluster of clusters) {
+    for (let i = 0; i < cluster.length; i += maxPerCluster) {
+      result.push(cluster.slice(i, i + maxPerCluster));
+    }
+  }
   return result;
 }
 
