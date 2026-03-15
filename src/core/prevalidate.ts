@@ -6,6 +6,13 @@ export interface PrevalidateResult {
   confidence: number; // 0-1
   concerns: string[];
   recommendation: 'proceed' | 'escalate-swarm' | 'reject';
+  /** Why prevalidate fell back to a default result (undefined when Claude reviewed normally) */
+  reason?: string;
+}
+
+export interface PrevalidateOptions {
+  /** When true, failures (timeout, parse error) reject instead of proceeding */
+  strict?: boolean;
 }
 
 /**
@@ -17,7 +24,9 @@ export interface PrevalidateResult {
  * On confidence 0.5–0.7 → escalate-swarm (needs more eyes)
  * On confidence > 0.7 → proceed
  */
-export async function prevalidate(cwd: string, model?: string): Promise<PrevalidateResult> {
+export async function prevalidate(cwd: string, model?: string, options?: PrevalidateOptions): Promise<PrevalidateResult> {
+  const strict = options?.strict ?? false;
+
   // 1. Collect the diff
   let diff: string;
   try {
@@ -25,12 +34,23 @@ export async function prevalidate(cwd: string, model?: string): Promise<Prevalid
     const unstaged = execFileSync('git', ['diff'], { cwd, encoding: 'utf8' });
     diff = [staged, unstaged].filter(Boolean).join('\n');
   } catch {
-    // Can't get diff — default to proceed so we don't block
+    // Can't get diff — this is an environment issue, not a review verdict
+    const reason = 'git diff failed (git unavailable or not a repo)';
+    if (strict) {
+      return {
+        approved: false,
+        confidence: 0.3,
+        concerns: [`prevalidate: ${reason}`],
+        recommendation: 'reject',
+        reason,
+      };
+    }
     return {
       approved: true,
       confidence: 0.8,
       concerns: [],
       recommendation: 'proceed',
+      reason,
     };
   }
 
@@ -74,14 +94,28 @@ Be strict but fair. Focus on: correctness, broken logic, security issues, missin
     args.push(prompt);
 
     const raw = await runClaude(args, cwd);
-    return parseClaudeResponse(raw, diff);
-  } catch {
-    // If Claude call fails, fall back to proceed (don't block)
+    return parseClaudeResponse(raw, diff, strict);
+  } catch (err: unknown) {
+    // Claude unavailable (timeout, crash, not installed) — environment failure
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    const isTimeout = msg.includes('timed out');
+    const reason = isTimeout ? 'Claude timed out' : `Claude call failed: ${msg}`;
+
+    if (strict) {
+      return {
+        approved: false,
+        confidence: 0.3,
+        concerns: [`prevalidate: ${reason}`],
+        recommendation: 'reject',
+        reason,
+      };
+    }
     return {
       approved: true,
       confidence: 0.75,
-      concerns: ['prevalidate: Claude call failed, proceeding with caution'],
+      concerns: [`prevalidate: ${reason}, proceeding with caution`],
       recommendation: 'proceed',
+      reason,
     };
   }
 }
@@ -121,18 +155,20 @@ function runClaude(args: string[], cwd: string): Promise<string> {
   });
 }
 
-function parseClaudeResponse(raw: string, _diff: string): PrevalidateResult {
+function parseClaudeResponse(raw: string, _diff: string, strict: boolean = false): PrevalidateResult {
   // Extract JSON from Claude's output (may be wrapped in markdown)
   const jsonMatch = raw.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    return fallbackResult('prevalidate: could not parse Claude response');
+    const reason = 'could not parse Claude response (no JSON found)';
+    return fallbackResult(`prevalidate: ${reason}`, strict, reason);
   }
 
   let parsed: { confidence?: unknown; concerns?: unknown; summary?: unknown };
   try {
     parsed = JSON.parse(jsonMatch[0]);
   } catch {
-    return fallbackResult('prevalidate: invalid JSON from Claude');
+    const reason = 'invalid JSON from Claude';
+    return fallbackResult(`prevalidate: ${reason}`, strict, reason);
   }
 
   const confidence = typeof parsed.confidence === 'number'
@@ -163,11 +199,21 @@ function getRecommendation(confidence: number): PrevalidateResult['recommendatio
   return 'reject';
 }
 
-function fallbackResult(concern: string): PrevalidateResult {
+function fallbackResult(concern: string, strict: boolean = false, reason?: string): PrevalidateResult {
+  if (strict) {
+    return {
+      approved: false,
+      confidence: 0.3,
+      concerns: [concern],
+      recommendation: 'reject',
+      reason,
+    };
+  }
   return {
     approved: true,
     confidence: 0.75,
     concerns: [concern],
     recommendation: 'proceed',
+    reason,
   };
 }

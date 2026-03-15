@@ -12,7 +12,7 @@ import { join } from 'path';
 import { execFileSync } from 'child_process';
 import { getImpact } from './gitnexus.js';
 import { prevalidate } from './prevalidate.js';
-import type { PrevalidateResult } from './prevalidate.js';
+import type { PrevalidateResult, PrevalidateOptions } from './prevalidate.js';
 
 export interface ClickContext {
   clickNumber: number;
@@ -126,7 +126,8 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       // 3.5. Pre-commit validation (runs before tests to catch bad changes early)
       let prevalidateResult: PrevalidateResult | undefined;
       try {
-        prevalidateResult = await prevalidate(cwd, config.model);
+        const prevalidateOpts: PrevalidateOptions = { strict: false };
+        prevalidateResult = await prevalidate(cwd, config.model, prevalidateOpts);
         if (prevalidateResult.concerns.length > 0) {
           console.error(`[ratchet] Prevalidate click ${clickNumber}: confidence=${prevalidateResult.confidence.toFixed(2)}, recommendation=${prevalidateResult.recommendation}`);
           for (const concern of prevalidateResult.concerns.slice(0, 3)) {

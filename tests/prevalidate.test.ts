@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -82,6 +82,101 @@ describe('prevalidate', () => {
     it('confidence < 0.5 corresponds to reject recommendation', () => {
       expect(true).toBe(true);
     });
+  });
+});
+
+describe('prevalidate strict mode', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'ratchet-prevalidate-strict-'));
+    initRepo(dir);
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('strict=true timeout/failure → reject with reason', async () => {
+    // Modify a tracked file so git diff shows changes (untracked files don't appear in git diff)
+    writeFileSync(join(dir, 'README.md'), '# modified\nexport const x = 1;\n');
+
+    const { prevalidate } = await import('../src/core/prevalidate.js');
+    // Set PATH to only git's directory so `claude` binary can't be found → spawn fails immediately
+    const origPath = process.env.PATH;
+    process.env.PATH = '/usr/bin';
+    try {
+      const result = await prevalidate(dir, undefined, { strict: true });
+
+      // Claude binary can't be found, so this hits the failure path
+      expect(result.recommendation).toBe('reject');
+      expect(result.approved).toBe(false);
+      expect(result.confidence).toBe(0.3);
+      expect(result.reason).toBeDefined();
+      expect(typeof result.reason).toBe('string');
+      expect(result.reason!.length).toBeGreaterThan(0);
+    } finally {
+      process.env.PATH = origPath;
+    }
+  });
+
+  it('strict=false (default) keeps current fallback-to-proceed behavior', async () => {
+    // Modify a tracked file so git diff shows changes
+    writeFileSync(join(dir, 'README.md'), '# modified for strict=false test\n');
+
+    const { prevalidate } = await import('../src/core/prevalidate.js');
+    // Set PATH to only git's directory so `claude` binary can't be found → spawn fails immediately
+    const origPath = process.env.PATH;
+    process.env.PATH = '/usr/bin';
+    try {
+      const result = await prevalidate(dir, undefined, { strict: false });
+
+      // Without Claude, falls back to proceed
+      expect(result.recommendation).toBe('proceed');
+      expect(result.approved).toBe(true);
+      expect(result.confidence).toBe(0.75);
+      expect(result.reason).toBeDefined();
+    } finally {
+      process.env.PATH = origPath;
+    }
+  });
+
+  it('strict=true with no git → reject', async () => {
+    const noGitDir = mkdtempSync(join(tmpdir(), 'ratchet-nogit-'));
+    try {
+      const { prevalidate } = await import('../src/core/prevalidate.js');
+      const result = await prevalidate(noGitDir, undefined, { strict: true });
+
+      expect(result.recommendation).toBe('reject');
+      expect(result.approved).toBe(false);
+      expect(result.confidence).toBe(0.3);
+      expect(result.reason).toContain('git');
+    } finally {
+      rmSync(noGitDir, { recursive: true, force: true });
+    }
+  });
+
+  it('strict=false with no git → proceed (backward compatible)', async () => {
+    const noGitDir = mkdtempSync(join(tmpdir(), 'ratchet-nogit2-'));
+    try {
+      const { prevalidate } = await import('../src/core/prevalidate.js');
+      const result = await prevalidate(noGitDir, undefined, { strict: false });
+
+      expect(result.recommendation).toBe('proceed');
+      expect(result.approved).toBe(true);
+      expect(result.reason).toContain('git');
+    } finally {
+      rmSync(noGitDir, { recursive: true, force: true });
+    }
+  });
+
+  it('reason field populated on no-change result (undefined — not a fallback)', async () => {
+    const { prevalidate } = await import('../src/core/prevalidate.js');
+    const result = await prevalidate(dir, undefined, { strict: true });
+
+    // No changes → normal proceed, reason should be undefined (not a fallback)
+    expect(result.recommendation).toBe('proceed');
+    expect(result.reason).toBeUndefined();
   });
 });
 
