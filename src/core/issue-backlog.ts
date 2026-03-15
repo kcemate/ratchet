@@ -7,6 +7,7 @@ export interface IssueTask {
   count: number;
   severity: 'low' | 'medium' | 'high';
   priority: number; // computed: severity_weight * count * gap_ratio
+  sweepFiles?: string[];
 }
 
 const SEVERITY_WEIGHT: Record<string, number> = {
@@ -58,6 +59,7 @@ export function buildBacklog(scan: ScanResult): IssueTask[] {
       count: issue.count,
       severity: issue.severity,
       priority,
+      sweepFiles: issue.locations ?? [],
     });
   }
 

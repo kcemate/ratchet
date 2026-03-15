@@ -8,7 +8,7 @@ import { loadConfig, configFilePath, findTarget, findIncompleteTargets, getConfi
 import { saveRun } from '../core/history.js';
 import { readFileSync } from 'fs';
 import { checkStaleBinary } from '../core/stale-check.js';
-import { runEngine } from '../core/engine.js';
+import { runEngine, runSweepEngine } from '../core/engine.js';
 import type { ClickPhase, HardenPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { buildSwarmConfig } from '../core/swarm.js';
@@ -45,6 +45,7 @@ export function torqueCommand(): Command {
     .option('--agents <number>', 'Number of competing agents in swarm mode (default: 3)')
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
     .option('--adversarial', 'Enable adversarial QA — red team tests each landed change for regressions', false)
+    .option('--sweep', 'Sweep mode — fix one issue type across the entire codebase', false)
     .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (default: 40)')
     .option('--max-files <number>', 'Max files changed per click before auto-rollback (default: 3)')
     .addHelpText(
@@ -68,6 +69,7 @@ export function torqueCommand(): Command {
         agents?: string;
         focus?: string;
         adversarial: boolean;
+        sweep: boolean;
         maxLines?: string;
         maxFiles?: string;
       }) => {
@@ -187,9 +189,12 @@ export function torqueCommand(): Command {
           }
         }
 
-        // Resolve target
+        // Resolve target (skip for sweep mode)
         let target;
-        if (options.target) {
+        if (options.sweep) {
+          // Sweep mode: use a synthetic target representing the whole codebase
+          target = { name: 'sweep', path: '.', description: 'Sweep mode — fix one issue type across the entire codebase' };
+        } else if (options.target) {
           target = findTarget(config, options.target);
           if (!target) {
             if (config.targets.length === 0) {
@@ -225,10 +230,10 @@ export function torqueCommand(): Command {
           }
         }
 
-        // Resolve click count
+        // Resolve click count (sweep mode defaults to 5)
         const clickCount = options.clicks
           ? parseInt(options.clicks, 10)
-          : config.defaults.clicks;
+          : options.sweep ? 5 : config.defaults.clicks;
 
         if (isNaN(clickCount) || clickCount < 1) {
           const provided = options.clicks ?? '';
@@ -250,8 +255,12 @@ export function torqueCommand(): Command {
         }
 
         // Print run summary
-        console.log(`  Target : ${chalk.cyan(target.name)}`);
-        console.log(`  Path   : ${chalk.dim(target.path)}`);
+        if (options.sweep) {
+          console.log(`  Mode   : ${chalk.yellow('sweep')}`);
+        } else {
+          console.log(`  Target : ${chalk.cyan(target.name)}`);
+          console.log(`  Path   : ${chalk.dim(target.path)}`);
+        }
         // Set up click guards
         const maxLines = options.maxLines ? parseInt(options.maxLines, 10) : 40;
         const maxFiles = options.maxFiles ? parseInt(options.maxFiles, 10) : 3;
@@ -336,9 +345,11 @@ export function torqueCommand(): Command {
           // Non-fatal — report will omit Before/After
         }
 
+        const engineFn = options.sweep ? runSweepEngine : runEngine;
+
         let run: RatchetRun;
         try {
-          run = await runEngine({
+          run = await engineFn({
             target,
             clicks: clickCount,
             config,

@@ -12,6 +12,7 @@ export interface SubCategory {
   summary: string;
   issuesFound: number;   // discrete countable issues (e.g., "7 empty catches")
   issuesDescription?: string; // e.g., "empty catch blocks"
+  locations?: string[];  // file paths where this issue was found
 }
 
 export interface CategoryResult {
@@ -29,6 +30,7 @@ export interface IssueType {
   count: number;
   description: string;  // e.g., "empty catch blocks", "any types", "functions >50 lines"
   severity: 'low' | 'medium' | 'high';
+  locations?: string[];  // file paths where this issue was found
 }
 
 export interface ScanResult {
@@ -233,6 +235,9 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
   const score = coverageScore + edgeCaseScore + testQualityScore;
   const summary = [coverageSummary, edgeCaseSummary].filter(Boolean).join(', ');
 
+  // Source files with no test coverage — used for sweep mode targeting
+  const coverageLocations: string[] = coverageIssues > 0 ? sourceFiles : [];
+
   return {
     name: 'Testing',
     emoji: '🧪',
@@ -240,7 +245,7 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
     max: 20,
     summary,
     subcategories: [
-      { name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: coverageIssues, issuesDescription: 'source files without tests' },
+      { name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: coverageIssues, issuesDescription: 'source files without tests', locations: coverageLocations },
       { name: 'Edge case depth', score: edgeCaseScore, max: 6, summary: edgeCaseSummary, issuesFound: edgeCaseCount === 0 ? 1 : 0, issuesDescription: 'no edge case tests' },
       { name: 'Test quality', score: testQualityScore, max: 6, summary: testQualitySummary, issuesFound: 0 },
     ],
@@ -449,10 +454,13 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
   const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
   let anyCount = 0;
   let totalLines = 0;
+  const anyTypeFiles: string[] = [];
 
   for (const file of srcTsFiles) {
     const content = contents.get(file) ?? '';
-    anyCount += (content.match(/:\s*any\b|<any>|\bas\s+any\b/g) ?? []).length;
+    const fileAnyCount = (content.match(/:\s*any\b|<any>|\bas\s+any\b/g) ?? []).length;
+    anyCount += fileAnyCount;
+    if (fileAnyCount > 0) anyTypeFiles.push(file);
     totalLines += content.split('\n').length;
   }
 
@@ -488,7 +496,7 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
     summary,
     subcategories: [
       { name: 'Strict config', score: strictScore, max: 4, summary: strictSummary, issuesFound: strictScore < 4 ? 1 : 0, issuesDescription: 'missing strict TypeScript config' },
-      { name: 'Any type count', score: anyScore, max: 8, summary: anySummary, issuesFound: anyCount, issuesDescription: 'any types' },
+      { name: 'Any type count', score: anyScore, max: 8, summary: anySummary, issuesFound: anyCount, issuesDescription: 'any types', locations: anyTypeFiles },
     ],
   };
 }
@@ -505,12 +513,19 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
   let asyncTotal = 0;
   let consoleErrorCount = 0;
   let structuredLogCount = 0;
+  const emptyCatchFiles: string[] = [];
+  const asyncNoHandlerFiles: string[] = [];
 
   for (const file of srcFiles) {
     const content = contents.get(file) ?? '';
     tryCatchTotal += (content.match(/\btry\s*\{/g) ?? []).length;
-    emptyCatchTotal += (content.match(/\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g) ?? []).length;
-    asyncTotal += (content.match(/\basync\s+function\b|\basync\s*\(/g) ?? []).length;
+    const fileCatches = (content.match(/\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g) ?? []).length;
+    emptyCatchTotal += fileCatches;
+    if (fileCatches > 0) emptyCatchFiles.push(file);
+    const fileAsync = (content.match(/\basync\s+function\b|\basync\s*\(/g) ?? []).length;
+    const fileTryCatch = (content.match(/\btry\s*\{/g) ?? []).length;
+    asyncTotal += fileAsync;
+    if (fileAsync > 0 && fileTryCatch === 0) asyncNoHandlerFiles.push(file);
     consoleErrorCount += (content.match(/\bconsole\.(?:error|warn|log)\s*\(/g) ?? []).length;
     structuredLogCount += (content.match(/\b(?:logger|winston|pino|bunyan|log4js)\./g) ?? []).length;
   }
@@ -586,8 +601,8 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
     max: 14,
     summary,
     subcategories: [
-      { name: 'Coverage', score: coverageScore, max: 5, summary: coverageSummary, issuesFound: Math.max(0, asyncTotal - tryCatchTotal), issuesDescription: 'async functions without error handling' },
-      { name: 'Empty catches', score: emptyCatchScore, max: 5, summary: emptyCatchSummary, issuesFound: emptyCatchTotal, issuesDescription: 'empty catch blocks' },
+      { name: 'Coverage', score: coverageScore, max: 5, summary: coverageSummary, issuesFound: Math.max(0, asyncTotal - tryCatchTotal), issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles },
+      { name: 'Empty catches', score: emptyCatchScore, max: 5, summary: emptyCatchSummary, issuesFound: emptyCatchTotal, issuesDescription: 'empty catch blocks', locations: emptyCatchFiles },
       { name: 'Structured logging', score: loggingScore, max: 4, summary: loggingSummary, issuesFound: structuredLogCount === 0 ? 1 : 0, issuesDescription: 'no structured logger' },
     ],
   };
@@ -610,12 +625,15 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
 
   let awaitInLoopCount = 0;
   let consoleLogCount = 0;
+  const consoleLogFiles: string[] = [];
 
   for (const file of appFiles) {
     const content = contents.get(file) ?? '';
     const lines = content.split('\n');
 
-    consoleLogCount += (content.match(/\bconsole\.log\s*\(/g) ?? []).length;
+    const fileConsoleCount = (content.match(/\bconsole\.log\s*\(/g) ?? []).length;
+    consoleLogCount += fileConsoleCount;
+    if (fileConsoleCount > 0) consoleLogFiles.push(file);
 
     // Detect await inside for/while loops — only flag DB/API patterns
     let loopDepth = 0;
@@ -729,7 +747,7 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
     summary,
     subcategories: [
       { name: 'Async patterns', score: asyncScore, max: 5, summary: asyncSummary, issuesFound: awaitInLoopCount, issuesDescription: 'await-in-loop patterns' },
-      { name: 'Console cleanup', score: consoleScore, max: 5, summary: consoleSummary, issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src' },
+      { name: 'Console cleanup', score: consoleScore, max: 5, summary: consoleSummary, issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src', locations: consoleLogFiles },
       { name: 'Import hygiene', score: importScore, max: 4, summary: importHygieneSummary, issuesFound: importIssues, issuesDescription: 'import issues' },
     ],
   };
@@ -749,6 +767,8 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
   let longLineCount = 0;
   let commentedCodeCount = 0;
   let todoCount = 0;
+  const longFuncFiles: string[] = [];
+  const longLineFiles: string[] = [];
 
   // For duplication: collect all source lines
   const lineFrequency = new Map<string, number>();
@@ -757,7 +777,9 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
     const content = contents.get(file) ?? '';
     const lines = content.split('\n');
 
-    longLineCount += lines.filter(l => l.length > 120).length;
+    const fileLongLines = lines.filter(l => l.length > 120).length;
+    longLineCount += fileLongLines;
+    if (fileLongLines > 0) longLineFiles.push(file);
 
     // Count commented-out code (lines that look like code inside comments)
     commentedCodeCount += lines.filter(l =>
@@ -787,7 +809,10 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
           const fnLen = i - fnStart;
           fnCount++;
           totalFnLength += fnLen;
-          if (fnLen > 50) longFnCount++;
+          if (fnLen > 50) {
+            longFnCount++;
+            if (!longFuncFiles.includes(file)) longFuncFiles.push(file);
+          }
           fnStart = -1;
           depth = 0;
         }
@@ -921,8 +946,8 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
     max: 24,
     summary,
     subcategories: [
-      { name: 'Function length', score: fnLenScore, max: 6, summary: fnLenSummary, issuesFound: longFnCount, issuesDescription: 'functions >50 lines' },
-      { name: 'Line length', score: lineLenScore, max: 6, summary: lineLenSummary, issuesFound: longLineCount, issuesDescription: 'lines >120 chars' },
+      { name: 'Function length', score: fnLenScore, max: 6, summary: fnLenSummary, issuesFound: longFnCount, issuesDescription: 'functions >50 lines', locations: longFuncFiles },
+      { name: 'Line length', score: lineLenScore, max: 6, summary: lineLenSummary, issuesFound: longLineCount, issuesDescription: 'lines >120 chars', locations: longLineFiles },
       { name: 'Dead code', score: deadCodeScore, max: 6, summary: deadCodeSummary, issuesFound: deadCodeTotal, issuesDescription: 'dead code indicators (TODO, commented code)' },
       { name: 'Duplication', score: dupScore, max: 6, summary: dupSummary, issuesFound: duplicatedLines, issuesDescription: 'repeated code lines' },
     ],
@@ -978,6 +1003,7 @@ function aggregateIssues(categories: CategoryResult[]): { totalIssuesFound: numb
           count: sub.issuesFound,
           description: sub.issuesDescription,
           severity,
+          locations: sub.locations,
         });
         totalIssuesFound += sub.issuesFound;
       }

@@ -244,6 +244,11 @@ function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
  * agent knows the blast radius before editing.
  */
 function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string): string {
+  // Sweep mode: if top issue has sweepFiles, use sweep-specific prompt
+  if (issues[0]?.sweepFiles && issues[0].sweepFiles.length > 0) {
+    return buildSweepPrompt(issues[0].description, issues[0].sweepFiles.slice(0, 8));
+  }
+
   const issueList = formatIssuesForPrompt(issues);
   // Parse path from context (format: "Path: ./server/routes/groups.ts")
   const pathMatch = context.match(/^Path:\s*(.+)$/m);
@@ -275,6 +280,31 @@ function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string
     `After making changes, output each modified file on its own line:\n` +
     `MODIFIED: <filepath>`
   );
+}
+
+/**
+ * Sweep prompt: fix one specific issue across a list of files.
+ * Used in sweep mode where we target one issue type across the entire codebase.
+ */
+export function buildSweepPrompt(issueDescription: string, filePaths: string[]): string {
+  return `You are a code improvement assistant fixing one specific issue across multiple files.
+
+ISSUE: ${issueDescription}
+
+FILES TO FIX (touch ONLY these files, no others):
+${filePaths.map(f => `  - ${f}`).join('\n')}
+
+HARD CONSTRAINTS:
+- Fix ONLY the described issue in ONLY the listed files
+- Do NOT refactor, rename variables, or change logic
+- Do NOT touch any file not in the list above  
+- Change AT MOST 10 lines per file
+- All existing tests MUST still pass
+
+For each file: read it, find the issue, make the minimal fix.
+
+After making changes, output each modified file:
+MODIFIED: <filepath>`;
 }
 
 function buildIssueProposePrompt(analysis: string, target: Target, issues: IssueTask[]): string {

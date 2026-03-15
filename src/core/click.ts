@@ -20,6 +20,7 @@ export interface ClickContext {
   hardenPhase?: HardenPhase;
   issues?: IssueTask[];
   adversarial?: boolean;
+  sweepMode?: boolean;
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
 }
 
@@ -77,7 +78,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       rolledBack = true;
     } else {
       // Click guards: reject over-aggressive changes before running tests
-      const guardResult = checkClickGuards(cwd, config.guards);
+      const guardResult = checkClickGuards(cwd, config.guards, ctx.sweepMode);
       if (!guardResult.passed) {
         console.error(`[ratchet] Click ${clickNumber} REJECTED by guards: ${guardResult.reason}`);
         console.error(`[ratchet]   ${guardResult.detail}`);
@@ -176,9 +177,14 @@ const DEFAULT_GUARDS: ClickGuards = {
 /**
  * Check click guards: reject over-aggressive changes before running tests.
  * Measures actual git diff to count lines and files changed.
+ * In sweep mode, uses tighter per-file limits but allows more files/total lines.
  */
-function checkClickGuards(cwd: string, guards?: ClickGuards): GuardResult {
-  const { maxLinesChanged, maxFilesChanged } = { ...DEFAULT_GUARDS, ...guards };
+function checkClickGuards(cwd: string, guards?: ClickGuards, sweepMode?: boolean): GuardResult {
+  let { maxLinesChanged, maxFilesChanged } = { ...DEFAULT_GUARDS, ...guards };
+  if (sweepMode) {
+    maxFilesChanged = 10;
+    maxLinesChanged = 80;
+  }
 
   try {
     // Count files changed
@@ -200,8 +206,20 @@ function checkClickGuards(cwd: string, guards?: ClickGuards): GuardResult {
       if (parts.length < 3) continue;
       const added = parseInt(parts[0], 10) || 0;
       const removed = parseInt(parts[1], 10) || 0;
-      totalLines += added + removed;
+      const fileLines = added + removed;
+      totalLines += fileLines;
       filesSet.add(parts[2]);
+
+      // Sweep mode: enforce per-file line limit of 10
+      if (sweepMode && fileLines > 10) {
+        return {
+          passed: false,
+          reason: `Single file changed too many lines in sweep mode`,
+          detail: `File ${parts[2]} changed ${fileLines} lines (added=${added}, removed=${removed}). Sweep mode allows at most 10 lines per file.`,
+          linesChanged: totalLines,
+          filesChanged: filesSet.size,
+        };
+      }
     }
 
     const filesChanged = filesSet.size;

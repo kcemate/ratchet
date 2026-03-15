@@ -33,6 +33,7 @@ export interface EngineRunOptions {
   createBranch?: boolean;
   hardenMode?: boolean;
   adversarial?: boolean;
+  sweep?: boolean;
   callbacks?: EngineCallbacks;
   /** If provided, skip the initial scan and use this result instead */
   scanResult?: ScanResult;
@@ -315,4 +316,108 @@ export interface RunSummary {
   commits: string[];
   duration: number;
   status: RatchetRun['status'];
+}
+
+/**
+ * Split an array into chunks of a given size.
+ */
+export function chunk<T>(arr: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
+
+/**
+ * Sweep engine: fix one issue type across the entire codebase in batches.
+ * Finds the highest-priority sweepable issue and runs clicks against each batch of files.
+ */
+export async function runSweepEngine(options: EngineRunOptions): Promise<RatchetRun> {
+  const { clicks, config, cwd, agent, callbacks = {} } = options;
+
+  const run: RatchetRun = {
+    id: randomUUID(),
+    target: options.target,
+    clicks: [],
+    startedAt: new Date(),
+    status: 'running',
+  };
+
+  try {
+    // 1. Run scan
+    const scanResult = options.scanResult ?? await runScan(cwd);
+    await callbacks.onScanComplete?.(scanResult);
+
+    // 2. Build backlog
+    const backlog = buildBacklog(scanResult);
+
+    // 3. Filter to sweepable tasks
+    const sweepable = backlog.filter(t => t.sweepFiles && t.sweepFiles.length > 0);
+
+    if (sweepable.length === 0) {
+      console.error('[ratchet] No sweepable issues found');
+      run.status = 'completed';
+      run.finishedAt = new Date();
+      await callbacks.onRunComplete?.(run);
+      return run;
+    }
+
+    // 4. Take top priority sweepable task
+    const task = sweepable[0]!;
+    console.error(`[ratchet] Sweep target: ${task.description} (${task.sweepFiles!.length} files)`);
+
+    // 5. Chunk files into batches of 6
+    const batches = chunk(task.sweepFiles!, 6);
+    const clicksToRun = Math.min(clicks, batches.length);
+
+    for (let i = 0; i < clicksToRun; i++) {
+      const clickNumber = i + 1;
+      const batch = batches[i]!;
+
+      await callbacks.onClickStart?.(clickNumber, clicksToRun);
+
+      // Create a modified task with only the current batch of files
+      const batchTask = { ...task, sweepFiles: batch };
+
+      try {
+        const clickStartMs = Date.now();
+        const result = await executeClick({
+          clickNumber,
+          target: options.target,
+          config,
+          agent,
+          cwd,
+          sweepMode: true,
+          issues: [batchTask],
+          onPhase: callbacks.onClickPhase
+            ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, clickNumber)
+            : undefined,
+        });
+
+        const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
+        if (result.rolled_back) {
+          console.error(`[ratchet] sweep click ${clickNumber} ROLLED BACK (${elapsedSec}s)`);
+        } else {
+          console.error(`[ratchet] sweep click ${clickNumber} LANDED (${elapsedSec}s)`);
+        }
+
+        run.clicks.push(result.click);
+        await callbacks.onClickComplete?.(result.click, result.rolled_back);
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        await callbacks.onError?.(error, clickNumber);
+      }
+    }
+
+    run.status = 'completed';
+  } catch (err: unknown) {
+    run.status = 'failed';
+    throw err;
+  } finally {
+    run.finishedAt = new Date();
+    await callbacks.onRunComplete?.(run);
+  }
+
+  return run;
 }
