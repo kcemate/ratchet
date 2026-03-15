@@ -571,18 +571,18 @@ export function run() {
       expect(result.maxTotal).toBe(100);
     });
 
-    it('category max values are: Testing=20, Security=16, TypeSafety=12, ErrorHandling=14, Performance=14, CodeQuality=24', async () => {
+    it('category max values are: Testing=25, Security=15, TypeSafety=15, ErrorHandling=20, Performance=10, CodeQuality=15', async () => {
       const result = await runScan(dir);
       const maxByName: Record<string, number> = {};
       for (const cat of result.categories) {
         maxByName[cat.name] = cat.max;
       }
-      expect(maxByName['Testing']).toBe(20);
-      expect(maxByName['Security']).toBe(16);
-      expect(maxByName['Type Safety']).toBe(12);
-      expect(maxByName['Error Handling']).toBe(14);
-      expect(maxByName['Performance']).toBe(14);
-      expect(maxByName['Code Quality']).toBe(24);
+      expect(maxByName['Testing']).toBe(25);
+      expect(maxByName['Security']).toBe(15);
+      expect(maxByName['Type Safety']).toBe(15);
+      expect(maxByName['Error Handling']).toBe(20);
+      expect(maxByName['Performance']).toBe(10);
+      expect(maxByName['Code Quality']).toBe(15);
     });
 
     it('scores improve with better code', async () => {

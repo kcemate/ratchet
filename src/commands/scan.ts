@@ -124,10 +124,10 @@ function scoreByThresholds(value: number, thresholds: Threshold[]): { score: num
 
 // --- Scorers ---
 
-// Testing (20 points)
+// Testing (25 points)
 // ├─ Coverage ratio ......... /8
-// ├─ Edge case depth ........ /6
-// └─ Test quality ........... /6
+// ├─ Edge case depth ........ /9
+// └─ Test quality ........... /8
 function scoreTests(files: string[], contents: Map<string, string>, cwd: string): CategoryResult {
   const testFiles = files.filter(isTestFile);
   const sourceFiles = files.filter(f => !isTestFile(f));
@@ -153,28 +153,30 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
     } catch { /* ignore */ }
   }
 
+  // New thresholds: 0%→0, 5%→2, 12%→4, 22%→6, 35%→7.5, 50%+→8
   if (testFiles.length === 0) {
     coverageScore = 0;
-    coverageSummary = 'no test files';
-    coverageIssues = sourceFiles.length; // all src files uncovered
-  } else if (ratio >= 0.5) {
-    coverageScore = 8;
-    coverageSummary = ratioStr;
-  } else if (ratio >= 0.3) {
-    coverageScore = hasTestScript ? 7 : 6;
-    coverageSummary = ratioStr;
-  } else if (ratio >= 0.15) {
-    coverageScore = hasTestScript ? 5 : 4;
-    coverageSummary = ratioStr;
-    coverageIssues = Math.floor(sourceFiles.length * (1 - ratio));
-  } else if (ratio > 0) {
-    coverageScore = hasTestScript ? 3 : 2;
-    coverageSummary = ratioStr;
-    coverageIssues = Math.floor(sourceFiles.length * (1 - ratio));
-  } else {
-    coverageScore = hasTestScript ? 2 : 0;
     coverageSummary = hasTestScript ? 'test script configured, no test files' : 'no test files';
     coverageIssues = sourceFiles.length;
+  } else {
+    const pct = ratio * 100;
+    if (pct >= 50) {
+      coverageScore = 8;
+    } else if (pct >= 35) {
+      coverageScore = 7.5;
+    } else if (pct >= 22) {
+      coverageScore = 6;
+    } else if (pct >= 12) {
+      coverageScore = 4;
+    } else if (pct >= 5) {
+      coverageScore = 2;
+    } else {
+      coverageScore = 0;
+    }
+    coverageSummary = ratioStr;
+    if (pct < 50) {
+      coverageIssues = Math.floor(sourceFiles.length * (1 - ratio));
+    }
   }
 
   // --- Edge case depth /6 ---
@@ -191,15 +193,15 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
   }
 
   ({ score: edgeCaseScore, summary: edgeCaseSummary } = scoreByThresholds(edgeCaseCount, [
-    { min: 50,  score: 6, summary: (n) => `${n} edge/error test cases` },
-    { min: 20,  score: 5, summary: (n) => `${n} edge/error test cases` },
-    { min: 10,  score: 4, summary: (n) => `${n} edge/error test cases` },
-    { min: 3,   score: 2, summary: (n) => `${n} edge/error test cases` },
+    { min: 50,  score: 9, summary: (n) => `${n} edge/error test cases` },
+    { min: 20,  score: 7, summary: (n) => `${n} edge/error test cases` },
+    { min: 10,  score: 5, summary: (n) => `${n} edge/error test cases` },
+    { min: 3,   score: 3, summary: (n) => `${n} edge/error test cases` },
     { min: 1,   score: 1, summary: (n) => `${n} edge/error test case${n !== 1 ? 's' : ''}` },
     { min: -Infinity, score: 0, summary: 'no edge case tests detected' },
   ]));
 
-  // --- Test quality /6 ---
+  // --- Test quality /8 ---
   let testQualityScore = 0;
   let testQualitySummary = '';
 
@@ -216,10 +218,10 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
   const hasDescribe = describeCount > 0;
 
   if (totalTestCases >= 50 && assertsPerTest >= 2 && hasDescribe) {
-    testQualityScore = 6;
+    testQualityScore = 8;
     testQualitySummary = `${assertsPerTest.toFixed(1)} assertions per test`;
   } else if (totalTestCases >= 10 && assertsPerTest >= 1.5 && hasDescribe) {
-    testQualityScore = 5;
+    testQualityScore = 6;
     testQualitySummary = `${assertsPerTest.toFixed(1)} assertions per test`;
   } else if (totalTestCases >= 5 && assertsPerTest >= 1) {
     testQualityScore = 4;
@@ -241,19 +243,19 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
   return {
     name: 'Testing',
     emoji: '🧪',
-    score: Math.min(score, 20),
-    max: 20,
+    score: Math.min(score, 25),
+    max: 25,
     summary,
     subcategories: [
       { name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: coverageIssues, issuesDescription: 'source files without tests', locations: coverageLocations },
-      { name: 'Edge case depth', score: edgeCaseScore, max: 6, summary: edgeCaseSummary, issuesFound: edgeCaseCount === 0 ? 1 : 0, issuesDescription: 'no edge case tests' },
-      { name: 'Test quality', score: testQualityScore, max: 6, summary: testQualitySummary, issuesFound: 0 },
+      { name: 'Edge case depth', score: edgeCaseScore, max: 9, summary: edgeCaseSummary, issuesFound: edgeCaseCount === 0 ? 1 : 0, issuesDescription: 'no edge case tests' },
+      { name: 'Test quality', score: testQualityScore, max: 8, summary: testQualitySummary, issuesFound: 0 },
     ],
   };
 }
 
-// Security (16 points)
-// ├─ Secrets & env vars ..... /4
+// Security (15 points)
+// ├─ Secrets & env vars ..... /3
 // ├─ Input validation ....... /6
 // └─ Auth & rate limiting ... /6
 function scoreSecurity(files: string[], contents: Map<string, string>): CategoryResult {
@@ -282,10 +284,10 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
   let secretsScore = 0;
   let secretsSummary = '';
   if (secretCount === 0 && usesEnvVars) {
-    secretsScore = 4;
+    secretsScore = 3;
     secretsSummary = 'no hardcoded secrets, uses env vars';
   } else if (secretCount === 0) {
-    secretsScore = 3;
+    secretsScore = 2;
     secretsSummary = 'no hardcoded secrets';
   } else {
     secretsScore = 0;
@@ -387,19 +389,19 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
   return {
     name: 'Security',
     emoji: '🔒',
-    score: Math.min(score, 16),
-    max: 16,
+    score: Math.min(score, 15),
+    max: 15,
     summary,
     subcategories: [
-      { name: 'Secrets & env vars', score: secretsScore, max: 4, summary: secretsSummary, issuesFound: secretCount, issuesDescription: 'hardcoded secrets' },
+      { name: 'Secrets & env vars', score: secretsScore, max: 3, summary: secretsSummary, issuesFound: secretCount, issuesDescription: 'hardcoded secrets' },
       { name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary, issuesFound: inputValIssues, issuesDescription: 'route files without validation' },
       { name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary, issuesFound: authIssues, issuesDescription: 'missing auth/security controls' },
     ],
   };
 }
 
-// Type Safety (12 points)
-// ├─ Strict config .......... /4
+// Type Safety (15 points)
+// ├─ Strict config .......... /7
 // └─ Any type count ......... /8
 function scoreTypes(files: string[], cwd: string, contents: Map<string, string>): CategoryResult {
   const tsFiles = files.filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
@@ -409,16 +411,16 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
       name: 'Type Safety',
       emoji: '📝',
       score: 0,
-      max: 12,
+      max: 15,
       summary: 'JavaScript only — no static types',
       subcategories: [
-        { name: 'Strict config', score: 0, max: 4, summary: 'JavaScript only', issuesFound: 1, issuesDescription: 'no TypeScript' },
+        { name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only', issuesFound: 1, issuesDescription: 'no TypeScript' },
         { name: 'Any type count', score: 0, max: 8, summary: 'JavaScript only', issuesFound: 0 },
       ],
     };
   }
 
-  // --- Strict config /4 ---
+  // --- Strict config /7 ---
   let strictScore = 0;
   let strictSummary = 'TypeScript (no strict config)';
   const tsconfigPath = join(cwd, 'tsconfig.json');
@@ -429,13 +431,13 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
         compilerOptions?: { strict?: boolean; noImplicitAny?: boolean; strictNullChecks?: boolean };
       };
       if (tsconfig.compilerOptions?.strict) {
-        strictScore = 4;
+        strictScore = 7;
         strictSummary = 'strict mode enabled';
       } else if (tsconfig.compilerOptions?.noImplicitAny && tsconfig.compilerOptions?.strictNullChecks) {
-        strictScore = 3;
+        strictScore = 5;
         strictSummary = 'noImplicitAny + strictNullChecks';
       } else if (tsconfig.compilerOptions?.noImplicitAny) {
-        strictScore = 2;
+        strictScore = 3;
         strictSummary = 'noImplicitAny';
       } else {
         strictScore = 1;
@@ -450,7 +452,7 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
     strictSummary = 'TypeScript, no tsconfig found';
   }
 
-  // --- Any type count /8 ---
+  // --- Any type count /8 (scored by density per 1k LOC) ---
   const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
   let anyCount = 0;
   let totalLines = 0;
@@ -464,25 +466,33 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
     totalLines += content.split('\n').length;
   }
 
-  const anyPer1k = totalLines > 0 ? (anyCount / totalLines) * 1000 : 0;
+  // Density = anyCount / (totalLines / 1000)
+  const density = totalLines > 0 ? anyCount / (totalLines / 1000) : 0;
   let anyScore = 0;
   let anySummary = '';
 
-  if (anyCount === 0) {
+  // Thresholds: <1→8, <2→7, <4→6, <7→5, <12→4, <20→2, else→0
+  if (anyCount === 0 || density < 1) {
     anyScore = 8;
-    anySummary = 'zero any types';
-  } else if (anyPer1k < 3) {
-    anyScore = 6;
+    anySummary = anyCount === 0 ? 'zero any types' : `${anyCount} any type${anyCount !== 1 ? 's' : ''} (very low density)`;
+  } else if (density < 2) {
+    anyScore = 7;
     anySummary = `${anyCount} any type${anyCount !== 1 ? 's' : ''} (low density)`;
-  } else if (anyPer1k < 8) {
-    anyScore = 4;
+  } else if (density < 4) {
+    anyScore = 6;
+    anySummary = `${anyCount} any types (low density)`;
+  } else if (density < 7) {
+    anyScore = 5;
     anySummary = `${anyCount} any types (moderate)`;
-  } else if (anyPer1k < 15) {
+  } else if (density < 12) {
+    anyScore = 4;
+    anySummary = `${anyCount} any types (moderate-high)`;
+  } else if (density < 20) {
     anyScore = 2;
     anySummary = `${anyCount} any types (high)`;
   } else {
     anyScore = 0;
-    anySummary = `${anyCount} any types (very high)`;
+    anySummary = `${anyCount} any types (very high density)`;
   }
 
   const score = strictScore + anyScore;
@@ -491,20 +501,20 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
   return {
     name: 'Type Safety',
     emoji: '📝',
-    score: Math.min(score, 12),
-    max: 12,
+    score: Math.min(score, 15),
+    max: 15,
     summary,
     subcategories: [
-      { name: 'Strict config', score: strictScore, max: 4, summary: strictSummary, issuesFound: strictScore < 4 ? 1 : 0, issuesDescription: 'missing strict TypeScript config' },
+      { name: 'Strict config', score: strictScore, max: 7, summary: strictSummary, issuesFound: strictScore < 7 ? 1 : 0, issuesDescription: 'missing strict TypeScript config' },
       { name: 'Any type count', score: anyScore, max: 8, summary: anySummary, issuesFound: anyCount, issuesDescription: 'any types', locations: anyTypeFiles },
     ],
   };
 }
 
-// Error Handling (14 points)
-// ├─ Coverage ............... /5
+// Error Handling (20 points)
+// ├─ Coverage ............... /8
 // ├─ Empty catches .......... /5
-// └─ Structured logging ..... /4
+// └─ Structured logging ..... /7
 function scoreErrorHandling(files: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
 
@@ -530,7 +540,7 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
     structuredLogCount += (content.match(/\b(?:logger|winston|pino|bunyan|log4js)\./g) ?? []).length;
   }
 
-  // --- Coverage /5 ---
+  // --- Coverage /8 ---
   let coverageScore = 0;
   let coverageSummary = '';
 
@@ -538,50 +548,41 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
     coverageScore = 0;
     coverageSummary = 'no try/catch found';
   } else if (asyncTotal === 0 || tryCatchTotal >= asyncTotal * 0.6) {
-    coverageScore = 5;
+    coverageScore = 8;
     coverageSummary = `${tryCatchTotal} try/catch block${tryCatchTotal !== 1 ? 's' : ''}`;
   } else {
     const pct = Math.round((tryCatchTotal / asyncTotal) * 100);
-    coverageScore = Math.round((pct / 100) * 5);
+    coverageScore = Math.round((pct / 100) * 8);
     coverageSummary = `${tryCatchTotal} try/catch (${pct}% async coverage)`;
   }
 
   // --- Empty catches /5 ---
+  // Thresholds: 0→5, 1→4.5, 2→4, 3-4→3, 5-7→2, 8-12→1, else→0
   let emptyCatchScore = 0;
   let emptyCatchSummary = '';
 
-  if (emptyCatchTotal === 0) {
-    emptyCatchScore = 5;
-    emptyCatchSummary = 'no empty catch blocks';
-  } else if (emptyCatchTotal === 1) {
-    emptyCatchScore = 4;
-    emptyCatchSummary = '1 empty catch';
-  } else if (emptyCatchTotal <= 3) {
-    emptyCatchScore = 3;
-    emptyCatchSummary = `${emptyCatchTotal} empty catches`;
-  } else if (emptyCatchTotal <= 5) {
-    emptyCatchScore = 2;
-    emptyCatchSummary = `${emptyCatchTotal} empty catches`;
-  } else if (emptyCatchTotal <= 10) {
-    emptyCatchScore = 1;
-    emptyCatchSummary = `${emptyCatchTotal} empty catches`;
-  } else {
-    emptyCatchScore = 0;
-    emptyCatchSummary = `${emptyCatchTotal} empty catches`;
-  }
+  ({ score: emptyCatchScore, summary: emptyCatchSummary } = scoreByThresholds(emptyCatchTotal, [
+    { min: 13, score: 0, summary: (n) => `${n} empty catches` },
+    { min: 8,  score: 1, summary: (n) => `${n} empty catches` },
+    { min: 5,  score: 2, summary: (n) => `${n} empty catches` },
+    { min: 3,  score: 3, summary: (n) => `${n} empty catches` },
+    { min: 2,  score: 4, summary: '2 empty catches' },
+    { min: 1,  score: 4.5, summary: '1 empty catch' },
+    { min: -Infinity, score: 5, summary: 'no empty catch blocks' },
+  ]));
 
-  // --- Structured logging /4 ---
+  // --- Structured logging /7 ---
   let loggingScore = 0;
   let loggingSummary = '';
 
   if (structuredLogCount > 0 && consoleErrorCount === 0) {
-    loggingScore = 4;
+    loggingScore = 7;
     loggingSummary = `structured logger only (${structuredLogCount} calls)`;
   } else if (structuredLogCount > 0 && consoleErrorCount <= 5) {
-    loggingScore = 3;
+    loggingScore = 5;
     loggingSummary = `structured logger + ${consoleErrorCount} console calls`;
   } else if (structuredLogCount > 0) {
-    loggingScore = 2;
+    loggingScore = 3;
     loggingSummary = `logger (${structuredLogCount}) + console (${consoleErrorCount})`;
   } else if (consoleErrorCount > 0) {
     loggingScore = 1;
@@ -597,13 +598,13 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
   return {
     name: 'Error Handling',
     emoji: '⚠️ ',
-    score: Math.min(score, 14),
-    max: 14,
+    score: Math.min(score, 20),
+    max: 20,
     summary,
     subcategories: [
-      { name: 'Coverage', score: coverageScore, max: 5, summary: coverageSummary, issuesFound: Math.max(0, asyncTotal - tryCatchTotal), issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles },
+      { name: 'Coverage', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: Math.max(0, asyncTotal - tryCatchTotal), issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles },
       { name: 'Empty catches', score: emptyCatchScore, max: 5, summary: emptyCatchSummary, issuesFound: emptyCatchTotal, issuesDescription: 'empty catch blocks', locations: emptyCatchFiles },
-      { name: 'Structured logging', score: loggingScore, max: 4, summary: loggingSummary, issuesFound: structuredLogCount === 0 ? 1 : 0, issuesDescription: 'no structured logger' },
+      { name: 'Structured logging', score: loggingScore, max: 7, summary: loggingSummary, issuesFound: structuredLogCount === 0 ? 1 : 0, issuesDescription: 'no structured logger' },
     ],
   };
 }
@@ -611,10 +612,10 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
 // Patterns that indicate a real DB query or API call worth flagging in a loop
 const LOOP_DB_API_PATTERN = /\.(find|findOne|findAll|findBy|query|save|update|insert|select|exec|execute|search)\s*[(<]|\.(get|post|put|delete|patch|request)\s*\(|\bfetch\s*\(|\baxios\s*[.(]/;
 
-// Performance (14 points)
-// ├─ Async patterns ......... /5
+// Performance (10 points)
+// ├─ Async patterns ......... /3
 // ├─ Console cleanup ........ /5
-// └─ Import hygiene ......... /4
+// └─ Import hygiene ......... /2
 function scorePerformance(files: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
   // Exclude scripts/ directories from console.log check
@@ -742,22 +743,22 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
   return {
     name: 'Performance',
     emoji: '⚡',
-    score: Math.min(score, 14),
-    max: 14,
+    score: Math.min(score, 10),
+    max: 10,
     summary,
     subcategories: [
-      { name: 'Async patterns', score: asyncScore, max: 5, summary: asyncSummary, issuesFound: awaitInLoopCount, issuesDescription: 'await-in-loop patterns' },
-      { name: 'Console cleanup', score: consoleScore, max: 5, summary: consoleSummary, issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src', locations: consoleLogFiles },
-      { name: 'Import hygiene', score: importScore, max: 4, summary: importHygieneSummary, issuesFound: importIssues, issuesDescription: 'import issues' },
+      { name: 'Async patterns', score: Math.min(asyncScore, 3), max: 3, summary: asyncSummary, issuesFound: awaitInLoopCount, issuesDescription: 'await-in-loop patterns' },
+      { name: 'Console cleanup', score: Math.min(consoleScore, 5), max: 5, summary: consoleSummary, issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src', locations: consoleLogFiles },
+      { name: 'Import hygiene', score: Math.min(importScore, 2), max: 2, summary: importHygieneSummary, issuesFound: importIssues, issuesDescription: 'import issues' },
     ],
   };
 }
 
-// Code Quality (24 points)
-// ├─ Function length ........ /6
-// ├─ Line length ............ /6
-// ├─ Dead code .............. /6
-// └─ Duplication ............ /6
+// Code Quality (15 points)
+// ├─ Function length ........ /4
+// ├─ Line length ............ /4
+// ├─ Dead code .............. /4
+// └─ Duplication ............ /3
 function scoreCodeQuality(files: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
 
@@ -942,14 +943,14 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
   return {
     name: 'Code Quality',
     emoji: '📖',
-    score: Math.min(score, 24),
-    max: 24,
+    score: Math.min(score, 15),
+    max: 15,
     summary,
     subcategories: [
-      { name: 'Function length', score: fnLenScore, max: 6, summary: fnLenSummary, issuesFound: longFnCount, issuesDescription: 'functions >50 lines', locations: longFuncFiles },
-      { name: 'Line length', score: lineLenScore, max: 6, summary: lineLenSummary, issuesFound: longLineCount, issuesDescription: 'lines >120 chars', locations: longLineFiles },
-      { name: 'Dead code', score: deadCodeScore, max: 6, summary: deadCodeSummary, issuesFound: deadCodeTotal, issuesDescription: 'dead code indicators (TODO, commented code)' },
-      { name: 'Duplication', score: dupScore, max: 6, summary: dupSummary, issuesFound: duplicatedLines, issuesDescription: 'repeated code lines' },
+      { name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary, issuesFound: longFnCount, issuesDescription: 'functions >50 lines', locations: longFuncFiles },
+      { name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary, issuesFound: longLineCount, issuesDescription: 'lines >120 chars', locations: longLineFiles },
+      { name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary, issuesFound: deadCodeTotal, issuesDescription: 'dead code indicators (TODO, commented code)' },
+      { name: 'Duplication', score: Math.min(dupScore, 3), max: 3, summary: dupSummary, issuesFound: duplicatedLines, issuesDescription: 'repeated code lines' },
     ],
   };
 }
