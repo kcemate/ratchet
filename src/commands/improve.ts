@@ -4,7 +4,7 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { printHeader, exitWithError, validateInt, loadConfigOrExit, severityColor } from '../lib/cli.js';
+import { printHeader, exitWithError, validateInt, loadConfigOrExit, severityColor, printFields } from '../lib/cli.js';
 import { saveRun } from '../core/history.js';
 import { checkStaleBinary } from '../core/stale-check.js';
 import { runSweepEngine, runArchitectEngine } from '../core/engine.js';
@@ -534,7 +534,11 @@ export function improveCommand(): Command {
 
       const outPath = options.out ?? join(cwd, 'docs', 'improve-report.pdf');
 
-      process.stdout.write(`  Clicks : ${chalk.yellow(String(clickCount))}\n  Tests  : ${chalk.dim(config.defaults.testCommand)}\n  Output : ${chalk.dim(outPath)}\n\n`);
+      printFields([
+        ['Clicks', chalk.yellow(String(clickCount))],
+        ['Tests',  chalk.dim(config.defaults.testCommand)],
+        ['Output', chalk.dim(outPath)],
+      ]);
 
       // ── Step 1: Scan (before) ──
       const scanSpinner = ora('  Scanning codebase…').start();
@@ -586,15 +590,16 @@ export function improveCommand(): Command {
           parallel: true,
           worktreeDir: '/tmp/ratchet-swarm',
         };
-        process.stdout.write(`  Swarm : ${chalk.green('on')} ${chalk.dim('(3 agents)')}\n`);
-      } else {
-        process.stdout.write(`  Swarm : ${chalk.dim('off')}\n`);
       }
-      process.stdout.write(`  Adversarial : ${useAdversarial ? chalk.green('on') : chalk.dim('off')}\n`);
+
+      const modeFields: Array<[string, string]> = [
+        ['Swarm',       useSwarm ? `${chalk.green('on')} ${chalk.dim('(3 agents)')}` : chalk.dim('off')],
+        ['Adversarial', useAdversarial ? chalk.green('on') : chalk.dim('off')],
+      ];
       if (useArchitect) {
-        process.stdout.write(`  Strategy : ${chalk.cyan(`${architectClicks} architect`)} ${chalk.dim('→')} ${chalk.green(`${surgicalClicks} surgical`)}\n`);
+        modeFields.push(['Strategy', `${chalk.cyan(`${architectClicks} architect`)} ${chalk.dim('→')} ${chalk.green(`${surgicalClicks} surgical`)}`]);
       }
-      process.stdout.write('\n');
+      printFields(modeFields);
 
       const agent = new ShellAgent({ model: config.model, cwd });
       const logger = new RatchetLogger(target.name, cwd);

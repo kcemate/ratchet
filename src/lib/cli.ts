@@ -69,6 +69,28 @@ export async function writeOutputFile(outputPath: string, content: string): Prom
 }
 
 /**
+ * Print a block of aligned label : value pairs, e.g.
+ *   Topic  : <cyan value>
+ *   Agents : <yellow value>
+ *
+ * Values may already contain chalk colour sequences.
+ * Labels are right-padded so colons align automatically.
+ *
+ * @param fields          - Array of [label, preformatted-value] tuples
+ * @param trailingNewline - Emit a blank line after the block (default: true)
+ */
+export function printFields(
+  fields: Array<[string, string]>,
+  trailingNewline = true,
+): void {
+  const width = Math.max(...fields.map(([label]) => label.length));
+  for (const [label, value] of fields) {
+    process.stdout.write(`  ${label.padEnd(width)} : ${value}\n`);
+  }
+  if (trailingNewline) process.stdout.write('\n');
+}
+
+/**
  * Print a titled bullet list to stdout with a given chalk color function.
  * Shared by simulate, debate, and improve commands.
  *

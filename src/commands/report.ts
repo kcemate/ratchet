@@ -11,7 +11,7 @@ import { generatePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { RatchetRun } from '../types.js';
 import type { ScanResult } from './scan.js';
-import { printHeader, exitWithError } from '../lib/cli.js';
+import { printHeader, exitWithError, printFields } from '../lib/cli.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -190,11 +190,12 @@ export function reportCommand(): Command {
       const score = scoreArrow(scoreBefore, scoreAfter);
 
       console.log('');
-      console.log(`  Run     : ${chalk.dim(run.id)}`);
-      console.log(`  Target  : ${chalk.cyan(run.target.name)}`);
-      console.log(`  Clicks  : ${chalk.green(String(passedClicks))} / ${totalClicks} passed`);
-      console.log(`  Score   : ${chalk.yellow(score)}`);
-      console.log('');
+      printFields([
+        ['Run',    chalk.dim(run.id)],
+        ['Target', chalk.cyan(run.target.name)],
+        ['Clicks', `${chalk.green(String(passedClicks))} / ${totalClicks} passed`],
+        ['Score',  chalk.yellow(score)],
+      ]);
 
       // Open PDF if requested
       if (opts.open && pdfPath) {

@@ -8,7 +8,7 @@ import {
   MAX_AGENTS,
   MAX_ROUNDS,
 } from '../core/debate.js';
-import { printHeader, validateInt, writeOutputFile, printBulletList } from '../lib/cli.js';
+import { printHeader, validateInt, writeOutputFile, printBulletList, printFields } from '../lib/cli.js';
 import { toErrorMessage } from '../core/utils.js';
 
 export function debateCommand(): Command {
@@ -52,13 +52,13 @@ export function debateCommand(): Command {
         const timeout = validateInt(options.timeout, 'timeout', 1000);
 
         // Print run summary
-        process.stdout.write(`  Topic  : ${chalk.cyan(options.topic)}\n`);
-        process.stdout.write(`  Agents : ${chalk.yellow(String(agentCount))}\n`);
-        process.stdout.write(`  Rounds : ${chalk.yellow(String(roundCount))}\n`);
-        if (options.model) {
-          process.stdout.write(`  Model  : ${chalk.dim(options.model)}\n`);
-        }
-        process.stdout.write('\n');
+        const fields: Array<[string, string]> = [
+          ['Topic', chalk.cyan(options.topic)],
+          ['Agents', chalk.yellow(String(agentCount))],
+          ['Rounds', chalk.yellow(String(roundCount))],
+        ];
+        if (options.model) fields.push(['Model', chalk.dim(options.model)]);
+        printFields(fields);
 
         const spinner = ora('  Round 1 — agents stating positions…').start();
 
