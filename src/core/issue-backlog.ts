@@ -10,6 +10,8 @@ export interface IssueTask {
   priority: number; // computed: severity_weight * count * gap_ratio
   sweepFiles?: string[];
   riskScore?: number; // 0–1 blast radius risk from GitNexus
+  /** If set, this task carries a pre-built architect prompt to use verbatim */
+  architectPrompt?: string;
 }
 
 const SEVERITY_WEIGHT: Record<string, number> = {

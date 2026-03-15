@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
 import type { Target, BuildResult, HardenPhase } from '../../types.js';
+import type { ScanResult } from '../../commands/scan.js';
 import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
 import type { IssueTask } from '../issue-backlog.js';
@@ -246,6 +247,11 @@ function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
  * agent knows the blast radius before editing.
  */
 function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string): string {
+  // Architect mode: if the first issue carries a pre-built prompt, use it verbatim
+  if (issues[0]?.architectPrompt) {
+    return issues[0].architectPrompt;
+  }
+
   // Sweep mode: if top issue has sweepFiles, use sweep-specific prompt
   if (issues[0]?.sweepFiles && issues[0].sweepFiles.length > 0) {
     return buildSweepPrompt(issues[0].description, issues[0].sweepFiles.slice(0, 8));

@@ -9,6 +9,8 @@ import { currentBranch } from '../core/git.js';
 
 export const STATE_FILE = '.ratchet-state.json';
 
+const log = console.log.bind(console);
+
 export async function loadRunState(cwd: string): Promise<RatchetRun | null> {
   let raw: string;
   try {
@@ -57,21 +59,21 @@ export function statusCommand(): Command {
     .action(async () => {
       const cwd = process.cwd();
 
-      console.log(chalk.bold('\n⚙  Ratchet Status\n'));
+      log(chalk.bold('\n⚙  Ratchet Status\n'));
 
       const run = await loadRunState(cwd);
 
       if (!run) {
         const hasConfig = existsSync(join(cwd, '.ratchet.yml'));
         if (!hasConfig) {
-          console.log(
+          log(
             chalk.dim('  No runs found and no .ratchet.yml detected.\n') +
               '  Get started:\n' +
               `    ${chalk.cyan('ratchet init')}               — create .ratchet.yml\n` +
               `    ${chalk.cyan('ratchet torque --target <name>')} — start the click loop\n`,
           );
         } else {
-          console.log(
+          log(
             chalk.dim('  No runs found. Run ') +
               chalk.cyan('ratchet torque --target <name>') +
               chalk.dim(' to start.\n'),
@@ -92,22 +94,22 @@ export function statusCommand(): Command {
 
       const branch = await currentBranch(cwd).catch(() => '');
 
-      console.log(`  Run ID  : ${chalk.dim(run.id)}`);
-      if (branch) console.log(`  Branch  : ${chalk.cyan(branch)}`);
-      console.log(
+      log(`  Run ID  : ${chalk.dim(run.id)}`);
+      if (branch) log(`  Branch  : ${chalk.cyan(branch)}`);
+      log(
         `  Target  : ${chalk.cyan(run.target.name)} ${chalk.dim(`(${run.target.path})`)}`,
       );
       if (run.target.description) {
-        console.log(`  Desc    : ${chalk.dim(run.target.description)}`);
+        log(`  Desc    : ${chalk.dim(run.target.description)}`);
       }
-      console.log(`  Status  : ${colorStatus(run.status, staleRunning)}`);
-      console.log(
+      log(`  Status  : ${colorStatus(run.status, staleRunning)}`);
+      log(
         `  Clicks  : ${chalk.green(String(passedClicks))} passed / ${totalClicks} total`,
       );
-      console.log(`  Time    : ${chalk.yellow(duration)}`);
+      log(`  Time    : ${chalk.yellow(duration)}`);
 
       if (run.clicks.length > 0) {
-        console.log('\n  ' + chalk.bold('Click history:'));
+        log('\n  ' + chalk.bold('Click history:'));
         for (const click of run.clicks) {
           const icon = click.testsPassed ? chalk.green('✓') : chalk.red('✗');
           const commit = click.commitHash
@@ -117,12 +119,12 @@ export function statusCommand(): Command {
             click.filesModified.length > 0
               ? chalk.dim(` — ${click.filesModified.slice(0, 3).join(', ')}${click.filesModified.length > 3 ? ` +${click.filesModified.length - 3} more` : ''}`)
               : '';
-          console.log(`    ${icon} Click ${click.number}${commit}${files}`);
+          log(`    ${icon} Click ${click.number}${commit}${files}`);
         }
       }
 
       if (run.status === 'completed' && passedClicks > 0) {
-        console.log(
+        log(
           '\n  ' +
             chalk.dim('Run ') +
             chalk.cyan('ratchet tighten --pr') +
@@ -130,7 +132,7 @@ export function statusCommand(): Command {
         );
       }
 
-      console.log('');
+      log('');
     });
 
   return cmd;

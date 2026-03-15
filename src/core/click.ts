@@ -22,6 +22,7 @@ export interface ClickContext {
   issues?: IssueTask[];
   adversarial?: boolean;
   sweepMode?: boolean;
+  architectMode?: boolean;
   /** Main repo cwd for GitNexus lookups (worktrees don't have .gitnexus) */
   gitnexusCwd?: string;
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
@@ -111,7 +112,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       rolledBack = true;
     } else {
       // Click guards: reject over-aggressive changes before running tests
-      const guardResult = checkClickGuards(cwd, config.guards, ctx.sweepMode);
+      const guardResult = checkClickGuards(cwd, config.guards, ctx.sweepMode, ctx.architectMode);
       if (!guardResult.passed) {
         console.error(`[ratchet] Click ${clickNumber} REJECTED by guards: ${guardResult.reason}`);
         console.error(`[ratchet]   ${guardResult.detail}`);
@@ -212,9 +213,12 @@ const DEFAULT_GUARDS: ClickGuards = {
  * Measures actual git diff to count lines and files changed.
  * In sweep mode, uses tighter per-file limits but allows more files/total lines.
  */
-function checkClickGuards(cwd: string, guards?: ClickGuards, sweepMode?: boolean): GuardResult {
+function checkClickGuards(cwd: string, guards?: ClickGuards, sweepMode?: boolean, architectMode?: boolean): GuardResult {
   let { maxLinesChanged, maxFilesChanged } = { ...DEFAULT_GUARDS, ...guards };
-  if (sweepMode) {
+  if (architectMode) {
+    maxFilesChanged = 20;
+    maxLinesChanged = 500;
+  } else if (sweepMode) {
     maxFilesChanged = 10;
     maxLinesChanged = 120;
   }
