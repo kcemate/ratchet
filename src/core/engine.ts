@@ -148,6 +148,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
       }
 
       try {
+        const clickStartMs = Date.now();
         const { click, rolled_back } = await executeClick({
           clickNumber: i,
           target,
@@ -160,6 +161,13 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             ? (phase) => callbacks.onClickPhase!(phase, i)
             : undefined,
         });
+        const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
+
+        if (rolled_back) {
+          console.error(`[ratchet] click ${i} ROLLED BACK (${elapsedSec}s) — tests failed or build errored`);
+        } else {
+          console.error(`[ratchet] click ${i} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
+        }
 
         // After a successful click, re-scan for live scoring
         if (click.testsPassed && !rolled_back && currentScan) {
@@ -212,6 +220,16 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     }
 
     run.status = 'completed';
+
+    // Diagnostic: if every click rolled back, surface a hint
+    if (run.clicks.length > 0 && run.clicks.every((c) => !c.testsPassed)) {
+      console.error(
+        '[ratchet] All clicks rolled back. Possible causes:\n' +
+        '  • Tests are failing before ratchet starts — run the test command manually to check\n' +
+        '  • The agent is not making changes (check build output above)\n' +
+        '  • Test suite is flaky or has a long timeout — check test output for details',
+      );
+    }
   } catch (err: unknown) {
     run.status = 'failed';
     throw err;
