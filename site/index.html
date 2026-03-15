@@ -11,7 +11,7 @@
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Ratchet — Make your AI-generated code production-ready">
-  <meta property="og:description" content="Ratchet finds what's broken in your AI-generated code and fixes it automatically. Free scan. Production Readiness Score. $20/month Pro.">
+  <meta property="og:description" content="Ratchet finds what's broken in your AI-generated code and fixes it automatically. Free scan. Production Readiness Score.">
   <meta property="og:url" content="https://ratchetcli.com">
   <meta property="og:site_name" content="Ratchet">
   <!-- Twitter Card -->
@@ -162,6 +162,8 @@
       box-shadow: 0 4px 20px rgba(245,158,11,0.3);
       letter-spacing: 0.01em;
       white-space: nowrap;
+      border: none;
+      cursor: pointer;
     }
     .btn:hover {
       transform: translateY(-2px) scale(1.02);
@@ -439,6 +441,88 @@
     .step-badge.ai { background: rgba(245,158,11,0.12); color: var(--accent); }
     .step-badge.yours { background: rgba(255,255,255,0.06); color: var(--muted); }
 
+    /* Social proof / stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px 20px;
+      text-align: center;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .stat-card:hover {
+      border-color: rgba(245,158,11,0.25);
+      transform: translateY(-2px);
+    }
+    .stat-number {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -2px;
+      line-height: 1;
+      color: var(--accent);
+      margin-bottom: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* Features grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .feature-card:hover {
+      border-color: rgba(245,158,11,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+    }
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 14px;
+      display: block;
+    }
+    .feature-name {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+    .feature-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .feature-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 100px;
+      margin-left: 8px;
+      vertical-align: middle;
+      background: rgba(245,158,11,0.12);
+      color: var(--accent);
+    }
+
     /* Pricing */
     .pricing-grid {
       display: grid;
@@ -584,6 +668,45 @@
       font-size: 13px;
     }
 
+    /* Email capture form */
+    .email-form {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .email-input {
+      flex: 1;
+      min-width: 220px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .email-input::placeholder { color: var(--muted); }
+    .email-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+    }
+    .email-success {
+      display: none;
+      text-align: center;
+      padding: 16px;
+      color: var(--green);
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .email-success.show { display: block; }
+    .email-form.hidden { display: none; }
+
     /* CTA section */
     .cta {
       text-align: center;
@@ -645,7 +768,11 @@
       .hero-ctas { flex-direction: column; align-items: center; }
       .section h2 { font-size: 28px; letter-spacing: -1px; }
       .category-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
       .pricing-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr; gap: 12px; }
+      .stat-card { padding: 24px 16px; }
+      .stat-number { font-size: 40px; }
       .score-badge { font-size: 52px; }
       .score-arrow { font-size: 30px; }
       .terminal { border-radius: 10px; }
@@ -654,6 +781,8 @@
       .cta { padding: 64px 0; }
       .cta h2 { font-size: 30px; }
       .cta-btns { flex-direction: column; align-items: center; }
+      .email-form { flex-direction: column; }
+      .email-input { min-width: unset; }
       .steps::before { left: 19px; }
     }
     @media (max-width: 375px) {
@@ -668,8 +797,10 @@
   <nav class="sticky-nav" id="sticky-nav" aria-label="Site navigation">
     <span class="nav-brand">⚙ <span>Ratchet</span></span>
     <div class="nav-actions">
+      <a href="#features" class="nav-link">Features</a>
       <a href="#pricing" class="nav-link">Pricing</a>
-      <a href="#scan" class="nav-cta">Scan free</a>
+      <a href="#faq" class="nav-link">FAQ</a>
+      <a href="#early-access" class="nav-cta">Get Early Access</a>
     </div>
   </nav>
 
@@ -681,8 +812,8 @@
       <h1>You built it with AI.<br>Now make it <span>real.</span></h1>
       <p class="hero-sub">Ratchet finds what's broken in your AI-generated code and fixes it automatically.</p>
       <div class="hero-ctas">
-        <a href="#scan" class="btn">Scan my project free</a>
-        <a href="#pricing" class="btn btn-secondary">Get Pro — $20/month</a>
+        <a href="#early-access" class="btn">Get Early Access</a>
+        <a href="#how-it-works" class="btn btn-secondary">See how it works</a>
       </div>
 
       <!-- Terminal: npx ratchet scan -->
@@ -742,6 +873,28 @@
         setInterval(function() { cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0'; }, 530);
       })();
     </script>
+
+    <!-- Social Proof / Stats -->
+    <section class="section fade-in" id="proof">
+      <div class="section-label">Built for real codebases</div>
+      <h2>Battle-tested on <span>production code.</span></h2>
+      <p class="section-sub">Ratchet doesn't just lint — it understands your codebase deeply across 6 quality dimensions.</p>
+
+      <div class="stats-row">
+        <div class="stat-card fade-in fade-in-delay-1">
+          <div class="stat-number">700+</div>
+          <div class="stat-label">Tests in our own suite</div>
+        </div>
+        <div class="stat-card fade-in fade-in-delay-2">
+          <div class="stat-number">6</div>
+          <div class="stat-label">Quality categories scored</div>
+        </div>
+        <div class="stat-card fade-in fade-in-delay-3">
+          <div class="stat-number">79<span style="font-size:24px;color:var(--muted);font-weight:400">/100</span></div>
+          <div class="stat-label">Ratchet's own score on itself</div>
+        </div>
+      </div>
+    </section>
 
     <!-- Score Improvement -->
     <section class="section fade-in">
@@ -845,7 +998,7 @@
     </section>
 
     <!-- How It Works -->
-    <section class="section fade-in">
+    <section class="section fade-in" id="how-it-works">
       <div class="section-label">The loop</div>
       <h2>Three steps. <span>Zero guesswork.</span></h2>
       <p class="section-sub">You don't write any code. Ratchet runs the loop. You review the PR.</p>
@@ -868,9 +1021,49 @@
         <div class="step-item fade-in fade-in-delay-3">
           <div class="step-num">3</div>
           <div class="step-body">
-            <h3>Review <span class="step-badge yours">Merge the PR</span></h3>
+            <h3>Ship <span class="step-badge yours">Merge the PR</span></h3>
             <p>Ratchet opens a pull request with every fix, test result, and a before/after score. You read through it, approve what looks good, and merge. No mystery — you can see exactly what changed and why. The diff is yours.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section fade-in" id="features">
+      <div class="section-label">Capabilities</div>
+      <h2>More than a <span>linter.</span></h2>
+      <p class="section-sub">Ratchet is an AI-powered code quality engine that gets smarter with every run.</p>
+
+      <div class="features-grid">
+        <div class="feature-card fade-in fade-in-delay-1">
+          <span class="feature-icon">🐝</span>
+          <div class="feature-name">Swarm Mode</div>
+          <p class="feature-desc">Launch multiple AI agents in parallel to fix different categories simultaneously. Fix testing, security, and types all at once — not one at a time.</p>
+        </div>
+        <div class="feature-card fade-in fade-in-delay-2">
+          <span class="feature-icon">🏗️</span>
+          <div class="feature-name">Architect Mode</div>
+          <p class="feature-desc">An orchestrator agent plans the fix strategy, then delegates to specialized workers. Handles complex, cross-file refactors that single-pass tools miss.</p>
+        </div>
+        <div class="feature-card fade-in fade-in-delay-3">
+          <span class="feature-icon">📈</span>
+          <div class="feature-name">Incremental Scanning</div>
+          <p class="feature-desc">Only re-scan files that changed since your last run. Fast feedback on every commit — seconds, not minutes. Works with git diff automatically.</p>
+        </div>
+        <div class="feature-card fade-in fade-in-delay-4">
+          <span class="feature-icon">🚦</span>
+          <div class="feature-name">Pre-commit Validation</div>
+          <p class="feature-desc">Add Ratchet to your git hooks or CI pipeline. Block merges that drop your score below a threshold. Quality only goes up — never back down.</p>
+        </div>
+        <div class="feature-card fade-in fade-in-delay-5">
+          <span class="feature-icon">🔒</span>
+          <div class="feature-name">Score Regression Guard</div>
+          <p class="feature-desc">Set a minimum score for your project. Ratchet prevents any change from lowering it. Like a ratchet wrench — it only turns one direction.</p>
+        </div>
+        <div class="feature-card fade-in fade-in-delay-6">
+          <span class="feature-icon">🧠</span>
+          <div class="feature-name">Cross-run Learning</div>
+          <p class="feature-desc">Ratchet remembers what worked in previous runs. Fix patterns that succeeded get prioritized. Your project-specific context carries forward.</p>
         </div>
       </div>
     </section>
@@ -879,7 +1072,7 @@
     <section class="section fade-in" id="pricing">
       <div class="section-label">Pricing</div>
       <h2>Simple. <span>No surprises.</span></h2>
-      <p class="section-sub">Free to scan. $20/month to fix. That's it.</p>
+      <p class="section-sub">Free to scan. Pay to fix. That's it.</p>
 
       <div class="pricing-grid">
         <!-- Free -->
@@ -909,18 +1102,18 @@
             <li><span class="check">✓</span><span>Everything in Free</span></li>
             <li><span class="check">✓</span><span><strong>20 AI fixes/month</strong> — no API key needed</span></li>
             <li><span class="check">✓</span><span>Unused fixes roll over (up to 40)</span></li>
-            <li><span class="check">✓</span><span><strong>Harden mode</strong> — writes tests where none exist</span></li>
+            <li><span class="check">✓</span><span><strong>Swarm + Architect mode</strong></span></li>
             <li><span class="check">✓</span><span>Full Ratchet Report with shareable card</span></li>
             <li><span class="check">✓</span><span>Priority improvements as Ratchet gets smarter</span></li>
           </ul>
-          <a href="#scan" class="plan-cta primary">Get Pro — $20/month</a>
-          <div class="plan-overage">Need more? Extra fixes at $1.25 each.</div>
+          <a href="#early-access" class="plan-cta primary">Get Early Access</a>
+          <div class="plan-overage">Pricing may change before launch.</div>
         </div>
       </div>
     </section>
 
     <!-- FAQ -->
-    <section class="section fade-in">
+    <section class="section fade-in" id="faq">
       <div class="section-label">FAQ</div>
       <h2>Common <span>questions</span></h2>
       <div class="faq" style="margin-top: 32px;">
@@ -944,16 +1137,31 @@
           <summary class="faq-q">How long does it take?</summary>
           <p class="faq-a">The free scan takes about 30 seconds. Each AI fix takes 1–3 minutes depending on your project size and test suite. A typical Pro session runs 20 fixes in about 30–45 minutes while you do something else. Come back to a pull request, review it, merge.</p>
         </details>
+        <details class="faq-item">
+          <summary class="faq-q">What languages and frameworks are supported?</summary>
+          <p class="faq-a">Ratchet works with any JavaScript/TypeScript project out of the box — React, Next.js, Node, Express, you name it. Python support is coming soon. Since it uses AI to analyze and fix code, adding new languages is a matter of training, not rewriting rules. The score categories (testing, security, types, etc.) apply universally.</p>
+        </details>
       </div>
     </section>
 
-    <!-- CTA -->
-    <section class="cta fade-in">
-      <h2>Your app is <span>almost</span> ready.</h2>
-      <p>Find out what's missing. Takes 30 seconds.</p>
-      <div class="cta-btns">
-        <a href="#scan" class="btn">Scan my project free</a>
-        <a href="#pricing" class="btn btn-secondary btn-sm">Get Pro — $20/month</a>
+    <!-- CTA with Email Capture -->
+    <section class="cta fade-in" id="early-access">
+      <h2>Get <span>early access.</span></h2>
+      <p>Be the first to know when Ratchet launches. Join the waitlist.</p>
+
+      <form class="email-form" id="waitlist-form" onsubmit="return false;">
+        <input type="email" class="email-input" placeholder="you@example.com" required aria-label="Email address" id="waitlist-email">
+        <button type="submit" class="btn" id="waitlist-btn">Join Waitlist</button>
+      </form>
+      <div class="email-success" id="waitlist-success">
+        🎉 You're on the list. We'll be in touch.
+      </div>
+
+      <div style="margin-top: 32px; position: relative;">
+        <p style="color: var(--muted); font-size: 14px;">Or scan your project right now — it's free.</p>
+        <div style="margin-top: 16px;">
+          <code style="background: var(--code-bg); padding: 10px 18px; border-radius: 8px; font-family: 'SF Mono', 'Fira Code', monospace; color: var(--accent); font-size: 14px; display: inline-block; border: 1px solid var(--border);">npx ratchet scan</code>
+        </div>
       </div>
     </section>
 
@@ -979,7 +1187,6 @@
         entries.forEach(function(e) {
           if (e.isIntersecting) {
             e.target.querySelectorAll('.cat-bar-fill').forEach(function(bar) {
-              // Trigger reflow then animate
               requestAnimationFrame(function() { bar.classList.add('animated'); });
             });
             barObs.unobserve(e.target);
@@ -1013,6 +1220,42 @@
       }, { threshold: 0.5 });
       if (scoreEl) scoreObs.observe(scoreEl.parentElement.parentElement);
 
+      // Animate stat numbers counting up
+      var statEls = document.querySelectorAll('.stat-number');
+      statEls.forEach(function(el) {
+        var statObs = new IntersectionObserver(function(entries) {
+          entries.forEach(function(e) {
+            if (e.isIntersecting) {
+              var text = el.textContent.trim();
+              var suffix = '';
+              var target = 0;
+              // Parse "700+" → 700, "+"
+              // Parse "6" → 6, ""
+              // Parse "79/100" → 79, "/100"
+              var match = text.match(/^(\d+)(.*)/);
+              if (match) {
+                target = parseInt(match[1], 10);
+                suffix = match[2];
+              }
+              var duration = 1200;
+              var t0 = null;
+              function step(ts) {
+                if (!t0) t0 = ts;
+                var p = Math.min((ts - t0) / duration, 1);
+                var ease = 1 - Math.pow(1 - p, 3);
+                var val = Math.round(ease * target);
+                el.innerHTML = val + suffix;
+                if (p < 1) requestAnimationFrame(step);
+              }
+              el.innerHTML = '0' + suffix;
+              requestAnimationFrame(step);
+              statObs.unobserve(e.target);
+            }
+          });
+        }, { threshold: 0.3 });
+        statObs.observe(el);
+      });
+
       // Sticky nav
       var nav = document.getElementById('sticky-nav');
       var hero = document.querySelector('.hero');
@@ -1024,6 +1267,20 @@
         }
       }
       window.addEventListener('scroll', onScroll, { passive: true });
+
+      // Waitlist form
+      var form = document.getElementById('waitlist-form');
+      var emailInput = document.getElementById('waitlist-email');
+      var successMsg = document.getElementById('waitlist-success');
+      var submitBtn = document.getElementById('waitlist-btn');
+      if (form) {
+        submitBtn.addEventListener('click', function() {
+          if (emailInput.value && emailInput.validity.valid) {
+            form.classList.add('hidden');
+            successMsg.classList.add('show');
+          }
+        });
+      }
     })();
   </script>
 </body>
