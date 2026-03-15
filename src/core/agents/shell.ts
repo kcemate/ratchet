@@ -5,6 +5,7 @@ import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
+import { buildIntelligenceBriefing } from '../gitnexus.js';
 
 export interface ShellAgentConfig extends AgentOptions {
   /** Command to run for analysis/proposal (defaults to: claude --print) */
@@ -19,6 +20,8 @@ export class ShellAgent implements Agent {
   private timeout: number;
   /** Tracks whether current click is issue-driven (single-shot) */
   private _issueDrivenClick = false;
+  /** Working directory — set during build(), used for GitNexus lookups */
+  private _cwd: string = process.cwd();
 
   constructor(config: ShellAgentConfig = {}) {
     this.command = config.command ?? 'claude';
@@ -29,13 +32,14 @@ export class ShellAgent implements Agent {
     }
     this.extraArgs = baseArgs;
     this.timeout = config.timeout ?? 300_000; // 5 minutes
+    if (config.cwd) this._cwd = config.cwd;
   }
 
   async analyze(context: string, hardenPhase?: HardenPhase, issues?: IssueTask[]): Promise<string> {
     // Shell agent collapses analyze+propose+build into a single call for issue-driven clicks
     if (issues && issues.length > 0) {
       this._issueDrivenClick = true;
-      return buildIssuePlanPrompt(context, issues);
+      return buildIssuePlanPrompt(context, issues, this._cwd);
     }
     this._issueDrivenClick = false;
     let prompt: string;
@@ -62,6 +66,7 @@ export class ShellAgent implements Agent {
   }
 
   async build(proposal: string, cwd: string): Promise<BuildResult> {
+    this._cwd = cwd; // keep in sync for future GitNexus lookups
     // Issue-driven clicks: the proposal IS the single-shot prompt — send it directly
     // without wrapping in buildBuildPrompt (which would double-wrap instructions)
     const prompt = this._issueDrivenClick ? proposal : buildBuildPrompt(proposal);
@@ -234,14 +239,25 @@ function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
  * Returns a self-contained instruction that is sent DIRECTLY to the agent
  * (not wrapped in buildBuildPrompt). The agent reads files, makes changes,
  * and reports what it modified — all in one call.
+ *
+ * When GitNexus is available, injects dependency/caller intelligence so the
+ * agent knows the blast radius before editing.
  */
-function buildIssuePlanPrompt(context: string, issues: IssueTask[]): string {
+function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string): string {
   const issueList = formatIssuesForPrompt(issues);
   // Parse path from context (format: "Path: ./server/routes/groups.ts")
   const pathMatch = context.match(/^Path:\s*(.+)$/m);
   const targetPath = pathMatch ? pathMatch[1].trim() : '';
+
+  // GitNexus intelligence: dependency graph + blast radius
+  let graphIntel = '';
+  if (cwd && targetPath) {
+    graphIntel = buildIntelligenceBriefing(targetPath, cwd);
+  }
+
   return (
     `You are a code improvement assistant. Fix the top issue in ${targetPath}.\n\n` +
+    (graphIntel ? `${graphIntel}\n\n` : '') +
     `ISSUES FOUND:\n${issueList}\n\n` +
     `HARD CONSTRAINTS (violating these will cause rollback):\n` +
     `- Change AT MOST 30 lines total (insertions + deletions combined)\n` +

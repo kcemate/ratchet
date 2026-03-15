@@ -280,6 +280,7 @@ export function torqueCommand(): Command {
         // Create agent
         const agent = new ShellAgent({
           model: config.model,
+          cwd,
         });
 
         // Spinner state

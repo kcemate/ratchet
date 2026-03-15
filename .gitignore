@@ -6,3 +6,4 @@ coverage/
 .env
 *.ratchet.lock
 .ratchet/
+.gitnexus
