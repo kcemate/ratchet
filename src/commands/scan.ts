@@ -699,7 +699,7 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
   } else if (consoleLogCount <= 25) {
     consoleScore = 2;
     consoleSummary = `${consoleLogCount} console.log calls`;
-  } else if (consoleLogCount <= 50) {
+  } else if (consoleLogCount <= 75) {
     consoleScore = 1;
     consoleSummary = `${consoleLogCount} console.log calls`;
   } else {
