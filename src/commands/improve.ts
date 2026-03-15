@@ -7,7 +7,7 @@ import { join } from 'path';
 import { loadConfig } from '../core/config.js';
 import { saveRun } from '../core/history.js';
 import { checkStaleBinary } from '../core/stale-check.js';
-import { runSweepEngine } from '../core/engine.js';
+import { runSweepEngine, runArchitectEngine } from '../core/engine.js';
 import type { ClickPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
@@ -415,8 +415,9 @@ export function improveCommand(): Command {
     .option('--no-swarm', 'Disable swarm mode (swarm is on by default)')
     .option('--no-adversarial', 'Disable adversarial QA (adversarial is on by default)')
     .option('--no-simulate', 'Disable post-run persona simulation')
-    .addHelpText('after', '\nExample:\n  $ ratchet improve\n  $ ratchet improve --clicks 15\n  $ ratchet improve --no-swarm --no-adversarial --no-simulate\n')
-    .action(async (options: { clicks: string; out?: string; swarm: boolean; adversarial: boolean; simulate: boolean }) => {
+    .option('--no-architect', 'Disable architect phase (architect+surgical is the default)')
+    .addHelpText('after', '\nExample:\n  $ ratchet improve\n  $ ratchet improve --clicks 14\n  $ ratchet improve --no-swarm --no-adversarial --no-simulate\n')
+    .action(async (options: { clicks: string; out?: string; swarm: boolean; adversarial: boolean; simulate: boolean; architect: boolean }) => {
       const cwd = process.cwd();
 
       process.stdout.write(chalk.bold('\n⚙  Ratchet Improve\n') + '\n');
@@ -482,13 +483,19 @@ export function improveCommand(): Command {
         });
       process.stdout.write('\n');
 
-      // ── Step 2: Fix (sweep all issue types) ──
+      // ── Step 2: Fix (architect phase → surgical phase) ──
+      // Default: first half of clicks = architect mode (structural, high-leverage)
+      //          second half          = surgical sweep (cleanup what's left)
+      // Opt out of architect phase with --no-architect.
       const target = { name: 'improve', path: '.', description: 'Improve all issue types across the codebase' };
       config.guards = { maxLinesChanged: 40, maxFilesChanged: 10 };
 
-      // Wire swarm mode as default (opt out with --no-swarm)
       const useSwarm = options.swarm !== false;
       const useAdversarial = options.adversarial !== false;
+      const useArchitect = options.architect !== false;
+
+      const architectClicks = useArchitect ? Math.ceil(clickCount / 2) : 0;
+      const surgicalClicks = clickCount - architectClicks;
 
       if (useSwarm) {
         config.swarm = {
@@ -502,12 +509,15 @@ export function improveCommand(): Command {
       } else {
         process.stdout.write(`  Swarm : ${chalk.dim('off')}\n`);
       }
-      process.stdout.write(`  Adversarial : ${useAdversarial ? chalk.green('on') : chalk.dim('off')}\n\n`);
+      process.stdout.write(`  Adversarial : ${useAdversarial ? chalk.green('on') : chalk.dim('off')}\n`);
+      if (useArchitect) {
+        process.stdout.write(`  Strategy : ${chalk.cyan(`${architectClicks} architect`)} ${chalk.dim('→')} ${chalk.green(`${surgicalClicks} surgical`)}\n`);
+      }
+      process.stdout.write('\n');
 
       const agent = new ShellAgent({ model: config.model, cwd });
       const logger = new RatchetLogger(target.name, cwd);
 
-      // Initialize learning store for cross-run learning
       const learningStore = new LearningStore(cwd);
       await learningStore.load();
 
@@ -516,51 +526,98 @@ export function improveCommand(): Command {
       let run: RatchetRun;
       let spinner: ReturnType<typeof ora> | null = null;
 
+      const makeCallbacks = (totalClicks: number, clickOffset: number = 0) => ({
+        onScanComplete: () => {},
+        onClickStart: async (n: number, total: number) => {
+          const globalN = n + clickOffset;
+          const phase = clickOffset === 0 && useArchitect ? chalk.cyan('[architect] ') : chalk.green('[surgical] ');
+          spinner = ora(`  ${phase}Click ${chalk.bold(String(globalN))}/${totalClicks} — fixing…`).start();
+          if (globalN === 1) {
+            await logger.initLog({ id: 'pending', target, clicks: [], startedAt: new Date(), status: 'running' }).catch(() => {});
+          }
+        },
+        onClickPhase: (phase: ClickPhase, n: number) => {
+          const globalN = n + clickOffset;
+          const labels: Record<ClickPhase, string> = {
+            analyzing: 'analyzing…', proposing: 'proposing…',
+            building: 'building…', testing: 'testing…', committing: 'committing…',
+          };
+          if (spinner) spinner.text = `  Click ${chalk.bold(String(globalN))}/${totalClicks} — ${labels[phase]}`;
+        },
+        onClickComplete: async (click: Click, _rolledBack: boolean) => {
+          if (spinner) {
+            const globalN = click.number + clickOffset;
+            if (click.testsPassed) {
+              spinner.succeed(
+                `  Click ${chalk.bold(String(globalN))} — ${chalk.green('✓ landed')}` +
+                  (click.commitHash ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`) : '') +
+                  (click.issuesFixedCount ? chalk.dim(` — ${click.issuesFixedCount} issues fixed`) : ''),
+              );
+            } else {
+              spinner.warn(`  Click ${chalk.bold(String(globalN))} — ${chalk.yellow('✗ rolled back')}`);
+            }
+            spinner = null;
+          }
+        },
+        onError: (err: Error, n: number) => {
+          if (spinner) { spinner.fail(`  Click ${n + clickOffset} — error: ${err.message}`); spinner = null; }
+        },
+      });
+
       try {
-        run = await runSweepEngine({
+        // Phase 1: Architect (structural, high-leverage)
+        let architectRun: RatchetRun | null = null;
+        let scanAfterArchitect = scoreBefore;
+
+        if (useArchitect && architectClicks > 0) {
+          process.stdout.write(chalk.cyan('  ◆ Architect phase\n'));
+          architectRun = await runArchitectEngine({
+            target,
+            clicks: architectClicks,
+            config,
+            cwd,
+            agent,
+            createBranch: true,
+            adversarial: useAdversarial,
+            scanResult: scoreBefore,
+            learningStore,
+            callbacks: makeCallbacks(clickCount, 0),
+          });
+          // Use scan after architect as input to surgical
+          if (architectRun.clicks.length > 0) {
+            try { scanAfterArchitect = await runScan(cwd); } catch { /* fallback */ }
+          }
+        }
+
+        // Phase 2: Surgical sweep (cleanup)
+        process.stdout.write(chalk.green('  ◆ Surgical phase\n'));
+        const surgicalRun = await runSweepEngine({
           target,
-          clicks: clickCount,
+          clicks: surgicalClicks,
           config,
           cwd,
           agent,
-          createBranch: true,
+          createBranch: architectClicks === 0, // only create branch if no architect phase
           adversarial: useAdversarial,
-          scanResult: scoreBefore,
+          scanResult: scanAfterArchitect,
           learningStore,
-          callbacks: {
-            onScanComplete: () => {},
-            onClickStart: async (n, total) => {
-              spinner = ora(`  Click ${chalk.bold(String(n))}/${total} — fixing…`).start();
-              if (n === 1) {
-                await logger.initLog({ id: 'pending', target, clicks: [], startedAt: new Date(), status: 'running' }).catch(() => {});
-              }
-            },
-            onClickPhase: (phase: ClickPhase, n: number) => {
-              const labels: Record<ClickPhase, string> = {
-                analyzing: 'analyzing…', proposing: 'proposing…',
-                building: 'building…', testing: 'testing…', committing: 'committing…',
-              };
-              if (spinner) spinner.text = `  Click ${chalk.bold(String(n))}/${clickCount} — ${labels[phase]}`;
-            },
-            onClickComplete: async (click: Click, rolledBack: boolean) => {
-              if (spinner) {
-                if (click.testsPassed) {
-                  spinner.succeed(
-                    `  Click ${chalk.bold(String(click.number))} — ${chalk.green('✓ landed')}` +
-                      (click.commitHash ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`) : '') +
-                      (click.issuesFixedCount ? chalk.dim(` — ${click.issuesFixedCount} issues fixed`) : ''),
-                  );
-                } else {
-                  spinner.warn(`  Click ${chalk.bold(String(click.number))} — ${chalk.yellow('✗ rolled back')}`);
-                }
-                spinner = null;
-              }
-            },
-            onError: (err, n) => {
-              if (spinner) { spinner.fail(`  Click ${n} — error: ${err.message}`); spinner = null; }
-            },
-          },
+          callbacks: makeCallbacks(clickCount, architectClicks),
         });
+
+        // Merge: combine architect + surgical clicks into one run for the report
+        if (architectRun) {
+          // Renumber clicks sequentially and merge
+          const archClicks = architectRun.clicks.map(c => ({ ...c }));
+          const surgClicks = surgicalRun.clicks.map(c => ({ ...c, number: c.number + architectClicks }));
+          run = {
+            ...surgicalRun,
+            id: architectRun.id,
+            startedAt: architectRun.startedAt,
+            clicks: [...archClicks, ...surgClicks],
+          };
+        } else {
+          run = surgicalRun;
+        }
       } catch (err) {
         if (spinner) (spinner as ReturnType<typeof ora>).fail();
         console.error(chalk.red('\nFatal error: ') + String(err));

@@ -365,6 +365,58 @@ function parseModifiedFiles(output: string): string[] {
   return files;
 }
 
+/**
+ * Build a single-shot architect prompt that instructs the agent to make ONE
+ * high-leverage structural improvement — extracting shared modules, consolidating
+ * duplicated logic, splitting god files — that eliminates many issues at once.
+ *
+ * Injects GitNexus codebase intelligence and top issues by volume so the agent
+ * can identify the highest-ROI architectural change.
+ */
+export function buildArchitectPrompt(scanResult: ScanResult, cwd: string): string {
+  let intel = '';
+  try {
+    intel = buildIntelligenceBriefing('.', cwd);
+  } catch {
+    // Non-fatal — GitNexus may not be available
+  }
+
+  const topIssues = scanResult.issuesByType
+    .filter(i => i.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 12);
+
+  const issuesList = topIssues.map(i => {
+    const locs = i.locations?.slice(0, 4).join(', ') ?? '';
+    return `  - [${i.severity}] ${i.description}: ${i.count} occurrences${locs ? ` — in ${locs}` : ''}`;
+  }).join('\n');
+
+  return (
+    `You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\n` +
+    (intel ? `CODEBASE INTELLIGENCE:\n${intel}\n\n` : '') +
+    `TOP ISSUES BY VOLUME (score: ${scanResult.total}/100, ${scanResult.totalIssuesFound} total issues):\n${issuesList}\n\n` +
+    `ARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n` +
+    `  - If multiple files share duplicated logic → extract a shared module/utility\n` +
+    `  - If a file is a god class/module → split it into focused modules\n` +
+    `  - If many files import the same pattern differently → consolidate with a shared abstraction\n` +
+    `  - If error handling is scattered → centralize error types/handlers\n` +
+    `  - If types are duplicated across files → extract to a shared types module\n\n` +
+    `RELAXED CONSTRAINTS (architect mode):\n` +
+    `  - You may change up to 20 files and 500 lines total\n` +
+    `  - You MAY create new files (shared modules, utilities, type definitions)\n` +
+    `  - You MUST update all import paths when extracting or moving code\n` +
+    `  - All existing tests MUST still pass — if tests break, the change will be rolled back\n` +
+    `  - Make ONE cohesive structural change, not many unrelated fixes\n\n` +
+    `INSTRUCTIONS:\n` +
+    `1. Analyze the top issues and identify the highest-leverage architectural improvement\n` +
+    `2. Make the structural change (extract module, consolidate, refactor)\n` +
+    `3. Update all import paths throughout the codebase\n` +
+    `4. Verify the change is cohesive and tests would pass\n\n` +
+    `After making changes, output each modified or created file:\n` +
+    `MODIFIED: <filepath>`
+  );
+}
+
 export function createShellAgent(options: ShellAgentConfig = {}): ShellAgent {
   return new ShellAgent(options);
 }
