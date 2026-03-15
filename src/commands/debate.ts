@@ -44,7 +44,7 @@ export function debateCommand(): Command {
       }) => {
         const cwd = process.cwd();
 
-        console.log(chalk.bold('\n⚔  Ratchet Debate\n'));
+        process.stdout.write(chalk.bold('\n⚔  Ratchet Debate\n') + '\n');
 
         // Parse and validate agent count
         const agentCount = parseInt(options.agents, 10);
@@ -93,11 +93,11 @@ export function debateCommand(): Command {
         }
 
         // Print run summary
-        console.log(`  Topic  : ${chalk.cyan(options.topic)}`);
-        console.log(`  Agents : ${chalk.yellow(String(agentCount))}`);
-        console.log(`  Rounds : ${chalk.yellow(String(roundCount))}`);
+        process.stdout.write(`  Topic  : ${chalk.cyan(options.topic)}\n`);
+        process.stdout.write(`  Agents : ${chalk.yellow(String(agentCount))}\n`);
+        process.stdout.write(`  Rounds : ${chalk.yellow(String(roundCount))}\n`);
         if (options.model) {
-          console.log(`  Model  : ${chalk.dim(options.model)}`);
+          process.stdout.write(`  Model  : ${chalk.dim(options.model)}\n`);
         }
         process.stdout.write('\n');
 
@@ -126,12 +126,12 @@ export function debateCommand(): Command {
           // Print synthesis to console
           const { synthesis } = result;
 
-          console.log(chalk.bold('  Recommendation'));
-          console.log(`  ${synthesis.recommendation.slice(0, 300)}${synthesis.recommendation.length > 300 ? '…' : ''}`);
+          process.stdout.write(chalk.bold('  Recommendation') + '\n');
+          process.stdout.write(`  ${synthesis.recommendation.slice(0, 300)}${synthesis.recommendation.length > 300 ? '…' : ''}\n`);
           process.stdout.write('\n');
 
           if (synthesis.tradeoffs.length > 0) {
-            console.log(chalk.bold('  Tradeoffs:'));
+            process.stdout.write(chalk.bold('  Tradeoffs:') + '\n');
             for (const t of synthesis.tradeoffs.slice(0, 5)) {
               console.log(`    ${chalk.yellow('•')} ${t}`);
             }
