@@ -21,16 +21,9 @@ import type { ScanResult } from './scan.js';
 import { isRepo, status as gitStatus } from '../core/git.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
+import { formatDuration } from '../core/utils.js';
 
 const STATE_FILE = '.ratchet-state.json';
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
-  const mins = Math.floor(ms / 60_000);
-  const secs = Math.floor((ms % 60_000) / 1000);
-  return `${mins}m ${secs}s`;
-}
 
 export function torqueCommand(): Command {
   const cmd = new Command('torque');
@@ -465,7 +458,7 @@ export function torqueCommand(): Command {
             },
           });
         } catch (err) {
-          if (spinner) spinner.fail();
+          if (spinner) (spinner as ReturnType<typeof ora>).fail();
           console.error(chalk.red('\nFatal error: ') + String(err));
           process.exit(1);
         } finally {

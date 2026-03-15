@@ -7,17 +7,17 @@ import { fileURLToPath } from 'url';
  */
 function latestMtime(dir: string): number {
   let latest = 0;
-  let entries: ReturnType<typeof readdirSync>;
+  let entries: import('fs').Dirent[];
   try {
-    entries = readdirSync(dir, { withFileTypes: true });
+    entries = readdirSync(dir, { withFileTypes: true, encoding: 'utf-8' }) as import('fs').Dirent[];
   } catch {
     return 0;
   }
   for (const entry of entries) {
-    const full = join(dir, entry.name);
+    const full = join(dir, String(entry.name));
     if (entry.isDirectory()) {
       // Skip node_modules and hidden dirs
-      if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+      if (String(entry.name) === 'node_modules' || String(entry.name).startsWith('.')) continue;
       const sub = latestMtime(full);
       if (sub > latest) latest = sub;
     } else if (entry.isFile()) {

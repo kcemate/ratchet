@@ -1,4 +1,4 @@
-# ⚙ Ratchet
+# Ratchet
 
 **Every click ships code.**
 
@@ -9,28 +9,24 @@ ratchet torque --target error-handling --clicks 7
 ```
 
 ```
-⚙  Ratchet Torque
-
   Target : error-handling
   Path   : src/api/
   Agent  : shell
   Clicks : 7
   Tests  : npm test
 
-  ✓ Click 1 [a3f9b21] — add null check to getUserById
-  ✗ Click 2 [rolled back] — proposed change broke 3 tests
-  ✓ Click 3 [7bc1d44] — extract error formatting helper
-  ✓ Click 4 [2e8f053] — add missing async/await to middleware
-  ✓ Click 5 [9da3c17] — remove duplicate error logger import
-  ✗ Click 6 [rolled back] — type mismatch in response handler
-  ✓ Click 7 [f81b44a] — normalize HTTP status codes in catch blocks
+  Score: 62/100 (14 issues found)
+     Targeting: Empty catches (5/6), any types (4/5), functions >50 lines (3/4)
 
-  ──────────────────────────────────────────────────
+  ✓ Click 1 — passed [a3f9b21] — Score: 62 → 65 (+3) — 2 issues fixed
+  ✗ Click 2 — rolled back
+  ✓ Click 3 — passed [7bc1d44] — Score: 65 → 68 (+3) — 1 issues fixed
+  ✓ Click 4 — passed [2e8f053] — Score: 68 → 71 (+3)
+  ✓ Click 5 — passed [9da3c17] — Score: 71 → 73 (+2) — 1 issues fixed
+  ✗ Click 6 — rolled back
+  ✓ Click 7 — passed [f81b44a] — Score: 73 → 76 (+3) — 2 issues fixed
 
   Done. 5 landed · 2 rolled back · 4m 12s
-
-  Log: docs/error-handling-ratchet.md
-  Run ratchet tighten --pr to open a pull request.
 ```
 
 ---
@@ -54,114 +50,56 @@ The result: a branch of real, tested commits — each one a measurable improveme
 
 ```bash
 # Install globally
-npm install -g ratchet
-
-# Or run without installing
-npx ratchet init
+npm install -g @ratchet-run/cli
 
 # Step 1: Initialize Ratchet in your project
 ratchet init
 
-# Step 2: Run 7 improvement clicks on a target
+# Step 2: Run improvement clicks on a target
 ratchet torque --target error-handling
 
-# Step 3: Check progress mid-run
+# Step 3: Check progress
 ratchet status
 
 # Step 4: Ship it — create a PR with all improvements
 ratchet tighten --pr
 ```
 
-**Prerequisites:** Node.js >=18, git, and an AI coding agent available on your PATH (e.g. `claude`).
+**Prerequisites:** Node.js >=18, git, and an AI coding agent available on your PATH.
 
----
+### Zero-config mode
 
-## How It Works
+If no `.ratchet.yml` exists, Ratchet auto-detects your project type, test command, and source paths. Just run:
 
-For each click, Ratchet:
-
-1. **Analyzes** the target path — reads the code, understands the current state
-2. **Proposes** one focused improvement — small scope, single concern
-3. **Builds** — the agent implements the change
-4. **Tests** — runs your full test suite against the change
-5. **Commits** if tests pass — or **reverts** if they fail (the Pawl)
-6. Repeats
-
-At the end you have a branch of N commits, all green, all logged.
-
----
-
-## .ratchet.yml
-
-```yaml
-agent: default
-model: claude-sonnet-4-6
-
-defaults:
-  clicks: 7
-  test_command: npm test
-  auto_commit: true
-
-targets:
-  - name: error-handling
-    path: src/api/
-    description: "Improve error handling across all API routes"
-
-  - name: types
-    path: src/types/
-    description: "Strengthen TypeScript types and remove any casts"
-
-  - name: performance
-    path: src/db/
-    description: "Optimize database queries and reduce N+1 patterns"
+```bash
+ratchet torque
 ```
 
-Run `ratchet init` to generate this file automatically with your project's detected settings.
-
-### Configuration Fields
-
-| Field | Description | Default |
-|-------|-------------|---------|
-| `agent` | AI backend: `default`, `shell` | `shell` |
-| `model` | Model override (agent-specific) | — |
-| `defaults.clicks` | Number of clicks per run | `7` |
-| `defaults.test_command` | Command to run tests | `npm test` |
-| `defaults.auto_commit` | Auto-commit passing clicks | `true` |
-| `targets` | List of named targets | — |
-| `boundaries` | Paths the agent must not touch | — |
-
-See [docs/configuration.md](docs/configuration.md) for the full reference.
-
 ---
 
-## Boundaries
+## Scoring System
 
-Boundaries protect critical code from agent modification. Define them in `.ratchet.yml`:
+Ratchet scans your codebase and produces a **Production Readiness Score** out of 100 points across 6 categories:
 
-```yaml
-boundaries:
-  - path: src/auth/
-    rule: no-modify
-    reason: "Auth architecture is intentional — Clerk dual-mode"
+| Category | Max Points | What it measures |
+|----------|-----------|------------------|
+| Code Quality | 24 | Function length, line length, dead code, duplication |
+| Testing | 20 | Coverage ratio, edge case depth, test quality |
+| Security | 16 | Secrets, input validation, auth & rate limiting |
+| Error Handling | 14 | Try/catch coverage, empty catches, structured logging |
+| Performance | 14 | Async patterns, console cleanup, import hygiene |
+| Type Safety | 12 | Strict config, `any` type count |
 
-  - path: "**/*.test.ts"
-    rule: preserve-pattern
-    reason: "Test structure follows team convention"
+Each click targets specific issues from the scan. After each successful click, Ratchet re-scans to measure progress and update the issue backlog.
 
-  - path: migrations/
-    rule: no-delete
-    reason: "Migration files are append-only"
+```bash
+# Run a standalone scan
+ratchet scan
 ```
 
-| Rule | Effect |
-|------|--------|
-| `no-modify` | Agent cannot change any file under this path |
-| `no-delete` | Agent cannot delete files under this path |
-| `preserve-pattern` | File structure and naming must be preserved |
-
 ---
 
-## CLI Reference
+## Commands
 
 ### `ratchet init [dir]`
 
@@ -172,49 +110,38 @@ Options:
   --force   Overwrite existing .ratchet.yml
 ```
 
-Supports: `npm`, `yarn`, `pnpm`, `pytest`, `go test`, `cargo test`, `make test`
+### `ratchet scan [dir]`
 
----
+Scan the project and generate a Production Readiness Score (0–100).
+
+```bash
+ratchet scan
+ratchet scan ./my-project
+```
 
 ### `ratchet torque`
 
-Run the click loop. This is the main command.
+Run the click loop — the main command.
 
 ```
 Options:
-  -t, --target <name>    Target from .ratchet.yml (required)
-  -n, --clicks <number>  Number of clicks (default: from config)
-  --dry-run              Preview mode — no commits made
-  --verbose              Show per-click timing, proposal preview, and modified files
-  --no-branch            Skip creating a ratchet branch
+  -t, --target <name>     Target from .ratchet.yml (omit for auto-detection)
+  -n, --clicks <number>   Number of clicks (default: from config)
+  --dry-run               Preview mode — no commits made
+  --verbose               Show per-click timing, proposals, and modified files
+  --no-branch             Skip creating a ratchet branch
+  --mode <mode>           "normal" (default) or "harden" (write tests first)
+  --swarm                 Enable swarm mode (N agents compete per click)
+  --agents <number>       Number of agents in swarm mode (1–5, default: 3)
+  --focus <specs>         Comma-separated specializations (see Swarm Mode)
+  --adversarial           Enable adversarial QA (red team tests each change)
 ```
 
-Creates branch: `ratchet/<target>-<timestamp>`
-Writes live log to: `docs/<target>-ratchet.md`
-
----
+Creates branch `ratchet/<target>-<timestamp>` and writes a live log to `docs/<target>-ratchet.md`.
 
 ### `ratchet status`
 
 Show the current or last run progress.
-
-```
-⚙  Ratchet Status
-
-  Run ID  : 7a3f9b21-...
-  Target  : error-handling (src/api/)
-  Status  : completed ✓
-  Clicks  : 5 passed / 7 total
-  Time    : 4m 12s
-
-  Click history:
-    ✓ Click 1 [a3f9b21]
-    ✗ Click 2 [rolled back]
-    ✓ Click 3 [7bc1d44]
-    ...
-```
-
----
 
 ### `ratchet log`
 
@@ -223,12 +150,8 @@ Display the Ratchet log for a target.
 ```
 Options:
   -t, --target <name>   Target to show log for
-  --raw                 Print raw markdown (no color)
+  --raw                 Print raw markdown
 ```
-
-The log lives at `docs/<target>-ratchet.md` — commit it alongside your code changes.
-
----
 
 ### `ratchet tighten`
 
@@ -240,67 +163,177 @@ Options:
   --draft   Create as draft PR
 ```
 
-The PR description includes the full ratchet log — analysis, proposals, and commit hashes for every click.
+### `ratchet report`
+
+Generate a detailed report (Markdown + PDF) of the last run.
+
+### `ratchet simulate`
+
+Simulate user personas navigating your product to find UX friction.
+
+```
+Options:
+  -s, --scenario <name>    Scenario: onboarding, daily-use, premium-upgrade, or custom
+  -p, --personas <number>  Number of persona agents (1–20, default: 5)
+  -u, --url <url>          API base URL to test against
+  -o, --output <path>      Save report as markdown file
+  -m, --model <model>      Override LLM model
+  --timeout <ms>           Timeout per persona call (default: 120000)
+```
+
+Built-in persona archetypes: power-user, casual, new-user, mobile, accessibility, api-developer.
+
+```bash
+ratchet simulate --scenario onboarding --personas 5 --output report.md
+ratchet simulate --scenario daily-use --personas 10
+```
 
 ---
 
-## Agent Backends
+## The Pawl (Rollback)
 
-| Agent | Description |
-|-------|-------------|
-| `shell` | Runs an AI coding agent via shell command (default) |
-| `claude-code` | Claude Code native integration |
-| `codex` | OpenAI Codex via API |
+The Pawl is Ratchet's anti-regression mechanism. After each click:
 
-The agent abstraction is open — implement the `Agent` interface to add your own.
+1. Ratchet stashes your working tree state
+2. The AI agent proposes and implements a change
+3. Your full test suite runs against the change
+4. **If tests pass** → commit the change, drop the stash
+5. **If tests fail** → revert all changes, restore the stash
+
+The codebase can only ever get better. Failed changes are silently discarded — no broken commits, no manual cleanup.
 
 ---
 
-## Real-World Use Cases
+## Swarm Mode
 
-**Harden error handling before a release**
+Swarm mode runs multiple specialized AI agents **in parallel**, each in its own git worktree. The best result wins.
+
+```bash
+ratchet torque --target src --swarm --agents 3 --focus security,quality,errors
+```
+
+### How it works
+
+1. Ratchet forks N git worktrees from HEAD
+2. Each agent gets a specialization focus and runs independently
+3. After all agents finish, Ratchet scores each result via `ratchet scan`
+4. The agent with the highest score delta wins
+5. The winning diff is applied to the main working directory
+6. All worktrees are cleaned up
+
+### Specializations
+
+| Focus | What the agent prioritizes |
+|-------|---------------------------|
+| `security` | Auth flaws, injection, secrets, input validation |
+| `performance` | Async patterns, N+1 queries, caching, memory leaks |
+| `quality` | Code duplication, readability, complexity, dead code |
+| `errors` | Empty catches, error propagation, logging, boundaries |
+| `types` | `any` types, missing annotations, strict null checks |
+
+Default specializations (when `--focus` is omitted): `security`, `quality`, `errors`.
+
+---
+
+## Adversarial QA
+
+Adversarial mode adds a red team challenge after each successful click.
+
+```bash
+ratchet torque --target src --adversarial
+```
+
+### How it works
+
+1. A click lands and passes tests
+2. A red team agent analyzes the diff between original and new code
+3. It writes a targeted regression test designed to catch subtle bugs
+4. The test is appended to the existing test file and run
+5. **If the regression test fails** → the change is reverted (the red team caught a bug)
+6. **If the regression test passes** → the change is solid
+7. The temporary test is always removed after the challenge
+
+Combine with swarm mode for maximum rigor:
+
+```bash
+ratchet torque --target src --swarm --adversarial
+```
+
+---
+
+## Harden Mode
+
+When no test command is detected (or `--mode harden` is passed), Ratchet enters harden mode:
+
+1. **Clicks 1–3**: Focus on writing tests for untested code
+2. **Clicks 4+**: Switch to normal improvement mode, now protected by the new tests
+
+```bash
+ratchet torque --target src --mode harden
+```
+
+---
+
+## Configuration (.ratchet.yml)
+
 ```yaml
+agent: shell
+model: claude-sonnet-4-6
+
+defaults:
+  clicks: 7
+  test_command: npm test
+  auto_commit: true
+  harden_mode: false
+
 targets:
   - name: error-handling
     path: src/api/
-    description: "Add try/catch, improve error messages, log failures consistently"
-```
+    description: "Improve error handling across all API routes"
 
-**Tighten TypeScript types on a legacy codebase**
-```yaml
-targets:
   - name: types
-    path: src/
-    description: "Replace 'any' types with proper types, add missing generics"
+    path: src/types/
+    description: "Strengthen TypeScript types and remove any casts"
+
+boundaries:
+  - path: src/auth/
+    rule: no-modify
+    reason: "Auth architecture is intentional"
+
+  - path: migrations/
+    rule: no-delete
+    reason: "Migration files are append-only"
+
+swarm:
+  enabled: false
+  agent_count: 3
+  specializations: [security, quality, errors]
+  parallel: true
 ```
 
-**Improve test coverage incrementally**
-```yaml
-targets:
-  - name: test-coverage
-    path: src/utils/
-    description: "Add unit tests for untested utility functions"
-```
+Run `ratchet init` to generate this file automatically.
 
-**Reduce bundle size before shipping**
-```yaml
-targets:
-  - name: bundle-size
-    path: src/components/
-    description: "Remove unused imports, lazy load heavy dependencies"
-```
+### Configuration Fields
 
----
+| Field | Description | Default |
+|-------|-------------|---------|
+| `agent` | AI backend: `shell`, `claude-code`, `codex` | `shell` |
+| `model` | Model override (agent-specific) | — |
+| `defaults.clicks` | Number of clicks per run | `7` |
+| `defaults.test_command` | Command to run tests | `npm test` |
+| `defaults.auto_commit` | Auto-commit passing clicks | `true` |
+| `defaults.harden_mode` | Start in harden mode | `false` |
+| `targets` | List of named targets | — |
+| `boundaries` | Paths the agent must not touch | — |
+| `swarm` | Swarm mode configuration | — |
 
-## Why Not X?
+### Boundary Rules
 
-**vs. GitHub Copilot / Cursor** — Those require a human in the loop for every suggestion. Ratchet is fully autonomous: define the target and walk away. Come back to a branch of tested commits.
-
-**vs. Devin / SWE-bench agents** — Devin is a general-purpose software engineer agent. Ratchet is a focused iteration tool. It doesn't architect features or reason about requirements — it applies one tight improvement per click with a mechanical guarantee that every commit is green.
-
-**vs. automated refactoring tools** — Those find or fix specific known patterns. Ratchet explores the improvement space and surfaces things you didn't know to look for.
-
-**The core insight:** Most codebases don't need a rewrite — they need 50 small improvements. Ratchet applies those 50 improvements, one tested commit at a time, while you do other things.
+| Rule | Effect |
+|------|--------|
+| `no-modify` | Agent cannot change any file under this path |
+| `no-delete` | Agent cannot delete files under this path |
+| `preserve-pattern` | File structure and naming must be preserved |
 
 ---
 
@@ -311,10 +344,20 @@ targets:
 .ratchet-state.json              — last run state (add to .gitignore)
 docs/
   error-handling-ratchet.md      — living run log (commit this)
-  types-ratchet.md
+  error-handling-ratchet-report.md — run report with scores
 ```
 
-Add `.ratchet-state.json` to `.gitignore`. Commit the `docs/*-ratchet.md` logs — they're the receipts for what the agent did.
+Add `.ratchet-state.json` and `.ratchet.lock` to `.gitignore`. Commit the `docs/*-ratchet.md` logs — they're the receipts for what the agent did.
+
+---
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | All clicks passed |
+| `1` | Partial success (some clicks rolled back) |
+| `2` | All clicks rolled back |
 
 ---
 
@@ -328,11 +371,3 @@ cd ratchet
 npm install
 npm test
 ```
-
-Ratchet uses Ratchet to improve itself. The `docs/` directory contains logs from real self-improvement runs.
-
----
-
-## License
-
-ISC

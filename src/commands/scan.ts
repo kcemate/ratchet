@@ -95,6 +95,31 @@ function readContents(files: string[]): Map<string, string> {
   return map;
 }
 
+// --- Threshold scoring utility ---
+
+interface Threshold {
+  min: number;          // value must be >= this (use -Infinity for fallback)
+  score: number;
+  summary: string | ((value: number) => string);
+}
+
+/**
+ * Map a numeric value to a score + summary using a threshold table.
+ * Thresholds are checked top-down; first match wins.
+ */
+function scoreByThresholds(value: number, thresholds: Threshold[]): { score: number; summary: string } {
+  for (const t of thresholds) {
+    if (value >= t.min) {
+      const summary = typeof t.summary === 'function' ? t.summary(value) : t.summary;
+      return { score: t.score, summary };
+    }
+  }
+  // Fallback (shouldn't be reached if thresholds cover all cases)
+  const last = thresholds[thresholds.length - 1]!;
+  const summary = typeof last.summary === 'function' ? last.summary(value) : last.summary;
+  return { score: last.score, summary };
+}
+
 // --- Scorers ---
 
 // Testing (20 points)
@@ -163,25 +188,14 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
     totalTestCases += (content.match(/\b(?:it|test)\s*[.(]/g) ?? []).length;
   }
 
-  if (edgeCaseCount >= 50) {
-    edgeCaseScore = 6;
-    edgeCaseSummary = `${edgeCaseCount} edge/error test cases`;
-  } else if (edgeCaseCount >= 20) {
-    edgeCaseScore = 5;
-    edgeCaseSummary = `${edgeCaseCount} edge/error test cases`;
-  } else if (edgeCaseCount >= 10) {
-    edgeCaseScore = 4;
-    edgeCaseSummary = `${edgeCaseCount} edge/error test cases`;
-  } else if (edgeCaseCount >= 3) {
-    edgeCaseScore = 2;
-    edgeCaseSummary = `${edgeCaseCount} edge/error test cases`;
-  } else if (edgeCaseCount > 0) {
-    edgeCaseScore = 1;
-    edgeCaseSummary = `${edgeCaseCount} edge/error test case${edgeCaseCount !== 1 ? 's' : ''}`;
-  } else {
-    edgeCaseScore = 0;
-    edgeCaseSummary = 'no edge case tests detected';
-  }
+  ({ score: edgeCaseScore, summary: edgeCaseSummary } = scoreByThresholds(edgeCaseCount, [
+    { min: 50,  score: 6, summary: (n) => `${n} edge/error test cases` },
+    { min: 20,  score: 5, summary: (n) => `${n} edge/error test cases` },
+    { min: 10,  score: 4, summary: (n) => `${n} edge/error test cases` },
+    { min: 3,   score: 2, summary: (n) => `${n} edge/error test cases` },
+    { min: 1,   score: 1, summary: (n) => `${n} edge/error test case${n !== 1 ? 's' : ''}` },
+    { min: -Infinity, score: 0, summary: 'no edge case tests detected' },
+  ]));
 
   // --- Test quality /6 ---
   let testQualityScore = 0;

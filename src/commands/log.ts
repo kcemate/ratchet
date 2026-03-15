@@ -33,7 +33,7 @@ export function logCommand(): Command {
 
       // Auto-detect target from config or docs directory
       if (!targetName) {
-        targetName = await inferTarget(cwd);
+        targetName = await inferTarget(cwd) ?? undefined;
         if (!targetName) {
           console.error(
             chalk.red('  No target specified and none could be inferred.') +

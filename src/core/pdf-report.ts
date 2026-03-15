@@ -2,6 +2,7 @@ import puppeteer from 'puppeteer';
 import { mkdir, writeFile } from 'fs/promises';
 import { dirname, join } from 'path';
 import type { Click } from '../types.js';
+import { formatDuration } from './utils.js';
 
 export type { ReportOptions } from './report.js';
 import type { ReportOptions } from './report.js';
@@ -14,14 +15,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   Performance: '#eab308',
   Readability: '#22c55e',
 };
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
-  const mins = Math.floor(ms / 60_000);
-  const secs = Math.floor((ms % 60_000) / 1000);
-  return `${mins}m ${secs}s`;
-}
 
 function plainEnglishSummary(click: Click): string {
   const raw = click.proposal || click.analysis || '';
@@ -672,7 +665,7 @@ export async function generatePDF(options: ReportOptions): Promise<Buffer> {
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
     await page.setContent(html, { waitUntil: 'load' });
     // Fit page height to actual content to eliminate bottom whitespace
-    const contentHeight = await page.evaluate(() => document.body.scrollHeight);
+    const contentHeight = await page.evaluate(() => (globalThis as unknown as { document: { body: { scrollHeight: number } } }).document.body.scrollHeight);
     const pdf = await page.pdf({
       width: '794px',
       height: `${contentHeight}px`,
