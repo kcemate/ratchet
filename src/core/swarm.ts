@@ -222,26 +222,51 @@ export class SwarmExecutor {
 
   /**
    * Apply the winning agent's changes from its worktree to the main cwd.
-   * Uses git diff + git apply for a clean patch transfer.
+   * Copies modified files directly from the worktree — avoids git patch corruption.
    */
   private async applyWinnerToMain(winnerWorktree: string, mainCwd: string): Promise<void> {
-    // Generate a diff of all changes in the worktree vs its HEAD
-    const diff = await git(['diff', 'HEAD'], winnerWorktree);
+    // Get list of files changed in the worktree branch vs the shared HEAD
+    // Use diff-tree to list committed changes, plus diff for any unstaged changes
+    let changedFiles: string[] = [];
 
-    if (!diff) {
+    try {
+      // Files changed in commits made on the worktree branch
+      const committed = await git(['diff', '--name-only', 'HEAD~1', 'HEAD'], winnerWorktree).catch(() => '');
+      // Files with unstaged changes
+      const unstaged = await git(['diff', '--name-only'], winnerWorktree).catch(() => '');
+      // Files staged but not committed
+      const staged = await git(['diff', '--name-only', '--cached'], winnerWorktree).catch(() => '');
+
+      changedFiles = [...new Set([
+        ...committed.split('\n'),
+        ...unstaged.split('\n'),
+        ...staged.split('\n'),
+      ])].filter(Boolean);
+    } catch {
+      // Fallback: try simple diff
+      const diff = await git(['diff', 'HEAD'], winnerWorktree).catch(() => '');
+      if (!diff) return;
+    }
+
+    if (changedFiles.length === 0) {
       return; // No changes to apply
     }
 
-    // Apply the diff to the main working directory
-    const { execFile: execFileCb } = await import('child_process');
-    await new Promise<void>((resolve, reject) => {
-      const child = execFileCb('git', ['apply', '--3way', '-'], { cwd: mainCwd }, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-      child.stdin?.write(diff);
-      child.stdin?.end();
-    });
+    // Copy each changed file directly from worktree to main cwd
+    const { copyFile } = await import('fs/promises');
+    const { dirname } = await import('path');
+    const { mkdirSync: mkdirSyncFn } = await import('fs');
+
+    for (const file of changedFiles) {
+      const src = join(winnerWorktree, file);
+      const dst = join(mainCwd, file);
+      try {
+        mkdirSyncFn(dirname(dst), { recursive: true });
+        await copyFile(src, dst);
+      } catch {
+        // Skip files that don't exist in worktree (deleted files, etc.)
+      }
+    }
   }
 
   /**
