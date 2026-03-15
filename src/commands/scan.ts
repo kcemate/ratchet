@@ -1,9 +1,17 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { readFileSync, existsSync, statSync, readdirSync } from 'fs';
-import { join, extname } from 'path';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import type { IssueSubcategory, IssueCategoryName } from '../core/taxonomy.js';
 import { printHeader, severityColor } from '../lib/cli.js';
+import {
+  LOOP_DB_API_PATTERN,
+  SECRET_PATTERNS,
+  isTestFile,
+  findSourceFiles,
+  readContents,
+  scoreByThresholds,
+} from '../core/scan-constants.js';
 
 // --- Types ---
 
@@ -43,85 +51,6 @@ export interface ScanResult {
   // Aggregate issues metric
   totalIssuesFound: number;
   issuesByType: IssueType[];
-}
-
-// --- File discovery ---
-
-const IGNORE_DIRS = new Set(['node_modules', 'dist', '.git', '.next', 'build', 'coverage', '__pycache__', '.cache', 'vendor', 'out']);
-const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.go', '.rs']);
-const TEST_PATTERNS = ['.test.', '.spec.', '_test.', '_spec.', '/test/', '/tests/', '/spec/'];
-
-function isTestFile(filePath: string): boolean {
-  return TEST_PATTERNS.some(p => filePath.includes(p));
-}
-
-function findSourceFiles(dir: string): string[] {
-  const results: string[] = [];
-
-  function walk(current: string): void {
-    let entries: string[];
-    try {
-      entries = readdirSync(current);
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      if (IGNORE_DIRS.has(entry)) continue;
-      const fullPath = join(current, entry);
-      let stat;
-      try {
-        stat = statSync(fullPath);
-      } catch {
-        continue;
-      }
-      if (stat.isDirectory()) {
-        walk(fullPath);
-      } else if (CODE_EXTENSIONS.has(extname(entry))) {
-        results.push(fullPath);
-      }
-    }
-  }
-
-  walk(dir);
-  return results;
-}
-
-function readContents(files: string[]): Map<string, string> {
-  const map = new Map<string, string>();
-  for (const file of files) {
-    try {
-      map.set(file, readFileSync(file, 'utf-8'));
-    } catch {
-      map.set(file, '');
-    }
-  }
-  return map;
-}
-
-// --- Threshold scoring utility ---
-
-interface Threshold {
-  min: number;          // value must be >= this (use -Infinity for fallback)
-  score: number;
-  summary: string | ((value: number) => string);
-}
-
-/**
- * Map a numeric value to a score + summary using a threshold table.
- * Thresholds are checked top-down; first match wins.
- */
-function scoreByThresholds(value: number, thresholds: Threshold[]): { score: number; summary: string } {
-  for (const t of thresholds) {
-    if (value >= t.min) {
-      const summary = typeof t.summary === 'function' ? t.summary(value) : t.summary;
-      return { score: t.score, summary };
-    }
-  }
-  // Fallback (shouldn't be reached if thresholds cover all cases)
-  const last = thresholds[thresholds.length - 1]!;
-  const summary = typeof last.summary === 'function' ? last.summary(value) : last.summary;
-  return { score: last.score, summary };
 }
 
 // --- Scorers ---
@@ -264,12 +193,6 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
   const srcFiles = files.filter(f => !isTestFile(f));
 
   // --- Secrets & env vars /4 ---
-  const SECRET_PATTERNS = [
-    /(?:api[_-]?key|apikey|secret|password|passwd|token)\s*=\s*['"][^'"]{8,}['"]/gi,
-    /(?:sk-|pk-live_|ghp_|gho_|ghs_|AKIA)[A-Za-z0-9]{16,}/g,
-    /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/g,
-  ];
-
   let secretCount = 0;
   let usesEnvVars = false;
 
@@ -610,9 +533,6 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
     ],
   };
 }
-
-// Patterns that indicate a real DB query or API call worth flagging in a loop
-const LOOP_DB_API_PATTERN = /\.(find|findOne|findAll|findBy|query|save|update|insert|select|exec|execute|search)\s*[(<]|\.(get|post|put|delete|patch|request)\s*\(|\bfetch\s*\(|\baxios\s*[.(]/;
 
 // Performance (10 points)
 // ├─ Async patterns ......... /3

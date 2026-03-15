@@ -1,8 +1,14 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, statSync } from 'fs';
-import { join, extname } from 'path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { join } from 'path';
 import { execSync } from 'child_process';
 import type { ScanResult } from '../commands/scan.js';
 import { runScan } from '../commands/scan.js';
+import {
+  TEST_PATTERNS,
+  LOOP_DB_API_PATTERN,
+  SECRET_PATTERNS,
+  findSourceFiles,
+} from './scan-constants.js';
 
 // ---------------------------------------------------------------------------
 // Per-file metrics for delta-based incremental updates
@@ -115,14 +121,6 @@ function buildFileHashes(filePaths: string[], cwd: string): Record<string, strin
 // ---------------------------------------------------------------------------
 // Per-file analysis
 // ---------------------------------------------------------------------------
-
-const TEST_PATTERNS = ['.test.', '.spec.', '_test.', '_spec.', '/test/', '/tests/', '/spec/'];
-const LOOP_DB_API_PATTERN = /\.(find|findOne|findAll|findBy|query|save|update|insert|select|exec|execute|search)\s*[(<]|\.(get|post|put|delete|patch|request)\s*\(|\bfetch\s*\(|\baxios\s*[.(]/;
-const SECRET_PATTERNS = [
-  /(?:api[_-]?key|apikey|secret|password|passwd|token)\s*=\s*['"][^'"]{8,}['"]/gi,
-  /(?:sk-|pk-live_|ghp_|gho_|ghs_|AKIA)[A-Za-z0-9]{16,}/g,
-  /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/g,
-];
 
 function isTestFilePath(filePath: string): boolean {
   return TEST_PATTERNS.some(p => filePath.includes(p));
@@ -853,27 +851,3 @@ export class IncrementalScanner {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Minimal findSourceFiles (avoids circular imports with scan.ts)
-// ---------------------------------------------------------------------------
-
-const IGNORE_DIRS = new Set(['node_modules', 'dist', '.git', '.next', 'build', 'coverage', '__pycache__', '.cache', 'vendor', 'out']);
-const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.go', '.rs']);
-
-function findSourceFiles(dir: string): string[] {
-  const results: string[] = [];
-  function walk(current: string): void {
-    let entries: string[];
-    try { entries = readdirSync(current); } catch { return; }
-    for (const entry of entries) {
-      if (IGNORE_DIRS.has(entry)) continue;
-      const fullPath = join(current, entry);
-      let s;
-      try { s = statSync(fullPath); } catch { continue; }
-      if (s.isDirectory()) walk(fullPath);
-      else if (CODE_EXTENSIONS.has(extname(entry))) results.push(fullPath);
-    }
-  }
-  walk(dir);
-  return results;
-}
