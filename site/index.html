@@ -1247,10 +1247,13 @@
               // Parse "700+" → 700, "+"
               // Parse "6" → 6, ""
               // Parse "79/100" → 79, "/100"
-              var match = text.match(/^(\d+)(.*)/);
+              var match = text.match(/^([+]?)(\d+)(.*)/);
               if (match) {
-                target = parseInt(match[1], 10);
-                suffix = match[2];
+                var prefix = match[1] || '';
+                target = parseInt(match[2], 10);
+                suffix = match[3];
+              } else {
+                var prefix = '';
               }
               var duration = 1200;
               var t0 = null;
@@ -1259,7 +1262,7 @@
                 var p = Math.min((ts - t0) / duration, 1);
                 var ease = 1 - Math.pow(1 - p, 3);
                 var val = Math.round(ease * target);
-                el.innerHTML = val + suffix;
+                el.innerHTML = prefix + val + suffix;
                 if (p < 1) requestAnimationFrame(step);
               }
               el.innerHTML = '0' + suffix;
