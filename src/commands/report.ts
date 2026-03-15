@@ -32,7 +32,7 @@ function scoreArrow(before?: ScanResult, after?: ScanResult): string {
 
 function renderList(entries: Awaited<ReturnType<typeof listRuns>>): void {
   if (entries.length === 0) {
-    console.log(chalk.dim('  No runs found.'));
+    process.stdout.write(chalk.dim('  No runs found.') + '\n');
     return;
   }
 
@@ -49,11 +49,7 @@ function renderList(entries: Awaited<ReturnType<typeof listRuns>>): void {
     'Date',
   ].join('  ');
 
-  console.log('');
-  console.log(chalk.bold('⚙  Ratchet Run History'));
-  console.log('');
-  console.log('  ' + chalk.dim(header));
-  console.log('  ' + chalk.dim('─'.repeat(header.length)));
+  process.stdout.write('\n' + chalk.bold('⚙  Ratchet Run History') + '\n\n  ' + chalk.dim(header) + '\n  ' + chalk.dim('─'.repeat(header.length)) + '\n');
 
   for (const entry of entries) {
     const { run, scoreBefore, scoreAfter } = entry;
@@ -161,9 +157,7 @@ export function reportCommand(): Command {
       let markdownPath: string | null = null;
       let pdfPath: string | null = null;
 
-      console.log('');
-      console.log(chalk.bold('⚙  Ratchet Report'));
-      console.log('');
+      process.stdout.write('\n' + chalk.bold('⚙  Ratchet Report') + '\n\n');
 
       // Generate markdown
       if (format === 'markdown' || format === 'both') {
