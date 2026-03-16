@@ -935,47 +935,47 @@ export async function runScan(cwd: string): Promise<ScanResult> {
 
 function renderScan(result: ScanResult): void {
   printHeader('🔧 Ratchet Scan — Production Readiness');
-  console.log(`Your app: ${chalk.cyan(result.projectName)}`);
+  process.stdout.write(`Your app: ${chalk.cyan(result.projectName)}\n`);
 
   const totalColor = scoreColor(result.total, result.maxTotal);
   const issuesStr = result.totalIssuesFound > 0
     ? chalk.dim(`  |  Issues: ${result.totalIssuesFound} found`)
     : '';
-  console.log(`Score:    ${totalColor.bold(`${result.total}/${result.maxTotal}`)}${issuesStr}`);
+  process.stdout.write(`Score:    ${totalColor.bold(`${result.total}/${result.maxTotal}`)}${issuesStr}\n`);
   process.stdout.write('\n');
 
   for (const cat of result.categories) {
     const color = scoreColor(cat.score, cat.max);
     const label = `${cat.emoji} ${cat.name}`.padEnd(22);
     const scoreStr = `${cat.score}/${cat.max}`;
-    console.log(`  ${label} ${color.bold(scoreStr)}`);
+    process.stdout.write(`  ${label} ${color.bold(scoreStr)}\n`);
 
     // Print subcategories
     for (const sub of cat.subcategories) {
       const subColor = scoreColor(sub.score, sub.max);
       const subLabel = sub.name.padEnd(24);
       const subScore = `${sub.score}/${sub.max}`.padEnd(6);
-      console.log(`     ${chalk.dim(subLabel)} ${subColor(`${subScore}`)}  ${chalk.dim(sub.summary)}`);
+      process.stdout.write(`     ${chalk.dim(subLabel)} ${subColor(`${subScore}`)}  ${chalk.dim(sub.summary)}\n`);
     }
   }
 
   // Print issues section
   if (result.issuesByType.length > 0) {
     process.stdout.write('\n');
-    console.log(`  ${chalk.bold(`📋 Issues Found: ${result.totalIssuesFound}`)}`);
+    process.stdout.write(`  ${chalk.bold(`📋 Issues Found: ${result.totalIssuesFound}`)}\n`);
     const topIssues = result.issuesByType.slice(0, 8);
     for (const issue of topIssues) {
       const sevColor = severityColor(issue.severity);
       const sev = sevColor(`(${issue.severity})`);
-      console.log(`     ${issue.count} ${issue.description} ${sev}`);
+      process.stdout.write(`     ${issue.count} ${issue.description} ${sev}\n`);
     }
     if (result.issuesByType.length > 8) {
-      console.log(chalk.dim(`     ... and ${result.issuesByType.length - 8} more issue type${result.issuesByType.length - 8 !== 1 ? 's' : ''}`));
+      process.stdout.write(chalk.dim(`     ... and ${result.issuesByType.length - 8} more issue type${result.issuesByType.length - 8 !== 1 ? 's' : ''}`) + '\n');
     }
   }
 
   process.stdout.write('\n');
-  console.log(chalk.dim("Run 'npx ratchet fix' to improve your score."));
+  process.stdout.write(chalk.dim("Run 'npx ratchet fix' to improve your score.") + '\n');
   process.stdout.write('\n');
 }
 

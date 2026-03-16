@@ -76,8 +76,8 @@ export function simulateCommand(): Command {
           spinner.succeed(`  ${personaCount} persona simulations complete`);
 
           const { summary } = result;
-          console.log(chalk.bold('  Summary'));
-          console.log(`  ${summary.overallSentiment}`);
+          process.stdout.write(chalk.bold('  Summary') + '\n');
+          process.stdout.write(`  ${summary.overallSentiment}\n`);
 
           printBulletList('Top Pain Points:', summary.topPainPoints, chalk.red);
           printBulletList('Critical Drop-offs:', summary.criticalDropoffs, chalk.yellow);

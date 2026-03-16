@@ -72,7 +72,7 @@ export function severityColor(severity: string): typeof chalk.red {
 export async function writeOutputFile(outputPath: string, content: string): Promise<void> {
   const resolved = outputPath.endsWith('.md') ? outputPath : `${outputPath}.md`;
   await writeFile(resolved, content, 'utf-8');
-  console.log(`  Report saved: ${chalk.dim(resolved)}\n`);
+  process.stdout.write(`  Report saved: ${chalk.dim(resolved)}\n\n`);
 }
 
 /**
@@ -113,11 +113,11 @@ export function printBulletList(
   limit = 5,
 ): void {
   if (items.length === 0) return;
-  console.log(chalk.bold(`  ${title}`));
+  process.stdout.write(chalk.bold(`  ${title}`) + '\n');
   for (const item of items.slice(0, limit)) {
-    console.log(`    ${color('•')} ${item}`);
+    process.stdout.write(`    ${color('•')} ${item}\n`);
   }
-  console.log('');
+  process.stdout.write('\n');
 }
 
 /**
@@ -265,7 +265,7 @@ export async function warnIfNotRepo(cwd: string): Promise<void> {
  */
 export function renderClickTable(clicks: Click[]): void {
   if (clicks.length === 0) return;
-  console.log('');
+  process.stdout.write('\n');
   for (const click of clicks) {
     const icon = click.testsPassed ? chalk.green('✓') : chalk.yellow('✗');
     const label = click.testsPassed ? chalk.green('passed') : chalk.yellow('rolled back');
@@ -278,6 +278,6 @@ export function renderClickTable(clicks: Click[]): void {
             ` — ${click.filesModified.slice(0, 2).join(', ')}${click.filesModified.length > 2 ? ` +${click.filesModified.length - 2}` : ''}`,
           )
         : '';
-    console.log(`  ${icon} Click ${chalk.bold(String(click.number))}  ${label}${hash}${files}`);
+    process.stdout.write(`  ${icon} Click ${chalk.bold(String(click.number))}  ${label}${hash}${files}\n`);
   }
 }

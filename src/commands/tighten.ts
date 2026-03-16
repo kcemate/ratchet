@@ -69,7 +69,7 @@ export function tightenCommand(): Command {
       printFields(fields);
 
       if (passedClicks === 0) {
-        console.log(chalk.yellow('  No successful clicks. Nothing to tighten.\n'));
+        process.stdout.write(chalk.yellow('  No successful clicks. Nothing to tighten.\n') + '\n');
         process.exit(0);
       }
 
@@ -79,17 +79,17 @@ export function tightenCommand(): Command {
         .map((c) => `    ${chalk.dim(c.commitHash!.slice(0, 7))} — click ${c.number}`);
 
       if (commits.length > 0) {
-        console.log('  ' + chalk.bold('Commits:'));
-        console.log(commits.join('\n'));
-        console.log('');
+        process.stdout.write('  ' + chalk.bold('Commits:') + '\n');
+        process.stdout.write(commits.join('\n') + '\n');
+        process.stdout.write('\n');
       }
 
       if (!options.pr) {
-        console.log(
+        process.stdout.write(
           chalk.green('  ✓') +
             ' Run finalized. Use ' +
             chalk.cyan('--pr') +
-            ' to open a pull request.\n',
+            ' to open a pull request.\n' + '\n',
         );
         return;
       }
@@ -153,7 +153,7 @@ export function tightenCommand(): Command {
         process.exit(1);
       }
 
-      console.log('');
+      process.stdout.write('\n');
     });
 
   return cmd;

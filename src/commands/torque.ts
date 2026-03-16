@@ -80,9 +80,9 @@ export function torqueCommand(): Command {
 
         // If config was auto-detected, show a banner so the user knows
         if (config._source === 'auto-detected') {
-          console.log(
+          process.stdout.write(
             chalk.dim('  ✦ No .ratchet.yml found — running in zero-config mode.') +
-              chalk.dim(' Run ' + chalk.cyan('ratchet init') + ' to create a config.\n'),
+              chalk.dim(' Run ' + chalk.cyan('ratchet init') + ' to create a config.\n') + '\n',
           );
           if (config._noTestCommand) {
             console.warn(
@@ -126,7 +126,7 @@ export function torqueCommand(): Command {
             for (const w of warnings) {
               console.warn(chalk.yellow(`  ⚠  ${w}`));
             }
-            if (warnings.length > 0) console.log('');
+            if (warnings.length > 0) process.stdout.write('\n');
           } catch {
             // Non-fatal
           }
@@ -224,7 +224,7 @@ export function torqueCommand(): Command {
           } else {
             process.stdout.write('\n');
           }
-          console.log(chalk.dim('\n  Run interrupted. Partial progress may be saved in .ratchet-state.json\n'));
+          process.stdout.write(chalk.dim('\n  Run interrupted. Partial progress may be saved in .ratchet-state.json\n') + '\n');
           process.exit(130);
         };
 
@@ -236,7 +236,7 @@ export function torqueCommand(): Command {
           } else {
             process.stdout.write('\n');
           }
-          console.log(chalk.dim('\n  Process terminated. Partial progress may be saved in .ratchet-state.json\n'));
+          process.stdout.write(chalk.dim('\n  Process terminated. Partial progress may be saved in .ratchet-state.json\n') + '\n');
           process.exit(143); // 128 + 15 (SIGTERM)
         };
 
@@ -280,13 +280,13 @@ export function torqueCommand(): Command {
                 const targetStr = topIssues
                   .map((t) => `${t.subcategory} (${t.count}/${t.count + 1})`)
                   .join(', ');
-                console.log(
-                  `  📊 Initial scan: ${chalk.bold(`${scan.total}/${scan.maxTotal}`)} (${scan.totalIssuesFound} issues found)`,
+                process.stdout.write(
+                  `  📊 Initial scan: ${chalk.bold(`${scan.total}/${scan.maxTotal}`)} (${scan.totalIssuesFound} issues found)\n`,
                 );
                 if (targetStr) {
-                  console.log(`     Targeting: ${chalk.dim(targetStr)}`);
+                  process.stdout.write(`     Targeting: ${chalk.dim(targetStr)}\n`);
                 }
-                console.log('');
+                process.stdout.write('\n');
                 lastKnownScore = scan.total;
               },
 
@@ -356,18 +356,18 @@ export function torqueCommand(): Command {
 
                 if (options.verbose) {
                   const elapsed = formatDuration(Date.now() - clickStartTime);
-                  console.log(chalk.dim(`     time: ${elapsed}`));
+                  process.stdout.write(chalk.dim(`     time: ${elapsed}`) + '\n');
                   if (click.proposal) {
                     const preview = click.proposal.length > 120
                       ? click.proposal.slice(0, 120) + '…'
                       : click.proposal;
-                    console.log(chalk.dim(`     proposal: ${preview}`));
+                    process.stdout.write(chalk.dim(`     proposal: ${preview}`) + '\n');
                   }
                   if (click.filesModified.length > 0) {
-                    console.log(
+                    process.stdout.write(
                       chalk.dim(
                         `     files: ${click.filesModified.join(', ')}`,
-                      ),
+                      ) + '\n',
                     );
                   }
                 }
@@ -432,32 +432,32 @@ export function torqueCommand(): Command {
         // Per-click result table
         renderClickTable(run.clicks);
 
-        console.log('\n' + chalk.bold('  ' + '─'.repeat(46)));
-        console.log(
+        process.stdout.write('\n' + chalk.bold('  ' + '─'.repeat(46)) + '\n');
+        process.stdout.write(
           `\n  ${chalk.bold('Done.')} ` +
             `${landedPart}${rolledPart} · ` +
-            `${chalk.dim(duration)}`,
+            `${chalk.dim(duration)}\n`,
         );
 
         if (passedClicks > 0) {
-          console.log(
-            `\n  Log: ${chalk.dim(`docs/${target.name}-ratchet.md`)}`,
+          process.stdout.write(
+            `\n  Log: ${chalk.dim(`docs/${target.name}-ratchet.md`)}\n`,
           );
           if (reportPath) {
-            console.log(
-              `  Report: ${chalk.dim(`docs/${target.name}-ratchet-report.md`)}`,
+            process.stdout.write(
+              `  Report: ${chalk.dim(`docs/${target.name}-ratchet-report.md`)}\n`,
             );
           }
-          console.log(
-            `  Run ${chalk.green('ratchet tighten --pr')} to open a pull request.\n`,
+          process.stdout.write(
+            `  Run ${chalk.green('ratchet tighten --pr')} to open a pull request.\n` + '\n',
           );
         } else {
-          console.log(chalk.dim('\n  No clicks landed. Try adjusting your target description.\n'));
+          process.stdout.write(chalk.dim('\n  No clicks landed. Try adjusting your target description.\n') + '\n');
         }
 
         // Print report summary
         const report = generateReport({ run, cwd, scoreBefore, scoreAfter });
-        console.log('\n' + report);
+        process.stdout.write('\n' + report + '\n');
 
         // Exit codes: 0 = all passed, 1 = partial, 2 = all failed
         if (run.clicks.length > 0 && passedClicks === 0) {
