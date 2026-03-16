@@ -71,6 +71,48 @@ export function readContents(files: string[]): Map<string, string> {
 }
 
 // ---------------------------------------------------------------------------
+// File-scanning utilities — eliminate repeated for-loop boilerplate
+// ---------------------------------------------------------------------------
+
+/** Sum all regex matches across a set of files. */
+export function countMatches(
+  files: string[],
+  contents: Map<string, string>,
+  pattern: RegExp,
+): number {
+  let total = 0;
+  for (const file of files) {
+    total += (contents.get(file)?.match(pattern) ?? []).length;
+  }
+  return total;
+}
+
+/** Sum matches and record which files had at least one match. */
+export function countMatchesWithFiles(
+  files: string[],
+  contents: Map<string, string>,
+  pattern: RegExp,
+): { count: number; matchedFiles: string[] } {
+  let count = 0;
+  const matchedFiles: string[] = [];
+  for (const file of files) {
+    const n = (contents.get(file)?.match(pattern) ?? []).length;
+    count += n;
+    if (n > 0) matchedFiles.push(file);
+  }
+  return { count, matchedFiles };
+}
+
+/** Return true if at least one file contains the pattern. */
+export function anyFileHasMatch(
+  files: string[],
+  contents: Map<string, string>,
+  pattern: RegExp,
+): boolean {
+  return files.some(file => pattern.test(contents.get(file) ?? ''));
+}
+
+// ---------------------------------------------------------------------------
 // Threshold scoring utility
 // ---------------------------------------------------------------------------
 

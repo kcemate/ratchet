@@ -11,6 +11,9 @@ import {
   findSourceFiles,
   readContents,
   scoreByThresholds,
+  countMatches,
+  countMatchesWithFiles,
+  anyFileHasMatch,
 } from '../core/scan-constants.js';
 
 // --- Types ---
@@ -114,14 +117,9 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
   let edgeCaseScore = 0;
   let edgeCaseSummary = '';
   const edgePatterns = /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
-  let edgeCaseCount = 0;
-  let totalTestCases = 0;
 
-  for (const file of testFiles) {
-    const content = contents.get(file) ?? '';
-    edgeCaseCount += (content.match(edgePatterns) ?? []).length;
-    totalTestCases += (content.match(/\b(?:it|test)\s*[.(]/g) ?? []).length;
-  }
+  const edgeCaseCount = countMatches(testFiles, contents, edgePatterns);
+  const totalTestCases = countMatches(testFiles, contents, /\b(?:it|test)\s*[.(]/g);
 
   ({ score: edgeCaseScore, summary: edgeCaseSummary } = scoreByThresholds(edgeCaseCount, [
     { min: 50,  score: 9, summary: (n) => `${n} edge/error test cases` },
@@ -136,14 +134,8 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
   let testQualityScore = 0;
   let testQualitySummary = '';
 
-  let assertCount = 0;
-  let describeCount = 0;
-
-  for (const file of testFiles) {
-    const content = contents.get(file) ?? '';
-    assertCount += (content.match(/\b(?:expect|assert)\s*[.(]/g) ?? []).length;
-    describeCount += (content.match(/\bdescribe\s*[.(]/g) ?? []).length;
-  }
+  const assertCount = countMatches(testFiles, contents, /\b(?:expect|assert)\s*[.(]/g);
+  const describeCount = countMatches(testFiles, contents, /\bdescribe\s*[.(]/g);
 
   const assertsPerTest = totalTestCases > 0 ? assertCount / totalTestCases : 0;
   const hasDescribe = describeCount > 0;
@@ -194,17 +186,10 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
 
   // --- Secrets & env vars /4 ---
   let secretCount = 0;
-  let usesEnvVars = false;
-
-  for (const file of srcFiles) {
-    const content = contents.get(file) ?? '';
-    for (const pattern of SECRET_PATTERNS) {
-      secretCount += (content.match(pattern) ?? []).length;
-    }
-    if (/\bprocess\.env\b|\bos\.environ\b|\bos\.getenv\b/.test(content)) {
-      usesEnvVars = true;
-    }
+  for (const pattern of SECRET_PATTERNS) {
+    secretCount += countMatches(srcFiles, contents, pattern);
   }
+  const usesEnvVars = anyFileHasMatch(srcFiles, contents, /\bprocess\.env\b|\bos\.environ\b|\bos\.getenv\b/);
 
   let secretsScore = 0;
   let secretsSummary = '';
@@ -267,22 +252,9 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
   let authSummary = '';
   let authIssues = 0;
 
-  let hasAuthMiddleware = false;
-  let hasRateLimit = false;
-  let hasCors = false;
-
-  for (const file of srcFiles) {
-    const content = contents.get(file) ?? '';
-    if (/\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i.test(content)) {
-      hasAuthMiddleware = true;
-    }
-    if (/\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i.test(content)) {
-      hasRateLimit = true;
-    }
-    if (/\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i.test(content)) {
-      hasCors = true;
-    }
-  }
+  const hasAuthMiddleware = anyFileHasMatch(srcFiles, contents, /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i);
+  const hasRateLimit = anyFileHasMatch(srcFiles, contents, /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i);
+  const hasCors = anyFileHasMatch(srcFiles, contents, /\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i);
 
   const authChecks = [hasAuthMiddleware, hasRateLimit, hasCors].filter(Boolean).length;
   if (authChecks >= 3) {
@@ -379,16 +351,11 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
 
   // --- Any type count /8 (scored by density per 1k LOC) ---
   const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
-  let anyCount = 0;
-  let totalLines = 0;
-  const anyTypeFiles: string[] = [];
 
+  const { count: anyCount, matchedFiles: anyTypeFiles } = countMatchesWithFiles(srcTsFiles, contents, /:\s*any\b|<any>|\bas\s+any\b/g);
+  let totalLines = 0;
   for (const file of srcTsFiles) {
-    const content = contents.get(file) ?? '';
-    const fileAnyCount = (content.match(/:\s*any\b|<any>|\bas\s+any\b/g) ?? []).length;
-    anyCount += fileAnyCount;
-    if (fileAnyCount > 0) anyTypeFiles.push(file);
-    totalLines += content.split('\n').length;
+    totalLines += (contents.get(file) ?? '').split('\n').length;
   }
 
   // Density = anyCount / (totalLines / 1000)
@@ -443,26 +410,19 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
 function scoreErrorHandling(files: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
 
-  let tryCatchTotal = 0;
-  let emptyCatchTotal = 0;
-  let asyncTotal = 0;
-  let consoleErrorCount = 0;
-  let structuredLogCount = 0;
-  const emptyCatchFiles: string[] = [];
-  const asyncNoHandlerFiles: string[] = [];
+  const tryCatchTotal = countMatches(srcFiles, contents, /\btry\s*\{/g);
+  const { count: emptyCatchTotal, matchedFiles: emptyCatchFiles } = countMatchesWithFiles(srcFiles, contents, /\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g);
+  const consoleErrorCount = countMatches(srcFiles, contents, /\bconsole\.(?:error|warn|log)\s*\(/g);
+  const structuredLogCount = countMatches(srcFiles, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g);
 
+  // asyncNoHandlerFiles requires per-file conditional logic (async with no try/catch)
+  let asyncTotal = 0;
+  const asyncNoHandlerFiles: string[] = [];
   for (const file of srcFiles) {
     const content = contents.get(file) ?? '';
-    tryCatchTotal += (content.match(/\btry\s*\{/g) ?? []).length;
-    const fileCatches = (content.match(/\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g) ?? []).length;
-    emptyCatchTotal += fileCatches;
-    if (fileCatches > 0) emptyCatchFiles.push(file);
     const fileAsync = (content.match(/\basync\s+function\b|\basync\s*\(/g) ?? []).length;
-    const fileTryCatch = (content.match(/\btry\s*\{/g) ?? []).length;
     asyncTotal += fileAsync;
-    if (fileAsync > 0 && fileTryCatch === 0) asyncNoHandlerFiles.push(file);
-    consoleErrorCount += (content.match(/\bconsole\.(?:error|warn|log)\s*\(/g) ?? []).length;
-    structuredLogCount += (content.match(/\b(?:logger|winston|pino|bunyan|log4js)\./g) ?? []).length;
+    if (fileAsync > 0 && (content.match(/\btry\s*\{/g) ?? []).length === 0) asyncNoHandlerFiles.push(file);
   }
 
   // --- Coverage /8 ---
@@ -546,17 +506,13 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
     return !normalized.includes('/scripts/');
   });
 
+  const { count: consoleLogCount, matchedFiles: consoleLogFiles } = countMatchesWithFiles(appFiles, contents, /\bconsole\.log\s*\(/g);
+
   let awaitInLoopCount = 0;
-  let consoleLogCount = 0;
-  const consoleLogFiles: string[] = [];
 
   for (const file of appFiles) {
     const content = contents.get(file) ?? '';
     const lines = content.split('\n');
-
-    const fileConsoleCount = (content.match(/\bconsole\.log\s*\(/g) ?? []).length;
-    consoleLogCount += fileConsoleCount;
-    if (fileConsoleCount > 0) consoleLogFiles.push(file);
 
     // Detect await inside for/while loops — only flag DB/API patterns
     let loopDepth = 0;
