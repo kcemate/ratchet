@@ -160,6 +160,31 @@ export function generateReportHTML(options: ReportOptions): string {
         const bPct = before.max > 0 ? (before.score / before.max) * 100 : 0;
         const aPct = after.max > 0 ? (after.score / after.max) * 100 : 0;
 
+        // Subcategory rows
+        const subRows = (after.subcategories ?? []).map((subAfter: { name: string; score: number; max: number }, j: number) => {
+          const subBefore = (before.subcategories ?? [])[j] as { name: string; score: number; max: number } | undefined;
+          if (!subBefore) return '';
+          const subDelta = subAfter.score - subBefore.score;
+          const subDeltaStr = subDelta > 0 ? `+${subDelta}` : String(subDelta);
+          const subPillClass = subDelta > 0 ? 'delta-pill-pos' : subDelta < 0 ? 'delta-pill-neg' : 'delta-pill-neu';
+          const sbPct = subBefore.max > 0 ? (subBefore.score / subBefore.max) * 100 : 0;
+          const saPct = subAfter.max > 0 ? (subAfter.score / subAfter.max) * 100 : 0;
+          return `
+          <div class="cat-row sub-row">
+            <div class="cat-dot" style="background:transparent;border:1px solid ${dotColor};opacity:0.5"></div>
+            <div class="cat-name sub-name">↳ ${esc(subAfter.name)}</div>
+            <div class="cat-bars">
+              <div class="cat-score gray">${subBefore.score}/${subBefore.max}</div>
+              <div class="mini-track"><div class="mini-fill before-mini" style="width:${Math.max(2, sbPct)}%"></div></div>
+            </div>
+            <div class="cat-bars">
+              <div class="cat-score white">${saPct > 0 ? subAfter.score : 0}/${subAfter.max}</div>
+              <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, saPct)}%"></div></div>
+            </div>
+            <div class="cat-delta"><span class="delta-pill ${subPillClass}">${esc(subDeltaStr)}</span></div>
+          </div>`;
+        }).join('');
+
         return `
         <div class="cat-row">
           <div class="cat-dot" style="background:${dotColor}"></div>
@@ -173,7 +198,7 @@ export function generateReportHTML(options: ReportOptions): string {
             <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, aPct)}%"></div></div>
           </div>
           <div class="cat-delta"><span class="delta-pill ${pillClass}">${esc(catDeltaStr)}</span></div>
-        </div>`;
+        </div>${subRows}`;
       })
       .join('');
 
