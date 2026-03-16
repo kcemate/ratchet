@@ -20,7 +20,7 @@ import type { ScanResult } from './scan.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
 import { formatDuration } from '../core/utils.js';
-import { printHeader, loadConfigOrExit, warnIfStaleBinary, warnIfDirtyWorktree, assertIsRepo, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
+import { printHeader, exitWithError, validateInt, printFields, loadConfigOrExit, warnIfStaleBinary, warnIfDirtyWorktree, assertIsRepo, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
 
 const STATE_FILE = '.ratchet-state.json';
 
@@ -107,25 +107,14 @@ export function torqueCommand(): Command {
 
         // Resolve swarm mode
         if (options.swarm) {
-          const agentCount = options.agents ? parseInt(options.agents, 10) : 3;
-          if (isNaN(agentCount) || agentCount < 1 || agentCount > 5) {
-            console.error(
-              chalk.red(`  Invalid --agents value: ${chalk.bold(String(options.agents))}`) +
-                '\n  Must be 1-5.\n',
-            );
-            process.exit(1);
-          }
+          const agentCount = options.agents ? validateInt(options.agents, 'agents', 1, 5) : 3;
 
           let focusSpecs: string[] | undefined;
           if (options.focus) {
             focusSpecs = options.focus.split(',').map((s) => s.trim());
             const invalid = focusSpecs.filter((s) => !isValidSpecialization(s));
             if (invalid.length > 0) {
-              console.error(
-                chalk.red(`  Invalid --focus specialization(s): ${invalid.join(', ')}`) +
-                  '\n  Valid: security, performance, quality, errors, types\n',
-              );
-              process.exit(1);
+              exitWithError(`  Invalid --focus specialization(s): ${invalid.join(', ')}\n  Valid: security, performance, quality, errors, types`);
             }
           }
 
@@ -162,35 +151,21 @@ export function torqueCommand(): Command {
           target = findTarget(config, options.target);
           if (!target) {
             if (config.targets.length === 0) {
-              console.error(
-                chalk.red(`  Target "${options.target}" not found — .ratchet.yml has no targets defined.`) +
-                  '\n\n  Add a target to .ratchet.yml:\n' +
-                  chalk.dim(
-                    '    targets:\n' +
-                    '      - name: my-target\n' +
-                    '        path: src/\n' +
-                    '        description: "Improve code quality in src/"',
-                  ) + '\n',
-              );
-            } else {
-              const available = config.targets.map((t) => chalk.cyan(t.name)).join(', ');
-              console.error(
-                chalk.red(`  Target "${options.target}" not found in .ratchet.yml.`) +
-                  `\n  Available: ${available}\n`,
+              exitWithError(
+                `  Target "${options.target}" not found — .ratchet.yml has no targets defined.\n\n  Add a target to .ratchet.yml:\n` +
+                chalk.dim('    targets:\n      - name: my-target\n        path: src/\n        description: "Improve code quality in src/"'),
               );
             }
-            process.exit(1);
+            const available = config.targets.map((t) => chalk.cyan(t.name)).join(', ');
+            exitWithError(`  Target "${options.target}" not found in .ratchet.yml.\n  Available: ${available}`);
           }
         } else {
           // No --target flag: use first auto-detected target
           target = config.targets[0];
           if (!target) {
-            console.error(
-              chalk.red('  No target specified and none could be auto-detected.') +
-                '\n  Use ' + chalk.cyan('--target <name>') + ' or run ' +
-                chalk.cyan('ratchet init') + ' to create a .ratchet.yml.\n',
+            exitWithError(
+              `  No target specified and none could be auto-detected.\n  Use ${chalk.cyan('--target <name>')} or run ${chalk.cyan('ratchet init')} to create a .ratchet.yml.`,
             );
-            process.exit(1);
           }
         }
 
@@ -200,52 +175,38 @@ export function torqueCommand(): Command {
           : options.sweep ? 5 : config.defaults.clicks;
 
         if (isNaN(clickCount) || clickCount < 1) {
-          const provided = options.clicks ?? '';
-          console.error(
-            chalk.red(`  Invalid --clicks value: ${chalk.bold(String(provided))}`) +
-              '\n  Must be a positive integer (e.g. ' +
-              chalk.cyan('--clicks 5') + ').\n',
-          );
-          process.exit(1);
+          exitWithError(`  Invalid --clicks value: ${chalk.bold(String(options.clicks ?? ''))}\n  Must be a positive integer (e.g. ${chalk.cyan('--clicks 5')}).`);
         }
 
         if (options.clicks && options.clicks.includes('.')) {
-          console.error(
-            chalk.red(`  Invalid --clicks value: ${chalk.bold(options.clicks)}`) +
-              '\n  Fractional clicks are not allowed — must be a whole number (e.g. ' +
-              chalk.cyan('--clicks 5') + ').\n',
-          );
-          process.exit(1);
+          exitWithError(`  Invalid --clicks value: ${chalk.bold(options.clicks)}\n  Fractional clicks are not allowed — must be a whole number (e.g. ${chalk.cyan('--clicks 5')}).`);
         }
 
-        // Print run summary
-        if (options.sweep) {
-          console.log(`  Mode   : ${chalk.yellow('sweep')}`);
-        } else {
-          console.log(`  Target : ${chalk.cyan(target.name)}`);
-          console.log(`  Path   : ${chalk.dim(target.path)}`);
-        }
         // Set up click guards
         const maxLines = options.maxLines ? parseInt(options.maxLines, 10) : 40;
         const maxFiles = options.maxFiles ? parseInt(options.maxFiles, 10) : 3;
         config.guards = { maxLinesChanged: maxLines, maxFilesChanged: maxFiles };
 
-        console.log(`  Agent  : ${chalk.dim(config.agent)}`);
-        console.log(`  Clicks : ${chalk.yellow(String(clickCount))}`);
-        console.log(`  Tests  : ${chalk.dim(config.defaults.testCommand)}`);
-        console.log(`  Guards : ${chalk.dim(`≤${maxLines} lines, ≤${maxFiles} files per click`)}`);
-        console.log(`  Mode   : ${hardenMode ? chalk.yellow('harden') : chalk.dim('normal')}`);
-        if (options.adversarial) {
-          console.log(`  QA     : ${chalk.yellow('adversarial')}`);
-        }
+        // Print run summary
+        const fields: Array<[string, string]> = options.sweep
+          ? [['Mode', chalk.yellow('sweep')]]
+          : [['Target', chalk.cyan(target.name)], ['Path', chalk.dim(target.path)]];
+        fields.push(
+          ['Agent',  chalk.dim(config.agent)],
+          ['Clicks', chalk.yellow(String(clickCount))],
+          ['Tests',  chalk.dim(config.defaults.testCommand)],
+          ['Guards', chalk.dim(`≤${maxLines} lines, ≤${maxFiles} files per click`)],
+          ['Mode',   hardenMode ? chalk.yellow('harden') : chalk.dim('normal')],
+        );
+        if (options.adversarial) fields.push(['QA', chalk.yellow('adversarial')]);
         if (config.swarm?.enabled) {
           const specs = config.swarm.specializations.join(', ');
-          console.log(`  Swarm  : ${chalk.yellow(`${config.swarm.agentCount} agents`)} ${chalk.dim(`(${specs})`)}`);
+          fields.push(['Swarm', `${chalk.yellow(`${config.swarm.agentCount} agents`)} ${chalk.dim(`(${specs})`)}`]);
         }
+        printFields(fields, !options.dryRun);
         if (options.dryRun) {
-          console.log('\n' + chalk.yellow('  [DRY RUN] No changes will be committed.'));
+          process.stdout.write(chalk.yellow('  [DRY RUN] No changes will be committed.\n') + '\n');
         }
-        console.log('');
 
         // Set up logger
         const logger = new RatchetLogger(target.name, cwd);
@@ -296,8 +257,7 @@ export function torqueCommand(): Command {
         try {
           acquireLock(cwd);
         } catch (err) {
-          console.error(chalk.red('\n  ' + String(err)) + '\n');
-          process.exit(1);
+          exitWithError('\n  ' + String(err));
         }
 
         // Capture score before the run (non-fatal)
