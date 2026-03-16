@@ -11,8 +11,9 @@ import { writeFile } from 'fs/promises';
 import { loadConfig } from '../core/config.js';
 import { toErrorMessage } from '../core/utils.js';
 import { checkStaleBinary } from '../core/stale-check.js';
-import { status as gitStatus } from '../core/git.js';
+import { status as gitStatus, isRepo } from '../core/git.js';
 import type { Click } from '../types.js';
+import type { ClickPhase } from '../core/engine.js';
 
 /** Print a bold command header line, e.g. printHeader('⚙  Ratchet Improve') */
 export function printHeader(text: string): void {
@@ -183,6 +184,50 @@ export function formatScoreDelta(before: number, after: number): string {
   if (delta > 0) return chalk.green(`+${delta}`);
   if (delta < 0) return chalk.red(String(delta));
   return chalk.dim('±0');
+}
+
+/**
+ * Human-readable labels for each ClickPhase, shared by torque and improve commands.
+ * Avoids duplicating the map in every file that renders spinner progress.
+ */
+export const CLICK_PHASE_LABELS: Record<ClickPhase, string> = {
+  analyzing: 'analyzing…',
+  proposing: 'proposing…',
+  building: 'building…',
+  testing: 'testing…',
+  committing: 'committing…',
+};
+
+/**
+ * Assert the cwd is inside a git repository.
+ * Prints a formatted error and exits if not.
+ * Used by commands that REQUIRE git (torque, improve).
+ */
+export async function assertIsRepo(cwd: string): Promise<void> {
+  if (!(await isRepo(cwd))) {
+    console.error(
+      chalk.red('  Not a git repository.') +
+        '\n  Ratchet requires git to track changes and roll back on failure.' +
+        '\n\n  ' + chalk.dim('To initialize a git repo:') +
+        '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
+    );
+    process.exit(1);
+  }
+}
+
+/**
+ * Warn (but do not exit) if the cwd is not inside a git repository.
+ * Used by commands that work without git but advise the user (init).
+ */
+export async function warnIfNotRepo(cwd: string): Promise<void> {
+  if (!(await isRepo(cwd))) {
+    console.warn(
+      chalk.yellow('  ⚠  Not a git repository.') +
+        ' Ratchet requires git to track changes and roll back on failure.\n' +
+        '\n  ' + chalk.dim('Initialize git before running ratchet torque:') +
+        '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
+    );
+  }
 }
 
 /**

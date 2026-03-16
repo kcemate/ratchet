@@ -4,7 +4,7 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { loadConfig, configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
+import { configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
 import { saveRun } from '../core/history.js';
 import { readFileSync } from 'fs';
 import { runEngine, runSweepEngine } from '../core/engine.js';
@@ -17,11 +17,10 @@ import { generateReport, writeReport } from '../core/report.js';
 import { writePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
-import { isRepo } from '../core/git.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
 import { formatDuration } from '../core/utils.js';
-import { warnIfStaleBinary, warnIfDirtyWorktree, formatScoreDelta, renderClickTable } from '../lib/cli.js';
+import { printHeader, loadConfigOrExit, warnIfStaleBinary, warnIfDirtyWorktree, assertIsRepo, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
 
 const STATE_FILE = '.ratchet-state.json';
 
@@ -75,38 +74,19 @@ export function torqueCommand(): Command {
       }) => {
         const cwd = process.cwd();
 
-        console.log(chalk.bold('\n⚙  Ratchet Torque\n'));
+        printHeader('⚙  Ratchet Torque');
 
         warnIfStaleBinary();
 
         // Check git repo
-        if (!(await isRepo(cwd))) {
-          console.error(
-            chalk.red('  Not a git repository.') +
-              '\n  Ratchet requires git to track changes and roll back on failure.' +
-              '\n\n  ' + chalk.dim('To initialize a git repo:') +
-              '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
-          );
-          process.exit(1);
-        }
+        await assertIsRepo(cwd);
 
         // Warn about dirty worktree — each click stashes before applying changes,
         // so existing uncommitted work won't be lost, but the user should know.
         await warnIfDirtyWorktree(cwd);
 
         // Load config
-        let config;
-        try {
-          config = loadConfig(cwd);
-        } catch (err) {
-          console.error(
-            chalk.red('Error loading .ratchet.yml: ') +
-              String(err) +
-              '\n' +
-              chalk.dim(`  Run ${chalk.cyan('ratchet init')} to create one.`),
-          );
-          process.exit(1);
-        }
+        const config = loadConfigOrExit(cwd);
 
         // If config was auto-detected, show a banner so the user knows
         if (config._source === 'auto-detected') {
@@ -383,16 +363,8 @@ export function torqueCommand(): Command {
 
               onClickPhase: (phase: ClickPhase, clickNumber: number) => {
                 if (!spinner) return;
-                const total = clickCount;
-                const phaseLabel: Record<ClickPhase, string> = {
-                  analyzing: 'analyzing…',
-                  proposing: 'proposing…',
-                  building: 'building…',
-                  testing: 'testing…',
-                  committing: 'committing…',
-                };
                 const phaseTag = currentHardenPhase ? chalk.dim(` [${currentHardenPhase}]`) : '';
-                spinner.text = `  Click ${chalk.bold(String(clickNumber))}/${total}${phaseTag} — ${phaseLabel[phase]}`;
+                spinner.text = `  Click ${chalk.bold(String(clickNumber))}/${clickCount}${phaseTag} — ${CLICK_PHASE_LABELS[phase]}`;
               },
 
               onClickScoreUpdate: (_clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number) => {

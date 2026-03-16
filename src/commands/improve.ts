@@ -4,7 +4,7 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { printHeader, exitWithError, validateInt, loadConfigOrExit, severityColor, printFields, warnIfStaleBinary, warnIfDirtyWorktree, formatScoreDelta } from '../lib/cli.js';
+import { printHeader, exitWithError, validateInt, loadConfigOrExit, severityColor, printFields, warnIfStaleBinary, warnIfDirtyWorktree, assertIsRepo, CLICK_PHASE_LABELS, formatScoreDelta } from '../lib/cli.js';
 import { saveRun } from '../core/history.js';
 import { runSweepEngine, runArchitectEngine } from '../core/engine.js';
 import type { ClickPhase } from '../core/engine.js';
@@ -13,7 +13,6 @@ import { RatchetLogger } from '../core/logger.js';
 import { writePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
-import { isRepo } from '../core/git.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun, SwarmConfig } from '../types.js';
 import { formatDuration } from '../core/utils.js';
@@ -512,9 +511,7 @@ export function improveCommand(): Command {
 
       warnIfStaleBinary();
 
-      if (!(await isRepo(cwd))) {
-        exitWithError('  Not a git repository. Ratchet requires git.');
-      }
+      await assertIsRepo(cwd);
 
       await warnIfDirtyWorktree(cwd);
 
@@ -634,11 +631,7 @@ export function improveCommand(): Command {
         },
         onClickPhase: (phase: ClickPhase, n: number) => {
           const globalN = n + clickOffset;
-          const labels: Record<ClickPhase, string> = {
-            analyzing: 'analyzing…', proposing: 'proposing…',
-            building: 'building…', testing: 'testing…', committing: 'committing…',
-          };
-          if (spinner) spinner.text = `  Click ${chalk.bold(String(globalN))}/${totalClicks} — ${labels[phase]}`;
+          if (spinner) spinner.text = `  Click ${chalk.bold(String(globalN))}/${totalClicks} — ${CLICK_PHASE_LABELS[phase]}`;
         },
         onClickComplete: async (click: Click, _rolledBack: boolean) => {
           if (spinner) {

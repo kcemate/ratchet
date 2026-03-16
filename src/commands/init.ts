@@ -3,8 +3,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { access, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
-import { isRepo } from '../core/git.js';
-import { printHeader } from '../lib/cli.js';
+import { printHeader, warnIfNotRepo } from '../lib/cli.js';
 
 export type ProjectType = 'node' | 'python' | 'go' | 'rust' | 'make' | 'unknown';
 
@@ -118,14 +117,7 @@ export function initCommand(): Command {
       printHeader('⚙  Ratchet Init');
 
       // Warn if not inside a git repo — ratchet torque requires git to function.
-      if (!(await isRepo(cwd))) {
-        console.warn(
-          chalk.yellow('  ⚠  Not a git repository.') +
-            ' Ratchet requires git to track changes and roll back on failure.\n' +
-            '\n  ' + chalk.dim('Initialize git before running ratchet torque:') +
-            '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
-        );
-      }
+      await warnIfNotRepo(cwd);
 
       // Guard: already initialized
       if (await exists(configPath)) {
