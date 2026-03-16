@@ -74,12 +74,10 @@ export function simulateCommand(): Command {
 
           const result = await engine.run();
           spinner.succeed(`  ${personaCount} persona simulations complete`);
-          console.log('');
 
           const { summary } = result;
           console.log(chalk.bold('  Summary'));
           console.log(`  ${summary.overallSentiment}`);
-          console.log('');
 
           printBulletList('Top Pain Points:', summary.topPainPoints, chalk.red);
           printBulletList('Critical Drop-offs:', summary.criticalDropoffs, chalk.yellow);
