@@ -8,6 +8,7 @@ import { promisify } from 'util';
 
 import { loadRunState } from './status.js';
 import { currentBranch, hasRemote } from '../core/git.js';
+import { printHeader, exitWithError, printFields } from '../lib/cli.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -33,7 +34,7 @@ export function tightenCommand(): Command {
     .action(async (options: { pr: boolean; draft: boolean }) => {
       const cwd = process.cwd();
 
-      console.log(chalk.bold('\n⚙  Ratchet Tighten\n'));
+      printHeader('⚙  Ratchet Tighten');
 
       const run = await loadRunState(cwd);
 
@@ -48,8 +49,7 @@ export function tightenCommand(): Command {
       }
 
       if (run.status === 'running') {
-        console.error(chalk.red('  Run is still in progress. Wait for it to finish.\n'));
-        process.exit(1);
+        exitWithError('  Run is still in progress. Wait for it to finish.');
       }
 
       const passedClicks = run.clicks.filter((c) => c.testsPassed).length;
@@ -57,14 +57,16 @@ export function tightenCommand(): Command {
 
       const branch = await currentBranch(cwd).catch(() => '');
 
-      console.log(`  Target  : ${chalk.cyan(run.target.name)}`);
-      console.log(`  Run ID  : ${chalk.dim(run.id)}`);
-      if (branch) console.log(`  Branch  : ${chalk.cyan(branch)}`);
-      console.log(`  Clicks  : ${chalk.green(String(passedClicks))} passed / ${totalClicks} total`);
-      console.log(
-        `  Status  : ${run.status === 'completed' ? chalk.green('completed') : chalk.red('failed')}`,
+      const fields: Array<[string, string]> = [
+        ['Target', chalk.cyan(run.target.name)],
+        ['Run ID', chalk.dim(run.id)],
+      ];
+      if (branch) fields.push(['Branch', chalk.cyan(branch)]);
+      fields.push(
+        ['Clicks', `${chalk.green(String(passedClicks))} passed / ${totalClicks} total`],
+        ['Status', run.status === 'completed' ? chalk.green('completed') : chalk.red('failed')],
       );
-      console.log('');
+      printFields(fields);
 
       if (passedClicks === 0) {
         console.log(chalk.yellow('  No successful clicks. Nothing to tighten.\n'));

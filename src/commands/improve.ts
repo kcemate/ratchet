@@ -818,7 +818,14 @@ export function improveCommand(): Command {
       // ── Summary ──
       const issuesFixed = scoreBefore.totalIssuesFound - scoreAfter.totalIssuesFound;
 
-      process.stdout.write(`\n${chalk.bold('  ' + '─'.repeat(46))}\n\n  ${chalk.bold('Done.')}\n  Score:  ${scoreBefore.total} → ${chalk.bold(String(scoreAfter.total))} (${formatScoreDelta(scoreBefore.total, scoreAfter.total)})\n  Issues: ${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}${issuesFixed > 0 ? chalk.green(` (${issuesFixed} fixed)`) : ''}\n  Clicks: ${landed.length} landed · ${rolledBack.length} rolled back\n  Time:   ${duration}\n  PDF:    ${chalk.cyan(outPath)}\n\n`);
+      process.stdout.write(`\n${chalk.bold('  ' + '─'.repeat(46))}\n\n  ${chalk.bold('Done.')}\n`);
+      printFields([
+        ['Score',  `${scoreBefore.total} → ${chalk.bold(String(scoreAfter.total))} (${formatScoreDelta(scoreBefore.total, scoreAfter.total)})`],
+        ['Issues', `${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}${issuesFixed > 0 ? chalk.green(` (${issuesFixed} fixed)`) : ''}`],
+        ['Clicks', `${landed.length} landed · ${rolledBack.length} rolled back`],
+        ['Time',   duration],
+        ['PDF',    chalk.cyan(outPath)],
+      ]);
 
       if (landed.length > 0) {
         process.stdout.write(chalk.dim(`  Run ${chalk.cyan('ratchet tighten --pr')} to open a pull request.\n`) + '\n');
