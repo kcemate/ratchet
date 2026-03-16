@@ -256,6 +256,31 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
   const hasRateLimit = anyFileHasMatch(srcFiles, contents, /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i);
   const hasCors = anyFileHasMatch(srcFiles, contents, /\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i);
 
+  // --- Overly broad middleware scope detection ---
+  // Catches app.use("/api/specific-path", limiter) where a method-specific
+  // app.post/app.get would be more appropriate. app.use on a sub-path applies
+  // the limiter to ALL HTTP methods, which blocks reads (GET) when you only
+  // meant to limit writes (POST/PUT/DELETE).
+  const BROAD_MIDDLEWARE_PATTERN = /app\.use\s*\(\s*(['"`]\/api\/[a-zA-Z][^'"`]*['"`])\s*,\s*\w*[Ll]imit\w*/g;
+  // Exclude global "/api" — that's intentionally broad
+  const GLOBAL_API_PATH = /^['"`]\/api['"`]$/;
+  let broadMiddlewareCount = 0;
+  const broadMiddlewareLocations: string[] = [];
+
+  for (const filePath of srcFiles) {
+    const content = contents.get(filePath);
+    if (!content) continue;
+    const lines = content.split('\n');
+    for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+      const line = lines[lineIdx];
+      const match = line.match(/app\.use\s*\(\s*(['"`]\/api\/[a-zA-Z0-9/_-][^'"`]*['"`])\s*,\s*\w*[Ll]imit\w*/);
+      if (match && !GLOBAL_API_PATH.test(match[1])) {
+        broadMiddlewareCount++;
+        broadMiddlewareLocations.push(`${filePath}:${lineIdx + 1}`);
+      }
+    }
+  }
+
   const authChecks = [hasAuthMiddleware, hasRateLimit, hasCors].filter(Boolean).length;
   if (authChecks >= 3) {
     authScore = 6;
@@ -280,6 +305,13 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
     authIssues = 3;
   }
 
+  // Penalize overly broad rate limiter scopes (app.use on specific sub-paths)
+  if (broadMiddlewareCount > 0) {
+    authScore = Math.max(0, authScore - Math.min(broadMiddlewareCount, 3));
+    authIssues += broadMiddlewareCount;
+    authSummary += ` (${broadMiddlewareCount} overly broad rate limiter${broadMiddlewareCount > 1 ? 's' : ''} — use app.post/get instead of app.use on sub-paths)`;
+  }
+
   const score = secretsScore + inputValScore + authScore;
   const summary = [secretsSummary, inputValSummary].filter(Boolean).join(', ');
 
@@ -292,7 +324,7 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
     subcategories: [
       { name: 'Secrets & env vars', score: secretsScore, max: 3, summary: secretsSummary, issuesFound: secretCount, issuesDescription: 'hardcoded secrets' },
       { name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary, issuesFound: inputValIssues, issuesDescription: 'route files without validation' },
-      { name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary, issuesFound: authIssues, issuesDescription: 'missing auth/security controls' },
+      { name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary, issuesFound: authIssues, issuesDescription: broadMiddlewareCount > 0 ? `missing auth/security controls + ${broadMiddlewareCount} overly broad rate limiter scope(s)` : 'missing auth/security controls', locations: broadMiddlewareLocations.length > 0 ? broadMiddlewareLocations : undefined },
     ],
   };
 }
