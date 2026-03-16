@@ -654,7 +654,7 @@ export function rebuildScanFromMetrics(
     for (const sub of cat.subcategories) {
       if (sub.issuesFound > 0 && sub.issuesDescription) {
         const severity = SEVERITY_MAP[cat.name]?.[sub.name] ?? 'low';
-        issuesByType.push({ category: cat.name, subcategory: sub.name, count: sub.issuesFound, description: sub.issuesDescription, severity, locations: sub.locations });
+        issuesByType.push({ category: cat.name, subcategory: sub.name, count: sub.issuesFound, description: sub.issuesDescription, severity, locations: 'locations' in sub ? (sub.locations ?? []) : [] });
         totalIssuesFound += sub.issuesFound;
       }
     }

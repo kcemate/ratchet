@@ -37,7 +37,7 @@ function esc(s: string): string {
  */
 export function generateReportHTML(options: ReportOptions): string {
   const { run, scoreBefore, scoreAfter } = options;
-  const projectName = (options as any).projectName ?? run.target.name;
+  const projectName = options.projectName ?? run.target.name;
   const targetName = run.target.name;
 
   const totalClicks = run.clicks.length;

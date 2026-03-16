@@ -5,7 +5,7 @@
  * writeOutputFile, printBulletList, withSpinner,
  * warnIfStaleBinary, warnIfDirtyWorktree, formatScoreDelta, renderClickTable.
  */
-import chalk from 'chalk';
+import chalk, { type ChalkInstance } from 'chalk';
 import ora, { type Ora } from 'ora';
 import { writeFile } from 'fs/promises';
 import { loadConfig } from '../core/config.js';
@@ -172,6 +172,21 @@ export async function warnIfDirtyWorktree(cwd: string): Promise<void> {
         chalk.dim(' Ratchet will stash these before each click and restore them on rollback.\n'),
     );
   }
+}
+
+/**
+ * Return the chalk colour function for a numeric score ratio.
+ * ≥80% → green, ≥50% → yellow, <50% → red.
+ * Matches the threshold used by renderScan and scoreLabel.
+ *
+ * @param score - achieved score
+ * @param max   - maximum possible score
+ */
+export function scoreColor(score: number, max: number): ChalkInstance {
+  const pct = max > 0 ? score / max : 0;
+  if (pct >= 0.8) return chalk.green;
+  if (pct >= 0.5) return chalk.yellow;
+  return chalk.red;
 }
 
 /**

@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { IssueSubcategory, IssueCategoryName } from '../core/taxonomy.js';
-import { printHeader, severityColor } from '../lib/cli.js';
+import { printHeader, severityColor, scoreColor } from '../lib/cli.js';
 import {
   LOOP_DB_API_PATTERN,
   SECRET_PATTERNS,
@@ -933,19 +933,11 @@ export async function runScan(cwd: string): Promise<ScanResult> {
   return { projectName, total, maxTotal, categories, totalIssuesFound, issuesByType };
 }
 
-function scoreColor(score: number, max: number): typeof chalk {
-  const pct = score / max;
-  if (pct >= 0.8) return chalk.green;
-  if (pct >= 0.5) return chalk.yellow;
-  return chalk.red;
-}
-
 function renderScan(result: ScanResult): void {
   printHeader('🔧 Ratchet Scan — Production Readiness');
   console.log(`Your app: ${chalk.cyan(result.projectName)}`);
 
-  const pct = result.total / result.maxTotal;
-  const totalColor = pct >= 0.8 ? chalk.green : pct >= 0.5 ? chalk.yellow : chalk.red;
+  const totalColor = scoreColor(result.total, result.maxTotal);
   const issuesStr = result.totalIssuesFound > 0
     ? chalk.dim(`  |  Issues: ${result.totalIssuesFound} found`)
     : '';

@@ -9,6 +9,7 @@ export interface ReportOptions {
   cwd: string;
   scoreBefore?: ScanResult;
   scoreAfter?: ScanResult;
+  projectName?: string;
 }
 
 function plainEnglishSummary(click: Click): string {
