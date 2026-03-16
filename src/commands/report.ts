@@ -67,10 +67,10 @@ function renderList(entries: Awaited<ReturnType<typeof listRuns>>): void {
       date,
     ].join('  ');
 
-    console.log('  ' + row);
+    process.stdout.write('  ' + row + '\n');
   }
 
-  console.log('');
+  process.stdout.write('\n');
 }
 
 async function openFile(filePath: string): Promise<void> {
@@ -164,9 +164,9 @@ export function reportCommand(): Command {
           await mkdir(dirname(mdFile), { recursive: true });
           await writeFile(mdFile, content, 'utf-8');
           markdownPath = mdFile;
-          console.log(`  ${chalk.green('✓')} Markdown  ${chalk.cyan(mdFile.replace(cwd + '/', ''))}`);
+          process.stdout.write(`  ${chalk.green('✓')} Markdown  ${chalk.cyan(mdFile.replace(cwd + '/', ''))}\n`);
         } catch (err) {
-          console.error(`  ${chalk.red('✗')} Markdown generation failed: ${(err as Error).message}`);
+          process.stderr.write(`  ${chalk.red('✗')} Markdown generation failed: ${(err as Error).message}\n`);
         }
       }
 
@@ -178,9 +178,9 @@ export function reportCommand(): Command {
           await mkdir(dirname(pdfFile), { recursive: true });
           await writeFile(pdfFile, buffer);
           pdfPath = pdfFile;
-          console.log(`  ${chalk.green('✓')} PDF       ${chalk.cyan(pdfFile.replace(cwd + '/', ''))}`);
+          process.stdout.write(`  ${chalk.green('✓')} PDF       ${chalk.cyan(pdfFile.replace(cwd + '/', ''))}\n`);
         } catch (err) {
-          console.error(`  ${chalk.red('✗')} PDF generation failed: ${(err as Error).message}`);
+          process.stderr.write(`  ${chalk.red('✗')} PDF generation failed: ${(err as Error).message}\n`);
         }
       }
 
@@ -189,7 +189,7 @@ export function reportCommand(): Command {
       const totalClicks = run.clicks.length;
       const score = scoreArrow(scoreBefore, scoreAfter);
 
-      console.log('');
+      process.stdout.write('\n');
       printFields([
         ['Run',    chalk.dim(run.id)],
         ['Target', chalk.cyan(run.target.name)],

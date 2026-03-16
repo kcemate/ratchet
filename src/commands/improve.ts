@@ -4,9 +4,8 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { printHeader, exitWithError, validateInt, loadConfigOrExit, severityColor, printFields } from '../lib/cli.js';
+import { printHeader, exitWithError, validateInt, loadConfigOrExit, severityColor, printFields, warnIfStaleBinary, warnIfDirtyWorktree, formatScoreDelta } from '../lib/cli.js';
 import { saveRun } from '../core/history.js';
-import { checkStaleBinary } from '../core/stale-check.js';
 import { runSweepEngine, runArchitectEngine } from '../core/engine.js';
 import type { ClickPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
@@ -14,7 +13,7 @@ import { RatchetLogger } from '../core/logger.js';
 import { writePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
-import { isRepo, status as gitStatus } from '../core/git.js';
+import { isRepo } from '../core/git.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun, SwarmConfig } from '../types.js';
 import { formatDuration } from '../core/utils.js';
@@ -24,6 +23,7 @@ import { LearningStore } from '../core/learning.js';
 import { SimulationEngine, aggregateResults } from '../core/simulate.js';
 import type { SimulationResult } from '../core/simulate.js';
 import { allocateClicks } from '../core/allocator.js';
+import { generateScorePlan } from '../core/score-optimizer.js';
 
 const STATE_FILE = '.ratchet-state.json';
 
@@ -510,23 +510,13 @@ export function improveCommand(): Command {
 
       printHeader('⚙  Ratchet Improve');
 
-      const staleWarning = checkStaleBinary();
-      if (staleWarning) console.warn(chalk.yellow(`  ${staleWarning}\n`));
+      warnIfStaleBinary();
 
       if (!(await isRepo(cwd))) {
         exitWithError('  Not a git repository. Ratchet requires git.');
       }
 
-      const ws = await gitStatus(cwd);
-      const dirtyFiles = [...ws.staged, ...ws.unstaged, ...ws.untracked].length;
-      if (dirtyFiles > 0) {
-        const shown = [...ws.staged, ...ws.unstaged, ...ws.untracked].slice(0, 3).join(', ');
-        const extra = dirtyFiles > 3 ? ` +${dirtyFiles - 3} more` : '';
-        console.warn(
-          chalk.yellow(`  ⚠  Dirty worktree: ${dirtyFiles} uncommitted files`) +
-            chalk.dim(` (${shown}${extra}). Will stash before each click.\n`),
-        );
-      }
+      await warnIfDirtyWorktree(cwd);
 
       const config = loadConfigOrExit(cwd);
 
@@ -607,6 +597,10 @@ export function improveCommand(): Command {
       }
       printFields(modeFields);
 
+      // Print score optimization plan
+      const scorePlan = generateScorePlan(scoreBefore);
+      process.stdout.write('\n' + chalk.dim(scorePlan) + '\n\n');
+
       // Model tiering: architect phase gets the configured (expensive) model,
       // surgical phase uses sonnet for mechanical fixes (70%+ cost reduction)
       const architectModel = config.model; // Opus or whatever is configured
@@ -683,6 +677,7 @@ export function improveCommand(): Command {
             adversarial: useAdversarial,
             scanResult: scoreBefore,
             learningStore,
+            scoreOptimized: true,
             callbacks: makeCallbacks(clickCount, 0),
           });
           // Use scan after architect as input to surgical
@@ -703,6 +698,7 @@ export function improveCommand(): Command {
           adversarial: useAdversarial,
           scanResult: scanAfterArchitect,
           learningStore,
+          scoreOptimized: true,
           callbacks: makeCallbacks(clickCount, architectClicks),
         });
 
@@ -735,10 +731,8 @@ export function improveCommand(): Command {
       let scoreAfter: ScanResult;
       try {
         scoreAfter = await runScan(cwd);
-        const delta = scoreAfter.total - scoreBefore.total;
-        const deltaStr = delta > 0 ? chalk.green(`+${delta}`) : delta < 0 ? chalk.red(String(delta)) : chalk.dim('±0');
         rescanSpinner.succeed(
-          `  Rescan complete: ${chalk.bold(`${scoreAfter.total}/100`)} (${deltaStr}) · ${scoreAfter.totalIssuesFound} issues remaining`,
+          `  Rescan complete: ${chalk.bold(`${scoreAfter.total}/100`)} (${formatScoreDelta(scoreBefore.total, scoreAfter.total)}) · ${scoreAfter.totalIssuesFound} issues remaining`,
         );
       } catch (err) {
         rescanSpinner.fail('  Rescan failed: ' + String(err));
@@ -821,10 +815,9 @@ export function improveCommand(): Command {
       await writeFile(join(cwd, STATE_FILE), JSON.stringify(run, null, 2), 'utf-8').catch(() => {});
 
       // ── Summary ──
-      const scoreDelta = scoreAfter.total - scoreBefore.total;
       const issuesFixed = scoreBefore.totalIssuesFound - scoreAfter.totalIssuesFound;
 
-      process.stdout.write(`\n${chalk.bold('  ' + '─'.repeat(46))}\n\n  ${chalk.bold('Done.')}\n  Score:  ${scoreBefore.total} → ${chalk.bold(String(scoreAfter.total))} (${scoreDelta > 0 ? chalk.green(`+${scoreDelta}`) : chalk.yellow(String(scoreDelta))})\n  Issues: ${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}${issuesFixed > 0 ? chalk.green(` (${issuesFixed} fixed)`) : ''}\n  Clicks: ${landed.length} landed · ${rolledBack.length} rolled back\n  Time:   ${duration}\n  PDF:    ${chalk.cyan(outPath)}\n\n`);
+      process.stdout.write(`\n${chalk.bold('  ' + '─'.repeat(46))}\n\n  ${chalk.bold('Done.')}\n  Score:  ${scoreBefore.total} → ${chalk.bold(String(scoreAfter.total))} (${formatScoreDelta(scoreBefore.total, scoreAfter.total)})\n  Issues: ${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}${issuesFixed > 0 ? chalk.green(` (${issuesFixed} fixed)`) : ''}\n  Clicks: ${landed.length} landed · ${rolledBack.length} rolled back\n  Time:   ${duration}\n  PDF:    ${chalk.cyan(outPath)}\n\n`);
 
       if (landed.length > 0) {
         process.stdout.write(chalk.dim(`  Run ${chalk.cyan('ratchet tighten --pr')} to open a pull request.\n`) + '\n');

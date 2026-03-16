@@ -2,11 +2,17 @@
  * Shared CLI presentation utilities.
  * Centralises repeated patterns from command files:
  * printHeader, exitWithError, validateInt, loadConfigOrExit,
- * writeOutputFile, printBulletList.
+ * writeOutputFile, printBulletList, withSpinner,
+ * warnIfStaleBinary, warnIfDirtyWorktree, formatScoreDelta, renderClickTable.
  */
 import chalk from 'chalk';
+import ora, { type Ora } from 'ora';
 import { writeFile } from 'fs/promises';
 import { loadConfig } from '../core/config.js';
+import { toErrorMessage } from '../core/utils.js';
+import { checkStaleBinary } from '../core/stale-check.js';
+import { status as gitStatus } from '../core/git.js';
+import type { Click } from '../types.js';
 
 /** Print a bold command header line, e.g. printHeader('⚙  Ratchet Improve') */
 export function printHeader(text: string): void {
@@ -111,4 +117,93 @@ export function printBulletList(
     console.log(`    ${color('•')} ${item}`);
   }
   console.log('');
+}
+
+/**
+ * Run an async operation inside an ora spinner with unified error handling.
+ * The callback receives the spinner so it can call spinner.succeed() on success.
+ * On any thrown error, fails the spinner and exits the process.
+ *
+ * @param text      - initial spinner text
+ * @param fn        - async work; receives the Ora spinner instance
+ * @param failLabel - short label for spinner.fail() (e.g. 'Debate failed')
+ *                    If omitted, the error message is used directly.
+ */
+export async function withSpinner<T>(
+  text: string,
+  fn: (spinner: Ora) => Promise<T>,
+  failLabel?: string,
+): Promise<T> {
+  const spinner = ora(text).start();
+  try {
+    return await fn(spinner);
+  } catch (err) {
+    const label = failLabel ? `  ${failLabel}` : `  ${toErrorMessage(err)}`;
+    spinner.fail(chalk.red(label));
+    if (failLabel) {
+      console.error(chalk.red(`\n  ${toErrorMessage(err)}`) + '\n');
+    }
+    process.exit(1);
+  }
+}
+
+/** Warn once if the compiled binary is older than source files. */
+export function warnIfStaleBinary(): void {
+  const warning = checkStaleBinary();
+  if (warning) console.warn(chalk.yellow(`  ${warning}\n`));
+}
+
+/**
+ * Warn if the working tree has uncommitted changes.
+ * Shows up to 3 file names and a stash-safety note.
+ */
+export async function warnIfDirtyWorktree(cwd: string): Promise<void> {
+  const ws = await gitStatus(cwd);
+  const allDirty = [...ws.staged, ...ws.unstaged, ...ws.untracked];
+  const dirtyFiles = allDirty.length;
+  if (dirtyFiles > 0) {
+    const fileWord = dirtyFiles === 1 ? 'file' : 'files';
+    const shown = allDirty.slice(0, 3).join(', ');
+    const extra = dirtyFiles > 3 ? ` +${dirtyFiles - 3} more` : '';
+    console.warn(
+      chalk.yellow(`  ⚠  Dirty worktree: ${dirtyFiles} uncommitted ${fileWord}`) +
+        chalk.dim(` (${shown}${extra}).`) +
+        chalk.dim(' Ratchet will stash these before each click and restore them on rollback.\n'),
+    );
+  }
+}
+
+/**
+ * Format a score delta as a coloured string, e.g. "+3" (green), "-2" (red), "±0" (dim).
+ * @param before - score before the run
+ * @param after  - score after the run
+ */
+export function formatScoreDelta(before: number, after: number): string {
+  const delta = after - before;
+  if (delta > 0) return chalk.green(`+${delta}`);
+  if (delta < 0) return chalk.red(String(delta));
+  return chalk.dim('±0');
+}
+
+/**
+ * Print a per-click result table to stdout.
+ * Each row shows pass/fail icon, click number, status, commit hash, and modified files.
+ */
+export function renderClickTable(clicks: Click[]): void {
+  if (clicks.length === 0) return;
+  console.log('');
+  for (const click of clicks) {
+    const icon = click.testsPassed ? chalk.green('✓') : chalk.yellow('✗');
+    const label = click.testsPassed ? chalk.green('passed') : chalk.yellow('rolled back');
+    const hash = click.commitHash
+      ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`)
+      : '';
+    const files =
+      click.filesModified.length > 0
+        ? chalk.dim(
+            ` — ${click.filesModified.slice(0, 2).join(', ')}${click.filesModified.length > 2 ? ` +${click.filesModified.length - 2}` : ''}`,
+          )
+        : '';
+    console.log(`  ${icon} Click ${chalk.bold(String(click.number))}  ${label}${hash}${files}`);
+  }
 }

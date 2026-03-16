@@ -1,6 +1,5 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import ora from 'ora';
 
 import {
   SimulationEngine,
@@ -8,8 +7,7 @@ import {
   getAvailableScenarios,
   MAX_PERSONAS,
 } from '../core/simulate.js';
-import { printHeader, validateInt, writeOutputFile, printBulletList } from '../lib/cli.js';
-import { toErrorMessage } from '../core/utils.js';
+import { printHeader, validateInt, writeOutputFile, printBulletList, printFields, withSpinner } from '../lib/cli.js';
 
 export function simulateCommand(): Command {
   const cmd = new Command('simulate');
@@ -56,17 +54,16 @@ export function simulateCommand(): Command {
         // Print run summary
         const builtinScenarios = getAvailableScenarios();
         const isBuiltin = builtinScenarios.includes(options.scenario);
-        console.log(`  Scenario : ${chalk.cyan(options.scenario)}${isBuiltin ? '' : chalk.dim(' (custom)')}`);
-        console.log(`  Personas : ${chalk.yellow(String(personaCount))}`);
-        if (options.url) console.log(`  URL      : ${chalk.dim(options.url)}`);
-        if (options.model) console.log(`  Model    : ${chalk.dim(options.model)}`);
-        console.log('');
+        const fields: Array<[string, string]> = [
+          ['Scenario', chalk.cyan(options.scenario) + (isBuiltin ? '' : chalk.dim(' (custom)'))],
+          ['Personas', chalk.yellow(String(personaCount))],
+        ];
+        if (options.url) fields.push(['URL', chalk.dim(options.url)]);
+        if (options.model) fields.push(['Model', chalk.dim(options.model)]);
+        printFields(fields);
 
-        const spinner = ora('  Spawning persona agents…').start();
-
-        let engine: SimulationEngine;
-        try {
-          engine = new SimulationEngine({
+        await withSpinner('  Spawning persona agents…', async (spinner) => {
+          const engine = new SimulationEngine({
             personas: personaCount,
             scenario: options.scenario,
             targetUrl: options.url,
@@ -74,12 +71,7 @@ export function simulateCommand(): Command {
             model: options.model,
             timeout,
           });
-        } catch (err) {
-          spinner.fail(chalk.red(`  ${toErrorMessage(err)}`));
-          process.exit(1);
-        }
 
-        try {
           const result = await engine.run();
           spinner.succeed(`  ${personaCount} persona simulations complete`);
           console.log('');
@@ -96,11 +88,7 @@ export function simulateCommand(): Command {
           if (options.output) {
             await writeOutputFile(options.output, formatReport(result));
           }
-        } catch (err) {
-          spinner.fail(chalk.red('  Simulation failed'));
-          console.error(chalk.red(`\n  ${toErrorMessage(err)}`) + '\n');
-          process.exit(1);
-        }
+        }, 'Simulation failed');
       },
     );
 

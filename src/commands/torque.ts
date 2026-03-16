@@ -7,7 +7,6 @@ import { join } from 'path';
 import { loadConfig, configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
 import { saveRun } from '../core/history.js';
 import { readFileSync } from 'fs';
-import { checkStaleBinary } from '../core/stale-check.js';
 import { runEngine, runSweepEngine } from '../core/engine.js';
 import type { ClickPhase, HardenPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
@@ -18,10 +17,11 @@ import { generateReport, writeReport } from '../core/report.js';
 import { writePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
-import { isRepo, status as gitStatus } from '../core/git.js';
+import { isRepo } from '../core/git.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
 import { formatDuration } from '../core/utils.js';
+import { warnIfStaleBinary, warnIfDirtyWorktree, formatScoreDelta, renderClickTable } from '../lib/cli.js';
 
 const STATE_FILE = '.ratchet-state.json';
 
@@ -77,11 +77,7 @@ export function torqueCommand(): Command {
 
         console.log(chalk.bold('\n⚙  Ratchet Torque\n'));
 
-        // Warn if the compiled binary is stale
-        const staleWarning = checkStaleBinary();
-        if (staleWarning) {
-          console.warn(chalk.yellow(`  ${staleWarning}\n`));
-        }
+        warnIfStaleBinary();
 
         // Check git repo
         if (!(await isRepo(cwd))) {
@@ -96,19 +92,7 @@ export function torqueCommand(): Command {
 
         // Warn about dirty worktree — each click stashes before applying changes,
         // so existing uncommitted work won't be lost, but the user should know.
-        const ws = await gitStatus(cwd);
-        const allDirty = [...ws.staged, ...ws.unstaged, ...ws.untracked];
-        const dirtyFiles = allDirty.length;
-        if (dirtyFiles > 0) {
-          const fileWord = dirtyFiles === 1 ? 'file' : 'files';
-          const shown = allDirty.slice(0, 3).join(', ');
-          const extra = dirtyFiles > 3 ? ` +${dirtyFiles - 3} more` : '';
-          console.warn(
-            chalk.yellow(`  ⚠  Dirty worktree: ${dirtyFiles} uncommitted ${fileWord}`) +
-              chalk.dim(` (${shown}${extra}).`) +
-              chalk.dim(' Ratchet will stash these before each click and restore them on rollback.\n'),
-          );
-        }
+        await warnIfDirtyWorktree(cwd);
 
         // Load config
         let config;
@@ -426,9 +410,7 @@ export function torqueCommand(): Command {
                     if (click.scoreAfterClick !== undefined && lastKnownScore !== undefined) {
                       const before = lastKnownScore - (lastKnownDelta ?? 0);
                       const after = click.scoreAfterClick;
-                      const delta = after - before;
-                      const deltaStr = delta > 0 ? chalk.green(`+${delta}`) : delta < 0 ? chalk.red(String(delta)) : chalk.dim('±0');
-                      scoreSuffix = ` — Score: ${before} → ${after} (${deltaStr})`;
+                      scoreSuffix = ` — Score: ${before} → ${after} (${formatScoreDelta(before, after)})`;
                       if (click.issuesFixedCount && click.issuesFixedCount > 0) {
                         scoreSuffix += chalk.dim(` — ${click.issuesFixedCount} issues fixed`);
                       }
@@ -526,20 +508,7 @@ export function torqueCommand(): Command {
           : '';
 
         // Per-click result table
-        if (run.clicks.length > 0) {
-          console.log('');
-          for (const click of run.clicks) {
-            const icon = click.testsPassed ? chalk.green('✓') : chalk.yellow('✗');
-            const label = click.testsPassed ? chalk.green('passed') : chalk.yellow('rolled back');
-            const hash = click.commitHash
-              ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`)
-              : '';
-            const files = click.filesModified.length > 0
-              ? chalk.dim(` — ${click.filesModified.slice(0, 2).join(', ')}${click.filesModified.length > 2 ? ` +${click.filesModified.length - 2}` : ''}`)
-              : '';
-            console.log(`  ${icon} Click ${chalk.bold(String(click.number))}  ${label}${hash}${files}`);
-          }
-        }
+        renderClickTable(run.clicks);
 
         console.log('\n' + chalk.bold('  ' + '─'.repeat(46)));
         console.log(
