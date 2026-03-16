@@ -175,7 +175,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       } else if (config.defaults.autoCommit) {
         // 5. Commit on success
         await onPhase?.('committing');
-        const message = buildCommitMessage(clickNumber, target, proposal);
+        const message = buildCommitMessage(clickNumber, target, proposal, buildResult.filesModified);
         commitHash = await git.commit(message, cwd);
         // Drop the stash since we committed successfully (only if we created one)
         if (stashCreated) {
@@ -375,9 +375,14 @@ async function rollback(cwd: string, clickNumber: number, stashCreated: boolean)
   }
 }
 
-function buildCommitMessage(clickNumber: number, target: Target, proposal: string): string {
-  // Trim proposal to first 60 chars for commit subject
-  const subject = proposal.split('\n')[0].slice(0, 60).trim();
+function buildCommitMessage(clickNumber: number, target: Target, proposal: string, filesModified?: string[]): string {
+  let subject = proposal.split('\n')[0].slice(0, 60).trim();
+  // Strip leaked agent system prompts from commit messages
+  if (/^You are (a |an |the )/i.test(subject)) {
+    subject = filesModified?.length
+      ? `Modified ${filesModified.length} file${filesModified.length > 1 ? 's' : ''}: ${filesModified.map(f => f.split('/').pop()).slice(0, 3).join(', ')}${filesModified.length > 3 ? '…' : ''}`
+      : 'Applied code improvements';
+  }
   return `ratchet(${target.name}): click ${clickNumber} — ${subject}`;
 }
 

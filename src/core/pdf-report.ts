@@ -17,8 +17,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 function plainEnglishSummary(click: Click): string {
-  const raw = click.proposal || click.analysis || '';
+  let raw = click.proposal || click.analysis || '';
   if (!raw) return 'Applied code improvements';
+  // Strip leaked agent system prompts (double-wrapped prompt bug)
+  if (/^You are (a |an |the )/i.test(raw)) return click.filesModified?.length
+    ? `Modified ${click.filesModified.length} file${click.filesModified.length > 1 ? 's' : ''}: ${click.filesModified.map(f => f.split('/').pop()).slice(0, 3).join(', ')}${click.filesModified.length > 3 ? '…' : ''}`
+    : 'Applied code improvements';
   const firstSentence = raw.split(/[.!\n]/)[0]?.trim() ?? '';
   if (firstSentence.length > 0 && firstSentence.length <= 120) return firstSentence;
   return raw.slice(0, 120).trimEnd() + (raw.length > 120 ? '...' : '');
@@ -82,15 +86,7 @@ export function generateReportHTML(options: ReportOptions): string {
 
     const deltaColor = delta > 0 ? '#22c55e' : delta < 0 ? '#ef4444' : '#9ca3af';
 
-    const issuesHeroHtml = issuesBefore > 0
-      ? `<div class="hero-issues-row">
-          <span class="hero-issues-label">Issues: </span>
-          <span class="hero-issues-before">${issuesBefore}</span>
-          <span class="hero-issues-arrow"> → </span>
-          <span class="hero-issues-after">${issuesAfter}</span>
-          ${issuesFixed > 0 ? `<span class="hero-issues-fixed"> (${issuesFixed} fixed)</span>` : ''}
-        </div>`
-      : '';
+    const issuesHeroHtml = '';
 
     heroHtml = `
     <div class="hero-card">
@@ -127,35 +123,9 @@ export function generateReportHTML(options: ReportOptions): string {
         const dotColor = CATEGORY_COLORS[after.name] ?? '#6b7280';
         const bPct = before.max > 0 ? (before.score / before.max) * 100 : 0;
         const aPct = after.max > 0 ? (after.score / after.max) * 100 : 0;
-        const rowBg = i % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'transparent';
-
-        // Subcategory rows
-        const subRows = (after.subcategories ?? []).map((subAfter, j) => {
-          const subBefore = (before.subcategories ?? [])[j];
-          if (!subBefore) return '';
-          const subDelta = subAfter.score - subBefore.score;
-          const subDeltaStr = subDelta > 0 ? `+${subDelta}` : String(subDelta);
-          const subPillClass = subDelta > 0 ? 'delta-pill-pos' : subDelta < 0 ? 'delta-pill-neg' : 'delta-pill-neu';
-          const sbPct = subBefore.max > 0 ? (subBefore.score / subBefore.max) * 100 : 0;
-          const saPct = subAfter.max > 0 ? (subAfter.score / subAfter.max) * 100 : 0;
-          return `
-          <div class="cat-row sub-row">
-            <div class="cat-dot" style="background:transparent;border:1px solid ${dotColor};opacity:0.5"></div>
-            <div class="cat-name sub-name">↳ ${esc(subAfter.name)}</div>
-            <div class="cat-bars">
-              <div class="cat-score gray">${subBefore.score}/${subBefore.max}</div>
-              <div class="mini-track"><div class="mini-fill before-mini" style="width:${Math.max(2, sbPct)}%"></div></div>
-            </div>
-            <div class="cat-bars">
-              <div class="cat-score white">${subAfter.score}/${subAfter.max}</div>
-              <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, saPct)}%"></div></div>
-            </div>
-            <div class="cat-delta"><span class="delta-pill ${subPillClass}">${esc(subDeltaStr)}</span></div>
-          </div>`;
-        }).join('');
 
         return `
-        <div class="cat-row" style="background:${rowBg}">
+        <div class="cat-row">
           <div class="cat-dot" style="background:${dotColor}"></div>
           <div class="cat-name">${esc(after.name)}</div>
           <div class="cat-bars">
@@ -167,7 +137,7 @@ export function generateReportHTML(options: ReportOptions): string {
             <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, aPct)}%"></div></div>
           </div>
           <div class="cat-delta"><span class="delta-pill ${pillClass}">${esc(catDeltaStr)}</span></div>
-        </div>${subRows}`;
+        </div>`;
       })
       .join('');
 
@@ -189,7 +159,7 @@ export function generateReportHTML(options: ReportOptions): string {
       : landed
           .map(
             (click) =>
-              `<div class="bullet-item"><span class="bullet-dot" style="background:#22c55e"></span><span class="bullet-text"><strong style="color:#f1f5f9">Click ${click.number}</strong> — ${esc(plainEnglishSummary(click))}</span></div>`,
+              `<div class="bullet-item"><span class="bullet-dot" style="background:#4ADE80"></span><span class="bullet-text"><strong>Click ${click.number}</strong> — ${esc(plainEnglishSummary(click))}</span></div>`,
           )
           .join('');
 
@@ -198,9 +168,7 @@ export function generateReportHTML(options: ReportOptions): string {
       ? `<div class="bullet-item"><span class="bullet-dot" style="background:#22c55e"></span><span class="bullet-text" style="color:#4ade80">Nothing rolled back — clean run!</span></div>`
       : rolledBack
           .map((click) => {
-            const reason = click.analysis
-              ? (click.analysis.split(/[.!\n]/)[0]?.trim() ?? 'Tests failed')
-              : 'Tests failed';
+            const reason = plainEnglishSummary(click) || 'Tests failed';
             return `<div class="bullet-item"><span class="bullet-dot" style="background:#ef4444"></span><span class="bullet-text"><strong style="color:#f1f5f9">Click ${click.number}</strong> — ${esc(reason.slice(0, 120))}</span></div>`;
           })
           .join('');
@@ -215,364 +183,325 @@ export function generateReportHTML(options: ReportOptions): string {
 
   body {
     width: 794px;
-    background: #08080a;
-    color: #f1f5f9;
+    background: #0D1117;
+    color: #C9D1D9;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-    position: relative;
-  }
-
-  /* Subtle grain texture */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.04;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 300px 300px;
   }
 
   .wrapper {
-    position: relative;
-    z-index: 1;
-    padding: 36px 56px 30px;
+    padding: 40px 48px 36px;
   }
 
   /* ─── Header ─────────────────────────────────────────── */
   .logo-row {
     display: flex;
     align-items: center;
-    gap: 11px;
-    margin-bottom: 7px;
+    gap: 12px;
+    margin-bottom: 8px;
   }
-  .gear-wrap {
-    position: relative;
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .gear-glow {
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(245,158,11,0.30) 0%, transparent 65%);
-  }
-  .gear {
-    font-size: 22px;
-    line-height: 1;
-    position: relative;
-    z-index: 1;
-  }
+  .gear { font-size: 32px; line-height: 1; }
   .logo-text {
-    font-size: 26px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #f59e0b, #fbbf24);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 32px;
+    font-weight: 700;
+    color: #E8A030;
     letter-spacing: -0.5px;
   }
   .header-meta {
-    font-size: 10.5px;
-    color: #6b7280;
-    line-height: 1.75;
-    margin-left: 1px;
+    font-size: 14px;
+    color: #8B949E;
+    line-height: 1.7;
   }
-  .header-meta strong { color: #cbd5e1; font-weight: 600; }
+  .header-meta strong { color: #C9D1D9; font-weight: 600; }
 
-  /* Amber accent line below header */
-  .header-accent {
-    height: 1.5px;
-    background: linear-gradient(90deg, #f59e0b 0%, rgba(245,158,11,0.25) 55%, transparent 100%);
-    margin: 13px 0 16px;
+  .header-divider {
+    height: 2px;
+    background: linear-gradient(90deg, #E8A030 0%, rgba(232,160,48,0.3) 60%, transparent 100%);
+    margin: 16px 0 24px;
   }
 
   /* ─── Summary Bar ────────────────────────────────────── */
   .summary-bar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    margin-bottom: 4px;
-    background: linear-gradient(180deg, #111116 0%, #0d0d10 100%);
-    border: 1px solid #1e1e2a;
-    border-radius: 10px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 6px rgba(0,0,0,0.35);
+    background: #161B22;
+    border: 1px solid #30363D;
+    border-radius: 12px;
+    margin-bottom: 24px;
   }
   .summary-item {
-    padding: 13px 8px 12px;
+    padding: 24px 8px;
     text-align: center;
     position: relative;
   }
   .summary-item:not(:last-child)::after {
     content: '';
     position: absolute;
-    right: 0;
-    top: 20%;
-    height: 60%;
-    width: 1px;
-    background: rgba(255,255,255,0.1);
+    right: 0; top: 20%; height: 60%; width: 1px;
+    background: #30363D;
   }
   .summary-value {
-    font-size: 28px;
-    font-weight: 800;
+    font-size: 40px;
+    font-weight: 700;
     line-height: 1;
-    margin-bottom: 5px;
-    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
   }
   .summary-label {
-    font-size: 8px;
-    font-weight: 700;
-    color: #4b5563;
-    letter-spacing: 0.9px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #8B949E;
+    letter-spacing: 3px;
     text-transform: uppercase;
   }
 
   /* ─── Section title ──────────────────────────────────── */
   .section-title {
-    font-size: 9.5px;
+    font-size: 12px;
     font-weight: 700;
-    color: #f59e0b;
+    color: #E8A030;
     text-transform: uppercase;
-    letter-spacing: 1.1px;
-    margin-top: 18px;
-    margin-bottom: 9px;
+    letter-spacing: 3px;
+    margin-top: 32px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
   }
   .section-title::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, rgba(245,158,11,0.18) 0%, transparent 100%);
+    background: #30363D;
   }
 
   /* ─── Hero card ──────────────────────────────────────── */
   .hero-card {
-    background: linear-gradient(180deg, #0f0f13 0%, #0b0b0e 100%);
-    border: 1px solid #1e1e2a;
+    background: #161B22;
+    border: 1px solid #30363D;
     border-radius: 12px;
-    padding: 32px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    padding: 32px 40px;
   }
   .hero-score-label {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
-    color: #f59e0b;
-    letter-spacing: 1.6px;
+    color: #E8A030;
+    letter-spacing: 4px;
     text-transform: uppercase;
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 30px;
   }
   .hero-score-row {
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 0;
+    align-items: center;
+    justify-content: space-around;
   }
   .hero-score-col {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    flex: 1;
-    max-width: 240px;
+    gap: 4px;
   }
   .hero-col-label {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
-    color: #6b7280;
-    letter-spacing: 1.2px;
+    color: #8B949E;
+    letter-spacing: 3px;
     text-transform: uppercase;
     margin-bottom: 4px;
   }
   .hero-num {
+    font-size: 80px;
     font-weight: 800;
     line-height: 1;
-    letter-spacing: -2px;
+    letter-spacing: -3px;
     margin-bottom: 6px;
   }
-  .before-num { font-size: 56px; color: #6b7280; }
-  .after-num { font-size: 56px; color: #ffffff; }
+  .before-num { color: #8B949E; }
+  .after-num  { color: #FFFFFF; font-size: 88px; }
   .hero-sub-score {
-    font-size: 11px;
-    font-weight: 600;
-    color: #4b5563;
-    margin-bottom: 8px;
+    font-size: 14px;
+    color: #8B949E;
+    margin-bottom: 12px;
   }
-  .hero-issues-row {
-    text-align: center;
-    margin-top: 16px;
-    font-size: 11px;
-    color: #9ca3af;
+  .hero-track {
+    width: 220px;
+    height: 8px;
+    background: #30363D;
+    border-radius: 4px;
+    overflow: hidden;
   }
-  .hero-issues-label { color: #6b7280; }
-  .hero-issues-before { color: #6b7280; font-weight: 700; }
-  .hero-issues-arrow { color: #374151; }
-  .hero-issues-after { color: #f1f5f9; font-weight: 700; }
-  .hero-issues-fixed { color: #22c55e; font-weight: 700; }
+  .hero-fill { height: 100%; border-radius: 4px; }
+  .before-fill { background: #8B949E; }
+  .after-fill  { background: #E8A030; }
+
   .hero-center-col {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 24px 28px 0;
     gap: 6px;
   }
-  .hero-arrow {
-    font-size: 28px;
-    color: #374151;
-    line-height: 1;
+  .hero-arrow { font-size: 28px; color: #8B949E; }
+  .hero-delta-inline { font-size: 28px; font-weight: 800; }
+
+  .hero-issues-row {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #8B949E;
   }
-  .hero-delta-inline {
-    font-size: 22px;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.5px;
-  }
-  .hero-track {
-    width: 80%;
-    height: 6px;
-    background: #1a1a22;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .hero-fill {
-    height: 100%;
-    border-radius: 3px;
-  }
-  .before-fill { background: #374151; }
-  .after-fill {
-    background: linear-gradient(90deg, #d97706, #fbbf24);
-    box-shadow: 0 0 6px rgba(245,158,11,0.35);
-  }
+  .hero-issues-before { color: #8B949E; font-weight: 700; }
+  .hero-issues-arrow  { color: #8B949E; }
+  .hero-issues-after  { color: #C9D1D9; font-weight: 700; }
+  .hero-issues-fixed  { color: #4ADE80; font-weight: 700; }
 
   /* ─── Category table ─────────────────────────────────── */
   .cat-header {
     display: flex;
     align-items: center;
-    padding: 0 12px;
-    margin-bottom: 4px;
+    padding: 0 16px;
+    margin-bottom: 6px;
     gap: 8px;
   }
   .cat-col-label {
-    font-size: 8px;
-    color: #374151;
+    font-size: 10px;
+    font-weight: 600;
+    color: #8B949E;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 2px;
     flex: 1;
     text-align: center;
-    font-weight: 600;
   }
   .cat-table {
-    border-radius: 9px;
+    background: #161B22;
+    border: 1px solid #30363D;
+    border-radius: 8px;
     overflow: hidden;
-    border: 1px solid #18181f;
   }
   .cat-row {
     display: flex;
     align-items: center;
-    padding: 7px 12px;
+    padding: 12px 16px;
     gap: 8px;
   }
-  .cat-row:not(:last-child) { border-bottom: 1px solid #111116; }
-  .cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .cat-name { font-size: 9.5px; color: #d1d5db; flex: 0 0 122px; font-weight: 500; }
-  .sub-row { padding: 4px 12px 4px 20px; }
-  .sub-name { font-size: 8.5px; color: #9ca3af; flex: 0 0 122px; font-weight: 400; }
-  .cat-bars { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .cat-row:not(:last-child) { border-bottom: 1px solid #30363D; }
+  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .cat-name { font-size: 14px; color: #C9D1D9; flex: 0 0 130px; font-weight: 500; }
+  .sub-row  { padding: 6px 16px 6px 22px; }
+  .sub-name { font-size: 12px; color: #8B949E; flex: 0 0 130px; font-weight: 400; }
+  .cat-bars { display: flex; align-items: center; gap: 8px; flex: 1; }
   .mini-track {
     flex: 1;
     height: 5px;
-    background: #1a1a22;
+    background: #30363D;
     border-radius: 99px;
     overflow: hidden;
   }
   .mini-fill { height: 100%; border-radius: 99px; }
-  .before-mini { background: #2d3748; }
-  .after-mini {
-    background: linear-gradient(90deg, #d97706, #fbbf24);
-    box-shadow: 0 0 6px rgba(245,158,11,0.5);
-  }
+  .before-mini { background: #8B949E; }
+  .after-mini  { background: #E8A030; }
   .cat-score {
-    font-size: 8.5px;
-    flex: 0 0 34px;
+    font-size: 13px;
+    flex: 0 0 38px;
     text-align: right;
     font-variant-numeric: tabular-nums;
-    font-weight: 500;
+    font-weight: 400;
     white-space: nowrap;
   }
-  .gray { color: #374151; }
-  .white { color: #cbd5e1; }
+  .gray  { color: #8B949E; }
+  .white { color: #C9D1D9; }
   .cat-delta { flex: 0 0 50px; text-align: right; }
   .delta-pill {
     display: inline-block;
-    padding: 2px 7px;
+    padding: 3px 10px;
     border-radius: 99px;
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.2px;
   }
-  .delta-pill-pos { background: rgba(34,197,94,0.14); color: #4ade80; }
-  .delta-pill-neg { background: rgba(239,68,68,0.14); color: #f87171; }
-  .delta-pill-neu { background: rgba(107,114,128,0.12); color: #9ca3af; }
+  .delta-pill-pos { background: rgba(74,222,128,0.15); color: #4ADE80; }
+  .delta-pill-neg { background: rgba(239,68,68,0.15); color: #f87171; }
+  .delta-pill-neu { background: #21262D; color: #8B949E; }
 
   /* ─── Improved / Rolled Back ─────────────────────────── */
   .two-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 16px;
     margin-top: 4px;
     align-items: start;
   }
   .items-card {
-    background: linear-gradient(180deg, #0f0f13 0%, #0b0b0e 100%);
-    border: 1px solid #1e1e2a;
-    border-radius: 10px;
-    padding: 11px 11px 10px;
+    background: #161B22;
+    border: 1px solid #30363D;
+    border-radius: 12px;
+    padding: 20px 24px;
     overflow: hidden;
   }
-  .items-card-green { border-left: 3px solid rgba(34,197,94,0.6); }
-  .items-card-red   { border-left: 3px solid rgba(239,68,68,0.6); }
-  .items-card-neutral { border-left: 3px solid #1e1e2a; }
-  .bullet-list { display: flex; flex-direction: column; gap: 4px; }
+  .items-card-green { border-left: 3px solid #4ADE80; }
+  .items-card-red   { border-left: 3px solid #f87171; }
+  .bullet-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
   .bullet-item {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.04);
+    background: #0D1117;
+    border: 1px solid #21262D;
     border-radius: 6px;
-    padding: 5px 8px;
+    padding: 10px 14px;
     display: flex;
     align-items: flex-start;
-    gap: 7px;
+    gap: 10px;
   }
   .bullet-dot {
-    width: 5px;
-    height: 5px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    margin-top: 4px;
+    margin-top: 3px;
     flex-shrink: 0;
   }
-  .bullet-text { font-size: 8.5px; color: #94a3b8; line-height: 1.55; }
+  .bullet-text { font-size: 13px; color: #8B949E; line-height: 1.5; }
+  .bullet-text strong { color: #C9D1D9; }
+
+  /* Sub-header inside card */
+  .card-subheader {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-subheader::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #30363D;
+  }
+
+  /* Clean-run banner */
+  .clean-banner {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.25);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4ADE80;
+    text-align: center;
+  }
 
   /* ─── Footer ─────────────────────────────────────────── */
   .footer {
-    padding-top: 11px;
-    border-top: 1px solid #111116;
-    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #30363D;
+    margin-top: 24px;
   }
   .footer-text {
-    font-size: 8px;
-    color: #2d3748;
+    font-size: 12px;
+    color: #8B949E;
     text-align: center;
-    letter-spacing: 0.2px;
   }
-  .footer-accent { color: #92400e; font-weight: 600; }
+  .footer-accent { color: #E8A030; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -580,34 +509,31 @@ export function generateReportHTML(options: ReportOptions): string {
 
   <!-- Header -->
   <div class="logo-row">
-    <div class="gear-wrap">
-      <div class="gear-glow"></div>
-      <span class="gear">⚙️</span>
-    </div>
+    <span class="gear">⚙️</span>
     <span class="logo-text">Ratchet Report</span>
   </div>
   <div class="header-meta">
     <div>${esc(dateStr)}</div>
     <div>Project: <strong>${esc(projectName)}</strong> &nbsp;·&nbsp; Target: <strong>${esc(targetName)}</strong></div>
   </div>
-  <div class="header-accent"></div>
+  <div class="header-divider"></div>
 
   <!-- Summary bar -->
   <div class="summary-bar">
     <div class="summary-item">
-      <div class="summary-value" style="color:#f59e0b">${totalClicks}</div>
+      <div class="summary-value" style="color:#4ADE80">${totalClicks}</div>
       <div class="summary-label">Clicks</div>
     </div>
     <div class="summary-item">
-      <div class="summary-value" style="color:#22c55e">${landed.length}</div>
+      <div class="summary-value" style="color:#4ADE80">${landed.length}</div>
       <div class="summary-label">Landed</div>
     </div>
     <div class="summary-item">
-      <div class="summary-value" style="color:${rolledBack.length > 0 ? '#ef4444' : '#22c55e'}">${rolledBack.length}</div>
+      <div class="summary-value" style="color:${rolledBack.length > 0 ? '#f87171' : '#4ADE80'}">${rolledBack.length}</div>
       <div class="summary-label">Rolled Back</div>
     </div>
     <div class="summary-item">
-      <div class="summary-value" style="color:#f59e0b">${esc(duration)}</div>
+      <div class="summary-value" style="color:#E8A030">${esc(duration)}</div>
       <div class="summary-label">Duration</div>
     </div>
   </div>
@@ -615,26 +541,24 @@ export function generateReportHTML(options: ReportOptions): string {
   ${heroHtml}
   ${categoryHtml}
 
-  <!-- What improved + What was rolled back -->
-  <div class="section-title" style="margin-top:18px;color:#94a3b8">Run Summary</div>
+  <!-- Run Summary -->
+  <div class="section-title">Run Summary</div>
   ${rolledBack.length > 0 ? `
   <div class="two-col">
     <div class="items-card items-card-green">
-      <div class="section-title" style="margin-top:0;margin-bottom:8px;color:#22c55e">&#10003; What improved</div>
+      <div class="card-subheader" style="color:#4ADE80">&#10003; What improved</div>
       <div class="bullet-list">${improvedItems}</div>
     </div>
     <div class="items-card items-card-red">
-      <div class="section-title" style="margin-top:0;margin-bottom:8px;color:#ef4444">&#10007; What was rolled back</div>
+      <div class="card-subheader" style="color:#f87171">&#10007; Rolled back</div>
       <div class="bullet-list">${rolledItems}</div>
     </div>
   </div>` : `
-  <div class="items-card items-card-green" style="margin-top:4px">
-    <div class="section-title" style="margin-top:0;margin-bottom:8px;color:#22c55e">&#10003; What improved</div>
+  <div class="items-card items-card-green">
+    <div class="card-subheader" style="color:#4ADE80">&#10003; What improved</div>
     <div class="bullet-list">${improvedItems}</div>
   </div>
-  <div style="margin-top:8px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;color:#4ade80;font-size:10px;font-weight:600;text-align:center">
-    Nothing was rolled back — clean run!
-  </div>`}
+  <div class="clean-banner">Nothing was rolled back — clean run!</div>`}
 
   <!-- Footer -->
   <div class="footer">
