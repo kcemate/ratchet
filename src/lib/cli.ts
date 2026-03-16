@@ -199,6 +199,20 @@ export const CLICK_PHASE_LABELS: Record<ClickPhase, string> = {
 };
 
 /**
+ * Validate project environment: check git repo, warn on dirty worktree, load config.
+ * Consolidates the 4-step startup sequence shared by torque and improve commands.
+ *
+ * @param cwd - current working directory
+ * @returns loaded Ratchet config
+ */
+export async function validateProjectEnv(cwd: string): Promise<ReturnType<typeof loadConfig>> {
+  warnIfStaleBinary();
+  await assertIsRepo(cwd);
+  await warnIfDirtyWorktree(cwd);
+  return loadConfigOrExit(cwd);
+}
+
+/**
  * Assert the cwd is inside a git repository.
  * Prints a formatted error and exits if not.
  * Used by commands that REQUIRE git (torque, improve).

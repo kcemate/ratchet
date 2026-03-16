@@ -20,9 +20,8 @@ import type { ScanResult } from './scan.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
 import { formatDuration } from '../core/utils.js';
-import { printHeader, exitWithError, validateInt, printFields, loadConfigOrExit, warnIfStaleBinary, warnIfDirtyWorktree, assertIsRepo, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
-
-const STATE_FILE = '.ratchet-state.json';
+import { printHeader, exitWithError, validateInt, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
+import { STATE_FILE } from './status.js';
 
 export function torqueCommand(): Command {
   const cmd = new Command('torque');
@@ -76,17 +75,8 @@ export function torqueCommand(): Command {
 
         printHeader('⚙  Ratchet Torque');
 
-        warnIfStaleBinary();
-
-        // Check git repo
-        await assertIsRepo(cwd);
-
-        // Warn about dirty worktree — each click stashes before applying changes,
-        // so existing uncommitted work won't be lost, but the user should know.
-        await warnIfDirtyWorktree(cwd);
-
-        // Load config
-        const config = loadConfigOrExit(cwd);
+        // Validate git repo, warn about dirty worktree, and load config
+        const config = await validateProjectEnv(cwd);
 
         // If config was auto-detected, show a banner so the user knows
         if (config._source === 'auto-detected') {

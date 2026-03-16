@@ -4,7 +4,8 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { printHeader, exitWithError, validateInt, loadConfigOrExit, severityColor, printFields, warnIfStaleBinary, warnIfDirtyWorktree, assertIsRepo, CLICK_PHASE_LABELS, formatScoreDelta } from '../lib/cli.js';
+import { printHeader, exitWithError, validateInt, severityColor, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta } from '../lib/cli.js';
+import { STATE_FILE } from './status.js';
 import { saveRun } from '../core/history.js';
 import { runSweepEngine, runArchitectEngine } from '../core/engine.js';
 import type { ClickPhase } from '../core/engine.js';
@@ -23,8 +24,6 @@ import { SimulationEngine, aggregateResults } from '../core/simulate.js';
 import type { SimulationResult } from '../core/simulate.js';
 import { allocateClicks } from '../core/allocator.js';
 import { generateScorePlan } from '../core/score-optimizer.js';
-
-const STATE_FILE = '.ratchet-state.json';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -509,13 +508,7 @@ export function improveCommand(): Command {
 
       printHeader('⚙  Ratchet Improve');
 
-      warnIfStaleBinary();
-
-      await assertIsRepo(cwd);
-
-      await warnIfDirtyWorktree(cwd);
-
-      const config = loadConfigOrExit(cwd);
+      const config = await validateProjectEnv(cwd);
 
       const clickCount = validateInt(options.clicks, 'clicks', 1);
 
