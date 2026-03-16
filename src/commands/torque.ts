@@ -407,9 +407,10 @@ export function torqueCommand(): Command {
         const reportPath = await writeReport({ run, cwd, scoreBefore, scoreAfter }).catch(() => null);
         await writePDF({ run, cwd, scoreBefore, scoreAfter }).catch(() => null);
 
-        // Persist run state for `ratchet status` / `ratchet tighten`
+        // Persist run state for `ratchet status` / `ratchet tighten` / regen-pdf
         try {
-          await writeFile(join(cwd, STATE_FILE), JSON.stringify(run, null, 2), 'utf-8');
+          const stateWithScores = { ...run, _scoreBefore: scoreBefore, _scoreAfter: scoreAfter };
+          await writeFile(join(cwd, STATE_FILE), JSON.stringify(stateWithScores, null, 2), 'utf-8');
         } catch {
           // Non-fatal
         }

@@ -10,14 +10,25 @@ state.finishedAt = state.finishedAt ? new Date(state.finishedAt) : undefined;
 
 const cwd = process.cwd();
 
-// Run a scan to get current scores
-console.log('Scanning for current scores...');
-const scoreAfter = await runScan(cwd);
-console.log(`Score: ${scoreAfter.total}/100`);
+// Use saved scores if available, otherwise scan fresh
+const scoreBefore = state._scoreBefore ?? undefined;
+let scoreAfter = state._scoreAfter ?? undefined;
+
+if (!scoreAfter) {
+  console.log('No saved scoreAfter — scanning for current scores...');
+  scoreAfter = await runScan(cwd);
+}
+
+if (scoreBefore && scoreAfter) {
+  console.log(`Score: ${scoreBefore.total} → ${scoreAfter.total} / ${scoreAfter.maxTotal}`);
+} else {
+  console.log(`Score: ${scoreAfter?.total ?? 'unknown'} / ${scoreAfter?.maxTotal ?? '?'} (no before-score available)`);
+}
 
 const outPath = await writePDF({
   run: state,
   cwd,
+  scoreBefore,
   scoreAfter,
   projectName: 'ratchet',
 });

@@ -16,16 +16,37 @@ const CATEGORY_COLORS: Record<string, string> = {
   Readability: '#22c55e',
 };
 
+function extractFilename(raw: string): string {
+  // filesModified can be bare paths or verbose descriptions like "`src/foo.ts` — added ..."
+  // Extract just the filename from any format
+  const backtickMatch = raw.match(/`([^`]+)`/);
+  const path = backtickMatch ? backtickMatch[1] : raw.split(/\s[—–-]\s/)[0].trim();
+  return path.split('/').pop() ?? path;
+}
+
+function filesSummary(click: Click): string {
+  if (!click.filesModified?.length) return 'Applied code improvements';
+  const names = click.filesModified.map(extractFilename);
+  const shown = names.slice(0, 3).join(', ');
+  const extra = names.length > 3 ? '…' : '';
+  return `Modified ${names.length} file${names.length > 1 ? 's' : ''}: ${shown}${extra}`;
+}
+
 function plainEnglishSummary(click: Click): string {
   let raw = click.proposal || click.analysis || '';
-  if (!raw) return 'Applied code improvements';
+  if (!raw) return filesSummary(click);
   // Strip leaked agent system prompts (double-wrapped prompt bug)
-  if (/^You are (a |an |the )/i.test(raw)) return click.filesModified?.length
-    ? `Modified ${click.filesModified.length} file${click.filesModified.length > 1 ? 's' : ''}: ${click.filesModified.map(f => f.split('/').pop()).slice(0, 3).join(', ')}${click.filesModified.length > 3 ? '…' : ''}`
-    : 'Applied code improvements';
-  const firstSentence = raw.split(/[.!\n]/)[0]?.trim() ?? '';
-  if (firstSentence.length > 0 && firstSentence.length <= 120) return firstSentence;
-  return raw.slice(0, 120).trimEnd() + (raw.length > 120 ? '...' : '');
+  if (/^You are (a |an |the )/i.test(raw)) return filesSummary(click);
+  // Clean up code artifacts that don't belong in a summary
+  let clean = raw.split('\n')[0].trim();
+  clean = clean.replace(/`/g, '').replace(/\s{2,}/g, ' ');
+  // If the first line is still too verbose or looks like code, fall back to files
+  if (clean.length > 100 || /^(import |const |let |var |function |class |export )/.test(clean)) {
+    return filesSummary(click);
+  }
+  const firstSentence = clean.split(/[.!]/)[0]?.trim() ?? '';
+  if (firstSentence.length > 0 && firstSentence.length <= 100) return firstSentence;
+  return clean.slice(0, 100).trimEnd() + (clean.length > 100 ? '…' : '');
 }
 
 function esc(s: string): string {
