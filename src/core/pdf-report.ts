@@ -33,20 +33,35 @@ function filesSummary(click: Click): string {
 }
 
 function plainEnglishSummary(click: Click): string {
+  // Build a richer summary using all available click metadata
+  const files = filesSummary(click);
+  const issuesFixed = (click as Click & { issuesFixedCount?: number }).issuesFixedCount;
+  const scoreAfter = (click as Click & { scoreAfterClick?: number }).scoreAfterClick;
+
+  // Try to extract a clean proposal summary first
   let raw = click.proposal || click.analysis || '';
-  if (!raw) return filesSummary(click);
-  // Strip leaked agent system prompts (double-wrapped prompt bug)
-  if (/^You are (a |an |the )/i.test(raw)) return filesSummary(click);
-  // Clean up code artifacts that don't belong in a summary
-  let clean = raw.split('\n')[0].trim();
-  clean = clean.replace(/`/g, '').replace(/\s{2,}/g, ' ');
-  // If the first line is still too verbose or looks like code, fall back to files
-  if (clean.length > 100 || /^(import |const |let |var |function |class |export )/.test(clean)) {
-    return filesSummary(click);
+  let proposalSummary = '';
+
+  if (raw && !/^You are (a |an |the )/i.test(raw)) {
+    let clean = raw.split('\n')[0].trim();
+    clean = clean.replace(/`/g, '').replace(/\s{2,}/g, ' ');
+    if (clean.length <= 100 && !/^(import |const |let |var |function |class |export |TOP ISSUES|ARCHITECTURAL)/.test(clean)) {
+      const firstSentence = clean.split(/[.!]/)[0]?.trim() ?? '';
+      if (firstSentence.length > 0 && firstSentence.length <= 100) {
+        proposalSummary = firstSentence;
+      }
+    }
   }
-  const firstSentence = clean.split(/[.!]/)[0]?.trim() ?? '';
-  if (firstSentence.length > 0 && firstSentence.length <= 100) return firstSentence;
-  return clean.slice(0, 100).trimEnd() + (clean.length > 100 ? '…' : '');
+
+  // Compose the best summary we can
+  const base = proposalSummary || files;
+
+  // Enrich with metrics when available
+  if (issuesFixed && issuesFixed > 0) {
+    return `${base} — fixed ${issuesFixed} issue${issuesFixed > 1 ? 's' : ''}`;
+  }
+
+  return base;
 }
 
 function esc(s: string): string {
