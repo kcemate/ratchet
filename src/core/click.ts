@@ -25,6 +25,13 @@ export interface ClickContext {
   adversarial?: boolean;
   sweepMode?: boolean;
   architectMode?: boolean;
+  /**
+   * Atomic sweep mode — one prompt, all files, no per-file/total line guards.
+   * Used for effort-1 mechanical fixes (console removal, dead code, line breaks)
+   * where the test suite is the only correctness gate. Bypasses file count +
+   * total line guards but keeps the Pawl (rollback on test failure).
+   */
+  atomicSweep?: boolean;
   /** Main repo cwd for GitNexus lookups (worktrees don't have .gitnexus) */
   gitnexusCwd?: string;
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
@@ -115,11 +122,13 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     } else {
       // Click guards: reject over-aggressive changes before running tests
       const guardResult = checkClickGuards(cwd, config.guards, ctx.sweepMode, ctx.architectMode);
-      if (!guardResult.passed) {
+      if (!guardResult.passed && !ctx.atomicSweep) {
         console.error(`[ratchet] Click ${clickNumber} REJECTED by guards: ${guardResult.reason}`);
         console.error(`[ratchet]   ${guardResult.detail}`);
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
+      } else if (!guardResult.passed && ctx.atomicSweep) {
+        console.error(`[ratchet] Click ${clickNumber} guard exceeded (${guardResult.reason}) — proceeding in atomic mode, test suite is the gate`);
       }
 
       if (!rolledBack) {
@@ -247,8 +256,13 @@ function checkClickGuards(cwd: string, guards?: ClickGuards, sweepMode?: boolean
     maxFilesChanged = 20;
     maxLinesChanged = 500;
   } else if (sweepMode) {
-    maxFilesChanged = 10;
-    maxLinesChanged = 120;
+    // Use config guards if set (tier engine sets larger limits for mechanical fixes),
+    // otherwise use defaults
+    maxFilesChanged = guards?.maxFilesChanged ?? 10;
+    maxLinesChanged = guards?.maxLinesChanged ?? 120;
+    // Enforce a floor for sweep: at least 10 files, 120 lines
+    maxFilesChanged = Math.max(maxFilesChanged, 10);
+    maxLinesChanged = Math.max(maxLinesChanged, 120);
   }
 
   try {

@@ -8,6 +8,7 @@ import { printHeader, exitWithError, validateInt, severityColor, printFields, va
 import { STATE_FILE } from './status.js';
 import { saveRun } from '../core/history.js';
 import { runSweepEngine, runArchitectEngine } from '../core/engine.js';
+import { runTierEngine, planTierTargets } from '../core/tier-engine.js';
 import type { ClickPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
@@ -672,9 +673,24 @@ export function improveCommand(): Command {
           }
         }
 
-        // Phase 2: Surgical sweep (cleanup) — uses cheaper model
-        process.stdout.write(chalk.green('  ◆ Surgical phase\n'));
-        const surgicalRun = await runSweepEngine({
+        // Phase 2: Tier-aware surgical (targets tier boundaries for max score gain)
+        // Relax guards for tier engine: larger batches for mechanical fixes
+        config.guards = { maxLinesChanged: 200, maxFilesChanged: 16 };
+        process.stdout.write(chalk.green('  ◆ Surgical phase (tier-aware)\n'));
+
+        // Show tier plan
+        const tierPlan = planTierTargets(scanAfterArchitect, surgicalClicks);
+        if (tierPlan.length > 0) {
+          for (const t of tierPlan) {
+            const arrow = `${t.gap.currentScore}→${t.gap.currentScore + t.gap.pointsAtNextTier}/${t.gap.maxScore}`;
+            process.stdout.write(
+              chalk.dim(`    ${t.gap.subcategory}: ${t.clickBudget} clicks, +${t.gap.pointsAtNextTier}pt (${arrow}), ${t.gap.files.length} files\n`)
+            );
+          }
+          process.stdout.write('\n');
+        }
+
+        const surgicalRun = await runTierEngine({
           target,
           clicks: surgicalClicks,
           config,
@@ -684,7 +700,6 @@ export function improveCommand(): Command {
           adversarial: useAdversarial,
           scanResult: scanAfterArchitect,
           learningStore,
-          scoreOptimized: true,
           callbacks: makeCallbacks(clickCount, architectClicks),
         });
 
