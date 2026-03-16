@@ -23,6 +23,7 @@ import { LearningStore } from '../core/learning.js';
 import { SimulationEngine, aggregateResults } from '../core/simulate.js';
 import type { SimulationResult } from '../core/simulate.js';
 import { allocateClicks } from '../core/allocator.js';
+import { generateScorePlan } from '../core/score-optimizer.js';
 
 const STATE_FILE = '.ratchet-state.json';
 
@@ -596,6 +597,10 @@ export function improveCommand(): Command {
       }
       printFields(modeFields);
 
+      // Print score optimization plan
+      const scorePlan = generateScorePlan(scoreBefore);
+      process.stdout.write('\n' + chalk.dim(scorePlan) + '\n\n');
+
       // Model tiering: architect phase gets the configured (expensive) model,
       // surgical phase uses sonnet for mechanical fixes (70%+ cost reduction)
       const architectModel = config.model; // Opus or whatever is configured
@@ -672,6 +677,7 @@ export function improveCommand(): Command {
             adversarial: useAdversarial,
             scanResult: scoreBefore,
             learningStore,
+            scoreOptimized: true,
             callbacks: makeCallbacks(clickCount, 0),
           });
           // Use scan after architect as input to surgical
@@ -692,6 +698,7 @@ export function improveCommand(): Command {
           adversarial: useAdversarial,
           scanResult: scanAfterArchitect,
           learningStore,
+          scoreOptimized: true,
           callbacks: makeCallbacks(clickCount, architectClicks),
         });
 

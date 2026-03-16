@@ -5,6 +5,7 @@ import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase } from '../t
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
 import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
+import { buildScoreOptimizedBacklog } from './score-optimizer.js';
 import { buildArchitectPrompt } from './agents/shell.js';
 import { executeClick } from './click.js';
 import { SwarmExecutor } from './swarm.js';
@@ -43,6 +44,8 @@ export interface EngineRunOptions {
   scanResult?: ScanResult;
   /** If provided, record outcomes for cross-run learning */
   learningStore?: LearningStore;
+  /** Use score-optimized prioritization instead of severity-based (default: false) */
+  scoreOptimized?: boolean;
 }
 
 const TEST_FILE_PATTERNS = [
@@ -81,7 +84,7 @@ function countTestFiles(dir: string): number {
  * re-scans to measure progress and update the backlog.
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore } = options;
+  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -129,7 +132,9 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
   if (currentScan) {
     await callbacks.onScanComplete?.(currentScan);
     previousTotal = currentScan.total;
-    const backlog = buildBacklog(currentScan);
+    const backlog = scoreOptimized
+      ? buildScoreOptimizedBacklog(currentScan)
+      : buildBacklog(currentScan);
     // Enrich backlog with blast-radius risk scores from GitNexus
     enrichBacklogWithRisk(backlog, cwd);
     backlogGroups = groupBacklogBySubcategory(backlog);
@@ -280,7 +285,9 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             // Update backlog from fresh scan
             previousTotal = newTotal;
             currentScan = newScan;
-            const newBacklog = buildBacklog(newScan);
+            const newBacklog = scoreOptimized
+              ? buildScoreOptimizedBacklog(newScan)
+              : buildBacklog(newScan);
             backlogGroups = groupBacklogBySubcategory(newBacklog);
           } catch {
             // Non-fatal — skip live scoring for this click
@@ -523,7 +530,7 @@ export function chunk<T>(arr: T[], size: number): T[][] {
  * Finds the highest-priority sweepable issue and runs clicks against each batch of files.
  */
 export async function runSweepEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore } = options;
+  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore, scoreOptimized = false } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -551,7 +558,10 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
     clearGitNexusCache();
 
     // 2. Build backlog and enrich with risk scores
-    const backlog = buildBacklog(scanResult);
+    // Score-optimized mode: prioritize by ROI (points per effort) instead of severity
+    const backlog = scoreOptimized
+      ? buildScoreOptimizedBacklog(scanResult)
+      : buildBacklog(scanResult);
     enrichBacklogWithRisk(backlog, cwd);
 
     // 3. Filter to sweepable tasks
