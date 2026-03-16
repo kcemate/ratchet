@@ -273,16 +273,18 @@ export class SwarmExecutor {
     const { dirname } = await import('path');
     const { mkdirSync: mkdirSyncFn } = await import('fs');
 
-    for (const file of changedFiles) {
-      const src = join(winnerWorktree, file);
-      const dst = join(mainCwd, file);
-      try {
-        mkdirSyncFn(dirname(dst), { recursive: true });
-        await copyFile(src, dst);
-      } catch {
-        // Skip files that don't exist in worktree (deleted files, etc.)
-      }
-    }
+    await Promise.all(
+      changedFiles.map(async (file) => {
+        const src = join(winnerWorktree, file);
+        const dst = join(mainCwd, file);
+        try {
+          mkdirSyncFn(dirname(dst), { recursive: true });
+          await copyFile(src, dst);
+        } catch {
+          // Skip files that don't exist in worktree (deleted files, etc.)
+        }
+      }),
+    );
   }
 
   /**

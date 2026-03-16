@@ -304,11 +304,10 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           const specName = config.swarm?.enabled
             ? (config.swarm.specializations?.[0] ?? 'default')
             : 'default';
-          for (const issue of clickIssues) {
-            const files = issue.sweepFiles ?? click.filesModified;
-            for (const file of files) {
-              try {
-                await learningStore.recordOutcome({
+          await Promise.all(
+            clickIssues.flatMap((issue) =>
+              (issue.sweepFiles ?? click.filesModified).map((file) =>
+                learningStore.recordOutcome({
                   issueType: issue.subcategory || issue.category,
                   filePath: file,
                   specialization: specName,
@@ -316,12 +315,12 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
                   fixTimeMs: elapsedMs,
                   scoreDelta,
                   failureReason: rolled_back ? 'click rolled back' : undefined,
-                });
-              } catch {
-                // Non-fatal — don't let learning failures break the engine
-              }
-            }
-          }
+                }).catch(() => {
+                  // Non-fatal — don't let learning failures break the engine
+                }),
+              ),
+            ),
+          );
         }
       } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -671,9 +670,9 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
         if (options.learningStore) {
           const elapsedMs = Date.now() - clickStartMs;
           const specName = click.swarmSpecialization ?? 'default';
-          for (const file of batch) {
-            try {
-              await options.learningStore.recordOutcome({
+          await Promise.all(
+            batch.map((file) =>
+              options.learningStore!.recordOutcome({
                 issueType: task.subcategory || task.category,
                 filePath: file,
                 specialization: specName,
@@ -681,11 +680,11 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
                 fixTimeMs: elapsedMs,
                 scoreDelta: 0,
                 failureReason: rolled_back ? 'sweep click rolled back' : undefined,
-              });
-            } catch {
-              // Non-fatal
-            }
-          }
+              }).catch(() => {
+                // Non-fatal
+              }),
+            ),
+          );
         }
       } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error(String(err));

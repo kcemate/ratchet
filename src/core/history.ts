@@ -72,16 +72,19 @@ export async function listRuns(cwd: string): Promise<HistoryEntry[]> {
 
   const jsonFiles = files.filter((f) => f.endsWith('.json'));
 
-  const entries: HistoryEntry[] = [];
-  for (const file of jsonFiles) {
-    const filePath = join(runsDir, file);
-    try {
-      const raw = await readFile(filePath, 'utf-8');
-      entries.push(hydrateDates(JSON.parse(raw) as HistoryEntry));
-    } catch {
-      // Skip corrupted files
-    }
-  }
+  const results = await Promise.all(
+    jsonFiles.map(async (file) => {
+      const filePath = join(runsDir, file);
+      try {
+        const raw = await readFile(filePath, 'utf-8');
+        return hydrateDates(JSON.parse(raw) as HistoryEntry);
+      } catch {
+        // Skip corrupted files
+        return null;
+      }
+    }),
+  );
+  const entries: HistoryEntry[] = results.filter((e): e is HistoryEntry => e !== null);
 
   // Sort newest first by savedAt
   entries.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
