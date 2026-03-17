@@ -651,7 +651,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
       {
         selector: 'node.hover-faded',
         style: {
-          'opacity': 0.12,
+          'opacity': 0.3,
         },
       },
       {
@@ -665,9 +665,9 @@ export function generateVisionHTML(graph: VisionGraph): string {
       {
         selector: 'edge',
         style: {
-          'width': 1,
-          'line-color': 'rgba(148,163,184,0.08)',
-          'target-arrow-color': 'rgba(148,163,184,0.12)',
+          'width': 1.2,
+          'line-color': 'rgba(148,163,184,0.18)',
+          'target-arrow-color': 'rgba(148,163,184,0.22)',
           'target-arrow-shape': 'triangle',
           'curve-style': 'bezier',
           'arrow-scale': 0.6,
@@ -677,28 +677,28 @@ export function generateVisionHTML(graph: VisionGraph): string {
       {
         selector: 'edge[sourceScore < 40]',
         style: {
-          'line-color': 'rgba(239,68,68,0.2)',
-          'target-arrow-color': 'rgba(239,68,68,0.2)',
-          'width': 1.5,
+          'line-color': 'rgba(239,68,68,0.35)',
+          'target-arrow-color': 'rgba(239,68,68,0.35)',
+          'width': 1.8,
         },
       },
       {
         selector: 'edge.highlighted',
         style: {
-          'line-color': 'rgba(34,211,238,0.6)',
-          'target-arrow-color': 'rgba(34,211,238,0.6)',
-          'width': 2,
+          'line-color': 'rgba(34,211,238,0.7)',
+          'target-arrow-color': 'rgba(34,211,238,0.7)',
+          'width': 2.5,
           'z-index': 999,
           'opacity': 1,
         },
       },
       {
         selector: 'edge.faded',
-        style: { 'opacity': 0.04 },
+        style: { 'opacity': 0.06 },
       },
       {
         selector: 'edge.hover-faded',
-        style: { 'opacity': 0.03 },
+        style: { 'opacity': 0.08 },
       },
     ],
     wheelSensitivity: 0.3,
@@ -717,31 +717,36 @@ export function generateVisionHTML(graph: VisionGraph): string {
     });
     cy.edges().style('opacity', 0);
 
-    // Staggered fade-in
+    // Staggered fade-in — fast burst for hub nodes, then cascade
     nodeArr.forEach(function(node, i) {
+      var delay = i < 20 ? i * 30 : 600 + (i - 20) * 12;
+      var dur = i < 20 ? 500 : 300;
       setTimeout(function() {
-        node.animate({ style: { opacity: 1 } }, { duration: 350, easing: 'ease-in' });
-      }, i * 20);
+        node.animate({ style: { opacity: 1 } }, { duration: dur, easing: 'ease-out' });
+      }, delay);
     });
 
-    // Fade in edges after nodes
-    const edgeDelay = nodeArr.length * 20 + 200;
+    // Fade in edges after nodes — sweep from visible
+    var edgeDelay = 600 + Math.max(0, nodeArr.length - 20) * 12 + 300;
     setTimeout(function() {
-      cy.edges().animate({ style: { opacity: 1 } }, { duration: 500 });
+      cy.edges().animate({ style: { opacity: 1 } }, { duration: 800, easing: 'ease-in-out' });
     }, edgeDelay);
 
-    // Pulse low-score nodes
+    // Pulse low-score nodes — dramatic throb with scale + opacity
     setTimeout(function() {
-      cy.nodes().filter(function(node) {
+      var criticalNodes = cy.nodes().filter(function(node) {
         return node.data('score') < 30;
-      }).forEach(function(node) {
+      });
+      criticalNodes.forEach(function(node) {
+        var baseSize = node.data('size') || 16;
+        var expandedSize = baseSize * 1.4;
         (function pulse() {
           node.animate(
-            { style: { 'background-opacity': 0.6 } },
-            { duration: 800, complete: function() {
+            { style: { 'width': expandedSize, 'height': expandedSize, 'background-opacity': 0.5, 'border-width': 4, 'border-color': '#ff2d55' } },
+            { duration: 900, easing: 'ease-in-out', complete: function() {
               node.animate(
-                { style: { 'background-opacity': 0.9 } },
-                { duration: 800, complete: pulse }
+                { style: { 'width': baseSize, 'height': baseSize, 'background-opacity': 1, 'border-width': 2, 'border-color': node.data('borderColor') } },
+                { duration: 900, easing: 'ease-in-out', complete: pulse }
               );
             }}
           );
