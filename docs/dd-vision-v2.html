@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ratchet Vision — rest-express</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/cytoscape@3/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-fcose@2/cytoscape-fcose.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #0f1419;
+      --bg-elevated: #151c28;
+      --border: #1e293b;
+      --accent-primary: #6366f1;
+      --accent-secondary: #8b5cf6;
+      --edge-default: rgba(148,163,184,0.08);
+      --edge-highlight: rgba(34,211,238,0.8);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #475569;
+      --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --sidebar-w: 300px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+    }
+
+    #app { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    #sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elevated);
+    }
+
+    #sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      letter-spacing: 0.5px;
+      font-family: var(--font-sans);
+      margin-bottom: 10px;
+    }
+
+    #score-ring-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    #score-ring-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    #project-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .score-ring-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    #sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    /* Search */
+    #search {
+      width: 100%;
+      padding: 7px 10px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: var(--font-sans);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #search:focus { border-color: var(--accent-primary); }
+    #search::placeholder { color: var(--text-muted); }
+
+    /* Filter selects */
+    select {
+      width: 100%;
+      padding: 7px 10px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: var(--font-sans);
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    select:focus { border-color: var(--accent-primary); }
+
+    /* Score range */
+    .score-radios { display: flex; flex-direction: column; gap: 5px; }
+    .score-radios label {
+      display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 12px;
+    }
+    .score-radios input[type=radio] { accent-color: var(--accent-primary); }
+
+    /* Legend */
+    .legend { display: flex; flex-direction: column; gap: 6px; }
+    .legend-item {
+      display: flex; align-items: center; gap: 8px; font-size: 12px;
+      cursor: pointer; padding: 4px 6px; border-radius: 4px;
+      transition: background 0.15s;
+      border: 1px solid transparent;
+    }
+    .legend-item:hover { background: var(--bg-elevated); border-color: var(--border); }
+    .legend-item.active { background: var(--bg-elevated); border-color: var(--accent-primary); }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+      box-shadow: 0 0 6px currentColor;
+    }
+    .legend-size-note {
+      font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.5;
+    }
+
+    /* Detail panel */
+    #detail {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.7;
+      display: none;
+    }
+    #detail.visible { display: block; }
+    #detail h2 {
+      font-size: 12px; font-weight: 700; color: var(--accent-primary);
+      margin-bottom: 8px; word-break: break-all;
+      font-family: var(--font-mono);
+    }
+    #detail .detail-row { display: flex; justify-content: space-between; gap: 8px; }
+    #detail .detail-label { color: var(--text-muted); }
+    #detail .detail-val { font-weight: 600; color: var(--text-primary); }
+    #detail .detail-issues { margin-top: 8px; }
+    #detail .detail-issues-title {
+      color: var(--text-muted); font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;
+    }
+    #detail .issue-cat { display: flex; justify-content: space-between; }
+    #detail .issue-cat-name { color: var(--text-secondary); }
+    #detail .issue-cat-count { font-weight: 600; color: #fbbf24; }
+
+    /* Node count */
+    #node-count { font-size: 11px; color: var(--text-muted); margin-top: -4px; }
+
+    /* Truncation warning */
+    #trunc-warn {
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.4);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: var(--accent-primary);
+      display: none;
+    }
+    #trunc-warn.visible { display: block; }
+
+    /* ── Graph area ── */
+    #cy-wrapper {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 40%, rgba(99,102,241,0.08) 0%, transparent 60%),
+        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(34,211,238,0.03) 39px, rgba(34,211,238,0.03) 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(34,211,238,0.03) 39px, rgba(34,211,238,0.03) 40px),
+        #0a0e17;
+    }
+
+    #cy-wrapper::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(10,14,23,0.7) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    #particles {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    #cy {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: transparent !important;
+    }
+
+    /* ── Tooltip ── */
+    #tooltip {
+      position: fixed;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+      max-width: 260px;
+      line-height: 1.6;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.8);
+    }
+    #tooltip .tt-name {
+      font-weight: 700; color: var(--accent-primary); margin-bottom: 4px;
+      word-break: break-all; font-family: var(--font-mono); font-size: 11px;
+    }
+    #tooltip .tt-row { display: flex; gap: 6px; }
+    #tooltip .tt-label { color: var(--text-muted); }
+
+    /* Scrollbar */
+    #sidebar-scroll::-webkit-scrollbar { width: 4px; }
+    #sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+    #sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ARIA focus outline */
+    :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- SVG Glow Filter -->
+<svg style="position:absolute;width:0;height:0">
+  <defs>
+    <filter id="glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<div id="app" role="main">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" aria-label="Graph controls and file details">
+    <div id="sidebar-header">
+      <h1>⚡ Ratchet Vision</h1>
+      <div id="score-ring-wrapper">
+        <svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true">
+          <circle cx="30" cy="30" r="22" fill="none" stroke="#1e293b" stroke-width="4"/>
+          <circle id="score-ring-arc" cx="30" cy="30" r="22" fill="none"
+            stroke="#6366f1" stroke-width="4"
+            stroke-dasharray="138.23" stroke-dashoffset="138.23"
+            stroke-linecap="round"
+            transform="rotate(-90 30 30)"
+            style="transition: stroke-dashoffset 1s ease, stroke 0.5s ease"/>
+          <text id="score-ring-text" x="30" y="34" text-anchor="middle"
+            fill="#f1f5f9" font-size="13" font-weight="600"
+            font-family="Inter, sans-serif"></text>
+        </svg>
+        <div id="score-ring-info">
+          <div class="score-ring-label">Project Score</div>
+          <div id="project-name"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sidebar-scroll">
+
+      <div id="trunc-warn" role="alert" aria-live="polite">
+        ⚠ Graph truncated to <span id="max-nodes-shown"></span> nodes. Use --focus or --filter to narrow the view.
+      </div>
+
+      <!-- Search -->
+      <div>
+        <div class="section-label">Search</div>
+        <input
+          id="search"
+          type="search"
+          placeholder="Filter by filename…"
+          aria-label="Search files by name"
+          autocomplete="off"
+        />
+        <div id="node-count" aria-live="polite"></div>
+      </div>
+
+      <!-- Category filter -->
+      <div>
+        <div class="section-label">Issue Category</div>
+        <select id="cat-filter" aria-label="Filter by issue category">
+          <option value="">All categories</option>
+        <option value="testing">Testing</option>
+        <option value="security">Security</option>
+        <option value="type safety">Type Safety</option>
+        <option value="error handling">Error Handling</option>
+        <option value="performance">Performance</option>
+        <option value="code quality">Code Quality</option>
+        </select>
+      </div>
+
+      <!-- Score range -->
+      <div>
+        <div class="section-label">Score Range</div>
+        <div class="score-radios" role="radiogroup" aria-label="Filter by score range">
+          <label><input type="radio" name="score-range" value="all" checked> All scores</label>
+          <label><input type="radio" name="score-range" value="good"> <span style="color:#22d3ee">●</span> Good (≥80)</label>
+          <label><input type="radio" name="score-range" value="caution"> <span style="color:#fbbf24">●</span> Caution (40–79)</label>
+          <label><input type="radio" name="score-range" value="danger"> <span style="color:#ef4444">●</span> Danger (&lt;40)</label>
+        </div>
+      </div>
+
+      <!-- Legend (clickable) -->
+      <div>
+        <div class="section-label">Legend — click to isolate</div>
+        <div class="legend" role="list" aria-label="Color and size legend">
+          <div class="legend-item" role="listitem" data-tier="excellent" tabindex="0" aria-label="Excellent tier: score above 90">
+            <span class="legend-dot" style="background:#00ff88;color:#00ff88"></span>Score &gt; 90 — Excellent
+          </div>
+          <div class="legend-item" role="listitem" data-tier="good" tabindex="0" aria-label="Good tier: score 80 to 90">
+            <span class="legend-dot" style="background:#22d3ee;color:#22d3ee"></span>Score 80–90 — Good
+          </div>
+          <div class="legend-item" role="listitem" data-tier="warning" tabindex="0" aria-label="Warning tier: score 60 to 80">
+            <span class="legend-dot" style="background:#fbbf24;color:#fbbf24"></span>Score 60–80 — Warning
+          </div>
+          <div class="legend-item" role="listitem" data-tier="caution" tabindex="0" aria-label="Caution tier: score 40 to 60">
+            <span class="legend-dot" style="background:#f97316;color:#f97316"></span>Score 40–60 — Caution
+          </div>
+          <div class="legend-item" role="listitem" data-tier="danger" tabindex="0" aria-label="Danger tier: score 20 to 40">
+            <span class="legend-dot" style="background:#ef4444;color:#ef4444"></span>Score 20–40 — Danger
+          </div>
+          <div class="legend-item" role="listitem" data-tier="critical" tabindex="0" aria-label="Critical tier: score below 20">
+            <span class="legend-dot" style="background:#ff2d55;color:#ff2d55"></span>Score &lt; 20 — Critical
+          </div>
+          <p class="legend-size-note">Node size = blast radius (dependents). Click a tier to isolate.</p>
+        </div>
+      </div>
+
+      <!-- Detail panel -->
+      <div id="detail" aria-live="polite" aria-label="Selected file details">
+        <h2 id="detail-name"></h2>
+        <div class="detail-row">
+          <span class="detail-label">Score</span>
+          <span class="detail-val" id="detail-score"></span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Issues</span>
+          <span class="detail-val" id="detail-issues-count"></span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Blast radius</span>
+          <span class="detail-val" id="detail-blast"></span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Directory</span>
+          <span class="detail-val" id="detail-dir"></span>
+        </div>
+        <div id="detail-cat-breakdown" class="detail-issues"></div>
+      </div>
+
+    </div><!-- /sidebar-scroll -->
+  </aside>
+
+  <!-- Graph area -->
+  <div id="cy-wrapper">
+    <canvas id="particles" aria-hidden="true"></canvas>
+    <div id="cy" role="img" aria-label="Dependency graph"></div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Hover tooltip -->
+<div id="tooltip" role="tooltip" aria-hidden="true"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const ELEMENTS = {"nodes":[{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/App.test.ts","label":"App.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/App.tsx","label":"App.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"client/src","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Badge.test.ts","label":"Badge.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Badge.tsx","label":"Badge.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":1,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Onboarding.test.ts","label":"Onboarding.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Onboarding.tsx","label":"Onboarding.tsx","score":62,"issueCount":3,"issuesByCategory":{"Testing":1,"Error Handling":1,"Code Quality":1},"blastRadius":1,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ShareCardModal.test.ts","label":"ShareCardModal.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ShareCardModal.tsx","label":"ShareCardModal.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/WeeklyThroneReport.test.ts","label":"WeeklyThroneReport.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/WeeklyThroneReport.tsx","label":"WeeklyThroneReport.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/back-header.test.ts","label":"back-header.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/back-header.tsx","label":"back-header.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":1,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-challenge-modal.test.ts","label":"battle-challenge-modal.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-challenge-modal.tsx","label":"battle-challenge-modal.tsx","score":59,"issueCount":4,"issuesByCategory":{"Testing":1,"Error Handling":1,"Code Quality":2},"blastRadius":1,"directory":"client/src/components","color":"#f97316","glow":"rgba(249,115,22,0.4)","borderColor":"rgba(249,115,22,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-grid.test.ts","label":"battle-grid.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-grid.tsx","label":"battle-grid.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":1,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-nudge.test.ts","label":"bingo-nudge.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-nudge.tsx","label":"bingo-nudge.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":1,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-strip.test.ts","label":"bingo-strip.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-strip.tsx","label":"bingo-strip.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bottom-navigation.test.ts","label":"bottom-navigation.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bottom-navigation.tsx","label":"bottom-navigation.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/create-group-modal.test.ts","label":"create-group-modal.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/create-group-modal.tsx","label":"create-group-modal.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/edit-username-modal.test.ts","label":"edit-username-modal.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/edit-username-modal.tsx","label":"edit-username-modal.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/error-boundary.test.ts","label":"error-boundary.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"client/src/components","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/error-boundary.tsx","label":"error-boundary.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":1,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/gold-crown-badge.tsx","label":"gold-crown-badge.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/group-leaderboard.tsx","label":"group-leaderboard.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/group-weekly-report.tsx","label":"group-weekly-report.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/invite-modal.tsx","label":"invite-modal.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/log-deuce-modal.tsx","label":"log-deuce-modal.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/next-badge-teaser.tsx","label":"next-badge-teaser.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/notification-banner.tsx","label":"notification-banner.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/premium-badge.tsx","label":"premium-badge.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/premium-gate.tsx","label":"premium-gate.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/profile-picture-upload.tsx","label":"profile-picture-upload.tsx","score":62,"issueCount":3,"issuesByCategory":{"Testing":1,"Error Handling":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/rank-strip.tsx","label":"rank-strip.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/reactions.tsx","label":"reactions.tsx","score":62,"issueCount":3,"issuesByCategory":{"Testing":1,"Error Handling":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/streak-frame.tsx","label":"streak-frame.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/streak-insurance-button.tsx","label":"streak-insurance-button.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/streak-strip.tsx","label":"streak-strip.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/throne-analytics.tsx","label":"throne-analytics.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/accordion.tsx","label":"accordion.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/alert-dialog.tsx","label":"alert-dialog.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/alert.tsx","label":"alert.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/aspect-ratio.tsx","label":"aspect-ratio.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/avatar.tsx","label":"avatar.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/badge.tsx","label":"badge.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/breadcrumb.tsx","label":"breadcrumb.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/button.tsx","label":"button.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/calendar.tsx","label":"calendar.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/card.tsx","label":"card.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/carousel.tsx","label":"carousel.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/chart.tsx","label":"chart.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/checkbox.tsx","label":"checkbox.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/collapsible.tsx","label":"collapsible.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/command.tsx","label":"command.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/context-menu.tsx","label":"context-menu.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/dialog.tsx","label":"dialog.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/drawer.tsx","label":"drawer.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/dropdown-menu.tsx","label":"dropdown-menu.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/form.tsx","label":"form.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/hover-card.tsx","label":"hover-card.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/input-otp.tsx","label":"input-otp.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/input.tsx","label":"input.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/label.tsx","label":"label.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/menubar.tsx","label":"menubar.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/navigation-menu.tsx","label":"navigation-menu.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/pagination.tsx","label":"pagination.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/popover.tsx","label":"popover.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/progress.tsx","label":"progress.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/radio-group.tsx","label":"radio-group.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/resizable.tsx","label":"resizable.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/scroll-area.tsx","label":"scroll-area.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/select.tsx","label":"select.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/separator.tsx","label":"separator.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/sheet.tsx","label":"sheet.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/sidebar.tsx","label":"sidebar.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/skeleton.tsx","label":"skeleton.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/slider.tsx","label":"slider.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/switch.tsx","label":"switch.tsx","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/table.tsx","label":"table.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/tabs.tsx","label":"tabs.tsx","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/textarea.tsx","label":"textarea.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/toast.tsx","label":"toast.tsx","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/toaster.tsx","label":"toaster.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/toggle-group.tsx","label":"toggle-group.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/toggle.tsx","label":"toggle.tsx","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ui/tooltip.tsx","label":"tooltip.tsx","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/components/ui","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/upgrade-prompt.tsx","label":"upgrade-prompt.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/components","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/contexts/ThemeContext.tsx","label":"ThemeContext.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/contexts","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/use-mobile.tsx","label":"use-mobile.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/hooks","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/use-toast.ts","label":"use-toast.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/hooks","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/useAuth.ts","label":"useAuth.ts","score":62,"issueCount":3,"issuesByCategory":{"Testing":1,"Error Handling":1,"Code Quality":1},"blastRadius":1,"directory":"client/src/hooks","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/useNetworkStatus.ts","label":"useNetworkStatus.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/hooks","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/useOfflineSync.ts","label":"useOfflineSync.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/hooks","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/useTheme.ts","label":"useTheme.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/hooks","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/useWebSocket.ts","label":"useWebSocket.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/hooks","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/auth-token.ts","label":"auth-token.ts","score":70,"issueCount":2,"issuesByCategory":{"Testing":1,"Error Handling":1},"blastRadius":1,"directory":"client/src/lib","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/authUtils.ts","label":"authUtils.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/gamification.ts","label":"gamification.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/offlineQueue.ts","label":"offlineQueue.ts","score":70,"issueCount":2,"issuesByCategory":{"Testing":1,"Error Handling":1},"blastRadius":0,"directory":"client/src/lib","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/queryClient.ts","label":"queryClient.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":1,"directory":"client/src/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/userUtils.ts","label":"userUtils.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/utils.ts","label":"utils.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/main.tsx","label":"main.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"client/src","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/battle-lobby.tsx","label":"battle-lobby.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/battle-match.tsx","label":"battle-match.tsx","score":59,"issueCount":4,"issuesByCategory":{"Testing":1,"Error Handling":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#f97316","glow":"rgba(249,115,22,0.4)","borderColor":"rgba(249,115,22,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/bingo.tsx","label":"bingo.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/group-detail.tsx","label":"group-detail.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/groups.tsx","label":"groups.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/home.tsx","label":"home.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/invite-landing.tsx","label":"invite-landing.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/landing.tsx","label":"landing.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/legacy.tsx","label":"legacy.tsx","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/not-found.tsx","label":"not-found.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/passport.tsx","label":"passport.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/premium.tsx","label":"premium.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/privacy.tsx","label":"privacy.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/profile.tsx","label":"profile.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/referral.tsx","label":"referral.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/settings.tsx","label":"settings.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/pages/terms.tsx","label":"terms.tsx","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"client/src/pages","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/drizzle.config.ts","label":"drizzle.config.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/fix-errors.js","label":"fix-errors.js","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/hooks/usePaywall.tsx","label":"usePaywall.tsx","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"hooks","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/postcss.config.js","label":"postcss.config.js","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/scripts/check-schema-drift.ts","label":"check-schema-drift.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"scripts","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/scripts/db-migrate.ts","label":"db-migrate.ts","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"scripts","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/scripts/generate-full-report.ts","label":"generate-full-report.ts","score":67,"issueCount":3,"issuesByCategory":{"Testing":1,"Error Handling":1,"Code Quality":1},"blastRadius":0,"directory":"scripts","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/scripts/regen-pdf.mjs","label":"regen-pdf.mjs","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"scripts","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/analytics-broadcast.test.ts","label":"analytics-broadcast.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api-premium.test.ts","label":"api-premium.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api-theme.test.ts","label":"api-theme.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api-v2.test.ts","label":"api-v2.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api.test.ts","label":"api.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/auth-edge-cases.test.ts","label":"auth-edge-cases.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/auth-security.test.ts","label":"auth-security.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/battle.test.ts","label":"battle.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/bingo-coverage.test.ts","label":"bingo-coverage.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/boundary-values.test.ts","label":"boundary-values.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/clerk-auth.test.ts","label":"clerk-auth.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/clerk-webhook.test.ts","label":"clerk-webhook.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/concurrent-race-conditions.test.ts","label":"concurrent-race-conditions.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/edge-cases.test.ts","label":"edge-cases.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/group-member-management.test.ts","label":"group-member-management.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/group-pagination-spy-reminder.test.ts","label":"group-pagination-spy-reminder.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/invite-flow.test.ts","label":"invite-flow.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/king.test.ts","label":"king.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/malformed-requests.test.ts","label":"malformed-requests.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/new-features.test.ts","label":"new-features.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/passport.test.ts","label":"passport.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/premium-flow.test.ts","label":"premium-flow.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/public-endpoints.test.ts","label":"public-endpoints.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/push.test.ts","label":"push.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/rate-limit-precision.test.ts","label":"rate-limit-precision.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/referral-edge-cases.test.ts","label":"referral-edge-cases.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/referral.test.ts","label":"referral.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/routes-coverage.test.ts","label":"routes-coverage.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/schema-drift.test.ts","label":"schema-drift.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/share-card.test.ts","label":"share-card.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/streak-concurrent.test.ts","label":"streak-concurrent.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/streak-edge-cases.test.ts","label":"streak-edge-cases.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/tier-rules.test.ts","label":"tier-rules.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/user-account-sync.test.ts","label":"user-account-sync.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/websocket-concurrent.test.ts","label":"websocket-concurrent.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/ws-broadcast-edge-cases.test.ts","label":"ws-broadcast-edge-cases.test.ts","score":100,"issueCount":0,"issuesByCategory":{},"blastRadius":0,"directory":"server/__tests__","color":"#00ff88","glow":"rgba(0,255,136,0.5)","borderColor":"rgba(0,255,136,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/challengeTemplates.ts","label":"challengeTemplates.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":2,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":17.65685424949238}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/challenges.ts","label":"challenges.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":2,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":17.65685424949238}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/cron.ts","label":"cron.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":1,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/db.ts","label":"db.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":3,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":18.928203230275507}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/express.d.ts","label":"express.d.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","label":"groupAuth.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":4,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":20}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","label":"index.ts","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","label":"analytics.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":6,"directory":"server/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":21.79795897113271}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/apiError.ts","label":"apiError.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":2,"directory":"server/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":17.65685424949238}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/errorTracker.ts","label":"errorTracker.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":2,"directory":"server/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":17.65685424949238}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/geocode.ts","label":"geocode.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":2,"directory":"server/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":17.65685424949238}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","label":"logger.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":25,"directory":"server/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":32}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/perfBaseline.ts","label":"perfBaseline.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":3,"directory":"server/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":18.928203230275507}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/slowQueryLogger.ts","label":"slowQueryLogger.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":1,"directory":"server/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/startupDiagnostics.ts","label":"startupDiagnostics.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":1,"directory":"server/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/wsMetrics.ts","label":"wsMetrics.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":2,"directory":"server/lib","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":17.65685424949238}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/migrate.ts","label":"migrate.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":1,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/notifications.ts","label":"notifications.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":2,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":17.65685424949238}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","label":"premiumAuth.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":7,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":22.583005244258363}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","label":"replitAuth.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":10,"directory":"server","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":24.64911064067352}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","label":"auth.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/battle.ts","label":"battle.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts","label":"bingo.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts","label":"deuces.ts","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":0,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts","label":"groups.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","label":"helpers.ts","score":74,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":2},"blastRadius":9,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":24}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts","label":"king.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts","label":"notifications.ts","score":62,"issueCount":3,"issuesByCategory":{"Testing":1,"Error Handling":1,"Code Quality":1},"blastRadius":0,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts","label":"passport.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts","label":"premium.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/public.ts","label":"public.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks/revenuecat.ts","label":"revenuecat.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"server/routes/webhooks","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks.ts","label":"webhooks.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"server/routes","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","label":"routes.ts","score":69,"issueCount":3,"issuesByCategory":{"Testing":1,"Code Quality":1,"Type Safety":1},"blastRadius":35,"directory":"server","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":35.66431913239846}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","label":"storage.ts","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":19,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":29.435595774162696}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts","label":"streakNotifications.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":2,"directory":"server","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":17.65685424949238}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/types.ts","label":"types.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/utils.ts","label":"utils.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":5,"directory":"server","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":20.94427190999916}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/vite.ts","label":"vite.ts","score":77,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":0,"directory":"server","color":"#fbbf24","glow":"rgba(251,191,36,0.35)","borderColor":"rgba(251,191,36,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/shared/schema.ts","label":"schema.ts","score":82,"issueCount":2,"issuesByCategory":{"Testing":1,"Code Quality":1},"blastRadius":1,"directory":"shared","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":16}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/tailwind.config.ts","label":"tailwind.config.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/vite.config.ts","label":"vite.config.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/vitest.config.ts","label":"vitest.config.ts","score":85,"issueCount":1,"issuesByCategory":{"Testing":1},"blastRadius":0,"directory":"","color":"#22d3ee","glow":"rgba(34,211,238,0.4)","borderColor":"rgba(34,211,238,0.6)","size":12}}],"edges":[{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/App.tsx->/Users/giovanni/Projects/DeuceDiary/client/src/lib/queryClient.ts","source":"/Users/giovanni/Projects/DeuceDiary/client/src/App.tsx","target":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/queryClient.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Badge.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/Badge.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Badge.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Badge.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Onboarding.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/Onboarding.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Onboarding.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/Onboarding.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ShareCardModal.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/ShareCardModal.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ShareCardModal.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/ShareCardModal.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/WeeklyThroneReport.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/WeeklyThroneReport.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/WeeklyThroneReport.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/WeeklyThroneReport.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/back-header.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/back-header.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/back-header.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/back-header.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-challenge-modal.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-challenge-modal.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-challenge-modal.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-challenge-modal.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-grid.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-grid.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-grid.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/battle-grid.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-nudge.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-nudge.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-nudge.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-nudge.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-strip.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-strip.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-strip.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bingo-strip.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bottom-navigation.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/bottom-navigation.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bottom-navigation.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/bottom-navigation.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/create-group-modal.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/create-group-modal.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/create-group-modal.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/create-group-modal.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/edit-username-modal.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/edit-username-modal.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/edit-username-modal.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/edit-username-modal.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/components/error-boundary.test.ts->/Users/giovanni/Projects/DeuceDiary/client/src/components/error-boundary.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/components/error-boundary.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/components/error-boundary.tsx","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/useWebSocket.ts->/Users/giovanni/Projects/DeuceDiary/client/src/hooks/useAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/useWebSocket.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/hooks/useAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/queryClient.ts->/Users/giovanni/Projects/DeuceDiary/client/src/lib/auth-token.ts","source":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/queryClient.ts","target":"/Users/giovanni/Projects/DeuceDiary/client/src/lib/auth-token.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/client/src/main.tsx->/Users/giovanni/Projects/DeuceDiary/client/src/App.tsx","source":"/Users/giovanni/Projects/DeuceDiary/client/src/main.tsx","target":"/Users/giovanni/Projects/DeuceDiary/client/src/App.tsx","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/scripts/check-schema-drift.ts->/Users/giovanni/Projects/DeuceDiary/shared/schema.ts","source":"/Users/giovanni/Projects/DeuceDiary/scripts/check-schema-drift.ts","target":"/Users/giovanni/Projects/DeuceDiary/shared/schema.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/analytics-broadcast.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/analytics-broadcast.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api-premium.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api-premium.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api-theme.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api-theme.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api-v2.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api-v2.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/api.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/auth-edge-cases.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/auth-edge-cases.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/auth-security.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/auth-security.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/bingo-coverage.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/bingo-coverage.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/boundary-values.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/boundary-values.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/clerk-auth.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/clerk-auth.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/clerk-webhook.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/clerk-webhook.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/concurrent-race-conditions.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/concurrent-race-conditions.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/edge-cases.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/edge-cases.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/group-member-management.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/group-member-management.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/group-pagination-spy-reminder.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/group-pagination-spy-reminder.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/invite-flow.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/invite-flow.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/king.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/king.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/malformed-requests.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/malformed-requests.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/new-features.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/new-features.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/passport.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/passport.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/premium-flow.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/premium-flow.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/public-endpoints.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/public-endpoints.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/push.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/push.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/push.test.ts->/Users/giovanni/Projects/DeuceDiary/server/notifications.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/push.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/notifications.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/rate-limit-precision.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/rate-limit-precision.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/referral-edge-cases.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/referral-edge-cases.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/referral.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/referral.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/routes-coverage.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/routes-coverage.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/share-card.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/share-card.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/streak-concurrent.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/streak-concurrent.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/streak-edge-cases.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/streak-edge-cases.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/tier-rules.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/tier-rules.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/user-account-sync.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/user-account-sync.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/websocket-concurrent.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/websocket-concurrent.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/ws-broadcast-edge-cases.test.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/__tests__/ws-broadcast-edge-cases.test.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":100}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/cron.ts->/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/cron.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/cron.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/cron.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/cron.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/cron.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/db.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/slowQueryLogger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/db.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/slowQueryLogger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/db.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/db.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts->/Users/giovanni/Projects/DeuceDiary/server/routes.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts->/Users/giovanni/Projects/DeuceDiary/server/utils.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/utils.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts->/Users/giovanni/Projects/DeuceDiary/server/cron.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/cron.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts->/Users/giovanni/Projects/DeuceDiary/server/migrate.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/migrate.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/errorTracker.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/errorTracker.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/perfBaseline.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/perfBaseline.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/startupDiagnostics.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/startupDiagnostics.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/wsMetrics.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/wsMetrics.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/index.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/index.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/errorTracker.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/lib/errorTracker.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/geocode.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/lib/geocode.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/perfBaseline.ts->/Users/giovanni/Projects/DeuceDiary/server/utils.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/lib/perfBaseline.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/utils.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/slowQueryLogger.ts->/Users/giovanni/Projects/DeuceDiary/server/utils.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/lib/slowQueryLogger.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/utils.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/slowQueryLogger.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/perfBaseline.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/lib/slowQueryLogger.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/perfBaseline.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/startupDiagnostics.ts->/Users/giovanni/Projects/DeuceDiary/server/utils.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/lib/startupDiagnostics.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/utils.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/lib/startupDiagnostics.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/lib/startupDiagnostics.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/migrate.ts->/Users/giovanni/Projects/DeuceDiary/scripts/db-migrate.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/migrate.ts","target":"/Users/giovanni/Projects/DeuceDiary/scripts/db-migrate.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/notifications.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/notifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/notifications.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/notifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts->/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/apiError.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/apiError.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/battle.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/battle.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/battle.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/battle.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/battle.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/battle.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts->/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":74}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":74}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":74}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","sourceScore":74}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","sourceScore":74}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/geocode.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/deuces.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/geocode.ts","sourceScore":74}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts->/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts->/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/groups.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":74}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts->/Users/giovanni/Projects/DeuceDiary/server/db.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/db.ts","sourceScore":74}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":74}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts->/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts->/Users/giovanni/Projects/DeuceDiary/server/challengeTemplates.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/challengeTemplates.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":62}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":62}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts->/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","sourceScore":62}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts->/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","sourceScore":62}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/notifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","sourceScore":62}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts->/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts->/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts->/Users/giovanni/Projects/DeuceDiary/server/challenges.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/challenges.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/public.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/public.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/public.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/public.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/public.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/public.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks/revenuecat.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks/revenuecat.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks/revenuecat.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks/revenuecat.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks/revenuecat.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks/revenuecat.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/db.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/db.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/replitAuth.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/premiumAuth.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/groupAuth.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks/revenuecat.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/webhooks/revenuecat.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/auth.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/bingo.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/passport.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/premium.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/king.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/battle.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/battle.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/challengeTemplates.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/challengeTemplates.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/challenges.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/challenges.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/analytics.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/errorTracker.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/errorTracker.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/perfBaseline.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/perfBaseline.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/apiError.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/apiError.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/wsMetrics.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/wsMetrics.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/geocode.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/geocode.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/routes.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","sourceScore":69}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts->/Users/giovanni/Projects/DeuceDiary/server/db.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/db.ts","sourceScore":82}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts->/Users/giovanni/Projects/DeuceDiary/server/storage.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/storage.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts->/Users/giovanni/Projects/DeuceDiary/server/notifications.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/notifications.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts->/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/streakNotifications.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/routes/helpers.ts","sourceScore":77}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/utils.ts->/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/utils.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/lib/logger.ts","sourceScore":85}},{"data":{"id":"/Users/giovanni/Projects/DeuceDiary/server/vite.ts->/Users/giovanni/Projects/DeuceDiary/server/utils.ts","source":"/Users/giovanni/Projects/DeuceDiary/server/vite.ts","target":"/Users/giovanni/Projects/DeuceDiary/server/utils.ts","sourceScore":77}}]};
+  const META     = {"projectName":"rest-express","totalScore":84,"totalNodes":212,"shownNodes":212,"truncated":false};
+
+  // ── Score ring ────────────────────────────────────────────────────────────
+  document.getElementById('project-name').textContent = META.projectName;
+  const circumference = 2 * Math.PI * 22; // r=22 => ~138.23
+  const score = META.totalScore;
+  const ringArc = document.getElementById('score-ring-arc');
+  const offset = circumference * (1 - score / 100);
+  const scoreColor = score >= 80 ? '#22d3ee' : score >= 60 ? '#fbbf24' : score >= 40 ? '#f97316' : '#ef4444';
+  // Animate ring on load
+  setTimeout(function() {
+    ringArc.style.strokeDashoffset = offset;
+    ringArc.style.stroke = scoreColor;
+  }, 300);
+  document.getElementById('score-ring-text').textContent = score;
+
+  if (META.truncated) {
+    document.getElementById('trunc-warn').classList.add('visible');
+    document.getElementById('max-nodes-shown').textContent = META.shownNodes;
+  }
+
+  // ── Ambient Particles ─────────────────────────────────────────────────────
+  const particleCanvas = document.getElementById('particles');
+  const pCtx = particleCanvas.getContext('2d');
+  const NUM_PARTICLES = 50;
+  const particles = [];
+
+  function resizeParticles() {
+    const wrapper = document.getElementById('cy-wrapper');
+    particleCanvas.width = wrapper.offsetWidth;
+    particleCanvas.height = wrapper.offsetHeight;
+  }
+
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      opacity: 0.1 + Math.random() * 0.2,
+      size: 0.8 + Math.random() * 1.5,
+    });
+  }
+
+  function animateParticles() {
+    const w = particleCanvas.width;
+    const h = particleCanvas.height;
+    pCtx.clearRect(0, 0, w, h);
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = w;
+      if (p.x > w) p.x = 0;
+      if (p.y < 0) p.y = h;
+      if (p.y > h) p.y = 0;
+      pCtx.beginPath();
+      pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      pCtx.fillStyle = 'rgba(34,211,238,' + p.opacity + ')';
+      pCtx.fill();
+    }
+    requestAnimationFrame(animateParticles);
+  }
+
+  resizeParticles();
+  animateParticles();
+  window.addEventListener('resize', resizeParticles);
+
+  // ── Cytoscape init ────────────────────────────────────────────────────────
+  const cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: ELEMENTS,
+    layout: {
+      name: 'fcose',
+      quality: 'proof',
+      animate: true,
+      animationDuration: 1000,
+      nodeRepulsion: function() { return 8500; },
+      idealEdgeLength: function() { return 100; },
+      edgeElasticity: function() { return 0.45; },
+      gravity: 0.4,
+      packComponents: true,
+      randomize: true,
+    },
+    style: [
+      {
+        selector: 'node',
+        style: {
+          'background-color': 'data(color)',
+          'label': 'data(label)',
+          'width': 'data(size)',
+          'height': 'data(size)',
+          'font-size': 9,
+          'font-family': 'JetBrains Mono, SF Mono, monospace',
+          'color': '#94a3b8',
+          'text-valign': 'bottom',
+          'text-halign': 'center',
+          'text-margin-y': 4,
+          'text-outline-color': '#0a0e17',
+          'text-outline-width': 2,
+          'text-background-color': 'rgba(10,14,23,0.8)',
+          'text-background-opacity': 0,
+          'border-width': 2,
+          'border-color': 'data(borderColor)',
+          'min-zoomed-font-size': 8,
+          'background-opacity': 0.85,
+        },
+      },
+      {
+        selector: 'node[blastRadius > 50]',
+        style: {
+          'border-width': 3,
+          'font-size': 11,
+          'font-weight': 600,
+          'z-index': 100,
+        },
+      },
+      {
+        selector: 'node[score < 30][blastRadius > 30]',
+        style: {
+          'border-width': 4,
+        },
+      },
+      {
+        selector: 'node.highlighted',
+        style: {
+          'border-color': 'rgba(34,211,238,0.9)',
+          'border-width': 3,
+          'z-index': 200,
+          'background-opacity': 1,
+          'text-background-opacity': 0.8,
+        },
+      },
+      {
+        selector: 'node.faded',
+        style: {
+          'opacity': 0.15,
+        },
+      },
+      {
+        selector: 'node.hover-faded',
+        style: {
+          'opacity': 0.12,
+        },
+      },
+      {
+        selector: 'node.hover-lit',
+        style: {
+          'opacity': 1,
+          'z-index': 200,
+          'background-opacity': 1,
+        },
+      },
+      {
+        selector: 'edge',
+        style: {
+          'width': 1,
+          'line-color': 'rgba(148,163,184,0.08)',
+          'target-arrow-color': 'rgba(148,163,184,0.12)',
+          'target-arrow-shape': 'triangle',
+          'curve-style': 'bezier',
+          'arrow-scale': 0.6,
+          'opacity': 1,
+        },
+      },
+      {
+        selector: 'edge[sourceScore < 40]',
+        style: {
+          'line-color': 'rgba(239,68,68,0.2)',
+          'target-arrow-color': 'rgba(239,68,68,0.2)',
+          'width': 1.5,
+        },
+      },
+      {
+        selector: 'edge.highlighted',
+        style: {
+          'line-color': 'rgba(34,211,238,0.6)',
+          'target-arrow-color': 'rgba(34,211,238,0.6)',
+          'width': 2,
+          'z-index': 999,
+          'opacity': 1,
+        },
+      },
+      {
+        selector: 'edge.faded',
+        style: { 'opacity': 0.04 },
+      },
+      {
+        selector: 'edge.hover-faded',
+        style: { 'opacity': 0.03 },
+      },
+    ],
+    wheelSensitivity: 0.3,
+  });
+
+  // ── Staggered entry + pulse animations (after layout) ─────────────────────
+  cy.one('layoutstop', function() {
+    // Sort nodes high blast-radius first
+    const nodeArr = cy.nodes().toArray().sort(function(a, b) {
+      return b.data('blastRadius') - a.data('blastRadius');
+    });
+
+    // Set all invisible
+    nodeArr.forEach(function(node) {
+      node.style('opacity', 0);
+    });
+    cy.edges().style('opacity', 0);
+
+    // Staggered fade-in
+    nodeArr.forEach(function(node, i) {
+      setTimeout(function() {
+        node.animate({ style: { opacity: 1 } }, { duration: 350, easing: 'ease-in' });
+      }, i * 20);
+    });
+
+    // Fade in edges after nodes
+    const edgeDelay = nodeArr.length * 20 + 200;
+    setTimeout(function() {
+      cy.edges().animate({ style: { opacity: 1 } }, { duration: 500 });
+    }, edgeDelay);
+
+    // Pulse low-score nodes
+    setTimeout(function() {
+      cy.nodes().filter(function(node) {
+        return node.data('score') < 30;
+      }).forEach(function(node) {
+        (function pulse() {
+          node.animate(
+            { style: { 'background-opacity': 0.6 } },
+            { duration: 800, complete: function() {
+              node.animate(
+                { style: { 'background-opacity': 0.9 } },
+                { duration: 800, complete: pulse }
+              );
+            }}
+          );
+        })();
+      });
+    }, edgeDelay + 600);
+  });
+
+  updateNodeCount();
+
+  // ── Tooltip ───────────────────────────────────────────────────────────────
+  const tooltip = document.getElementById('tooltip');
+
+  cy.on('mouseover', 'node', function (e) {
+    const d = e.target.data();
+    tooltip.innerHTML =
+      '<div class="tt-name">' + escHtml(d.label) + '</div>' +
+      '<div class="tt-row"><span class="tt-label">Score</span>&nbsp;' + d.score + '/100</div>' +
+      '<div class="tt-row"><span class="tt-label">Issues</span>&nbsp;' + d.issueCount + '</div>' +
+      '<div class="tt-row"><span class="tt-label">Blast</span>&nbsp;' + d.blastRadius + '</div>' +
+      '<div class="tt-row"><span class="tt-label">Dir</span>&nbsp;' + escHtml(d.directory || '.') + '</div>';
+    tooltip.style.display = 'block';
+    tooltip.removeAttribute('aria-hidden');
+
+    // Hover: dim non-neighborhood
+    if (!activeNode) {
+      const neighborhood = e.target.closedNeighborhood();
+      cy.elements().not(neighborhood).addClass('hover-faded');
+      neighborhood.addClass('hover-lit');
+    }
+  });
+
+  cy.on('mouseout', 'node', function () {
+    tooltip.style.display = 'none';
+    tooltip.setAttribute('aria-hidden', 'true');
+    if (!activeNode) {
+      cy.elements().removeClass('hover-faded hover-lit');
+    }
+  });
+
+  cy.on('mousemove', function (e) {
+    if (tooltip.style.display === 'none') return;
+    tooltip.style.left = (e.originalEvent.clientX + 14) + 'px';
+    tooltip.style.top  = (e.originalEvent.clientY + 14) + 'px';
+  });
+
+  // ── Node click ─────────────────────────────────────────────────────────────
+  let activeNode = null;
+  const detail      = document.getElementById('detail');
+  const detailName  = document.getElementById('detail-name');
+  const detailScore = document.getElementById('detail-score');
+  const detailIssues = document.getElementById('detail-issues-count');
+  const detailBlast = document.getElementById('detail-blast');
+  const detailDir   = document.getElementById('detail-dir');
+  const detailCats  = document.getElementById('detail-cat-breakdown');
+
+  cy.on('tap', 'node', function (e) {
+    const d = e.target.data();
+    activeNode = e.target;
+
+    // Clear hover classes
+    cy.elements().removeClass('hover-faded hover-lit');
+
+    // Highlight neighbourhood
+    cy.elements().removeClass('highlighted faded');
+    const neighborhood = e.target.closedNeighborhood();
+    cy.elements().not(neighborhood).addClass('faded');
+    neighborhood.addClass('highlighted');
+
+    // Smooth zoom to fit neighborhood
+    cy.animate({ fit: { eles: neighborhood, padding: 60 } }, { duration: 600 });
+
+    // Populate detail panel
+    detailName.textContent = d.label;
+    detailScore.textContent = d.score + '/100';
+    detailScore.style.color = d.color;
+    detailIssues.textContent = d.issueCount;
+    detailBlast.textContent = d.blastRadius + ' dependents';
+    detailDir.textContent = d.directory || '.';
+
+    const cats = d.issuesByCategory || {};
+    const catKeys = Object.keys(cats);
+    if (catKeys.length > 0) {
+      const rows = catKeys
+        .sort(function(a, b) { return cats[b] - cats[a]; })
+        .map(function(k) {
+          return '<div class="issue-cat">' +
+            '<span class="issue-cat-name">' + escHtml(k) + '</span>' +
+            '<span class="issue-cat-count">' + cats[k] + '</span>' +
+            '</div>';
+        }).join('');
+      detailCats.innerHTML = '<div class="detail-issues-title">Issues by category</div>' + rows;
+    } else {
+      detailCats.innerHTML = '';
+    }
+
+    detail.classList.add('visible');
+  });
+
+  cy.on('tap', function (e) {
+    if (e.target === cy) {
+      activeNode = null;
+      cy.elements().removeClass('highlighted faded hover-faded hover-lit');
+      detail.classList.remove('visible');
+    }
+  });
+
+  // ── Double-click: zoom to fit cluster ─────────────────────────────────────
+  cy.on('dblclick', 'node', function(e) {
+    const dir = e.target.data('directory');
+    const cluster = cy.nodes().filter(function(n) { return n.data('directory') === dir; });
+    cy.animate({ fit: { eles: cluster, padding: 40 } }, { duration: 600 });
+  });
+
+  // ── Keyboard navigation ───────────────────────────────────────────────────
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      activeNode = null;
+      cy.elements().removeClass('highlighted faded hover-faded hover-lit');
+      detail.classList.remove('visible');
+    }
+    if (e.key === 'f' && !e.ctrlKey && !e.metaKey) {
+      document.getElementById('search').focus();
+      e.preventDefault();
+    }
+  });
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  const searchInput = document.getElementById('search');
+  searchInput.addEventListener('input', applyFilters);
+
+  // ── Category filter ───────────────────────────────────────────────────────
+  document.getElementById('cat-filter').addEventListener('change', applyFilters);
+
+  // ── Score range ───────────────────────────────────────────────────────────
+  document.querySelectorAll('input[name="score-range"]').forEach(function (radio) {
+    radio.addEventListener('change', applyFilters);
+  });
+
+  function applyFilters() {
+    const q    = searchInput.value.toLowerCase().trim();
+    const cat  = document.getElementById('cat-filter').value;
+    const range = document.querySelector('input[name="score-range"]:checked').value;
+
+    cy.nodes().forEach(function (node) {
+      const d = node.data();
+      const nameMatch = !q || d.label.toLowerCase().includes(q);
+      const catMatch  = !cat || (d.issuesByCategory &&
+        Object.keys(d.issuesByCategory || {}).some(function(k) { return k.toLowerCase().includes(cat); }));
+      const rangeMatch = range === 'all' ||
+        (range === 'good'    && d.score >= 80) ||
+        (range === 'caution' && d.score >= 40 && d.score < 80) ||
+        (range === 'danger'  && d.score < 40);
+
+      node.style('display', (nameMatch && catMatch && rangeMatch) ? 'element' : 'none');
+    });
+
+    cy.edges().forEach(function (edge) {
+      const srcVisible = edge.source().style('display') !== 'none';
+      const tgtVisible = edge.target().style('display') !== 'none';
+      edge.style('display', srcVisible && tgtVisible ? 'element' : 'none');
+    });
+
+    updateNodeCount();
+  }
+
+  function updateNodeCount() {
+    const visible = cy.nodes().filter(function(n) { return n.style('display') !== 'none'; }).length;
+    document.getElementById('node-count').textContent =
+      visible + ' of ' + cy.nodes().length + ' files shown';
+  }
+
+  // ── Clickable Legend ──────────────────────────────────────────────────────
+  const TIER_RANGES = {
+    excellent: [90, 101],
+    good:      [80, 90],
+    warning:   [60, 80],
+    caution:   [40, 60],
+    danger:    [20, 40],
+    critical:  [0,  20],
+  };
+
+  let activeTier = null;
+
+  document.querySelectorAll('.legend-item[data-tier]').forEach(function(item) {
+    function activate() {
+      const tier = item.getAttribute('data-tier');
+      if (activeTier === tier) {
+        // Toggle off — show all
+        activeTier = null;
+        document.querySelectorAll('.legend-item').forEach(function(el) { el.classList.remove('active'); });
+        cy.nodes().style('display', 'element');
+        cy.edges().style('display', 'element');
+        updateNodeCount();
+        return;
+      }
+      activeTier = tier;
+      document.querySelectorAll('.legend-item').forEach(function(el) { el.classList.remove('active'); });
+      item.classList.add('active');
+
+      const range = TIER_RANGES[tier];
+      cy.nodes().forEach(function(node) {
+        const s = node.data('score');
+        node.style('display', (s >= range[0] && s < range[1]) ? 'element' : 'none');
+      });
+      cy.edges().forEach(function(edge) {
+        const srcOk = edge.source().style('display') !== 'none';
+        const tgtOk = edge.target().style('display') !== 'none';
+        edge.style('display', srcOk && tgtOk ? 'element' : 'none');
+      });
+      updateNodeCount();
+    }
+
+    item.addEventListener('click', activate);
+    item.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+    });
+  });
+
+  // ── Utility ───────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+})();
+</script>
+</body>
+</html>

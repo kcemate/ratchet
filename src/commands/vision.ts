@@ -87,6 +87,8 @@ export function generateVisionHTML(graph: VisionGraph): string {
   <title>Ratchet Vision — ${escHtml(graph.projectName)}</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/cytoscape@3/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/layout-base@2/layout-base.js"></script>
+  <script src="https://unpkg.com/cose-base@2/cose-base.js"></script>
   <script src="https://unpkg.com/cytoscape-fcose@2/cytoscape-fcose.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -501,6 +503,11 @@ export function generateVisionHTML(graph: VisionGraph): string {
 <script>
 (function () {
   'use strict';
+
+  // Register fcose extension (falls back to cose if unavailable)
+  if (typeof cytoscapeFcose !== 'undefined') {
+    cytoscape.use(cytoscapeFcose);
+  }
 
   const ELEMENTS = ${cytoscapeElements};
   const META     = ${meta};
