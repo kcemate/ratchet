@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   nodeColor,
+  glowColor,
   computeFileScore,
   parseLocalImports,
   getNeighborhood,
@@ -11,20 +12,48 @@ import { generateVisionHTML } from '../../src/commands/vision.js';
 // ── nodeColor ─────────────────────────────────────────────────────────────────
 
 describe('nodeColor', () => {
-  it('returns red for score < 50', () => {
-    expect(nodeColor(0)).toBe('#ef4444');
-    expect(nodeColor(49)).toBe('#ef4444');
+  it('returns neon mint for score >= 90', () => {
+    expect(nodeColor(90)).toBe('#00ff88');
+    expect(nodeColor(100)).toBe('#00ff88');
   });
 
-  it('returns yellow for score 50–80', () => {
-    expect(nodeColor(50)).toBe('#f59e0b');
-    expect(nodeColor(65)).toBe('#f59e0b');
-    expect(nodeColor(80)).toBe('#f59e0b');
+  it('returns cyan for score >= 80 and < 90', () => {
+    expect(nodeColor(80)).toBe('#22d3ee');
+    expect(nodeColor(85)).toBe('#22d3ee');
   });
 
-  it('returns green for score > 80', () => {
-    expect(nodeColor(81)).toBe('#22c55e');
-    expect(nodeColor(100)).toBe('#22c55e');
+  it('returns amber for score >= 60 and < 80', () => {
+    expect(nodeColor(60)).toBe('#fbbf24');
+    expect(nodeColor(70)).toBe('#fbbf24');
+    expect(nodeColor(79)).toBe('#fbbf24');
+  });
+
+  it('returns orange for score >= 40 and < 60', () => {
+    expect(nodeColor(40)).toBe('#f97316');
+    expect(nodeColor(50)).toBe('#f97316');
+    expect(nodeColor(59)).toBe('#f97316');
+  });
+
+  it('returns red for score >= 20 and < 40', () => {
+    expect(nodeColor(20)).toBe('#ef4444');
+    expect(nodeColor(30)).toBe('#ef4444');
+    expect(nodeColor(39)).toBe('#ef4444');
+  });
+
+  it('returns hot pink for score < 20', () => {
+    expect(nodeColor(0)).toBe('#ff2d55');
+    expect(nodeColor(19)).toBe('#ff2d55');
+  });
+});
+
+describe('glowColor', () => {
+  it('returns correct glow for each tier', () => {
+    expect(glowColor(95)).toBe('rgba(0,255,136,0.5)');
+    expect(glowColor(85)).toBe('rgba(34,211,238,0.4)');
+    expect(glowColor(70)).toBe('rgba(251,191,36,0.35)');
+    expect(glowColor(50)).toBe('rgba(249,115,22,0.4)');
+    expect(glowColor(30)).toBe('rgba(239,68,68,0.45)');
+    expect(glowColor(10)).toBe('rgba(255,45,85,0.6)');
   });
 });
 
@@ -188,6 +217,17 @@ describe('generateVisionHTML', () => {
     expect(html).toContain('unpkg.com/cytoscape');
   });
 
+  it('includes cytoscape-fcose CDN script tag', () => {
+    const html = generateVisionHTML(makeGraph());
+    expect(html).toContain('cytoscape-fcose');
+    expect(html).toContain('unpkg.com/cytoscape-fcose');
+  });
+
+  it('includes JetBrains Mono font reference', () => {
+    const html = generateVisionHTML(makeGraph());
+    expect(html).toContain('JetBrains Mono');
+  });
+
   it('embeds the project name in the title', () => {
     const html = generateVisionHTML(makeGraph());
     expect(html).toContain('my-project');
@@ -250,7 +290,7 @@ describe('generateVisionHTML', () => {
       }],
     });
     const html = generateVisionHTML(graph);
-    expect(html).toContain('#22c55e');
+    expect(html).toContain('#00ff88');
   });
 
   it('embeds edges in element data', () => {

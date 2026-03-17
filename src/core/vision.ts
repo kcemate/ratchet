@@ -58,15 +58,27 @@ const SEVERITY_WEIGHT: Record<string, number> = {
 // ── Pure helpers (exported for tests) ────────────────────────────────────────
 
 /**
- * Map a 0–100 score to a hex colour.
- * < 50  → red   #ef4444
- * 50–80 → yellow #f59e0b
- * > 80  → green  #22c55e
+ * Map a 0–100 score to a hex colour (6-tier cyberpunk scale).
  */
 export function nodeColor(score: number): string {
-  if (score < 50) return '#ef4444';
-  if (score <= 80) return '#f59e0b';
-  return '#22c55e';
+  if (score >= 90) return '#00ff88';
+  if (score >= 80) return '#22d3ee';
+  if (score >= 60) return '#fbbf24';
+  if (score >= 40) return '#f97316';
+  if (score >= 20) return '#ef4444';
+  return '#ff2d55';
+}
+
+/**
+ * Map a 0–100 score to a glow rgba colour for cyberpunk node halos.
+ */
+export function glowColor(score: number): string {
+  if (score >= 90) return 'rgba(0,255,136,0.5)';
+  if (score >= 80) return 'rgba(34,211,238,0.4)';
+  if (score >= 60) return 'rgba(251,191,36,0.35)';
+  if (score >= 40) return 'rgba(249,115,22,0.4)';
+  if (score >= 20) return 'rgba(239,68,68,0.45)';
+  return 'rgba(255,45,85,0.6)';
 }
 
 /**
