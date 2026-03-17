@@ -46,6 +46,8 @@ export interface EngineRunOptions {
   learningStore?: LearningStore;
   /** Use score-optimized prioritization instead of severity-based (default: false) */
   scoreOptimized?: boolean;
+  /** Filter sweep to a specific issue category or subcategory (e.g. 'line-length', 'console-cleanup') */
+  category?: string;
 }
 
 const TEST_FILE_PATTERNS = [
@@ -529,7 +531,7 @@ export function chunk<T>(arr: T[], size: number): T[][] {
  * Finds the highest-priority sweepable issue and runs clicks against each batch of files.
  */
 export async function runSweepEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore, scoreOptimized = false } = options;
+  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -556,15 +558,25 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
     // Clear GitNexus cache for fresh data
     clearGitNexusCache();
 
-    // 2. Build backlog and enrich with risk scores
-    // Score-optimized mode: prioritize by ROI (points per effort) instead of severity
-    const backlog = scoreOptimized
-      ? buildScoreOptimizedBacklog(scanResult)
-      : buildBacklog(scanResult);
+    // 2. Build backlog and enrich with risk scores.
+    // Sweep always uses score-optimized ordering to pick the highest-ROI subcategory first.
+    const backlog = buildScoreOptimizedBacklog(scanResult);
     enrichBacklogWithRisk(backlog, cwd);
 
-    // 3. Filter to sweepable tasks
-    const sweepable = backlog.filter(t => t.sweepFiles && t.sweepFiles.length > 0);
+    // 3. Filter to sweepable tasks, then optionally narrow by --category
+    let sweepable = backlog.filter(t => t.sweepFiles && t.sweepFiles.length > 0);
+
+    if (options.category) {
+      const cat = options.category.toLowerCase();
+      const filtered = sweepable.filter(
+        t => t.subcategory?.toLowerCase() === cat || t.category?.toLowerCase() === cat,
+      );
+      if (filtered.length > 0) {
+        sweepable = filtered;
+      } else {
+        console.error(`[ratchet] --category "${options.category}" matched no sweepable issues — running without category filter`);
+      }
+    }
 
     if (sweepable.length === 0) {
       console.error('[ratchet] No sweepable issues found');

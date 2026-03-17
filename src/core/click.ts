@@ -289,13 +289,13 @@ function checkClickGuards(cwd: string, guards?: ClickGuards, sweepMode?: boolean
       totalLines += fileLines;
       filesSet.add(parts[2]);
 
-      // Sweep mode: enforce per-file line limit of 50 (cross-cutting fixes like replacing
-      // `any` types or converting console.logs can legitimately touch 30-40 lines in a single file)
-      if (sweepMode && fileLines > 50) {
+      // Sweep mode: enforce per-file line limit of 120 (mechanical fixes like breaking long lines
+      // or removing console.logs can legitimately touch many lines in a single file)
+      if (sweepMode && fileLines > 120) {
         return {
           passed: false,
           reason: `Single file changed too many lines in sweep mode`,
-          detail: `File ${parts[2]} changed ${fileLines} lines (added=${added}, removed=${removed}). Sweep mode allows at most 50 lines per file.`,
+          detail: `File ${parts[2]} changed ${fileLines} lines (added=${added}, removed=${removed}). Sweep mode allows at most 120 lines per file.`,
           linesChanged: totalLines,
           filesChanged: filesSet.size,
         };

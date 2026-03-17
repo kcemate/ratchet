@@ -44,6 +44,7 @@ export function torqueCommand(): Command {
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
     .option('--adversarial', 'Enable adversarial QA — red team tests each landed change for regressions', false)
     .option('--sweep', 'Sweep mode — fix one issue type across the entire codebase', false)
+    .option('--category <type>', 'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)')
     .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (default: 40)')
     .option('--max-files <number>', 'Max files changed per click before auto-rollback (default: 3)')
     .addHelpText(
@@ -68,6 +69,7 @@ export function torqueCommand(): Command {
         focus?: string;
         adversarial: boolean;
         sweep: boolean;
+        category?: string;
         maxLines?: string;
         maxFiles?: string;
       }) => {
@@ -179,7 +181,7 @@ export function torqueCommand(): Command {
 
         // Print run summary
         const fields: Array<[string, string]> = options.sweep
-          ? [['Mode', chalk.yellow('sweep')]]
+          ? [['Mode', chalk.yellow('sweep') + (options.category ? chalk.dim(` (${options.category})`) : '')]]
           : [['Target', chalk.cyan(target.name)], ['Path', chalk.dim(target.path)]];
         fields.push(
           ['Agent',  chalk.dim(config.agent)],
@@ -274,6 +276,7 @@ export function torqueCommand(): Command {
             adversarial: options.adversarial,
             // Pass the pre-run scan to avoid a redundant re-scan
             scanResult: scoreBefore,
+            category: options.category,
             callbacks: {
               onScanComplete: (scan: ScanResult) => {
                 const topIssues = scan.issuesByType.slice(0, 3);
