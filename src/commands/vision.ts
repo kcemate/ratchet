@@ -47,7 +47,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
           color,
           glow,
           borderColor,
-          size: Math.min(55, 14 + Math.sqrt(n.blastRadius) * 5),
+          size: Math.min(55, 14 + Math.sqrt(n.blastRadius) * 5) + (n.blastRadius < 3 ? (Math.sin(n.score * 7) * 2) : 0),
         },
       };
     }),
@@ -136,9 +136,10 @@ export function generateVisionHTML(graph: VisionGraph): string {
 
     #sidebar-header {
       padding: 16px;
-      border-bottom: 1px solid rgba(99,102,241,0.12);
+      border-bottom: 1px solid rgba(99,102,241,0.25);
       background: rgba(21,28,40,0.6);
       backdrop-filter: blur(12px);
+      box-shadow: inset 0 -1px 0 rgba(99,102,241,0.15), 0 1px 12px rgba(0,0,0,0.3);
     }
 
     #sidebar-header h1 {
@@ -148,7 +149,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
       letter-spacing: 0.5px;
       font-family: var(--font-sans);
       margin-bottom: 10px;
-      text-shadow: 0 0 12px rgba(99,102,241,0.4);
+      text-shadow: 0 0 16px rgba(99,102,241,0.5), 0 0 32px rgba(99,102,241,0.2);
     }
 
     #score-ring-wrapper {
@@ -251,8 +252,8 @@ export function generateVisionHTML(graph: VisionGraph): string {
     .legend-item:hover { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.25); }
     .legend-item.active { background: rgba(99,102,241,0.12); border-color: var(--accent-primary); box-shadow: 0 0 8px rgba(99,102,241,0.15); }
     .legend-dot {
-      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-      box-shadow: 0 0 6px currentColor;
+      width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+      box-shadow: 0 0 8px currentColor, 0 0 16px currentColor;
     }
     .legend-size-note {
       font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.5;
@@ -763,6 +764,8 @@ export function generateVisionHTML(graph: VisionGraph): string {
           'font-weight': 700,
           'z-index': 100,
           'text-outline-width': 3,
+          'background-opacity': 1,
+          'overlay-opacity': 0,
         },
       },
       {
