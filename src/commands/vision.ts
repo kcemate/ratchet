@@ -349,9 +349,8 @@ export function generateVisionHTML(graph: VisionGraph): string {
       flex: 1;
       overflow: hidden;
       background:
-        radial-gradient(ellipse at 50% 40%, rgba(99,102,241,0.08) 0%, transparent 60%),
-        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(34,211,238,0.03) 39px, rgba(34,211,238,0.03) 40px),
-        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(34,211,238,0.03) 39px, rgba(34,211,238,0.03) 40px),
+        radial-gradient(ellipse at 50% 40%, rgba(99,102,241,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 70%, rgba(139,92,246,0.04) 0%, transparent 50%),
         #0a0e17;
     }
 
@@ -359,7 +358,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse at center, transparent 40%, rgba(10,14,23,0.7) 100%);
+      background: radial-gradient(ellipse at center, transparent 50%, rgba(10,14,23,0.5) 100%);
       pointer-events: none;
       z-index: 2;
     }
@@ -377,6 +376,33 @@ export function generateVisionHTML(graph: VisionGraph): string {
       z-index: 1;
       background: transparent !important;
     }
+
+    /* ── Zoom controls ── */
+    #zoom-controls {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .zoom-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      backdrop-filter: blur(8px);
+    }
+    .zoom-btn:hover { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
 
     /* ── Tooltip ── */
     #tooltip {
@@ -411,13 +437,22 @@ export function generateVisionHTML(graph: VisionGraph): string {
 </head>
 <body>
 
-<!-- SVG Glow Filter -->
+<!-- SVG Glow Filters -->
 <svg style="position:absolute;width:0;height:0">
   <defs>
     <filter id="glow-filter" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
       <feMerge>
         <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="glow-strong" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="4" result="blur1"/>
+      <feGaussianBlur stdDeviation="8" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
@@ -493,10 +528,10 @@ export function generateVisionHTML(graph: VisionGraph): string {
         </div>
       </div>
 
-      <!-- Legend (clickable) -->
+      <!-- Legend (collapsible, clickable) -->
       <div>
-        <div class="section-label">Legend — click to isolate</div>
-        <div class="legend" role="list" aria-label="Color and size legend">
+        <div class="section-label" style="cursor:pointer;user-select:none" id="legend-toggle">Legend ▾</div>
+        <div class="legend" id="legend-body" role="list" aria-label="Color and size legend">
           <div class="legend-item" role="listitem" data-tier="excellent" tabindex="0" aria-label="Excellent tier: score above 90">
             <span class="legend-dot" style="background:#00ff88;color:#00ff88"></span>Score &gt; 90 — Excellent
           </div>
@@ -548,6 +583,11 @@ export function generateVisionHTML(graph: VisionGraph): string {
   <div id="cy-wrapper">
     <canvas id="particles" aria-hidden="true"></canvas>
     <div id="cy" role="img" aria-label="Dependency graph"></div>
+    <div id="zoom-controls">
+      <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+      <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+      <button class="zoom-btn" id="zoom-fit" title="Fit all">⊡</button>
+    </div>
   </div>
 
 </div><!-- /app -->
@@ -571,6 +611,15 @@ export function generateVisionHTML(graph: VisionGraph): string {
   }
   toggleBtn.addEventListener('click', toggleSidebar);
   backdrop.addEventListener('click', toggleSidebar);
+
+  // ── Collapsible legend ────────────────────────────────────────────────────
+  var legendToggle = document.getElementById('legend-toggle');
+  var legendBody = document.getElementById('legend-body');
+  legendToggle.addEventListener('click', function() {
+    var collapsed = legendBody.style.display === 'none';
+    legendBody.style.display = collapsed ? 'flex' : 'none';
+    legendToggle.textContent = collapsed ? 'Legend ▾' : 'Legend ▸';
+  });
 
   // Register fcose extension (falls back to cose if unavailable)
   if (typeof cytoscapeFcose !== 'undefined') {
@@ -671,18 +720,18 @@ export function generateVisionHTML(graph: VisionGraph): string {
           'height': 'data(size)',
           'font-size': 9,
           'font-family': 'JetBrains Mono, SF Mono, monospace',
-          'color': '#94a3b8',
+          'color': '#cbd5e1',
           'text-valign': 'bottom',
           'text-halign': 'center',
           'text-margin-y': 4,
           'text-outline-color': '#0a0e17',
-          'text-outline-width': 2,
-          'text-background-color': 'rgba(10,14,23,0.8)',
+          'text-outline-width': 2.5,
+          'text-background-color': 'rgba(10,14,23,0.85)',
           'text-background-opacity': 0,
           'border-width': 2,
           'border-color': 'data(borderColor)',
-          'min-zoomed-font-size': 8,
-          'background-opacity': 0.85,
+          'min-zoomed-font-size': 7,
+          'background-opacity': 0.9,
         },
       },
       {
@@ -719,7 +768,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
       {
         selector: 'node.hover-faded',
         style: {
-          'opacity': 0.3,
+          'opacity': 0.45,
         },
       },
       {
@@ -733,9 +782,9 @@ export function generateVisionHTML(graph: VisionGraph): string {
       {
         selector: 'edge',
         style: {
-          'width': 1.2,
-          'line-color': 'rgba(148,163,184,0.18)',
-          'target-arrow-color': 'rgba(148,163,184,0.22)',
+          'width': 1.4,
+          'line-color': 'rgba(148,163,184,0.25)',
+          'target-arrow-color': 'rgba(148,163,184,0.30)',
           'target-arrow-shape': 'triangle',
           'curve-style': 'bezier',
           'arrow-scale': 0.6,
@@ -745,9 +794,9 @@ export function generateVisionHTML(graph: VisionGraph): string {
       {
         selector: 'edge[sourceScore < 40]',
         style: {
-          'line-color': 'rgba(239,68,68,0.35)',
-          'target-arrow-color': 'rgba(239,68,68,0.35)',
-          'width': 1.8,
+          'line-color': 'rgba(239,68,68,0.45)',
+          'target-arrow-color': 'rgba(239,68,68,0.45)',
+          'width': 2,
         },
       },
       {
@@ -766,7 +815,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
       },
       {
         selector: 'edge.hover-faded',
-        style: { 'opacity': 0.08 },
+        style: { 'opacity': 0.12 },
       },
     ],
     wheelSensitivity: 0.3,
@@ -800,25 +849,28 @@ export function generateVisionHTML(graph: VisionGraph): string {
       cy.edges().animate({ style: { opacity: 1 } }, { duration: 800, easing: 'ease-in-out' });
     }, edgeDelay);
 
-    // Pulse low-score nodes — dramatic throb with scale + opacity
+    // Pulse low-score nodes — dramatic throb with scale + glow border
     setTimeout(function() {
       var criticalNodes = cy.nodes().filter(function(node) {
         return node.data('score') < 30;
       });
-      criticalNodes.forEach(function(node) {
+      criticalNodes.forEach(function(node, idx) {
         var baseSize = node.data('size') || 16;
-        var expandedSize = baseSize * 1.4;
-        (function pulse() {
-          node.animate(
-            { style: { 'width': expandedSize, 'height': expandedSize, 'background-opacity': 0.5, 'border-width': 4, 'border-color': '#ff2d55' } },
-            { duration: 900, easing: 'ease-in-out', complete: function() {
-              node.animate(
-                { style: { 'width': baseSize, 'height': baseSize, 'background-opacity': 1, 'border-width': 2, 'border-color': node.data('borderColor') } },
-                { duration: 900, easing: 'ease-in-out', complete: pulse }
-              );
-            }}
-          );
-        })();
+        var expandedSize = baseSize * 1.35;
+        // Stagger pulse start so they don't all throb in sync
+        setTimeout(function() {
+          (function pulse() {
+            node.animate(
+              { style: { 'width': expandedSize, 'height': expandedSize, 'background-opacity': 0.5, 'border-width': 5, 'border-color': '#ff2d55', 'border-opacity': 1 } },
+              { duration: 1000, easing: 'ease-in-out', complete: function() {
+                node.animate(
+                  { style: { 'width': baseSize, 'height': baseSize, 'background-opacity': 0.9, 'border-width': 2, 'border-color': node.data('borderColor'), 'border-opacity': 0.6 } },
+                  { duration: 1000, easing: 'ease-in-out', complete: pulse }
+                );
+              }}
+            );
+          })();
+        }, idx * 150);
       });
     }, edgeDelay + 600);
   });
@@ -1032,6 +1084,17 @@ export function generateVisionHTML(graph: VisionGraph): string {
     item.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
     });
+  });
+
+  // ── Zoom controls ──────────────────────────────────────────────────────────
+  document.getElementById('zoom-in').addEventListener('click', function() {
+    cy.animate({ zoom: { level: cy.zoom() * 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } } }, { duration: 200 });
+  });
+  document.getElementById('zoom-out').addEventListener('click', function() {
+    cy.animate({ zoom: { level: cy.zoom() / 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } } }, { duration: 200 });
+  });
+  document.getElementById('zoom-fit').addEventListener('click', function() {
+    cy.animate({ fit: { eles: cy.elements(':visible'), padding: 30 } }, { duration: 400 });
   });
 
   // ── Utility ───────────────────────────────────────────────────────────────
