@@ -47,7 +47,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
           color,
           glow,
           borderColor,
-          size: Math.min(40, 12 + Math.sqrt(n.blastRadius) * 4),
+          size: Math.min(55, 14 + Math.sqrt(n.blastRadius) * 5),
         },
       };
     }),
@@ -120,12 +120,14 @@ export function generateVisionHTML(graph: VisionGraph): string {
 
     #app { display: flex; height: 100vh; overflow: hidden; }
 
-    /* ── Sidebar ── */
+    /* ── Sidebar (glassmorphic) ── */
     #sidebar {
       width: var(--sidebar-w);
       min-width: var(--sidebar-w);
-      background: var(--bg-secondary);
-      border-right: 1px solid var(--border);
+      background: rgba(15,20,25,0.85);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border-right: 1px solid rgba(99,102,241,0.15);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -134,8 +136,9 @@ export function generateVisionHTML(graph: VisionGraph): string {
 
     #sidebar-header {
       padding: 16px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-elevated);
+      border-bottom: 1px solid rgba(99,102,241,0.12);
+      background: rgba(21,28,40,0.6);
+      backdrop-filter: blur(12px);
     }
 
     #sidebar-header h1 {
@@ -145,6 +148,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
       letter-spacing: 0.5px;
       font-family: var(--font-sans);
       margin-bottom: 10px;
+      text-shadow: 0 0 12px rgba(99,102,241,0.4);
     }
 
     #score-ring-wrapper {
@@ -195,40 +199,45 @@ export function generateVisionHTML(graph: VisionGraph): string {
     /* Search */
     #search {
       width: 100%;
-      padding: 7px 10px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      padding: 8px 12px;
+      background: rgba(21,28,40,0.6);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 8px;
       color: var(--text-primary);
       font-size: 13px;
-      font-family: var(--font-sans);
+      font-family: var(--font-mono);
+      font-weight: 500;
       outline: none;
-      transition: border-color 0.2s;
+      transition: all 0.2s;
+      backdrop-filter: blur(8px);
     }
-    #search:focus { border-color: var(--accent-primary); }
-    #search::placeholder { color: var(--text-muted); }
+    #search:focus { border-color: var(--accent-primary); box-shadow: 0 0 12px rgba(99,102,241,0.2); }
+    #search::placeholder { color: var(--text-muted); font-family: var(--font-sans); font-weight: 400; }
 
     /* Filter selects */
     select {
       width: 100%;
-      padding: 7px 10px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      padding: 8px 12px;
+      background: rgba(21,28,40,0.6);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 8px;
       color: var(--text-primary);
       font-size: 13px;
       font-family: var(--font-sans);
       outline: none;
       cursor: pointer;
-      transition: border-color 0.2s;
+      transition: all 0.2s;
+      backdrop-filter: blur(8px);
     }
-    select:focus { border-color: var(--accent-primary); }
+    select:focus { border-color: var(--accent-primary); box-shadow: 0 0 12px rgba(99,102,241,0.2); }
 
     /* Score range */
-    .score-radios { display: flex; flex-direction: column; gap: 5px; }
+    .score-radios { display: flex; flex-direction: column; gap: 4px; }
     .score-radios label {
-      display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 12px;
+      display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px;
+      padding: 4px 8px; border-radius: 6px; transition: background 0.15s;
     }
+    .score-radios label:hover { background: rgba(99,102,241,0.08); }
     .score-radios input[type=radio] { accent-color: var(--accent-primary); }
 
     /* Legend */
@@ -239,8 +248,8 @@ export function generateVisionHTML(graph: VisionGraph): string {
       transition: background 0.15s;
       border: 1px solid transparent;
     }
-    .legend-item:hover { background: var(--bg-elevated); border-color: var(--border); }
-    .legend-item.active { background: var(--bg-elevated); border-color: var(--accent-primary); }
+    .legend-item:hover { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.25); }
+    .legend-item.active { background: rgba(99,102,241,0.12); border-color: var(--accent-primary); box-shadow: 0 0 8px rgba(99,102,241,0.15); }
     .legend-dot {
       width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
       box-shadow: 0 0 6px currentColor;
@@ -251,13 +260,15 @@ export function generateVisionHTML(graph: VisionGraph): string {
 
     /* Detail panel */
     #detail {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
+      background: rgba(21,28,40,0.7);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 10px;
+      padding: 14px;
       font-size: 12px;
       line-height: 1.7;
       display: none;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
     #detail.visible { display: block; }
     #detail h2 {
@@ -735,12 +746,23 @@ export function generateVisionHTML(graph: VisionGraph): string {
         },
       },
       {
-        selector: 'node[blastRadius > 50]',
+        selector: 'node[blastRadius > 15]',
         style: {
           'border-width': 3,
-          'font-size': 11,
+          'font-size': 10,
           'font-weight': 600,
+          'z-index': 50,
+          'text-outline-width': 3,
+        },
+      },
+      {
+        selector: 'node[blastRadius > 30]',
+        style: {
+          'border-width': 3.5,
+          'font-size': 11,
+          'font-weight': 700,
           'z-index': 100,
+          'text-outline-width': 3,
         },
       },
       {
@@ -802,10 +824,20 @@ export function generateVisionHTML(graph: VisionGraph): string {
       {
         selector: 'edge.highlighted',
         style: {
-          'line-color': 'rgba(34,211,238,0.7)',
-          'target-arrow-color': 'rgba(34,211,238,0.7)',
+          'line-color': 'rgba(34,211,238,0.8)',
+          'target-arrow-color': 'rgba(34,211,238,0.8)',
           'width': 2.5,
           'z-index': 999,
+          'opacity': 1,
+        },
+      },
+      {
+        selector: 'edge.hover-lit',
+        style: {
+          'line-color': 'rgba(34,211,238,0.65)',
+          'target-arrow-color': 'rgba(34,211,238,0.65)',
+          'width': 2,
+          'z-index': 500,
           'opacity': 1,
         },
       },
@@ -891,11 +923,12 @@ export function generateVisionHTML(graph: VisionGraph): string {
     tooltip.style.display = 'block';
     tooltip.removeAttribute('aria-hidden');
 
-    // Hover: dim non-neighborhood
+    // Hover: dim non-neighborhood, glow connected edges
     if (!activeNode) {
       const neighborhood = e.target.closedNeighborhood();
       cy.elements().not(neighborhood).addClass('hover-faded');
-      neighborhood.addClass('hover-lit');
+      neighborhood.nodes().addClass('hover-lit');
+      neighborhood.edges().addClass('hover-lit');
     }
   });
 
