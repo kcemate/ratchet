@@ -292,6 +292,57 @@ export function generateVisionHTML(graph: VisionGraph): string {
     }
     #trunc-warn.visible { display: block; }
 
+    /* ── Mobile: collapsible sidebar ── */
+    #sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 20px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      transition: background 0.2s;
+    }
+    #sidebar-toggle:hover { background: var(--accent-primary); }
+
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 280px;
+        min-width: 280px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 50;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+      }
+      #sidebar.open { transform: translateX(0); }
+      #sidebar-toggle { display: flex; }
+      #sidebar-toggle.open { left: 290px; }
+      #cy-wrapper { width: 100vw !important; }
+      #sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 40;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      #sidebar-backdrop.open { opacity: 1; pointer-events: auto; }
+    }
+
     /* ── Graph area ── */
     #cy-wrapper {
       position: relative;
@@ -374,6 +425,10 @@ export function generateVisionHTML(graph: VisionGraph): string {
 </svg>
 
 <div id="app" role="main">
+
+  <!-- Mobile toggle -->
+  <button id="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+  <div id="sidebar-backdrop"></div>
 
   <!-- Sidebar -->
   <aside id="sidebar" aria-label="Graph controls and file details">
@@ -503,6 +558,19 @@ export function generateVisionHTML(graph: VisionGraph): string {
 <script>
 (function () {
   'use strict';
+
+  // ── Mobile sidebar toggle ────────────────────────────────────────────────
+  var toggleBtn = document.getElementById('sidebar-toggle');
+  var sidebar = document.getElementById('sidebar');
+  var backdrop = document.getElementById('sidebar-backdrop');
+  function toggleSidebar() {
+    var isOpen = sidebar.classList.toggle('open');
+    toggleBtn.classList.toggle('open', isOpen);
+    backdrop.classList.toggle('open', isOpen);
+    toggleBtn.textContent = isOpen ? '✕' : '☰';
+  }
+  toggleBtn.addEventListener('click', toggleSidebar);
+  backdrop.addEventListener('click', toggleSidebar);
 
   // Register fcose extension (falls back to cose if unavailable)
   if (typeof cytoscapeFcose !== 'undefined') {
