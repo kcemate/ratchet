@@ -349,6 +349,16 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         run.clicks.push(click);
         await callbacks.onClickComplete?.(click, rolled_back);
 
+        // Smart early stop: if stalled with only architect-mode issues remaining
+        if (consecutiveRollbacks >= 2 && totalLanded > 0 && backlogGroups.length > 0) {
+          const allArchitect = backlogGroups.every(group => group.every(task => !!task.architectPrompt));
+          if (allArchitect) {
+            run.earlyStopReason = 'remaining issues need architect mode';
+            console.error(`[ratchet] ⏹ Smart stop — remaining issues need architect mode. ${totalLanded} cycles used, ${clicks - i} returned.`);
+            break;
+          }
+        }
+
         // Cross-run learning: record the outcome for future recommendations
         if (learningStore && clickIssues && clickIssues.length > 0) {
           const elapsedMs = Date.now() - clickStartMs;
