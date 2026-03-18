@@ -48,6 +48,7 @@ export function torqueCommand(): Command {
     .option('--category <type>', 'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)')
     .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (default: 40)')
     .option('--max-files <number>', 'Max files changed per click before auto-rollback (default: 3)')
+    .option('--no-escalate', 'Disable adaptive escalation — stay on single-file target even when stalled')
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
     .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
     .addHelpText(
@@ -75,6 +76,7 @@ export function torqueCommand(): Command {
         category?: string;
         maxLines?: string;
         maxFiles?: string;
+        escalate: boolean;
         prComment: boolean;
         prCommentFooter: boolean;
       }) => {
@@ -282,6 +284,7 @@ export function torqueCommand(): Command {
             // Pass the pre-run scan to avoid a redundant re-scan
             scanResult: scoreBefore,
             category: options.category,
+            escalate: options.escalate,
             callbacks: {
               onScanComplete: (scan: ScanResult) => {
                 const topIssues = scan.issuesByType.slice(0, 3);
@@ -387,6 +390,15 @@ export function torqueCommand(): Command {
                     `  Click ${chalk.bold(String(clickNumber))} — ${chalk.red('error')}: ${err.message}`,
                   );
                   spinner = null;
+                }
+              },
+
+              onEscalate: (reason: string) => {
+                if (spinner) {
+                  spinner.warn(chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep`));
+                  spinner = null;
+                } else {
+                  process.stdout.write(chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep\n`));
                 }
               },
             },

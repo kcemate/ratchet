@@ -27,6 +27,7 @@ export interface EngineCallbacks {
   onError?: (err: Error, clickNumber: number) => Promise<void> | void;
   onScanComplete?: (scan: ScanResult) => Promise<void> | void;
   onClickScoreUpdate?: (clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number) => Promise<void> | void;
+  onEscalate?: (reason: string) => Promise<void> | void;
 }
 
 export interface EngineRunOptions {
@@ -48,6 +49,8 @@ export interface EngineRunOptions {
   scoreOptimized?: boolean;
   /** Filter sweep to a specific issue category or subcategory (e.g. 'line-length', 'console-cleanup') */
   category?: string;
+  /** Enable adaptive escalation to cross-file sweep on stall (default: true) */
+  escalate?: boolean;
 }
 
 const TEST_FILE_PATTERNS = [
@@ -86,7 +89,8 @@ function countTestFiles(dir: string): number {
  * re-scans to measure progress and update the backlog.
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { target, clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false } = options;
+  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true } = options;
+  let target = options.target;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -149,6 +153,13 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
   if (hardenMode) {
     initialTestFileCount = countTestFiles(cwd);
   }
+
+  // Stall detection for adaptive escalation
+  let consecutiveRollbacks = 0;
+  let totalLanded = 0;
+  let totalRolled = 0;
+  let scoreAtMidpoint: number | undefined;
+  let escalated = false;
 
   try {
     for (let i = 1; i <= clicks; i++) {
@@ -263,8 +274,12 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         if (rolled_back) {
           console.error(`[ratchet] click ${i} ROLLED BACK (${elapsedSec}s) — tests failed or build errored`);
+          consecutiveRollbacks++;
+          totalRolled++;
         } else {
           console.error(`[ratchet] click ${i} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
+          consecutiveRollbacks = 0;
+          totalLanded++;
         }
 
         // After a successful click, re-scan for live scoring (incremental for speed)
@@ -293,6 +308,40 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             backlogGroups = groupBacklogBySubcategory(newBacklog);
           } catch {
             // Non-fatal — skip live scoring for this click
+          }
+        }
+
+        // Capture midpoint score for stall detection
+        if (i === Math.floor(clicks / 2) && scoreAtMidpoint === undefined) {
+          scoreAtMidpoint = previousTotal;
+        }
+
+        // Adaptive escalation: switch to cross-file sweep when stalled
+        if (escalateEnabled && !escalated && !hardenMode && currentScan) {
+          const rollbackRate = i > 0 ? totalRolled / i : 0;
+          const scoreDelta = scoreAtMidpoint !== undefined ? previousTotal - scoreAtMidpoint : undefined;
+          const backlogExhausted = backlogGroups.length === 0;
+
+          let escalateReason: string | undefined;
+          if (consecutiveRollbacks >= 3) {
+            escalateReason = '3 consecutive rollbacks';
+          } else if (i >= Math.floor(clicks / 2) && scoreDelta === 0 && rollbackRate > 0.4) {
+            escalateReason = 'no score progress at midpoint';
+          } else if (backlogExhausted && i < clicks) {
+            escalateReason = 'backlog exhausted';
+          }
+
+          if (escalateReason) {
+            console.error('[ratchet] 🔄 Stall detected — escalating to cross-file sweep mode');
+            await callbacks.onEscalate?.(escalateReason);
+
+            const fullBacklog = buildScoreOptimizedBacklog(currentScan);
+            const sweepableBacklog = fullBacklog.filter((task) => !task.architectPrompt);
+            if (sweepableBacklog.length > 0) {
+              backlogGroups = groupBacklogBySubcategory(sweepableBacklog);
+              target = { name: 'sweep', path: '.', description: 'auto-escalated cross-file sweep' };
+              escalated = true;
+            }
           }
         }
 
