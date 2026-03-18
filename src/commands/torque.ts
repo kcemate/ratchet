@@ -15,6 +15,7 @@ import { isValidSpecialization } from '../core/agents/specialized.js';
 import { RatchetLogger } from '../core/logger.js';
 import { generateReport, writeReport } from '../core/report.js';
 import { writePDF } from '../core/pdf-report.js';
+import { generateScoreCard, generatePRDescription } from '../core/pr-comment.js';
 import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
@@ -47,6 +48,8 @@ export function torqueCommand(): Command {
     .option('--category <type>', 'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)')
     .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (default: 40)')
     .option('--max-files <number>', 'Max files changed per click before auto-rollback (default: 3)')
+    .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
+    .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -72,6 +75,8 @@ export function torqueCommand(): Command {
         category?: string;
         maxLines?: string;
         maxFiles?: string;
+        prComment: boolean;
+        prCommentFooter: boolean;
       }) => {
         const cwd = process.cwd();
 
@@ -407,6 +412,26 @@ export function torqueCommand(): Command {
           // Non-fatal
         }
 
+        // Compute pass/fail counts (used below and in final summary)
+        const passedClicks = run.clicks.filter((c) => c.testsPassed).length;
+        const rolledBack = run.clicks.length - passedClicks;
+
+        // Generate and display PR score card if enabled and we have both scores
+        if (options.prComment && scoreBefore && scoreAfter && passedClicks > 0 && !options.dryRun) {
+          const scoreCard = generateScoreCard(scoreBefore, scoreAfter, { footer: options.prCommentFooter });
+          process.stdout.write('\n' + chalk.dim('  ─'.repeat(23)) + '\n\n');
+          process.stdout.write(scoreCard.split('\n').map((l) => '  ' + l).join('\n') + '\n');
+
+          // Write PR description to file for use with `ratchet tighten --pr`
+          const changedFiles = run.clicks
+            .filter((c) => c.testsPassed)
+            .flatMap((c) => c.filesModified)
+            .filter((f, i, arr) => arr.indexOf(f) === i);
+          const prDesc = generatePRDescription(scoreBefore, scoreAfter, changedFiles, { footer: options.prCommentFooter });
+          const prDescPath = join(cwd, `docs/${target.name}-pr-description.md`);
+          await writeFile(prDescPath, prDesc, 'utf-8').catch(() => {});
+        }
+
         const reportPath = await writeReport({ run, cwd, scoreBefore, scoreAfter }).catch(() => null);
         await writePDF({ run, cwd, scoreBefore, scoreAfter }).catch(() => null);
 
@@ -424,8 +449,6 @@ export function torqueCommand(): Command {
         });
 
         // Final summary
-        const passedClicks = run.clicks.filter((c) => c.testsPassed).length;
-        const rolledBack = run.clicks.length - passedClicks;
         const duration = formatDuration(Date.now() - runStart);
 
         const landedPart = `${chalk.green(String(passedClicks))} landed`;
