@@ -31,8 +31,8 @@
       --purple:     #a78bfa;
 
       --text-primary:   #f1f5f9;
-      --text-secondary: rgba(255,255,255,0.78);
-      --text-muted:     rgba(255,255,255,0.45);
+      --text-secondary: rgba(255,255,255,0.87);
+      --text-muted:     rgba(255,255,255,0.55);
       --border:         rgba(99, 102, 241, 0.15);
       --border-bright:  rgba(99, 102, 241, 0.4);
 
@@ -1285,6 +1285,265 @@
       .hero-actions { flex-direction: column; align-items: center; }
       .install-wrap { flex-direction: column; align-items: center; }
     }
+
+    /* ══════════════════════════════════════════
+       PRICING
+    ══════════════════════════════════════════ */
+    #pricing {
+      padding: 100px 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(9, 13, 26, 0.5) 50%, transparent 100%);
+    }
+
+    .pricing-toggle-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 56px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .billing-label {
+      color: var(--text-muted);
+      transition: color var(--transition);
+    }
+    .billing-label.active { color: var(--text-primary); }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all var(--transition);
+      padding: 0;
+      outline: none;
+      flex-shrink: 0;
+    }
+    .toggle-switch.on {
+      background: rgba(52, 211, 153, 0.15);
+      border-color: var(--mint);
+    }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: all var(--transition);
+    }
+    .toggle-switch.on::after {
+      left: 21px;
+      background: var(--mint);
+    }
+
+    .annual-discount {
+      background: rgba(52, 211, 153, 0.12);
+      color: var(--mint);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .pricing-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      transition: all var(--transition);
+      position: relative;
+    }
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-bright);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .pricing-card.popular {
+      background: rgba(12, 18, 34, 0.95);
+      border-color: rgba(34, 211, 238, 0.5);
+      box-shadow:
+        0 0 0 1px rgba(34, 211, 238, 0.15),
+        0 0 60px rgba(34, 211, 238, 0.15),
+        0 24px 60px rgba(0,0,0,0.45);
+      transform: translateY(-10px);
+      z-index: 1;
+    }
+    .pricing-card.popular:hover {
+      transform: translateY(-14px);
+      box-shadow:
+        0 0 0 1px rgba(34, 211, 238, 0.2),
+        0 0 80px rgba(34, 211, 238, 0.2),
+        0 32px 80px rgba(0,0,0,0.45);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--mint) 100%);
+      color: #070b14;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .pricing-tier {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+      font-family: var(--font-mono);
+    }
+
+    .pricing-price-wrap { margin-bottom: 6px; }
+
+    .pricing-price {
+      font-family: var(--font-mono);
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--cyan);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      transition: all var(--transition);
+    }
+    .pricing-price.mint   { color: var(--mint); }
+    .pricing-price.purple { color: var(--purple); }
+    .pricing-price.muted  { color: var(--text-secondary); font-size: 28px; }
+
+    .pricing-period {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 5px;
+      margin-bottom: 4px;
+      min-height: 16px;
+    }
+
+    .pricing-tagline {
+      font-size: 13px;
+      color: rgba(255,255,255,0.72);
+      font-style: italic;
+      margin-bottom: 20px;
+      min-height: 32px;
+      line-height: 1.45;
+    }
+
+    .pricing-divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 18px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      flex: 1;
+      margin-bottom: 24px;
+    }
+    .pricing-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.87);
+      line-height: 1.4;
+    }
+    .pricing-features li::before {
+      content: '✓';
+      color: var(--mint);
+      font-weight: 700;
+      flex-shrink: 0;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .pricing-cta {
+      display: block;
+      text-align: center;
+      padding: 11px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all var(--transition);
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      white-space: nowrap;
+    }
+    .pricing-cta-outline {
+      background: transparent;
+      color: rgba(255,255,255,0.87);
+      border: 1px solid var(--border-bright);
+    }
+    .pricing-cta-outline:hover {
+      color: var(--text-primary);
+      background: rgba(99, 102, 241, 0.08);
+      border-color: var(--indigo);
+      transform: translateY(-2px);
+    }
+    .pricing-cta-primary {
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--indigo) 100%);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(34, 211, 238, 0.3);
+    }
+    .pricing-cta-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(34, 211, 238, 0.45);
+    }
+
+    .pricing-note {
+      text-align: center;
+      margin-top: 44px;
+      font-size: 14px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+    .pricing-note strong { color: var(--cyan); font-weight: 600; }
+
+    @media (max-width: 1100px) {
+      .pricing-grid { grid-template-columns: repeat(3, 1fr); }
+      .pricing-card.popular { transform: none; }
+      .pricing-card.popular:hover { transform: translateY(-4px); }
+    }
+    @media (max-width: 700px) {
+      .pricing-grid { grid-template-columns: 1fr 1fr; }
+      .pricing-card.popular { grid-column: span 2; }
+    }
+    @media (max-width: 480px) {
+      .pricing-grid { grid-template-columns: 1fr; }
+      .pricing-card.popular { grid-column: span 1; }
+    }
   </style>
 </head>
 <body>
@@ -1307,6 +1566,7 @@
         <li><a href="#commands">Commands</a></li>
         <li><a href="#scoring">Scoring</a></li>
         <li><a href="#vision">Vision</a></li>
+        <li><a href="#pricing">Pricing</a></li>
         <li><a href="#install">Install</a></li>
       </ul>
 
@@ -1333,6 +1593,7 @@
   <a href="#commands" onclick="closeMobileNav()">Commands</a>
   <a href="#scoring" onclick="closeMobileNav()">Scoring</a>
   <a href="#vision" onclick="closeMobileNav()">Vision</a>
+  <a href="#pricing" onclick="closeMobileNav()">Pricing</a>
   <a href="#install" onclick="closeMobileNav()">Install</a>
   <a href="https://github.com/ratchet-run/ratchet" target="_blank" rel="noopener">GitHub ↗</a>
 </div>
@@ -1998,6 +2259,133 @@
 </section>
 
 <!-- ══════════════════════════════════════════
+     PRICING
+══════════════════════════════════════════ -->
+<div class="container"><div class="divider"></div></div>
+
+<section id="pricing">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">
+        <span class="badge badge-cyan">Pricing</span>
+      </div>
+      <h2 class="section-title">Simple, honest pricing.</h2>
+      <p class="section-sub">Start free. Level up when your codebase demands it.</p>
+    </div>
+
+    <!-- Billing toggle -->
+    <div class="pricing-toggle-wrap reveal">
+      <span class="billing-label active" id="label-monthly">Monthly</span>
+      <button class="toggle-switch" id="billingToggle" aria-label="Toggle annual billing" onclick="toggleBilling()"></button>
+      <span class="billing-label" id="label-annual">Annual &nbsp;<span class="annual-discount">20% off</span></span>
+    </div>
+
+    <!-- Pricing cards -->
+    <div class="pricing-grid reveal">
+
+      <!-- FREE -->
+      <div class="pricing-card">
+        <div class="pricing-tier">Free</div>
+        <div class="pricing-price-wrap">
+          <div class="pricing-price muted" data-monthly="$0" data-annual="$0">$0</div>
+        </div>
+        <div class="pricing-period">&nbsp;</div>
+        <div class="pricing-tagline">See your score. Feel the itch.</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>Scan: unlimited</li>
+          <li>Vision: 1/week</li>
+          <li>Quality score across 6 dimensions</li>
+          <li>JSON &amp; Markdown export</li>
+        </ul>
+        <a href="#install" class="pricing-cta pricing-cta-outline">Get Started</a>
+      </div>
+
+      <!-- BUILDER -->
+      <div class="pricing-card">
+        <div class="pricing-tier">Builder</div>
+        <div class="pricing-price-wrap">
+          <div class="pricing-price" data-monthly="$9" data-annual="$7">$9</div>
+        </div>
+        <div class="pricing-period" id="period-builder">/mo</div>
+        <div class="pricing-tagline">BYOK. Your key, your rate.</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>30 improvement cycles/month</li>
+          <li>BYOK — bring your own API key</li>
+          <li>ratchet improve access</li>
+          <li>Everything in Free</li>
+        </ul>
+        <a href="#install" class="pricing-cta pricing-cta-outline">Start Building</a>
+      </div>
+
+      <!-- PRO — MOST POPULAR -->
+      <div class="pricing-card popular">
+        <div class="popular-badge">⭐ Most Popular</div>
+        <div class="pricing-tier">Pro</div>
+        <div class="pricing-price-wrap">
+          <div class="pricing-price mint" data-monthly="$29" data-annual="$23">$29</div>
+        </div>
+        <div class="pricing-period" id="period-pro">/mo</div>
+        <div class="pricing-tagline">Full torque. Full vision. Full speed.</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>150 improvement cycles/month</li>
+          <li>BYOK — bring your own API key</li>
+          <li>ratchet torque + improve</li>
+          <li>Unlimited vision</li>
+          <li>PDF reports</li>
+          <li>Everything in Builder</li>
+        </ul>
+        <a href="#install" class="pricing-cta pricing-cta-primary">Go Pro</a>
+      </div>
+
+      <!-- TEAM -->
+      <div class="pricing-card">
+        <div class="pricing-tier">Team</div>
+        <div class="pricing-price-wrap">
+          <div class="pricing-price purple" data-monthly="$149" data-annual="$119">$149</div>
+        </div>
+        <div class="pricing-period" id="period-team">/mo</div>
+        <div class="pricing-tagline">Hosted. No API key needed.</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>5 seats included</li>
+          <li>500 improvement cycles/month</li>
+          <li>Hosted — no API key required</li>
+          <li>CI/CD GitHub Action</li>
+          <li>Slack &amp; Discord notifications</li>
+          <li>Team dashboard + score trends</li>
+        </ul>
+        <a href="#install" class="pricing-cta pricing-cta-outline">Start Team Trial</a>
+      </div>
+
+      <!-- ENTERPRISE -->
+      <div class="pricing-card">
+        <div class="pricing-tier">Enterprise</div>
+        <div class="pricing-price-wrap">
+          <div class="pricing-price muted" data-monthly="Custom" data-annual="Custom">Custom</div>
+        </div>
+        <div class="pricing-period">&nbsp;</div>
+        <div class="pricing-tagline">Air-gapped. Your rules. Your SLA.</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>Unlimited cycles</li>
+          <li>Air-gapped / self-hosted</li>
+          <li>Custom scoring rules</li>
+          <li>SLA + dedicated support</li>
+          <li>Everything in Team</li>
+        </ul>
+        <a href="mailto:hello@ratchet.run" class="pricing-cta pricing-cta-outline">Contact Us</a>
+      </div>
+
+    </div>
+
+    <p class="pricing-note reveal">Need more cycles? <strong>$0.75/cycle</strong> on any paid plan.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
      INSTALL
 ══════════════════════════════════════════ -->
 <section id="install">
@@ -2072,6 +2460,7 @@
         <li><a href="#commands">Commands</a></li>
         <li><a href="#scoring">Scoring</a></li>
         <li><a href="#vision">Vision</a></li>
+        <li><a href="#pricing">Pricing</a></li>
         <li><a href="#install">Install</a></li>
         <li><a href="https://github.com/ratchet-run/ratchet/blob/main/README.md" target="_blank" rel="noopener">Docs</a></li>
       </ul>
@@ -2158,6 +2547,30 @@
 
   const scorePanel = document.getElementById('scorePanel');
   if (scorePanel) scoreObs.observe(scorePanel);
+
+  /* ── Billing toggle ── */
+  let isAnnual = false;
+
+  function toggleBilling() {
+    isAnnual = !isAnnual;
+    const toggle = document.getElementById('billingToggle');
+    const labelMonthly = document.getElementById('label-monthly');
+    const labelAnnual  = document.getElementById('label-annual');
+
+    toggle.classList.toggle('on', isAnnual);
+    labelMonthly.classList.toggle('active', !isAnnual);
+    labelAnnual.classList.toggle('active', isAnnual);
+
+    document.querySelectorAll('.pricing-price').forEach(el => {
+      el.textContent = isAnnual ? el.dataset.annual : el.dataset.monthly;
+    });
+
+    const periods = ['period-builder', 'period-pro', 'period-team'];
+    periods.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = isAnnual ? '/mo · billed annually' : '/mo';
+    });
+  }
 
   /* ── Smooth active nav link ── */
   const sections = document.querySelectorAll('section[id]');
