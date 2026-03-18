@@ -238,6 +238,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             cwd,
             hardenPhase,
             adversarial,
+            sweepMode: escalated,
             issues: clickIssues,
             onPhase: callbacks.onClickPhase
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
