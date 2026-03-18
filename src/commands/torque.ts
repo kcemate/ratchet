@@ -18,6 +18,7 @@ import { writePDF } from '../core/pdf-report.js';
 import { generateScoreCard, generatePRDescription } from '../core/pr-comment.js';
 import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
+import { analyzeScoreGaps } from '../core/score-optimizer.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
 import { formatDuration } from '../core/utils.js';
@@ -297,6 +298,26 @@ export function torqueCommand(): Command {
                 if (targetStr) {
                   process.stdout.write(`     Targeting: ${chalk.dim(targetStr)}\n`);
                 }
+                // Score ceiling detection
+                const gaps = analyzeScoreGaps(scan);
+                const sweepableGaps = gaps.filter(g => g.sweepable);
+                const nonSweepableGaps = gaps.filter(g => !g.sweepable);
+                const reachablePoints = sweepableGaps.reduce((sum, g) => sum + g.pointsAvailable, 0);
+                const allPoints = gaps.reduce((sum, g) => sum + g.pointsAvailable, 0);
+                const reachableScore = Math.min(100, scan.total + reachablePoints);
+                const ceilingScore = Math.min(100, scan.total + allPoints);
+                if (reachablePoints > 0) {
+                  process.stdout.write(
+                    `  📈 Reachable by torque: ~${reachableScore}/100 (+${reachablePoints}pts from ${sweepableGaps.length} fixable categories)\n`,
+                  );
+                }
+                if (nonSweepableGaps.length > 0) {
+                  const archNames = nonSweepableGaps.slice(0, 2).map(g => g.subcategory).join(', ');
+                  const etcSuffix = nonSweepableGaps.length > 2 ? ', etc.' : '';
+                  process.stdout.write(
+                    `     Ceiling: ${ceilingScore}/100 — ${nonSweepableGaps.length} categories need architect mode (${archNames}${etcSuffix})\n`,
+                  );
+                }
                 process.stdout.write('\n');
                 lastKnownScore = scan.total;
               },
@@ -357,7 +378,8 @@ export function torqueCommand(): Command {
                     );
                   } else {
                     spinner.warn(
-                      `  Click ${chalk.bold(String(click.number))} — ${chalk.yellow('✗ rolled back')}`,
+                      `  Click ${chalk.bold(String(click.number))} — ${chalk.yellow('✗ rolled back')}` +
+                        (click.rollbackReason ? chalk.dim(` — ${click.rollbackReason}`) : ''),
                     );
                   }
                   spinner = null;
@@ -477,6 +499,14 @@ export function torqueCommand(): Command {
             `${landedPart}${rolledPart} · ` +
             `${chalk.dim(duration)}\n`,
         );
+
+        if (run.earlyStopReason) {
+          const returned = clickCount - run.clicks.length;
+          process.stdout.write(
+            `\n  💰 Cycles: ${passedClicks} used, ${returned} returned to balance\n` +
+            `  ⏹ Stopped early: ${run.earlyStopReason}\n`,
+          );
+        }
 
         if (passedClicks > 0) {
           process.stdout.write(

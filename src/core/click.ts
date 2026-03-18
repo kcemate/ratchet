@@ -87,6 +87,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   let testsPassed = false;
   let commitHash: string | undefined;
   let rolledBack = false;
+  let rollbackReason: string | undefined;
 
   try {
     // Pass GitNexus cwd to the agent so worktree agents can look up intelligence
@@ -117,6 +118,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
 
     if (!buildResult.success) {
       console.error(`[DEBUG] Build failed. Output: ${buildResult.output?.slice(0, 500)}`);
+      rollbackReason = 'build failed';
       await rollback(cwd, clickNumber, stashCreated);
       rolledBack = true;
     } else {
@@ -125,6 +127,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       if (!guardResult.passed && !ctx.atomicSweep) {
         console.error(`[ratchet] Click ${clickNumber} REJECTED by guards: ${guardResult.reason}`);
         console.error(`[ratchet]   ${guardResult.detail}`);
+        rollbackReason = guardResult.reason;
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       } else if (!guardResult.passed && ctx.atomicSweep) {
@@ -149,6 +152,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
 
       if (prevalidateResult?.recommendation === 'reject') {
         console.error(`[ratchet] Click ${clickNumber} REJECTED by prevalidate (confidence=${prevalidateResult.confidence.toFixed(2)}) — rolling back without tests`);
+        rollbackReason = `prevalidate rejected (confidence ${prevalidateResult.confidence.toFixed(2)})`;
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       } else if (prevalidateResult?.recommendation === 'escalate-swarm') {
@@ -170,6 +174,13 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       if (!testsPassed) {
         console.error(`[DEBUG] Tests FAILED. Exit output (last 500 chars): ${testResult.output?.slice(-500)}`);
         console.error(`[DEBUG] Test error: ${testResult.error}`);
+        const failMatch = testResult.output?.match(/(\d+)\s+failing/i) ?? testResult.output?.match(/(\d+)\s+failed/i);
+        if (failMatch) {
+          rollbackReason = `${failMatch[1]} tests failed`;
+        } else {
+          const lastLine = testResult.output?.split('\n').filter(l => l.trim()).at(-1)?.trim().slice(0, 80);
+          rollbackReason = lastLine ?? testResult.error?.slice(0, 80) ?? 'tests failed';
+        }
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       } else if (config.defaults.autoCommit) {
@@ -210,6 +221,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     await rollback(cwd, clickNumber, stashCreated).catch(() => {});
     rolledBack = true;
     const error = err as Error;
+    rollbackReason = error.message?.slice(0, 80) ?? 'unexpected error';
     buildResult = {
       success: false,
       output: error.message ?? 'Unknown error',
@@ -227,6 +239,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     testsPassed,
     commitHash,
     timestamp,
+    rollbackReason,
   };
 
   return { click, rolled_back: rolledBack };
