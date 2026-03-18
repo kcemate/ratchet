@@ -17,6 +17,7 @@ import { simulateCommand } from './commands/simulate.js';
 import { debateCommand } from './commands/debate.js';
 import { improveCommand } from './commands/improve.js';
 import { visionCommand } from './commands/vision.js';
+import { badgeCommand } from './commands/badge.js';
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -55,5 +56,6 @@ program.addCommand(simulateCommand());
 program.addCommand(debateCommand());
 program.addCommand(improveCommand());
 program.addCommand(visionCommand());
+program.addCommand(badgeCommand());
 
 program.parse(process.argv);
