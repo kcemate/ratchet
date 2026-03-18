@@ -1,0 +1,10 @@
+{
+  "publishes": {
+    "brave-guitar-gdv7": {
+      "siteUrl": "https://brave-guitar-gdv7.here.now/",
+      "claimToken": "42a064764636b76634e36363cb8727fff81f93434a0b9d52a7f86b553f35c853",
+      "claimUrl": "https://here.now/claim?slug=brave-guitar-gdv7&token=42a064764636b76634e36363cb8727fff81f93434a0b9d52a7f86b553f35c853",
+      "expiresAt": "2026-03-19T11:51:22.953Z"
+    }
+  }
+}

@@ -187,7 +187,8 @@ describe('requireAuth middleware', () => {
 
 // ─── HTTP integration tests ──────────────────────────────────────────────────
 
-import { resetDb } from '../api/db/client.js';
+import { resetDb, getDb } from '../api/db/client.js';
+import { users, usageRecords } from '../api/db/schema.js';
 import { createServer } from '../api/server.js';
 
 // Reset DB singleton before each HTTP test group so each test gets a clean DB
@@ -323,21 +324,20 @@ describe('POST /api/usage/record — tier enforcement', () => {
 
   it('blocks torque on free plan with 403', async () => {
     resetDb();
-    const { getDb } = await import('../api/db/client.js');
-    const { users } = await import('../api/db/schema.js');
     const db = getDb();
     const now = new Date();
+    const uid = `user-free-torque-${Date.now()}`;
     db.insert(users).values({
-      id: 'user-free-2',
-      githubId: '33333',
-      username: 'freeuser2',
+      id: uid,
+      githubId: `gh-${Date.now()}`,
+      username: 'freeuser-torque',
       plan: 'free',
       createdAt: now,
       updatedAt: now,
     }).run();
 
     const app = createServer();
-    const token = signToken({ id: 'user-free-2', username: 'freeuser2', plan: 'free' });
+    const token = signToken({ id: uid, username: 'freeuser-torque', plan: 'free' });
     const res = await request(app)
       .post('/api/usage/record')
       .set('Authorization', `Bearer ${token}`)
