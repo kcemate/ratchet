@@ -13,12 +13,9 @@ import { tightenCommand } from './commands/tighten.js';
 import { scanCommand } from './commands/scan.js';
 import { reportCommand } from './commands/report.js';
 import { buildCommand } from './commands/build.js';
-import { simulateCommand } from './commands/simulate.js';
-import { debateCommand } from './commands/debate.js';
 import { improveCommand } from './commands/improve.js';
 import { visionCommand } from './commands/vision.js';
 import { badgeCommand } from './commands/badge.js';
-import { serveCommand } from './commands/serve.js';
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -53,11 +50,8 @@ program.addCommand(tightenCommand());
 program.addCommand(scanCommand());
 program.addCommand(reportCommand());
 program.addCommand(buildCommand());
-program.addCommand(simulateCommand());
-program.addCommand(debateCommand());
 program.addCommand(improveCommand());
 program.addCommand(visionCommand());
 program.addCommand(badgeCommand());
-program.addCommand(serveCommand());
 
 program.parse(process.argv);
