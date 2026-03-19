@@ -4,6 +4,8 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { IssueSubcategory, IssueCategoryName } from '../core/taxonomy.js';
 import { printHeader, severityColor, scoreColor } from '../lib/cli.js';
+import { classifyIssues, summarizeClassifications } from '../core/cross-cutting.js';
+import type { ClickGuards } from '../types.js';
 import {
   LOOP_DB_API_PATTERN,
   SECRET_PATTERNS,
@@ -1003,6 +1005,35 @@ function renderScan(result: ScanResult): void {
     }
     if (result.issuesByType.length > 8) {
       process.stdout.write(chalk.dim(`     ... and ${result.issuesByType.length - 8} more issue type${result.issuesByType.length - 8 !== 1 ? 's' : ''}`) + '\n');
+    }
+  }
+
+  // Cross-cutting classification
+  const defaultGuards: ClickGuards = { maxFilesChanged: 3, maxLinesChanged: 40 };
+  const classifications = classifyIssues(result, defaultGuards);
+  if (classifications.length > 0) {
+    const summary = summarizeClassifications(classifications);
+    const crossAndArch = [...summary.crossCutting, ...summary.architectural];
+    if (crossAndArch.length > 0) {
+      process.stdout.write('\n');
+      process.stdout.write(chalk.yellow('  ⚠ Cross-cutting issues detected:') + '\n');
+      for (const c of crossAndArch) {
+        const label = c.subcategory;
+        const hits = `${c.hitCount} hits across ${c.fileCount} file${c.fileCount !== 1 ? 's' : ''}`;
+        const rec = c.recommendation ? ` — ${c.recommendation}` : '';
+        process.stdout.write(`     ${label} (${hits})${rec}\n`);
+      }
+    }
+    if (summary.singleFile.length > 0) {
+      process.stdout.write('\n');
+      process.stdout.write(chalk.green('  ✅ Single-file issues (fixable with normal torque):') + '\n');
+      for (const c of summary.singleFile) {
+        process.stdout.write(`     ${c.subcategory} (${c.hitCount} in individual files)\n`);
+      }
+    }
+    if (summary.hasAnyCrossCutting) {
+      process.stdout.write('\n');
+      process.stdout.write(chalk.cyan(`  💡 Recommended: ${summary.recommendedCommand}`) + '\n');
     }
   }
 
