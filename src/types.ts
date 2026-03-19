@@ -19,6 +19,16 @@ export interface ClickGuards {
   maxFilesChanged: number;
 }
 
+export type GuardProfileName = 'tight' | 'refactor' | 'broad' | 'atomic';
+
+/** Named guard profiles. null means no limits (test suite is the only gate). */
+export const GUARD_PROFILES: Record<GuardProfileName, ClickGuards | null> = {
+  tight:   { maxFilesChanged: 3,  maxLinesChanged: 40  },
+  refactor: { maxFilesChanged: 12, maxLinesChanged: 280 },
+  broad:   { maxFilesChanged: 20, maxLinesChanged: 500 },
+  atomic:  null,
+};
+
 export interface RatchetConfig {
   agent: 'claude-code' | 'codex' | 'shell';
   model?: string;
@@ -31,8 +41,8 @@ export interface RatchetConfig {
   targets: Target[];
   boundaries?: Boundary[];
   swarm?: SwarmConfig;
-  /** Click scope guards — reject over-aggressive changes before running tests */
-  guards?: ClickGuards;
+  /** Click scope guards — named profile or explicit limits */
+  guards?: GuardProfileName | ClickGuards;
   /** Set to 'auto-detected' when config was generated from project detection, not a .ratchet.yml */
   _source?: 'file' | 'auto-detected';
   /** True when no test command was found during auto-detection; harden mode should be enabled */
@@ -43,6 +53,8 @@ export interface Target {
   name: string;
   path: string;
   description: string;
+  /** Per-target guard override — named profile or explicit limits */
+  guards?: GuardProfileName | ClickGuards;
 }
 
 export interface Boundary {

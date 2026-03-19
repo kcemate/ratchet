@@ -21,6 +21,8 @@ import type { ScanResult } from './scan.js';
 import { analyzeScoreGaps } from '../core/score-optimizer.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import type { Click, RatchetRun } from '../types.js';
+import { GUARD_PROFILES } from '../types.js';
+import type { GuardProfileName } from '../types.js';
 import { formatDuration } from '../core/utils.js';
 import { printHeader, exitWithError, validateInt, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
 import { STATE_FILE } from './status.js';
@@ -47,8 +49,9 @@ export function torqueCommand(): Command {
     .option('--adversarial', 'Enable adversarial QA — red team tests each landed change for regressions', false)
     .option('--sweep', 'Sweep mode — fix one issue type across the entire codebase', false)
     .option('--category <type>', 'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)')
-    .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (default: 40)')
-    .option('--max-files <number>', 'Max files changed per click before auto-rollback (default: 3)')
+    .option('--guards <profile>', 'Guard profile: tight (3/40), refactor (12/280), broad (20/500), atomic (no limits)')
+    .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (overrides --guards)')
+    .option('--max-files <number>', 'Max files changed per click before auto-rollback (overrides --guards)')
     .option('--no-escalate', 'Disable adaptive escalation — stay on single-file target even when stalled')
     .option('--architect', 'Enable architect mode — structural refactoring with relaxed guards (20 files, 500 lines)')
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
@@ -76,6 +79,7 @@ export function torqueCommand(): Command {
         adversarial: boolean;
         sweep: boolean;
         category?: string;
+        guards?: string;
         maxLines?: string;
         maxFiles?: string;
         escalate: boolean;
@@ -184,10 +188,24 @@ export function torqueCommand(): Command {
           exitWithError(`  Invalid --clicks value: ${chalk.bold(options.clicks)}\n  Fractional clicks are not allowed — must be a whole number (e.g. ${chalk.cyan('--clicks 5')}).`);
         }
 
-        // Set up click guards
-        const maxLines = options.maxLines ? parseInt(options.maxLines, 10) : 40;
-        const maxFiles = options.maxFiles ? parseInt(options.maxFiles, 10) : 3;
-        config.guards = { maxLinesChanged: maxLines, maxFilesChanged: maxFiles };
+        // Set up click guards — resolution priority: --max-lines/--max-files > --guards > target config > mode defaults
+        const VALID_PROFILES: GuardProfileName[] = ['tight', 'refactor', 'broad', 'atomic'];
+        if (options.maxLines || options.maxFiles) {
+          // Explicit per-dimension override takes highest priority
+          const base = options.guards && VALID_PROFILES.includes(options.guards as GuardProfileName)
+            ? GUARD_PROFILES[options.guards as GuardProfileName] ?? GUARD_PROFILES.tight!
+            : GUARD_PROFILES.tight!;
+          config.guards = {
+            maxLinesChanged: options.maxLines ? parseInt(options.maxLines, 10) : base.maxLinesChanged,
+            maxFilesChanged: options.maxFiles ? parseInt(options.maxFiles, 10) : base.maxFilesChanged,
+          };
+        } else if (options.guards) {
+          if (!VALID_PROFILES.includes(options.guards as GuardProfileName)) {
+            exitWithError(`  Invalid --guards profile: "${options.guards}"\n  Valid profiles: ${VALID_PROFILES.join(', ')}`);
+          }
+          config.guards = options.guards as GuardProfileName;
+        }
+        // Otherwise leave config.guards as-is (from .ratchet.yml) or undefined (engine uses mode defaults)
 
         // Print run summary
         const fields: Array<[string, string]> = options.sweep
@@ -197,7 +215,15 @@ export function torqueCommand(): Command {
           ['Agent',  chalk.dim(config.agent)],
           ['Clicks', chalk.yellow(String(clickCount))],
           ['Tests',  chalk.dim(config.defaults.testCommand)],
-          ['Guards', chalk.dim(`≤${maxLines} lines, ≤${maxFiles} files per click`)],
+          ['Guards', (() => {
+            if (config.guards === undefined) return chalk.dim('mode defaults');
+            if (config.guards === 'atomic') return chalk.yellow('atomic (no limits)');
+            if (typeof config.guards === 'string') {
+              const g = GUARD_PROFILES[config.guards as GuardProfileName];
+              return chalk.dim(`${config.guards} (≤${g!.maxLinesChanged} lines, ≤${g!.maxFilesChanged} files)`);
+            }
+            return chalk.dim(`≤${config.guards.maxLinesChanged} lines, ≤${config.guards.maxFilesChanged} files`);
+          })()],
           ['Mode',   hardenMode ? chalk.yellow('harden') : chalk.dim('normal')],
         );
         if (options.architect) fields.push(['Architect', chalk.yellow('enabled')]);
