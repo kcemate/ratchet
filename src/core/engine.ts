@@ -53,6 +53,8 @@ export interface EngineRunOptions {
   escalate?: boolean;
   /** Auto-escalate to architect mode when smart stop detects architect-only issues remain (default: true) */
   architectEscalation?: boolean;
+  /** Offset added to click numbering (used when architect engine is called mid-run) */
+  clickOffset?: number;
 }
 
 const TEST_FILE_PATTERNS = [
@@ -379,6 +381,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
                 clicks: remainingClicks,
                 createBranch: false,
                 scanResult: currentScan,
+                clickOffset: i,
               });
               run.clicks.push(...architectRun.clicks);
               run.architectEscalated = true;
@@ -510,9 +513,11 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
     let previousTotal = scanResult.total;
     let architectPrompt = buildArchitectPrompt(currentScan, cwd);
 
+    const clickOffset = options.clickOffset ?? 0;
+
     for (let i = 1; i <= clicks; i++) {
-      const clickNumber = i;
-      await callbacks.onClickStart?.(clickNumber, clicks);
+      const clickNumber = i + clickOffset;
+      await callbacks.onClickStart?.(clickNumber, clicks + clickOffset);
 
       // Synthetic architect task — carries the pre-built prompt verbatim
       const architectTask: IssueTask = {
