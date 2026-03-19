@@ -16,6 +16,7 @@ import { buildCommand } from './commands/build.js';
 import { improveCommand } from './commands/improve.js';
 import { visionCommand } from './commands/vision.js';
 import { badgeCommand } from './commands/badge.js';
+import { loginCommand, logoutCommand } from './commands/login.js';
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -53,5 +54,7 @@ program.addCommand(buildCommand());
 program.addCommand(improveCommand());
 program.addCommand(visionCommand());
 program.addCommand(badgeCommand());
+program.addCommand(loginCommand());
+program.addCommand(logoutCommand());
 
 program.parse(process.argv);

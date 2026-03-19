@@ -5,6 +5,7 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
 import { printHeader, exitWithError, validateInt, severityColor, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta } from '../lib/cli.js';
+import { requireLicense } from '../core/license.js';
 import { STATE_FILE } from './status.js';
 import { saveRun } from '../core/history.js';
 import { runSweepEngine, runArchitectEngine } from '../core/engine.js';
@@ -46,6 +47,9 @@ export function improveCommand(): Command {
       const cwd = process.cwd();
 
       printHeader('⚙  Ratchet Improve');
+
+      // License gate — improve requires Builder or higher
+      requireLicense('improve');
 
       const config = await validateProjectEnv(cwd);
 

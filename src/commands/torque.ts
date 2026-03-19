@@ -26,6 +26,7 @@ import type { GuardProfileName } from '../types.js';
 import { formatDuration } from '../core/utils.js';
 import { printHeader, exitWithError, validateInt, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
 import { STATE_FILE } from './status.js';
+import { requireLicense } from '../core/license.js';
 
 export function torqueCommand(): Command {
   const cmd = new Command('torque');
@@ -93,6 +94,9 @@ export function torqueCommand(): Command {
         const cwd = process.cwd();
 
         printHeader('⚙  Ratchet Torque');
+
+        // License gate — torque requires Pro or higher
+        requireLicense('torque');
 
         // Validate git repo, warn about dirty worktree, and load config
         const config = await validateProjectEnv(cwd);
