@@ -273,6 +273,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
 
+        const prevConsecutiveRollbacks = consecutiveRollbacks;
         if (rolled_back) {
           console.error(`[ratchet] click ${i} ROLLED BACK (${elapsedSec}s) — tests failed or build errored`);
           consecutiveRollbacks++;
@@ -299,8 +300,8 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
               click.rollbackReason = `score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`;
               click.commitHash = undefined;
               rolled_back = true;
-              // Correct counters (were already updated above assuming a successful land)
-              consecutiveRollbacks++;
+              // Restore consecutive count from before the "landed" reset, then add this one
+              consecutiveRollbacks = prevConsecutiveRollbacks + 1;
               totalLanded--;
               totalRolled++;
             } else {
