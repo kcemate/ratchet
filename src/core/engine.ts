@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { readdirSync } from 'fs';
 import { join } from 'path';
-import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase } from '../types.js';
+import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta } from '../types.js';
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
 import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
@@ -18,6 +18,41 @@ import { IncrementalScanner } from './scan-cache.js';
 
 export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
 export type { HardenPhase };
+
+/**
+ * Compute per-category score deltas between two scan results.
+ * Returns entries only for categories that exist in either scan.
+ */
+export function diffCategories(before: ScanResult, after: ScanResult): CategoryDelta[] {
+  const deltas: CategoryDelta[] = [];
+
+  // Build maps keyed by category name
+  const beforeMap = new Map(before.categories.map(c => [c.name, c]));
+  const afterMap = new Map(after.categories.map(c => [c.name, c]));
+
+  // Union of all category names
+  const names = new Set([...beforeMap.keys(), ...afterMap.keys()]);
+
+  for (const name of names) {
+    const b = beforeMap.get(name);
+    const a = afterMap.get(name);
+
+    const beforeScore = b?.score ?? 0;
+    const afterScore = a?.score ?? 0;
+    const max = b?.max ?? a?.max ?? 0;
+
+    const beforeIssues = b?.subcategories.reduce((sum, s) => sum + s.issuesFound, 0) ?? 0;
+    const afterIssues = a?.subcategories.reduce((sum, s) => sum + s.issuesFound, 0) ?? 0;
+    const issuesFixed = Math.max(0, beforeIssues - afterIssues);
+
+    const delta = afterScore - beforeScore;
+    const wastedEffort = issuesFixed > 0 && delta === 0;
+
+    deltas.push({ category: name, before: beforeScore, max, after: afterScore, delta, issuesFixed, wastedEffort });
+  }
+
+  return deltas;
+}
 
 export interface EngineCallbacks {
   onClickStart?: (clickNumber: number, total: number, hardenPhase?: HardenPhase) => Promise<void> | void;
@@ -316,6 +351,20 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
               click.scoreAfterClick = newTotal;
               click.issuesFixedCount = issuesFixedCount;
+
+              // Compute and attach per-category breakdown
+              const categoryDeltas = diffCategories(currentScan, newScan);
+              click.categoryDeltas = categoryDeltas;
+
+              // Print per-category breakdown for non-zero or wasted-effort categories
+              for (const cd of categoryDeltas) {
+                if (cd.delta !== 0) {
+                  const sign = cd.delta > 0 ? '+' : '';
+                  console.error(`   ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} (${sign}${cd.delta})${cd.issuesFixed > 0 ? ` — ${cd.issuesFixed} issues fixed` : ''}`);
+                } else if (cd.wastedEffort) {
+                  console.error(`   ⚠ ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} — ${cd.issuesFixed} issues fixed but category already maxed`);
+                }
+              }
 
               await callbacks.onClickScoreUpdate?.(i, previousTotal, newTotal, delta);
 
