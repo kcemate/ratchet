@@ -19,6 +19,33 @@ import type { LearningStore } from './learning.js';
 import { clearCache as clearGitNexusCache } from './gitnexus.js';
 import { IncrementalScanner } from './scan-cache.js';
 
+/** Guard profile escalation chain: tight → refactor → broad → atomic */
+const GUARD_ESCALATION_ORDER: Array<import('../types.js').GuardProfileName> = ['tight', 'refactor', 'broad', 'atomic'];
+
+/**
+ * Given the current resolved guards, return the next level up in the escalation chain.
+ * Returns null if already at atomic or if guards can't be matched to a known profile.
+ */
+export function nextGuardProfile(current: ClickGuards | null): { name: import('../types.js').GuardProfileName; guards: ClickGuards | null } | null {
+  if (current === null) return null; // already atomic
+  // Match current guards to a known profile
+  const currentIdx = GUARD_ESCALATION_ORDER.findIndex(name => {
+    const profile = GUARD_PROFILES[name];
+    if (profile === null && current === null) return true;
+    if (profile === null || current === null) return false;
+    return profile.maxFilesChanged === current.maxFilesChanged && profile.maxLinesChanged === current.maxLinesChanged;
+  });
+  if (currentIdx === -1 || currentIdx >= GUARD_ESCALATION_ORDER.length - 1) return null;
+  const nextName = GUARD_ESCALATION_ORDER[currentIdx + 1];
+  return { name: nextName, guards: GUARD_PROFILES[nextName] };
+}
+
+/** Detect guard-rejection rollbacks from click rollbackReason */
+export function isGuardRejection(reason?: string): boolean {
+  if (!reason) return false;
+  return reason.startsWith('Too many lines changed:') || reason.startsWith('Too many files changed:') || reason.startsWith('Single file changed too many lines');
+}
+
 export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
 export type { HardenPhase };
 
@@ -93,6 +120,8 @@ export interface EngineRunOptions {
   escalate?: boolean;
   /** Auto-escalate to architect mode when smart stop detects architect-only issues remain (default: true) */
   architectEscalation?: boolean;
+  /** Auto-bump guard profile after consecutive guard-rejection rollbacks (default: true) */
+  guardEscalation?: boolean;
   /** Offset added to click numbering (used when architect engine is called mid-run) */
   clickOffset?: number;
   /** Run a read-only planning click 0 before execution clicks (default: false) */
@@ -157,7 +186,7 @@ function resolveGuards(
  * re-scans to measure progress and update the backlog.
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true, architectEscalation: architectEscalationEnabled = true, planFirst = false } = options;
+  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true, architectEscalation: architectEscalationEnabled = true, guardEscalation: guardEscalationEnabled = true, planFirst = false } = options;
   let target = options.target;
 
   const run: RatchetRun = {
@@ -224,10 +253,20 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
   // Stall detection for adaptive escalation
   let consecutiveRollbacks = 0;
+  let consecutiveGuardRejections = 0;
   let totalLanded = 0;
   let totalRolled = 0;
   let scoreAtMidpoint: number | undefined;
   let escalated = false;
+
+  // Smart guard escalation: mutable guards that can be bumped mid-run
+  let currentMode: 'normal' | 'sweep' | 'architect' = 'normal';
+  let currentGuards = resolveGuards(options.target, config, 'normal');
+  let currentGuardProfileName: string = (() => {
+    const source = config.guards ?? options.target.guards;
+    if (typeof source === 'string') return source;
+    return 'tight';
+  })();
 
   // --- Plan-first: click 0 — read-only planning before execution clicks ---
   if (planFirst) {
@@ -302,7 +341,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             agent,
             cwd,
             hardenPhase,
-            resolvedGuards: resolveGuards(target, config, escalated ? 'sweep' : 'normal'),
+            resolvedGuards: escalated ? resolveGuards(target, config, 'sweep') : currentGuards,
             issues: clickIssues,
             planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
             onPhase: callbacks.onClickPhase
@@ -345,7 +384,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             hardenPhase,
             adversarial,
             sweepMode: escalated,
-            resolvedGuards: resolveGuards(target, config, escalated ? 'sweep' : 'normal'),
+            resolvedGuards: escalated ? resolveGuards(target, config, 'sweep') : currentGuards,
             issues: clickIssues,
             planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
             onPhase: callbacks.onClickPhase
@@ -387,9 +426,30 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           console.error(`[ratchet] click ${i} ROLLED BACK (${elapsedSec}s) — tests failed or build errored`);
           consecutiveRollbacks++;
           totalRolled++;
+
+          // Track guard-rejection rollbacks separately for smart guard escalation
+          if (isGuardRejection(click.rollbackReason)) {
+            consecutiveGuardRejections++;
+          } else {
+            consecutiveGuardRejections = 0;
+          }
+
+          // Smart guard escalation: auto-bump to next profile after 2+ guard rejections
+          if (guardEscalationEnabled && !escalated && consecutiveGuardRejections >= 2) {
+            const next = nextGuardProfile(currentGuards);
+            if (next) {
+              const prevName = currentGuardProfileName;
+              currentGuards = next.guards;
+              currentGuardProfileName = next.name;
+              consecutiveGuardRejections = 0;
+              console.error(`[ratchet] 🛡 Guard escalation: ${prevName} → ${next.name} (${consecutiveGuardRejections + 2} consecutive guard rejections)`);
+              await callbacks.onEscalate?.(`guard escalation: ${prevName} → ${next.name}`);
+            }
+          }
         } else {
           console.error(`[ratchet] click ${i} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
           consecutiveRollbacks = 0;
+          consecutiveGuardRejections = 0;
           totalLanded++;
         }
 
