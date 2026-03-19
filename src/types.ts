@@ -72,6 +72,14 @@ export interface Click {
   };
 }
 
+export interface PlanResult {
+  filesToTouch: string[];
+  extractionTargets: Array<{ name: string; files: string[]; pattern: string }>;
+  dependencyOrder: string[];
+  estimatedClicks: number;
+  generatedAt: Date;
+}
+
 export interface RatchetRun {
   id: string;
   target: Target;
@@ -81,6 +89,7 @@ export interface RatchetRun {
   status: 'running' | 'completed' | 'failed';
   earlyStopReason?: string; // set when the engine stopped early (e.g. architect-only issues remain)
   architectEscalated?: boolean; // set when the engine escalated to architect mode mid-run
+  planResult?: PlanResult; // set when --plan-first generates a click 0 plan
 }
 
 export interface BuildResult {

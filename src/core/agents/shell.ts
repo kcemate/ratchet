@@ -97,6 +97,11 @@ export class ShellAgent implements Agent {
     return this.runPromptInDir(prompt, process.cwd());
   }
 
+  /** Run a prompt directly without any wrapping — used for plan/read-only clicks */
+  runDirect(prompt: string, cwd: string): Promise<string> {
+    return this.runPromptInDir(prompt, cwd);
+  }
+
   private runPromptInDir(prompt: string, cwd: string): Promise<string> {
     const args = [...this.extraArgs, prompt];
     const maxBuffer = 10 * 1024 * 1024; // 10MB
@@ -419,4 +424,32 @@ export function buildArchitectPrompt(scanResult: ScanResult, cwd: string): strin
 
 export function createShellAgent(options: ShellAgentConfig = {}): ShellAgent {
   return new ShellAgent(options);
+}
+
+/**
+ * Build a read-only planning prompt (click 0).
+ * The agent must output ONLY valid JSON matching the PlanResult schema.
+ * No code changes, no commits — pure structured planning.
+ */
+export function buildPlanPrompt(scanSummary: string, targetPath: string, targetDescription: string): string {
+  return (
+    `You are a code planning assistant. Analyze the target and produce a structured execution plan.\n\n` +
+    `TARGET: ${targetPath}\n` +
+    `DESCRIPTION: ${targetDescription}\n\n` +
+    (scanSummary ? `SCAN SUMMARY:\n${scanSummary}\n\n` : '') +
+    `INSTRUCTIONS:\n` +
+    `- Read the files in ${targetPath} to understand the current state\n` +
+    `- Identify which files will need to be touched to improve this target\n` +
+    `- Identify any extraction targets (shared modules, utilities, type definitions)\n` +
+    `- Determine the safest dependency order for changes\n` +
+    `- Estimate how many execution clicks will be needed\n\n` +
+    `DO NOT make any code changes. DO NOT create or modify any files.\n\n` +
+    `Output ONLY valid JSON matching this schema (no markdown, no explanation):\n` +
+    `{\n` +
+    `  "filesToTouch": ["path/to/file1.ts", "path/to/file2.ts"],\n` +
+    `  "extractionTargets": [{ "name": "shared-utils", "files": ["src/a.ts", "src/b.ts"], "pattern": "duplicated helper" }],\n` +
+    `  "dependencyOrder": ["path/to/file1.ts", "path/to/file2.ts"],\n` +
+    `  "estimatedClicks": 3\n` +
+    `}`
+  );
 }

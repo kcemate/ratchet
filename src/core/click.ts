@@ -34,6 +34,8 @@ export interface ClickContext {
   atomicSweep?: boolean;
   /** Main repo cwd for GitNexus lookups (worktrees don't have .gitnexus) */
   gitnexusCwd?: string;
+  /** Execution plan from click 0 (--plan-first) — injected into agent context */
+  planContext?: string;
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
 }
 
@@ -97,7 +99,10 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
 
     // 1. Analyze
     await onPhase?.('analyzing');
-    const context = createAgentContext(target, clickNumber, hardenPhase);
+    let context = createAgentContext(target, clickNumber, hardenPhase);
+    if (ctx.planContext) {
+      context += '\n\n## Execution Plan\n' + ctx.planContext;
+    }
     analysis = await agent.analyze(context, hardenPhase, issues);
 
     // 2. Propose

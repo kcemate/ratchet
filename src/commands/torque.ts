@@ -51,6 +51,7 @@ export function torqueCommand(): Command {
     .option('--max-files <number>', 'Max files changed per click before auto-rollback (default: 3)')
     .option('--no-escalate', 'Disable adaptive escalation — stay on single-file target even when stalled')
     .option('--architect', 'Enable architect mode — structural refactoring with relaxed guards (20 files, 500 lines)')
+    .option('--plan-first', 'Run a planning click 0 before execution clicks — read-only, generates a structured plan', false)
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
     .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
     .addHelpText(
@@ -80,6 +81,7 @@ export function torqueCommand(): Command {
         maxFiles?: string;
         escalate: boolean;
         architect: boolean;
+        planFirst: boolean;
         prComment: boolean;
         prCommentFooter: boolean;
       }) => {
@@ -201,6 +203,7 @@ export function torqueCommand(): Command {
           ['Mode',   hardenMode ? chalk.yellow('harden') : chalk.dim('normal')],
         );
         if (options.architect) fields.push(['Architect', chalk.yellow('enabled')]);
+        if (options.planFirst) fields.push(['Plan-first', chalk.yellow('enabled')]);
         if (options.adversarial) fields.push(['QA', chalk.yellow('adversarial')]);
         if (config.swarm?.enabled) {
           const specs = config.swarm.specializations.join(', ');
@@ -290,6 +293,7 @@ export function torqueCommand(): Command {
             category: options.category,
             escalate: options.escalate,
             architectEscalation: options.architect !== false,
+            planFirst: options.planFirst,
             callbacks: {
               onScanComplete: (scan: ScanResult) => {
                 const topIssues = scan.issuesByType.slice(0, 3);
@@ -324,6 +328,22 @@ export function torqueCommand(): Command {
                 }
                 process.stdout.write('\n');
                 lastKnownScore = scan.total;
+              },
+
+              onPlanStart: () => {
+                spinner = ora('  📋 Click 0 — Planning…').start();
+              },
+
+              onPlanComplete: (plan) => {
+                if (spinner) {
+                  spinner.succeed(
+                    `  📋 Click 0 — Plan ready: ${plan.filesToTouch.length} files, ~${plan.estimatedClicks} clicks estimated`,
+                  );
+                  spinner = null;
+                }
+                process.stdout.write(
+                  chalk.dim(`     Files to touch: ${plan.filesToTouch.slice(0, 5).join(', ')}${plan.filesToTouch.length > 5 ? `, +${plan.filesToTouch.length - 5} more` : ''}\n`) + '\n',
+                );
               },
 
               onClickStart: async (clickNumber, total, hardenPhase?: HardenPhase) => {
