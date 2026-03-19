@@ -8,7 +8,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 // Load .env
-const envPath = path.join(__dirname, "..", ".env");
+const envPath = path.join(path.dirname(new URL(import.meta.url).pathname), "..", ".env");
 const envContent = fs.readFileSync(envPath, "utf-8");
 for (const line of envContent.split("\n")) {
   const match = line.match(/^([^#=]+)=(.*)$/);
@@ -143,7 +143,7 @@ async function main() {
     createdAt: new Date().toISOString(),
   };
 
-  const configPath = path.join(__dirname, "..", "stripe-config.json");
+  const configPath = path.join(path.dirname(new URL(import.meta.url).pathname), "..", "stripe-config.json");
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   console.log(`\n📄 Config saved to stripe-config.json`);
   console.log("\nDone! Update landing page CTAs with the payment links above.");

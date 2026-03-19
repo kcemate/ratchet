@@ -2314,7 +2314,7 @@
           <li>ratchet improve access</li>
           <li>Everything in Free</li>
         </ul>
-        <a href="#install" class="pricing-cta pricing-cta-outline">Start Building</a>
+        <a href="https://buy.stripe.com/test_8x29AU2d4cvBdcT70P9bO00" class="pricing-cta pricing-cta-outline" data-monthly="https://buy.stripe.com/test_8x29AU2d4cvBdcT70P9bO00" data-annual="https://buy.stripe.com/test_28E8wQcRIfHN2yfgBp9bO01" target="_blank" rel="noopener">Start Building</a>
       </div>
 
       <!-- PRO — MOST POPULAR -->
@@ -2335,7 +2335,7 @@
           <li>PDF reports</li>
           <li>Everything in Builder</li>
         </ul>
-        <a href="#install" class="pricing-cta pricing-cta-primary">Go Pro</a>
+        <a href="https://buy.stripe.com/test_6oU4gAg3U3Z51ubfxl9bO02" class="pricing-cta pricing-cta-primary" data-monthly="https://buy.stripe.com/test_6oU4gAg3U3Z51ubfxl9bO02" data-annual="https://buy.stripe.com/test_bJecN67xo8fl3Cj70P9bO03" target="_blank" rel="noopener">Go Pro</a>
       </div>
 
       <!-- TEAM -->
@@ -2355,7 +2355,7 @@
           <li>Slack &amp; Discord notifications</li>
           <li>Team dashboard + score trends</li>
         </ul>
-        <a href="#install" class="pricing-cta pricing-cta-outline">Start Team Trial</a>
+        <a href="https://buy.stripe.com/test_28E4gA9Fw1QX5Krdpd9bO04" class="pricing-cta pricing-cta-outline" data-monthly="https://buy.stripe.com/test_28E4gA9Fw1QX5Krdpd9bO04" data-annual="https://buy.stripe.com/test_fZu7sM7xobrx4Gncl99bO05" target="_blank" rel="noopener">Start Team Trial</a>
       </div>
 
       <!-- ENTERPRISE -->
@@ -2374,7 +2374,7 @@
           <li>SLA + dedicated support</li>
           <li>Everything in Team</li>
         </ul>
-        <a href="mailto:hello@ratchet.run" class="pricing-cta pricing-cta-outline">Contact Us</a>
+        <a href="mailto:hello@ratchetcli.com" class="pricing-cta pricing-cta-outline">Contact Us</a>
       </div>
 
     </div>
@@ -2562,6 +2562,10 @@
     periods.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = isAnnual ? '/mo · billed annually' : '/mo';
+    });
+
+    document.querySelectorAll('.pricing-cta[data-monthly]').forEach(el => {
+      el.href = isAnnual ? el.dataset.annual : el.dataset.monthly;
     });
   }
 
