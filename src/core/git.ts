@@ -117,6 +117,10 @@ export async function revert(cwd: string): Promise<void> {
   await git(['clean', '-fd'], cwd);
 }
 
+export async function revertLastCommit(cwd: string): Promise<void> {
+  await git(['reset', '--hard', 'HEAD~1'], cwd);
+}
+
 export async function getLastCommitHash(cwd: string): Promise<string> {
   return gitSafe(['rev-parse', 'HEAD'], cwd);
 }

@@ -290,23 +290,38 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             const newTotal = newScan.total;
             const delta = newTotal - previousTotal;
 
-            // Count how many issues were resolved
-            const prevIssueCount = currentScan.totalIssuesFound;
-            const newIssueCount = newScan.totalIssuesFound;
-            const issuesFixedCount = Math.max(0, prevIssueCount - newIssueCount);
+            // Score regression guard: if score dropped, revert the commit
+            if (newTotal < previousTotal && click.commitHash) {
+              const regressionDelta = previousTotal - newTotal;
+              console.error(`[ratchet] click ${i} ROLLED BACK — score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`);
+              await git.revertLastCommit(cwd).catch(() => {});
+              click.testsPassed = false;
+              click.rollbackReason = `score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`;
+              click.commitHash = undefined;
+              rolled_back = true;
+              // Correct counters (were already updated above assuming a successful land)
+              consecutiveRollbacks++;
+              totalLanded--;
+              totalRolled++;
+            } else {
+              // Count how many issues were resolved
+              const prevIssueCount = currentScan.totalIssuesFound;
+              const newIssueCount = newScan.totalIssuesFound;
+              const issuesFixedCount = Math.max(0, prevIssueCount - newIssueCount);
 
-            click.scoreAfterClick = newTotal;
-            click.issuesFixedCount = issuesFixedCount;
+              click.scoreAfterClick = newTotal;
+              click.issuesFixedCount = issuesFixedCount;
 
-            await callbacks.onClickScoreUpdate?.(i, previousTotal, newTotal, delta);
+              await callbacks.onClickScoreUpdate?.(i, previousTotal, newTotal, delta);
 
-            // Update backlog from fresh scan
-            previousTotal = newTotal;
-            currentScan = newScan;
-            const newBacklog = scoreOptimized
-              ? buildScoreOptimizedBacklog(newScan)
-              : buildBacklog(newScan);
-            backlogGroups = groupBacklogBySubcategory(newBacklog);
+              // Update backlog from fresh scan
+              previousTotal = newTotal;
+              currentScan = newScan;
+              const newBacklog = scoreOptimized
+                ? buildScoreOptimizedBacklog(newScan)
+                : buildBacklog(newScan);
+              backlogGroups = groupBacklogBySubcategory(newBacklog);
+            }
           } catch {
             // Non-fatal — skip live scoring for this click
           }
@@ -355,6 +370,18 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           if (allArchitect) {
             run.earlyStopReason = 'remaining issues need architect mode';
             console.error(`[ratchet] ⏹ Smart stop — remaining issues need architect mode. ${totalLanded} cycles used, ${clicks - i} returned.`);
+            break;
+          }
+        }
+
+        // Practical smart stop: sweepable items that keep rolling back are effectively unsweepable
+        if (!run.earlyStopReason && consecutiveRollbacks >= 3 && totalLanded > 0) {
+          const totalAttempted = totalLanded + totalRolled;
+          const rollbackRate = totalAttempted > 0 ? totalRolled / totalAttempted : 0;
+          if (rollbackRate > 0.6) {
+            const ratePct = Math.round(rollbackRate * 100);
+            run.earlyStopReason = `high rollback rate (${ratePct}%) — remaining issues may need manual intervention`;
+            console.error(`[ratchet] ⏹ Smart stop — ${run.earlyStopReason}. ${totalLanded} cycles used, ${clicks - i} returned.`);
             break;
           }
         }
