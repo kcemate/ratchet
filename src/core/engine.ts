@@ -1,15 +1,11 @@
 import { randomUUID } from 'crypto';
 import { readdirSync } from 'fs';
 import { join } from 'path';
-import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickGuards } from '../types.js';
-import { GUARD_PROFILES } from '../types.js';
+import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta } from '../types.js';
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
 import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
 import { buildScoreOptimizedBacklog } from './score-optimizer.js';
-import { buildArchitectPrompt, buildPlanPrompt } from './agents/shell.js';
-import type { PlanResult } from '../types.js';
-import { mkdir, writeFile } from 'fs/promises';
 import { executeClick } from './click.js';
 import { SwarmExecutor } from './swarm.js';
 import * as git from './git.js';
@@ -18,33 +14,14 @@ import { runScan } from '../commands/scan.js';
 import type { LearningStore } from './learning.js';
 import { clearCache as clearGitNexusCache } from './gitnexus.js';
 import { IncrementalScanner } from './scan-cache.js';
+import { resolveGuards, nextGuardProfile, isGuardRejection } from './engine-guards.js';
+import { runPlanFirst } from './engine-plan.js';
+import { runArchitectEngine } from './engine-architect.js';
 
-/** Guard profile escalation chain: tight → refactor → broad → atomic */
-const GUARD_ESCALATION_ORDER: Array<import('../types.js').GuardProfileName> = ['tight', 'refactor', 'broad', 'atomic'];
-
-/**
- * Given the current resolved guards, return the next level up in the escalation chain.
- * Returns null if already at atomic or if guards can't be matched to a known profile.
- */
-export function nextGuardProfile(current: ClickGuards | null): { name: import('../types.js').GuardProfileName; guards: ClickGuards | null } | null {
-  if (current === null) return null; // already atomic
-  // Match current guards to a known profile
-  const currentIdx = GUARD_ESCALATION_ORDER.findIndex(name => {
-    const profile = GUARD_PROFILES[name];
-    if (profile === null && current === null) return true;
-    if (profile === null || current === null) return false;
-    return profile.maxFilesChanged === current.maxFilesChanged && profile.maxLinesChanged === current.maxLinesChanged;
-  });
-  if (currentIdx === -1 || currentIdx >= GUARD_ESCALATION_ORDER.length - 1) return null;
-  const nextName = GUARD_ESCALATION_ORDER[currentIdx + 1];
-  return { name: nextName, guards: GUARD_PROFILES[nextName] };
-}
-
-/** Detect guard-rejection rollbacks from click rollbackReason */
-export function isGuardRejection(reason?: string): boolean {
-  if (!reason) return false;
-  return reason.startsWith('Too many lines changed:') || reason.startsWith('Too many files changed:') || reason.startsWith('Single file changed too many lines');
-}
+// Re-export public API from sub-modules
+export { nextGuardProfile, isGuardRejection } from './engine-guards.js';
+export { runArchitectEngine } from './engine-architect.js';
+export { runSweepEngine, chunk } from './engine-sweep.js';
 
 export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
 export type { HardenPhase };
@@ -94,7 +71,7 @@ export interface EngineCallbacks {
   onClickScoreUpdate?: (clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number) => Promise<void> | void;
   onEscalate?: (reason: string) => Promise<void> | void;
   onPlanStart?: () => Promise<void> | void;
-  onPlanComplete?: (plan: PlanResult) => Promise<void> | void;
+  onPlanComplete?: (plan: import('../types.js').PlanResult) => Promise<void> | void;
 }
 
 export interface EngineRunOptions {
@@ -128,6 +105,17 @@ export interface EngineRunOptions {
   planFirst?: boolean;
 }
 
+export interface RunSummary {
+  id: string;
+  target: string;
+  totalClicks: number;
+  passed: number;
+  failed: number;
+  commits: string[];
+  duration: number;
+  status: RatchetRun['status'];
+}
+
 const TEST_FILE_PATTERNS = [
   /\.test\.[a-z]+$/i,
   /\.spec\.[a-z]+$/i,
@@ -155,26 +143,23 @@ function countTestFiles(dir: string): number {
   return count;
 }
 
-/**
- * Resolve click guards for a run.
- * Priority: config.guards (set by CLI) > target.guards > mode defaults.
- * Returns null for atomic (no limits).
- */
-function resolveGuards(
-  target: Target,
-  config: RatchetConfig,
-  mode: 'normal' | 'sweep' | 'architect',
-): ClickGuards | null {
-  // config.guards is set by CLI (highest priority)
-  const source = config.guards ?? target.guards;
-  if (source !== undefined) {
-    if (typeof source === 'string') return GUARD_PROFILES[source];
-    return source;
-  }
-  // Mode defaults
-  if (mode === 'architect') return GUARD_PROFILES.broad;
-  if (mode === 'sweep') return GUARD_PROFILES.refactor;
-  return GUARD_PROFILES.tight;
+export function summarizeRun(run: RatchetRun): RunSummary {
+  const passed = run.clicks.filter((c) => c.testsPassed).length;
+  const failed = run.clicks.filter((c) => !c.testsPassed).length;
+  const duration = run.finishedAt
+    ? run.finishedAt.getTime() - run.startedAt.getTime()
+    : 0;
+
+  return {
+    id: run.id,
+    target: run.target.name,
+    totalClicks: run.clicks.length,
+    passed,
+    failed,
+    commits: run.clicks.filter((c) => c.commitHash).map((c) => c.commitHash!),
+    duration,
+    status: run.status,
+  };
 }
 
 /**
@@ -260,7 +245,6 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
   let escalated = false;
 
   // Smart guard escalation: mutable guards that can be bumped mid-run
-  let currentMode: 'normal' | 'sweep' | 'architect' = 'normal';
   let currentGuards = resolveGuards(options.target, config, 'normal');
   let currentGuardProfileName: string = (() => {
     const source = config.guards ?? options.target.guards;
@@ -270,38 +254,10 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
   // --- Plan-first: click 0 — read-only planning before execution clicks ---
   if (planFirst) {
-    await callbacks.onPlanStart?.();
-    try {
-      const scanSummary = currentScan
-        ? `Score: ${currentScan.total}/${currentScan.maxTotal}, ${currentScan.totalIssuesFound} issues found`
-        : '';
-      const planPrompt = buildPlanPrompt(scanSummary, target.path, target.description);
-      const agentWithDirect = agent as { runDirect?: (p: string, cwd: string) => Promise<string> };
-      const planOutput = agentWithDirect.runDirect
-        ? await agentWithDirect.runDirect(planPrompt, cwd)
-        : '';
-
-      if (planOutput) {
-        // Extract JSON from agent output (may be wrapped in markdown code fences)
-        const jsonMatch = planOutput.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]) as Omit<PlanResult, 'generatedAt'>;
-          const planResult: PlanResult = { ...parsed, generatedAt: new Date() };
-          run.planResult = planResult;
-
-          // Save plan to .ratchet/plans/<timestamp>-<target>.json
-          const plansDir = join(cwd, '.ratchet', 'plans');
-          await mkdir(plansDir, { recursive: true });
-          const planFileName = `${Date.now()}-${target.name}.json`;
-          await writeFile(join(plansDir, planFileName), JSON.stringify(planResult, null, 2), 'utf-8');
-
-          await callbacks.onPlanComplete?.(planResult);
-        }
-      }
-    } catch {
-      // Non-fatal — if plan generation fails, continue without plan
-      console.error('[ratchet] Plan generation failed — continuing without plan');
-    }
+    await runPlanFirst(run, target, currentScan, agent, cwd, {
+      onPlanStart: callbacks.onPlanStart,
+      onPlanComplete: callbacks.onPlanComplete,
+    });
   }
 
   try {
@@ -641,374 +597,6 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         '  • Test suite is flaky or has a long timeout — check test output for details',
       );
     }
-  } catch (err: unknown) {
-    run.status = 'failed';
-    throw err;
-  } finally {
-    run.finishedAt = new Date();
-    await callbacks.onRunComplete?.(run);
-  }
-
-  return run;
-}
-
-/**
- * Architect engine: make high-leverage structural improvements that eliminate many issues at once.
- * Unlike sweep (one issue type, many files) or normal (surgical per-file), architect mode
- * targets cross-cutting concerns — extracting shared modules, consolidating duplicated logic,
- * splitting god files — with relaxed guards (up to 20 files / 500 lines per click).
- *
- * Re-scans after each successful click to measure impact and refresh the prompt.
- */
-export async function runArchitectEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore } = options;
-
-  const run: RatchetRun = {
-    id: randomUUID(),
-    target: options.target,
-    clicks: [],
-    startedAt: new Date(),
-    status: 'running',
-  };
-
-  try {
-    // 1. Create branch (if requested)
-    if (createBranch) {
-      if (await git.isDetachedHead(cwd)) {
-        throw new Error('Git repository is in detached HEAD state. Ratchet requires a named branch.');
-      }
-      const branch = git.branchName(options.target.name + '-architect');
-      await git.createBranch(branch, cwd);
-    }
-
-    // 2. Run scan (or use provided)
-    const scanResult = options.scanResult ?? await runScan(cwd);
-    await callbacks.onScanComplete?.(scanResult);
-
-    // Clear GitNexus cache for fresh data
-    clearGitNexusCache();
-
-    let currentScan = scanResult;
-    let previousTotal = scanResult.total;
-    let architectPrompt = buildArchitectPrompt(currentScan, cwd);
-
-    const clickOffset = options.clickOffset ?? 0;
-
-    for (let i = 1; i <= clicks; i++) {
-      const clickNumber = i + clickOffset;
-      await callbacks.onClickStart?.(clickNumber, clicks + clickOffset);
-
-      // Synthetic architect task — carries the pre-built prompt verbatim
-      const architectTask: IssueTask = {
-        category: 'architecture',
-        subcategory: 'structural',
-        description: 'High-leverage architectural refactoring',
-        count: currentScan.totalIssuesFound,
-        severity: 'high',
-        priority: 100,
-        architectPrompt,
-      };
-
-      try {
-        const clickStartMs = Date.now();
-
-        const result = await executeClick({
-          clickNumber,
-          target: options.target,
-          config,
-          agent,
-          cwd,
-          architectMode: true,
-          resolvedGuards: resolveGuards(options.target, config, 'architect'),
-          adversarial: options.adversarial,
-          issues: [architectTask],
-          onPhase: callbacks.onClickPhase
-            ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, clickNumber)
-            : undefined,
-        });
-
-        const { click } = result;
-        let rolled_back = result.rolled_back;
-        const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
-
-        if (rolled_back) {
-          console.error(`[ratchet] architect click ${clickNumber} ROLLED BACK (${elapsedSec}s)`);
-        } else {
-          console.error(`[ratchet] architect click ${clickNumber} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
-        }
-
-        // Re-scan after successful click to measure impact and refresh the prompt
-        if (click.testsPassed && !rolled_back) {
-          try {
-            const newScan = await runScan(cwd);
-            const newTotal = newScan.total;
-
-            // Score regression guard: if score dropped, revert the commit
-            if (newTotal < previousTotal && click.commitHash) {
-              const regressionDelta = previousTotal - newTotal;
-              console.error(`[ratchet] architect click ${clickNumber} ROLLED BACK — score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`);
-              await git.revertLastCommit(cwd).catch(() => {});
-              click.testsPassed = false;
-              click.rollbackReason = `score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`;
-              click.commitHash = undefined;
-              rolled_back = true;
-            } else {
-              const delta = newTotal - previousTotal;
-              click.scoreAfterClick = newTotal;
-              click.issuesFixedCount = Math.max(0, currentScan.totalIssuesFound - newScan.totalIssuesFound);
-              await callbacks.onClickScoreUpdate?.(clickNumber, previousTotal, newTotal, delta);
-              previousTotal = newTotal;
-              currentScan = newScan;
-              // Rebuild prompt with fresh scan data for the next click
-              architectPrompt = buildArchitectPrompt(currentScan, cwd);
-            }
-          } catch {
-            // Non-fatal
-          }
-        }
-
-        run.clicks.push(click);
-        await callbacks.onClickComplete?.(click, rolled_back);
-      } catch (err: unknown) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        await callbacks.onError?.(error, clickNumber);
-      }
-    }
-
-    run.status = 'completed';
-  } catch (err: unknown) {
-    run.status = 'failed';
-    throw err;
-  } finally {
-    run.finishedAt = new Date();
-    await callbacks.onRunComplete?.(run);
-  }
-
-  return run;
-}
-
-export function summarizeRun(run: RatchetRun): RunSummary {
-  const passed = run.clicks.filter((c) => c.testsPassed).length;
-  const failed = run.clicks.filter((c) => !c.testsPassed).length;
-  const duration = run.finishedAt
-    ? run.finishedAt.getTime() - run.startedAt.getTime()
-    : 0;
-
-  return {
-    id: run.id,
-    target: run.target.name,
-    totalClicks: run.clicks.length,
-    passed,
-    failed,
-    commits: run.clicks.filter((c) => c.commitHash).map((c) => c.commitHash!),
-    duration,
-    status: run.status,
-  };
-}
-
-export interface RunSummary {
-  id: string;
-  target: string;
-  totalClicks: number;
-  passed: number;
-  failed: number;
-  commits: string[];
-  duration: number;
-  status: RatchetRun['status'];
-}
-
-/**
- * Split an array into chunks of a given size.
- */
-export function chunk<T>(arr: T[], size: number): T[][] {
-  const result: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    result.push(arr.slice(i, i + size));
-  }
-  return result;
-}
-
-/**
- * Sweep engine: fix one issue type across the entire codebase in batches.
- * Finds the highest-priority sweepable issue and runs clicks against each batch of files.
- */
-export async function runSweepEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore } = options;
-
-  const run: RatchetRun = {
-    id: randomUUID(),
-    target: options.target,
-    clicks: [],
-    startedAt: new Date(),
-    status: 'running',
-  };
-
-  try {
-    // Create branch only if requested (when combined with architect phase, branch already exists)
-    if (createBranch) {
-      if (await git.isDetachedHead(cwd)) {
-        throw new Error('Git repository is in detached HEAD state. Ratchet requires a named branch.');
-      }
-      const branch = git.branchName(options.target.name);
-      await git.createBranch(branch, cwd);
-    }
-
-    // 1. Run scan
-    const scanResult = options.scanResult ?? await runScan(cwd);
-    await callbacks.onScanComplete?.(scanResult);
-
-    // Clear GitNexus cache for fresh data
-    clearGitNexusCache();
-
-    // 2. Build backlog and enrich with risk scores.
-    // Sweep always uses score-optimized ordering to pick the highest-ROI subcategory first.
-    const backlog = buildScoreOptimizedBacklog(scanResult);
-    enrichBacklogWithRisk(backlog, cwd);
-
-    // 3. Filter to sweepable tasks, then optionally narrow by --category
-    let sweepable = backlog.filter(t => t.sweepFiles && t.sweepFiles.length > 0);
-
-    if (options.category) {
-      const cat = options.category.toLowerCase();
-      const filtered = sweepable.filter(
-        t => t.subcategory?.toLowerCase() === cat || t.category?.toLowerCase() === cat,
-      );
-      if (filtered.length > 0) {
-        sweepable = filtered;
-      } else {
-        console.error(`[ratchet] --category "${options.category}" matched no sweepable issues — running without category filter`);
-      }
-    }
-
-    if (sweepable.length === 0) {
-      console.error('[ratchet] No sweepable issues found');
-      run.status = 'completed';
-      run.finishedAt = new Date();
-      await callbacks.onRunComplete?.(run);
-      return run;
-    }
-
-    // 4. Take top priority sweepable task
-    const task = sweepable[0]!;
-    console.error(`[ratchet] Sweep target: ${task.description} (${task.sweepFiles!.length} files)`);
-
-    // 5. Group files by dependency cluster (tightly-coupled files together),
-    // falling back to plain chunking if GitNexus is not available
-    const batches = groupByDependencyCluster(task.sweepFiles!, cwd, 6);
-    const clicksToRun = Math.min(clicks, batches.length);
-
-    for (let i = 0; i < clicksToRun; i++) {
-      const clickNumber = i + 1;
-      const batch = batches[i]!;
-
-      await callbacks.onClickStart?.(clickNumber, clicksToRun);
-
-      // Create a modified task with only the current batch of files
-      const batchTask = { ...task, sweepFiles: batch };
-
-      try {
-        const clickStartMs = Date.now();
-
-        let click: Click;
-        let rolled_back: boolean;
-
-        if (config.swarm?.enabled) {
-          // Swarm mode: run N agents in parallel worktrees, pick best
-          const swarm = new SwarmExecutor(config.swarm, learningStore ?? options.learningStore);
-          const clickCtx = {
-            clickNumber,
-            target: options.target,
-            config,
-            agent,
-            cwd,
-            sweepMode: true,
-            resolvedGuards: resolveGuards(options.target, config, 'sweep'),
-            issues: [batchTask],
-            onPhase: callbacks.onClickPhase
-              ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, clickNumber)
-              : undefined,
-          };
-          const swarmResult = await swarm.execute(clickCtx, cwd);
-
-          if (swarmResult.winner) {
-            click = swarmResult.winner.click;
-            rolled_back = swarmResult.winner.rolled_back;
-            // Attach winning specialization metadata
-            const winnerAgent = swarmResult.allResults.find(
-              r => !r.outcome.rolled_back && r.outcome.click.testsPassed,
-            );
-            if (winnerAgent) {
-              click.swarmSpecialization = winnerAgent.specialization;
-            }
-          } else {
-            click = {
-              number: clickNumber,
-              target: options.target.name,
-              analysis: '',
-              proposal: 'swarm: all agents failed',
-              filesModified: [],
-              testsPassed: false,
-              timestamp: new Date(),
-            };
-            rolled_back = true;
-          }
-        } else {
-          // Normal single-agent mode
-          const result = await executeClick({
-            clickNumber,
-            target: options.target,
-            config,
-            agent,
-            cwd,
-            sweepMode: true,
-            resolvedGuards: resolveGuards(options.target, config, 'sweep'),
-            adversarial: options.adversarial,
-            issues: [batchTask],
-            onPhase: callbacks.onClickPhase
-              ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, clickNumber)
-              : undefined,
-          });
-          click = result.click;
-          rolled_back = result.rolled_back;
-        }
-
-        const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
-        if (rolled_back) {
-          console.error(`[ratchet] sweep click ${clickNumber} ROLLED BACK (${elapsedSec}s)`);
-        } else {
-          console.error(`[ratchet] sweep click ${clickNumber} LANDED (${elapsedSec}s)`);
-        }
-
-        run.clicks.push(click);
-        await callbacks.onClickComplete?.(click, rolled_back);
-
-        // Cross-run learning: record sweep outcome
-        if (options.learningStore) {
-          const elapsedMs = Date.now() - clickStartMs;
-          const specName = click.swarmSpecialization ?? 'default';
-          await Promise.all(
-            batch.map((file) =>
-              options.learningStore!.recordOutcome({
-                issueType: task.subcategory || task.category,
-                filePath: file,
-                specialization: specName,
-                success: click.testsPassed && !rolled_back,
-                fixTimeMs: elapsedMs,
-                scoreDelta: 0,
-                failureReason: rolled_back ? 'sweep click rolled back' : undefined,
-              }).catch(() => {
-                // Non-fatal
-              }),
-            ),
-          );
-        }
-      } catch (err: unknown) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        await callbacks.onError?.(error, clickNumber);
-      }
-    }
-
-    run.status = 'completed';
   } catch (err: unknown) {
     run.status = 'failed';
     throw err;
