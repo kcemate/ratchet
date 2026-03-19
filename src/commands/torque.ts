@@ -53,6 +53,7 @@ export function torqueCommand(): Command {
     .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (overrides --guards)')
     .option('--max-files <number>', 'Max files changed per click before auto-rollback (overrides --guards)')
     .option('--no-escalate', 'Disable adaptive escalation — stay on single-file target even when stalled')
+    .option('--no-guard-escalation', 'Disable smart guard escalation — don\'t auto-bump guard profile on consecutive guard rejections')
     .option('--architect', 'Enable architect mode — structural refactoring with relaxed guards (20 files, 500 lines)')
     .option('--plan-first', 'Run a planning click 0 before execution clicks — read-only, generates a structured plan', false)
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
@@ -319,6 +320,7 @@ export function torqueCommand(): Command {
             category: options.category,
             escalate: options.escalate,
             architectEscalation: options.architect !== false,
+            guardEscalation: options.guardEscalation !== false,
             planFirst: options.planFirst,
             callbacks: {
               onScanComplete: (scan: ScanResult) => {
