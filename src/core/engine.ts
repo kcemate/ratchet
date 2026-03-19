@@ -7,7 +7,9 @@ import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
 import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
 import { buildScoreOptimizedBacklog } from './score-optimizer.js';
-import { buildArchitectPrompt } from './agents/shell.js';
+import { buildArchitectPrompt, buildPlanPrompt } from './agents/shell.js';
+import type { PlanResult } from '../types.js';
+import { mkdir, writeFile } from 'fs/promises';
 import { executeClick } from './click.js';
 import { SwarmExecutor } from './swarm.js';
 import * as git from './git.js';
@@ -64,6 +66,8 @@ export interface EngineCallbacks {
   onScanComplete?: (scan: ScanResult) => Promise<void> | void;
   onClickScoreUpdate?: (clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number) => Promise<void> | void;
   onEscalate?: (reason: string) => Promise<void> | void;
+  onPlanStart?: () => Promise<void> | void;
+  onPlanComplete?: (plan: PlanResult) => Promise<void> | void;
 }
 
 export interface EngineRunOptions {
@@ -91,6 +95,8 @@ export interface EngineRunOptions {
   architectEscalation?: boolean;
   /** Offset added to click numbering (used when architect engine is called mid-run) */
   clickOffset?: number;
+  /** Run a read-only planning click 0 before execution clicks (default: false) */
+  planFirst?: boolean;
 }
 
 const TEST_FILE_PATTERNS = [
@@ -151,7 +157,7 @@ function resolveGuards(
  * re-scans to measure progress and update the backlog.
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true, architectEscalation: architectEscalationEnabled = true } = options;
+  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true, architectEscalation: architectEscalationEnabled = true, planFirst = false } = options;
   let target = options.target;
 
   const run: RatchetRun = {
@@ -223,6 +229,42 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
   let scoreAtMidpoint: number | undefined;
   let escalated = false;
 
+  // --- Plan-first: click 0 — read-only planning before execution clicks ---
+  if (planFirst) {
+    await callbacks.onPlanStart?.();
+    try {
+      const scanSummary = currentScan
+        ? `Score: ${currentScan.total}/${currentScan.maxTotal}, ${currentScan.totalIssuesFound} issues found`
+        : '';
+      const planPrompt = buildPlanPrompt(scanSummary, target.path, target.description);
+      const agentWithDirect = agent as { runDirect?: (p: string, cwd: string) => Promise<string> };
+      const planOutput = agentWithDirect.runDirect
+        ? await agentWithDirect.runDirect(planPrompt, cwd)
+        : '';
+
+      if (planOutput) {
+        // Extract JSON from agent output (may be wrapped in markdown code fences)
+        const jsonMatch = planOutput.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]) as Omit<PlanResult, 'generatedAt'>;
+          const planResult: PlanResult = { ...parsed, generatedAt: new Date() };
+          run.planResult = planResult;
+
+          // Save plan to .ratchet/plans/<timestamp>-<target>.json
+          const plansDir = join(cwd, '.ratchet', 'plans');
+          await mkdir(plansDir, { recursive: true });
+          const planFileName = `${Date.now()}-${target.name}.json`;
+          await writeFile(join(plansDir, planFileName), JSON.stringify(planResult, null, 2), 'utf-8');
+
+          await callbacks.onPlanComplete?.(planResult);
+        }
+      }
+    } catch {
+      // Non-fatal — if plan generation fails, continue without plan
+      console.error('[ratchet] Plan generation failed — continuing without plan');
+    }
+  }
+
   try {
     for (let i = 1; i <= clicks; i++) {
       // Determine harden phase for this click
@@ -262,6 +304,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             hardenPhase,
             resolvedGuards: resolveGuards(target, config, escalated ? 'sweep' : 'normal'),
             issues: clickIssues,
+            planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
             onPhase: callbacks.onClickPhase
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
               : undefined,
@@ -304,6 +347,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             sweepMode: escalated,
             resolvedGuards: resolveGuards(target, config, escalated ? 'sweep' : 'normal'),
             issues: clickIssues,
+            planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
             onPhase: callbacks.onClickPhase
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
               : undefined,
@@ -316,6 +360,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             const swarmResult = await swarm.execute({
               clickNumber: i, target, config, agent, cwd, hardenPhase,
               issues: clickIssues,
+              planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
               onPhase: callbacks.onClickPhase
                 ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
                 : undefined,
