@@ -1,0 +1,14 @@
+name = "ratchet-api"
+main = "src/worker.ts"
+compatibility_date = "2024-09-25"
+
+[vars]
+STRIPE_PUBLISHABLE_KEY = "pk_test_51TCp7PIRcKFcvl8uCVrWwq3Qx8g2X3HkhOC8FJLPtXUwqKx7v0ZkZ9X7qRnJYyL0j7RwCJ1o8wB1eUxRxvBOevU00YvJPEoXr"
+
+[[kv_namespaces]]
+binding = "LICENSES"
+id = "cf652eeffa4f4b54b62e0fad30e9087d"
+
+[[routes]]
+pattern = "api.ratchetcli.com/*"
+zone_name = "ratchetcli.com"
