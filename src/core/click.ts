@@ -1,4 +1,5 @@
 import type { Click, Target, RatchetConfig, BuildResult, HardenPhase, ClickGuards } from '../types.js';
+import { GUARD_PROFILES } from '../types.js';
 import type { Agent } from './agents/base.js';
 import { createAgentContext } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
@@ -32,6 +33,12 @@ export interface ClickContext {
    * total line guards but keeps the Pawl (rollback on test failure).
    */
   atomicSweep?: boolean;
+  /**
+   * Pre-resolved guards for this click. null = atomic (no limits).
+   * When set, overrides config.guards and mode-based defaults.
+   * Set by the engine using resolveGuards() based on CLI flag > target config > mode defaults.
+   */
+  resolvedGuards?: ClickGuards | null;
   /** Main repo cwd for GitNexus lookups (worktrees don't have .gitnexus) */
   gitnexusCwd?: string;
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
@@ -123,14 +130,18 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       rolledBack = true;
     } else {
       // Click guards: reject over-aggressive changes before running tests
-      const guardResult = checkClickGuards(cwd, config.guards, ctx.sweepMode, ctx.architectMode);
-      if (!guardResult.passed && !ctx.atomicSweep) {
+      // Use pre-resolved guards from context if available; otherwise fall back to config + mode defaults
+      const effectiveGuards = ctx.resolvedGuards !== undefined
+        ? ctx.resolvedGuards
+        : resolveGuardsFromConfig(config.guards, ctx.sweepMode, ctx.architectMode);
+      const guardResult = checkClickGuards(cwd, effectiveGuards, ctx.sweepMode);
+      if (!guardResult.passed && !ctx.atomicSweep && effectiveGuards !== null) {
         console.error(`[ratchet] Click ${clickNumber} REJECTED by guards: ${guardResult.reason}`);
         console.error(`[ratchet]   ${guardResult.detail}`);
         rollbackReason = guardResult.reason;
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
-      } else if (!guardResult.passed && ctx.atomicSweep) {
+      } else if (!guardResult.passed && (ctx.atomicSweep || effectiveGuards === null)) {
         console.error(`[ratchet] Click ${clickNumber} guard exceeded (${guardResult.reason}) — proceeding in atomic mode, test suite is the gate`);
       }
 
@@ -289,37 +300,42 @@ interface GuardResult {
   filesChanged?: number;
 }
 
-const DEFAULT_GUARDS: ClickGuards = {
-  maxLinesChanged: 40,
-  maxFilesChanged: 3,
-};
+/**
+ * Resolve guards from a config value + mode flags (legacy fallback for callers
+ * that don't pass pre-resolved guards via ClickContext.resolvedGuards).
+ */
+function resolveGuardsFromConfig(
+  guards?: import('../types.js').GuardProfileName | ClickGuards,
+  sweepMode?: boolean,
+  architectMode?: boolean,
+): ClickGuards | null {
+  if (architectMode) return GUARD_PROFILES.broad;
+  if (sweepMode) {
+    // If guards is an explicit ClickGuards object, enforce sweep floor; otherwise use refactor profile
+    if (guards && typeof guards === 'object') {
+      return {
+        maxFilesChanged: Math.max(guards.maxFilesChanged, 10),
+        maxLinesChanged: Math.max(guards.maxLinesChanged, 120),
+      };
+    }
+    return GUARD_PROFILES.refactor;
+  }
+  if (!guards) return GUARD_PROFILES.tight;
+  if (typeof guards === 'string') return GUARD_PROFILES[guards];
+  return guards;
+}
 
 /**
  * Check click guards: reject over-aggressive changes before running tests.
  * Measures actual git diff to count lines and files changed.
- * In sweep mode, uses tighter per-file limits but allows more files/total lines.
+ * In sweep mode, also enforces a per-file line limit.
+ * Pass null for resolvedGuards to skip all guard checks (atomic mode).
  */
-function checkClickGuards(cwd: string, guards?: ClickGuards, sweepMode?: boolean, architectMode?: boolean): GuardResult {
-  let { maxLinesChanged, maxFilesChanged } = { ...DEFAULT_GUARDS, ...guards };
-  if (architectMode) {
-    maxFilesChanged = 20;
-    maxLinesChanged = 500;
-  } else if (sweepMode) {
-    // Use config guards if set (tier engine sets larger limits for mechanical fixes),
-    // otherwise use defaults
-    maxFilesChanged = guards?.maxFilesChanged ?? 10;
-    maxLinesChanged = guards?.maxLinesChanged ?? 120;
-    // Enforce a floor for sweep: at least 10 files, 120 lines
-    maxFilesChanged = Math.max(maxFilesChanged, 10);
-    maxLinesChanged = Math.max(maxLinesChanged, 120);
-  }
+function checkClickGuards(cwd: string, resolvedGuards: ClickGuards | null, sweepMode?: boolean): GuardResult {
+  if (resolvedGuards === null) return { passed: true };
+  const { maxLinesChanged, maxFilesChanged } = resolvedGuards;
 
   try {
-    // Count files changed
-    const diffStat = execFileSync('git', ['diff', '--stat', '--cached'], { cwd, encoding: 'utf8' }).trim();
-    const unstagedStat = execFileSync('git', ['diff', '--stat'], { cwd, encoding: 'utf8' }).trim();
-    const combinedStat = [diffStat, unstagedStat].filter(Boolean).join('\n');
-
     // Count lines changed (insertions + deletions)
     const numstatStaged = execFileSync('git', ['diff', '--numstat', '--cached'], { cwd, encoding: 'utf8' }).trim();
     const numstatUnstaged = execFileSync('git', ['diff', '--numstat'], { cwd, encoding: 'utf8' }).trim();

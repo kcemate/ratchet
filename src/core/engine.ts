@@ -1,7 +1,8 @@
 import { randomUUID } from 'crypto';
 import { readdirSync } from 'fs';
 import { join } from 'path';
-import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta } from '../types.js';
+import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickGuards } from '../types.js';
+import { GUARD_PROFILES } from '../types.js';
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
 import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
@@ -117,6 +118,28 @@ function countTestFiles(dir: string): number {
     // ignore permission errors
   }
   return count;
+}
+
+/**
+ * Resolve click guards for a run.
+ * Priority: config.guards (set by CLI) > target.guards > mode defaults.
+ * Returns null for atomic (no limits).
+ */
+function resolveGuards(
+  target: Target,
+  config: RatchetConfig,
+  mode: 'normal' | 'sweep' | 'architect',
+): ClickGuards | null {
+  // config.guards is set by CLI (highest priority)
+  const source = config.guards ?? target.guards;
+  if (source !== undefined) {
+    if (typeof source === 'string') return GUARD_PROFILES[source];
+    return source;
+  }
+  // Mode defaults
+  if (mode === 'architect') return GUARD_PROFILES.broad;
+  if (mode === 'sweep') return GUARD_PROFILES.refactor;
+  return GUARD_PROFILES.tight;
 }
 
 /**
@@ -237,6 +260,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             agent,
             cwd,
             hardenPhase,
+            resolvedGuards: resolveGuards(target, config, escalated ? 'sweep' : 'normal'),
             issues: clickIssues,
             onPhase: callbacks.onClickPhase
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
@@ -278,6 +302,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             hardenPhase,
             adversarial,
             sweepMode: escalated,
+            resolvedGuards: resolveGuards(target, config, escalated ? 'sweep' : 'normal'),
             issues: clickIssues,
             onPhase: callbacks.onClickPhase
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
@@ -589,6 +614,7 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
           agent,
           cwd,
           architectMode: true,
+          resolvedGuards: resolveGuards(options.target, config, 'architect'),
           adversarial: options.adversarial,
           issues: [architectTask],
           onPhase: callbacks.onClickPhase
@@ -791,6 +817,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
             agent,
             cwd,
             sweepMode: true,
+            resolvedGuards: resolveGuards(options.target, config, 'sweep'),
             issues: [batchTask],
             onPhase: callbacks.onClickPhase
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, clickNumber)
@@ -829,6 +856,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
             agent,
             cwd,
             sweepMode: true,
+            resolvedGuards: resolveGuards(options.target, config, 'sweep'),
             adversarial: options.adversarial,
             issues: [batchTask],
             onPhase: callbacks.onClickPhase
