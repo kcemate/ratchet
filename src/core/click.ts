@@ -174,8 +174,11 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       if (!testsPassed) {
         console.error(`[DEBUG] Tests FAILED. Exit output (last 500 chars): ${testResult.output?.slice(-500)}`);
         console.error(`[DEBUG] Test error: ${testResult.error}`);
+        const failingNames = extractFailingTestNames(testResult.output ?? '');
         const failMatch = testResult.output?.match(/(\d+)\s+failing/i) ?? testResult.output?.match(/(\d+)\s+failed/i);
-        if (failMatch) {
+        if (failingNames.length > 0) {
+          rollbackReason = `tests failed: ${failingNames.join(', ')}`;
+        } else if (failMatch) {
           rollbackReason = `${failMatch[1]} tests failed`;
         } else {
           const lastLine = testResult.output?.split('\n').filter(l => l.trim()).at(-1)?.trim().slice(0, 80);
@@ -243,6 +246,39 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   };
 
   return { click, rolled_back: rolledBack };
+}
+
+/**
+ * Parse test runner output to extract up to 3 failing test file names.
+ * Handles Vitest, Jest, and common generic patterns.
+ */
+function extractFailingTestNames(output: string): string[] {
+  const names: string[] = [];
+  const lines = output.split('\n');
+
+  // Vitest/Jest: "FAIL  path/to/file.test.ts" or "× path/to/file.test.ts"
+  for (const line of lines) {
+    const m = line.match(/(?:^|\s)(?:FAIL|×)\s+([\w./\\-]+\.(?:test|spec)\.[a-z]+)/i);
+    if (m) {
+      const name = m[1].split(/[/\\]/).pop() ?? m[1];
+      if (!names.includes(name)) names.push(name);
+      if (names.length >= 3) break;
+    }
+  }
+
+  if (names.length === 0) {
+    // Vitest inline: ✕ or ✗ before test name
+    for (const line of lines) {
+      const m = line.match(/^\s*[✕✗×]\s+(.+)$/);
+      if (m) {
+        const name = m[1].trim().slice(0, 60);
+        if (!names.includes(name)) names.push(name);
+        if (names.length >= 3) break;
+      }
+    }
+  }
+
+  return names;
 }
 
 interface GuardResult {
