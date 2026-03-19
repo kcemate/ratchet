@@ -51,6 +51,16 @@ export interface Boundary {
   reason?: string;
 }
 
+export interface CategoryDelta {
+  category: string;
+  before: number;
+  max: number;
+  after: number;
+  delta: number;
+  issuesFixed: number;
+  wastedEffort: boolean; // true when issuesFixed > 0 but delta === 0 (category already maxed)
+}
+
 export interface Click {
   number: number;
   target: string;
@@ -65,6 +75,7 @@ export interface Click {
   riskScore?: number; // 0–1 blast radius risk from GitNexus (0=isolated, 1=high-impact)
   swarmSpecialization?: string; // which swarm agent won (e.g. 'security', 'quality')
   rollbackReason?: string; // short summary of why this click was rolled back
+  categoryDeltas?: CategoryDelta[]; // per-category score changes for this click
   adversarialResult?: {
     challenged: boolean;
     passed: boolean;
