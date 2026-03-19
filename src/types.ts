@@ -80,6 +80,7 @@ export interface RatchetRun {
   finishedAt?: Date;
   status: 'running' | 'completed' | 'failed';
   earlyStopReason?: string; // set when the engine stopped early (e.g. architect-only issues remain)
+  architectEscalated?: boolean; // set when the engine escalated to architect mode mid-run
 }
 
 export interface BuildResult {

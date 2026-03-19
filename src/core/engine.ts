@@ -51,6 +51,8 @@ export interface EngineRunOptions {
   category?: string;
   /** Enable adaptive escalation to cross-file sweep on stall (default: true) */
   escalate?: boolean;
+  /** Auto-escalate to architect mode when smart stop detects architect-only issues remain (default: true) */
+  architectEscalation?: boolean;
 }
 
 const TEST_FILE_PATTERNS = [
@@ -89,7 +91,7 @@ function countTestFiles(dir: string): number {
  * re-scans to measure progress and update the backlog.
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true } = options;
+  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true, architectEscalation: architectEscalationEnabled = true } = options;
   let target = options.target;
 
   const run: RatchetRun = {
@@ -369,8 +371,21 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         if (consecutiveRollbacks >= 2 && totalLanded > 0 && backlogGroups.length > 0) {
           const allArchitect = backlogGroups.every(group => group.every(task => !!task.architectPrompt));
           if (allArchitect) {
-            run.earlyStopReason = 'remaining issues need architect mode';
-            console.error(`[ratchet] ⏹ Smart stop — remaining issues need architect mode. ${totalLanded} cycles used, ${clicks - i} returned.`);
+            const remainingClicks = clicks - i;
+            if (architectEscalationEnabled && remainingClicks > 0) {
+              console.error(`[ratchet] 🏗️ Escalating to architect mode — ${remainingClicks} clicks remaining`);
+              const architectRun = await runArchitectEngine({
+                ...options,
+                clicks: remainingClicks,
+                createBranch: false,
+                scanResult: currentScan,
+              });
+              run.clicks.push(...architectRun.clicks);
+              run.architectEscalated = true;
+            } else {
+              run.earlyStopReason = 'remaining issues need architect mode';
+              console.error(`[ratchet] ⏹ Smart stop — remaining issues need architect mode. ${totalLanded} cycles used, ${clicks - i} returned.`);
+            }
             break;
           }
         }
@@ -527,7 +542,8 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
             : undefined,
         });
 
-        const { click, rolled_back } = result;
+        const { click } = result;
+        let rolled_back = result.rolled_back;
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
 
         if (rolled_back) {
@@ -540,14 +556,27 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
         if (click.testsPassed && !rolled_back) {
           try {
             const newScan = await runScan(cwd);
-            const delta = newScan.total - previousTotal;
-            click.scoreAfterClick = newScan.total;
-            click.issuesFixedCount = Math.max(0, currentScan.totalIssuesFound - newScan.totalIssuesFound);
-            await callbacks.onClickScoreUpdate?.(clickNumber, previousTotal, newScan.total, delta);
-            previousTotal = newScan.total;
-            currentScan = newScan;
-            // Rebuild prompt with fresh scan data for the next click
-            architectPrompt = buildArchitectPrompt(currentScan, cwd);
+            const newTotal = newScan.total;
+
+            // Score regression guard: if score dropped, revert the commit
+            if (newTotal < previousTotal && click.commitHash) {
+              const regressionDelta = previousTotal - newTotal;
+              console.error(`[ratchet] architect click ${clickNumber} ROLLED BACK — score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`);
+              await git.revertLastCommit(cwd).catch(() => {});
+              click.testsPassed = false;
+              click.rollbackReason = `score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`;
+              click.commitHash = undefined;
+              rolled_back = true;
+            } else {
+              const delta = newTotal - previousTotal;
+              click.scoreAfterClick = newTotal;
+              click.issuesFixedCount = Math.max(0, currentScan.totalIssuesFound - newScan.totalIssuesFound);
+              await callbacks.onClickScoreUpdate?.(clickNumber, previousTotal, newTotal, delta);
+              previousTotal = newTotal;
+              currentScan = newScan;
+              // Rebuild prompt with fresh scan data for the next click
+              architectPrompt = buildArchitectPrompt(currentScan, cwd);
+            }
           } catch {
             // Non-fatal
           }

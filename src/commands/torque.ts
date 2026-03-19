@@ -7,7 +7,7 @@ import { join } from 'path';
 import { configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
 import { saveRun } from '../core/history.js';
 import { readFileSync } from 'fs';
-import { runEngine, runSweepEngine } from '../core/engine.js';
+import { runEngine, runSweepEngine, runArchitectEngine } from '../core/engine.js';
 import type { ClickPhase, HardenPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { buildSwarmConfig } from '../core/swarm.js';
@@ -50,6 +50,7 @@ export function torqueCommand(): Command {
     .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (default: 40)')
     .option('--max-files <number>', 'Max files changed per click before auto-rollback (default: 3)')
     .option('--no-escalate', 'Disable adaptive escalation — stay on single-file target even when stalled')
+    .option('--architect', 'Enable architect mode — structural refactoring with relaxed guards (20 files, 500 lines)')
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
     .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
     .addHelpText(
@@ -78,6 +79,7 @@ export function torqueCommand(): Command {
         maxLines?: string;
         maxFiles?: string;
         escalate: boolean;
+        architect: boolean;
         prComment: boolean;
         prCommentFooter: boolean;
       }) => {
@@ -198,6 +200,7 @@ export function torqueCommand(): Command {
           ['Guards', chalk.dim(`≤${maxLines} lines, ≤${maxFiles} files per click`)],
           ['Mode',   hardenMode ? chalk.yellow('harden') : chalk.dim('normal')],
         );
+        if (options.architect) fields.push(['Architect', chalk.yellow('enabled')]);
         if (options.adversarial) fields.push(['QA', chalk.yellow('adversarial')]);
         if (config.swarm?.enabled) {
           const specs = config.swarm.specializations.join(', ');
@@ -269,7 +272,7 @@ export function torqueCommand(): Command {
           // Non-fatal — report will omit Before/After
         }
 
-        const engineFn = options.sweep ? runSweepEngine : runEngine;
+        const engineFn = options.sweep ? runSweepEngine : options.architect ? runArchitectEngine : runEngine;
 
         let run: RatchetRun;
         try {
@@ -286,6 +289,7 @@ export function torqueCommand(): Command {
             scanResult: scoreBefore,
             category: options.category,
             escalate: options.escalate,
+            architectEscalation: options.architect !== false,
             callbacks: {
               onScanComplete: (scan: ScanResult) => {
                 const topIssues = scan.issuesByType.slice(0, 3);
@@ -506,6 +510,10 @@ export function torqueCommand(): Command {
             `\n  💰 Cycles: ${passedClicks} used, ${returned} returned to balance\n` +
             `  ⏹ Stopped early: ${run.earlyStopReason}\n`,
           );
+        }
+
+        if (run.architectEscalated) {
+          process.stdout.write(chalk.yellow(`\n  🏗️  Escalated to architect mode mid-run.\n`));
         }
 
         if (passedClicks > 0) {
