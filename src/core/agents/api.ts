@@ -45,7 +45,7 @@ export class APIAgent implements Agent {
   }
 }
 
-function buildAnalyzePrompt(context: string): string {
+export function buildAnalyzePrompt(context: string): string {
   return (
     `You are a code improvement assistant. Analyze the following target and provide a concise analysis of what can be improved.\n\n` +
     `${context}\n\n` +
@@ -67,7 +67,7 @@ function buildProposePrompt(analysis: string, target: Target): string {
   );
 }
 
-function buildHardenAnalyzePrompt(context: string): string {
+export function buildHardenAnalyzePrompt(context: string): string {
   return (
     `You are a test-writing assistant. Analyze the following target and identify what test coverage is missing.\n\n` +
     `${context}\n\n` +
