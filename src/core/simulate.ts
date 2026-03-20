@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { toErrorMessage } from './utils.js';
+import { toErrorMessage, extractJSON } from './utils.js';
 
 // ── Persona types ──────────────────────────────────────────────────────
 
@@ -411,22 +411,6 @@ function runClaude(options: ClaudeRunOptions): Promise<string> {
   });
 }
 
-// ── JSON parsing ───────────────────────────────────────────────────────
-
-function extractJSON(raw: string): string {
-  // Try to find JSON in the response (may be wrapped in markdown fences)
-  const fenceMatch = raw.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-  if (fenceMatch) return fenceMatch[1].trim();
-
-  // Try to find a raw JSON object
-  const braceStart = raw.indexOf('{');
-  const braceEnd = raw.lastIndexOf('}');
-  if (braceStart !== -1 && braceEnd > braceStart) {
-    return raw.slice(braceStart, braceEnd + 1);
-  }
-
-  return raw;
-}
 
 function parsePersonaResponse(raw: string, persona: Persona): PersonaSimResult {
   try {

@@ -17,3 +17,16 @@ export function formatDuration(ms: number): string {
 export function toErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
+
+export function extractJSON(raw: string): string {
+  const fenceMatch = raw.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (fenceMatch) return fenceMatch[1].trim();
+
+  const braceStart = raw.indexOf('{');
+  const braceEnd = raw.lastIndexOf('}');
+  if (braceStart !== -1 && braceEnd > braceStart) {
+    return raw.slice(braceStart, braceEnd + 1);
+  }
+
+  return raw;
+}
