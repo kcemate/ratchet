@@ -144,6 +144,9 @@ export function torqueCommand(): Command {
 
         printHeader('⚙  Ratchet Torque');
 
+        const { trackEvent } = await import('../core/telemetry.js');
+        trackEvent('torque');
+
         // License gate — torque requires Pro or higher
         requireLicense('torque');
 

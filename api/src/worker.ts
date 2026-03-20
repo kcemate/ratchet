@@ -373,6 +373,41 @@ function handleOptions(): Response {
   });
 }
 
+// ── Telemetry (anonymous scan/torque counters) ────────
+
+async function handleTelemetry(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = await request.json() as { event?: string; version?: string };
+    const event = body.event || "unknown";
+    if (!["scan", "torque", "improve", "vision", "badge"].includes(event)) {
+      return json({ ok: true }); // ignore unknown events silently
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `stats:${event}:${today}`;
+    const current = parseInt((await env.LICENSES.get(key)) || "0");
+    await env.LICENSES.put(key, String(current + 1), { expirationTtl: 86400 * 90 }); // keep 90 days
+    // Also bump all-time counter
+    const allKey = `stats:${event}:total`;
+    const allCurrent = parseInt((await env.LICENSES.get(allKey)) || "0");
+    await env.LICENSES.put(allKey, String(allCurrent + 1));
+    return json({ ok: true });
+  } catch {
+    return json({ ok: true }); // never fail on telemetry
+  }
+}
+
+async function handleStats(env: Env): Promise<Response> {
+  const events = ["scan", "torque", "improve", "vision", "badge"];
+  const today = new Date().toISOString().slice(0, 10);
+  const stats: Record<string, { today: number; total: number }> = {};
+  for (const event of events) {
+    const todayVal = parseInt((await env.LICENSES.get(`stats:${event}:${today}`)) || "0");
+    const totalVal = parseInt((await env.LICENSES.get(`stats:${event}:total`)) || "0");
+    stats[event] = { today: todayVal, total: totalVal };
+  }
+  return json({ stats });
+}
+
 // ── Router ─────────────────────────────────────────────
 
 export default {
@@ -387,6 +422,8 @@ export default {
     if (path === "/usage" && request.method === "POST") return handleUsage(request, env);
     if (path === "/lookup" && request.method === "GET") return handleLookup(request, env);
     if (path === "/welcome" && request.method === "GET") return handleWelcome(request, env);
+    if (path === "/telemetry" && request.method === "POST") return handleTelemetry(request, env);
+    if (path === "/stats" && request.method === "GET") return handleStats(env);
 
     return json({ api: "ratchet", version: "1.0.0", status: "ok" });
   },
