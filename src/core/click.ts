@@ -1,4 +1,4 @@
-import type { Click, Target, RatchetConfig, BuildResult, HardenPhase, ClickGuards } from '../types.js';
+import type { Click, Target, RatchetConfig, BuildResult, HardenPhase, ClickGuards, ClickEconomics, RollbackReason } from '../types.js';
 import { GUARD_PROFILES } from '../types.js';
 import type { Agent } from './agents/base.js';
 import { createAgentContext } from './agents/base.js';
@@ -53,6 +53,50 @@ export interface ClickOutcome {
   rolled_back: boolean;
   /** True if the risk gate determined this file needs swarm mode */
   requiresSwarm?: boolean;
+  economics: ClickEconomics;
+}
+
+// Cost lookup table: input/output price per 1M tokens (USD)
+const MODEL_COSTS: Record<string, { inputPer1M: number; outputPer1M: number }> = {
+  sonnet: { inputPer1M: 3,    outputPer1M: 15   },
+  opus:   { inputPer1M: 15,   outputPer1M: 75   },
+  haiku:  { inputPer1M: 0.25, outputPer1M: 1.25 },
+};
+
+/** Estimate API cost from lines changed (1 line ≈ 20 input tokens + 10 output tokens). */
+export function estimateCost(linesChanged: number, model?: string): number {
+  const key = model?.toLowerCase().includes('opus') ? 'opus'
+    : model?.toLowerCase().includes('haiku') ? 'haiku'
+    : 'sonnet';
+  const { inputPer1M, outputPer1M } = MODEL_COSTS[key];
+  const inputTokens  = linesChanged * 20;
+  const outputTokens = linesChanged * 10;
+  return (inputTokens / 1_000_000) * inputPer1M + (outputTokens / 1_000_000) * outputPer1M;
+}
+
+/** Map a free-form rollback reason string to a typed RollbackReason. */
+export function classifyRollbackReason(reason?: string): RollbackReason | undefined {
+  if (!reason) return undefined;
+  if (/timeout|timed.?out/i.test(reason)) return 'timeout';
+  if (/scope.exceed/i.test(reason)) return 'scope-exceeded';
+  if (/score.regress/i.test(reason)) return 'score-regression';
+  if (/lint|typecheck|tsc|noEmit/i.test(reason)) return 'lint-error';
+  if (reason.startsWith('Too many lines changed:') ||
+      reason.startsWith('Too many files changed:') ||
+      reason.startsWith('Single file changed too many lines')) return 'guard-rejected';
+  return 'test-related';
+}
+
+/** Determine the ClickEconomics outcome from rolled_back state and reason. */
+export function determineOutcome(rolledBack: boolean, rollbackReason?: string): ClickEconomics['outcome'] {
+  if (!rolledBack) return 'landed';
+  if (!rollbackReason) return 'rolled-back';
+  if (/timeout|timed.?out/i.test(rollbackReason)) return 'timeout';
+  if (rollbackReason.startsWith('Too many lines changed:') ||
+      rollbackReason.startsWith('Too many files changed:') ||
+      rollbackReason.startsWith('Single file changed too many lines')) return 'guard-rejected';
+  if (/scope.exceed/i.test(rollbackReason)) return 'scope-rejected';
+  return 'rolled-back';
 }
 
 /**
@@ -62,6 +106,12 @@ export interface ClickOutcome {
 export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   const { clickNumber, target, config, agent, cwd, hardenPhase, issues, onPhase } = ctx;
   const timestamp = new Date();
+  const wallStartMs = Date.now();
+  let agentStartMs = wallStartMs;
+  let agentEndMs = wallStartMs;
+  let testStartMs = wallStartMs;
+  let testEndMs = wallStartMs;
+  let linesChanged = 0;
 
   // Pre-click risk gate: if file has >10 direct dependents and change is structural,
   // signal that swarm mode is required instead of single-agent
@@ -82,6 +132,16 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         },
         rolled_back: false,
         requiresSwarm: true,
+        economics: {
+          clickIndex: clickNumber,
+          wallTimeMs: Date.now() - wallStartMs,
+          agentTimeMs: 0,
+          testTimeMs: 0,
+          estimatedCost: 0,
+          outcome: 'rolled-back',
+          issuesFixed: 0,
+          scoreDelta: 0,
+        },
       };
     }
   }
@@ -107,6 +167,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     }
 
     // 1. Analyze
+    agentStartMs = Date.now();
     await onPhase?.('analyzing');
     let context = createAgentContext(target, clickNumber, hardenPhase);
     if (ctx.planContext) {
@@ -129,6 +190,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     // 3. Build (apply code change)
     await onPhase?.('building');
     buildResult = await agent.build(proposal, cwd);
+    agentEndMs = Date.now();
 
     if (!buildResult.success) {
       console.error(`[DEBUG] Build failed. Output: ${buildResult.output?.slice(0, 500)}`);
@@ -142,6 +204,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         ? ctx.resolvedGuards
         : resolveGuardsFromConfig(config.guards, ctx.sweepMode, ctx.architectMode);
       const guardResult = checkClickGuards(cwd, effectiveGuards, ctx.sweepMode);
+      if (guardResult.linesChanged) linesChanged = guardResult.linesChanged;
       if (!guardResult.passed && !ctx.atomicSweep && effectiveGuards !== null) {
         console.error(`[ratchet] Click ${clickNumber} REJECTED by guards: ${guardResult.reason}`);
         console.error(`[ratchet]   ${guardResult.detail}`);
@@ -181,8 +244,10 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
 
       if (!rolledBack) {
       // 4. Test (the Pawl) — progressive gates if testIsolation is enabled
+      testStartMs = Date.now();
       await onPhase?.('testing');
       const gateResult = await progressiveGates(config, cwd, ctx.baselineFailures ?? []);
+      testEndMs = Date.now();
 
       testsPassed = gateResult.passed;
 
@@ -260,7 +325,19 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     rollbackReason,
   };
 
-  return { click, rolled_back: rolledBack };
+  const economics: ClickEconomics = {
+    clickIndex: clickNumber,
+    wallTimeMs: Date.now() - wallStartMs,
+    agentTimeMs: agentEndMs - agentStartMs,
+    testTimeMs: testEndMs - testStartMs,
+    estimatedCost: estimateCost(linesChanged, config.model),
+    outcome: determineOutcome(rolledBack, rollbackReason),
+    rollbackReason: classifyRollbackReason(rollbackReason),
+    issuesFixed: 0,   // updated by engine after re-scan
+    scoreDelta: 0,    // updated by engine after re-scan
+  };
+
+  return { click, rolled_back: rolledBack, economics };
 }
 
 /**
