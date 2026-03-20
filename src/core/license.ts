@@ -135,6 +135,11 @@ export async function validateLicenseRemote(key: string): Promise<LicenseValidat
 export function requireLicense(commandName: string): LicenseData {
   if (!GATED_COMMANDS.has(commandName)) return null as any; // ungated
 
+  // Dev bypass — skip license check for local development
+  if (process.env.RATCHET_DEV === '1') {
+    return { key: 'dev', tier: 'enterprise', validatedAt: new Date().toISOString() };
+  }
+
   const license = loadLicense();
 
   if (!license || !license.key) {
