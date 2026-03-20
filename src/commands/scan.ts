@@ -16,6 +16,7 @@ import {
   countMatches,
   countMatchesWithFiles,
   anyFileHasMatch,
+  SEVERITY_MAP,
 } from '../core/scan-constants.js';
 
 // --- Types ---
@@ -872,39 +873,6 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
 function aggregateIssues(categories: CategoryResult[]): { totalIssuesFound: number; issuesByType: IssueType[] } {
   const issuesByType: IssueType[] = [];
   let totalIssuesFound = 0;
-
-  const SEVERITY_MAP: Record<string, Record<string, 'low' | 'medium' | 'high'>> = {
-    'Testing': {
-      'Coverage ratio': 'high',
-      'Edge case depth': 'medium',
-      'Test quality': 'low',
-    },
-    'Security': {
-      'Secrets & env vars': 'high',
-      'Input validation': 'high',
-      'Auth & rate limiting': 'medium',
-    },
-    'Type Safety': {
-      'Strict config': 'medium',
-      'Any type count': 'medium',
-    },
-    'Error Handling': {
-      'Coverage': 'high',
-      'Empty catches': 'high',
-      'Structured logging': 'low',
-    },
-    'Performance': {
-      'Async patterns': 'medium',
-      'Console cleanup': 'low',
-      'Import hygiene': 'low',
-    },
-    'Code Quality': {
-      'Function length': 'medium',
-      'Line length': 'low',
-      'Dead code': 'low',
-      'Duplication': 'medium',
-    },
-  };
 
   for (const cat of categories) {
     for (const sub of cat.subcategories) {
