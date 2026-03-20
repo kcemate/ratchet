@@ -100,7 +100,7 @@ function buildBuildPrompt(proposal: string): string {
   );
 }
 
-function parseModifiedFiles(output: string): string[] {
+export function parseModifiedFiles(output: string): string[] {
   const files: string[] = [];
   for (const line of output.split('\n')) {
     const match = line.match(/^MODIFIED:\s*(.+)$/);
