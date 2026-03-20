@@ -8,7 +8,7 @@ import { configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } 
 import { saveRun } from '../core/history.js';
 import { readFileSync } from 'fs';
 import { runEngine, runSweepEngine, runArchitectEngine } from '../core/engine.js';
-import type { ClickPhase, HardenPhase } from '../core/engine.js';
+import type { ClickPhase, HardenPhase, RunEconomics } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { buildSwarmConfig } from '../core/swarm.js';
 import { isValidSpecialization } from '../core/agents/specialized.js';
@@ -27,6 +27,53 @@ import { formatDuration } from '../core/utils.js';
 import { printHeader, exitWithError, validateInt, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
 import { STATE_FILE } from './status.js';
 import { requireLicense } from '../core/license.js';
+
+function formatMs(ms: number): string {
+  if (ms < 60_000) return `${(ms / 1000).toFixed(0)}s`;
+  const m = Math.floor(ms / 60_000);
+  const s = Math.round((ms % 60_000) / 1000);
+  return `${m}m ${s.toString().padStart(2, '0')}s`;
+}
+
+function printEconomics(economics: RunEconomics): void {
+  const total = economics.landed + economics.rolledBack;
+  const efficiencyPct = (economics.efficiency * 100).toFixed(1);
+  const landedPct = total > 0 ? ((economics.landed / total) * 100).toFixed(0) : '0';
+
+  process.stdout.write('\n' + chalk.bold('  📊 Run Economics') + '\n');
+  process.stdout.write(`  Wall time:     ${formatMs(economics.totalWallTimeMs)}\n`);
+  process.stdout.write(`  Effective:     ${formatMs(economics.effectiveTimeMs)} (${efficiencyPct}% efficiency)\n`);
+  process.stdout.write(`  Wasted:        ${formatMs(economics.wastedTimeMs)}\n`);
+  process.stdout.write('\n');
+  process.stdout.write(`  Landed:        ${economics.landed}/${total} clicks (${landedPct}%)\n`);
+  if (economics.rolledBack > 0) {
+    process.stdout.write(`  Rolled back:   ${economics.rolledBack}/${total}\n`);
+  }
+  if (economics.timedOut > 0) {
+    process.stdout.write(`  Timed out:     ${economics.timedOut}/${total}\n`);
+  }
+  process.stdout.write('\n');
+  if (economics.scoreDelta !== 0 || economics.issuesFixed > 0) {
+    if (economics.scoreDelta !== 0) {
+      const sign = economics.scoreDelta > 0 ? '+' : '';
+      process.stdout.write(`  Score delta:   ${sign}${economics.scoreDelta}\n`);
+    }
+    if (economics.issuesFixed > 0) {
+      process.stdout.write(`  Issues fixed:  ${economics.issuesFixed}\n`);
+    }
+    process.stdout.write('\n');
+  }
+  if (economics.totalCost > 0) {
+    process.stdout.write(`  Est. cost:     $${economics.totalCost.toFixed(4)}\n\n`);
+  }
+  if (economics.recommendations.length > 0) {
+    process.stdout.write(chalk.bold('  💡 Recommendations:') + '\n');
+    for (const rec of economics.recommendations) {
+      process.stdout.write(`  → ${chalk.dim(rec)}\n`);
+    }
+    process.stdout.write('\n');
+  }
+}
 
 export function torqueCommand(): Command {
   const cmd = new Command('torque');
@@ -57,6 +104,7 @@ export function torqueCommand(): Command {
     .option('--no-guard-escalation', 'Disable smart guard escalation — don\'t auto-bump guard profile on consecutive guard rejections')
     .option('--architect', 'Enable architect mode — structural refactoring with relaxed guards (20 files, 500 lines)')
     .option('--plan-first', 'Run a planning click 0 before execution clicks — read-only, generates a structured plan', false)
+    .option('--json', 'Output full run economics as JSON (for CI/CD integration)', false)
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
     .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
     .addHelpText(
@@ -88,6 +136,7 @@ export function torqueCommand(): Command {
         escalate: boolean;
         architect: boolean;
         planFirst: boolean;
+        json: boolean;
         prComment: boolean;
         prCommentFooter: boolean;
       }) => {
@@ -257,6 +306,7 @@ export function torqueCommand(): Command {
         // Spinner state
         let spinner: ReturnType<typeof ora> | null = null;
         const runStart = Date.now();
+        let capturedEconomics: RunEconomics | undefined;
         let clickStartTime = 0;
         let currentHardenPhase: HardenPhase | undefined;
         // Live score tracking
@@ -471,6 +521,10 @@ export function torqueCommand(): Command {
                 }
               },
 
+              onRunEconomics: (economics: RunEconomics) => {
+                capturedEconomics = economics;
+              },
+
               onEscalate: (reason: string) => {
                 if (spinner) {
                   spinner.warn(chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep`));
@@ -582,6 +636,15 @@ export function torqueCommand(): Command {
           );
         } else {
           process.stdout.write(chalk.dim('\n  No clicks landed. Try adjusting your target description.\n') + '\n');
+        }
+
+        // Print economics summary (or JSON output)
+        if (options.json) {
+          if (capturedEconomics) {
+            process.stdout.write(JSON.stringify(capturedEconomics, null, 2) + '\n');
+          }
+        } else if (capturedEconomics) {
+          printEconomics(capturedEconomics);
         }
 
         // Print report summary

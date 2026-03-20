@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { readdirSync } from 'fs';
 import { join } from 'path';
-import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta } from '../types.js';
+import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickEconomics } from '../types.js';
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
 import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
@@ -62,6 +62,83 @@ export function diffCategories(before: ScanResult, after: ScanResult): CategoryD
   return deltas;
 }
 
+export interface RunEconomics {
+  totalWallTimeMs: number;
+  /** Sum of wall time for landed clicks only */
+  effectiveTimeMs: number;
+  /** Sum of wall time for rolled-back clicks */
+  wastedTimeMs: number;
+  /** effectiveTimeMs / totalWallTimeMs (0–1) */
+  efficiency: number;
+  totalCost: number;
+  landed: number;
+  rolledBack: number;
+  timedOut: number;
+  rollbackRate: number;
+  timeoutRate: number;
+  scoreDelta: number;
+  issuesFixed: number;
+  clicks: ClickEconomics[];
+  recommendations: string[];
+}
+
+/** Generate strategy recommendations from per-click economics. */
+export function generateRecommendations(clicks: ClickEconomics[]): string[] {
+  if (clicks.length === 0) return [];
+  const total = clicks.length;
+  const rolledBack = clicks.filter(c => c.outcome !== 'landed').length;
+  const timedOut = clicks.filter(c => c.outcome === 'timeout').length;
+  const rollbackRate = rolledBack / total;
+  const timeoutRate = timedOut / total;
+  const scoreDelta = clicks.reduce((sum, c) => sum + c.scoreDelta, 0);
+
+  const recs: string[] = [];
+
+  if (rollbackRate > 0.30) {
+    recs.push(`${rolledBack}/${total} clicks rolled back — consider --plan-first to reduce wasted iterations`);
+  }
+  if (timeoutRate > 0.15) {
+    recs.push(`${timedOut} timeout(s) detected — consider --timeout 900 for complex refactors`);
+  }
+  if (scoreDelta === 0 && total > 0) {
+    recs.push('Score delta is zero — consider --architect --guards refactor for structural improvements');
+  }
+
+  return recs;
+}
+
+/** Aggregate per-click economics into a run-level summary. */
+export function computeRunEconomics(clicks: ClickEconomics[], totalWallTimeMs: number): RunEconomics {
+  const landed = clicks.filter(c => c.outcome === 'landed');
+  const rolledBack = clicks.filter(c => c.outcome !== 'landed');
+  const timedOut = clicks.filter(c => c.outcome === 'timeout');
+
+  const effectiveTimeMs = landed.reduce((sum, c) => sum + c.wallTimeMs, 0);
+  const wastedTimeMs = rolledBack.reduce((sum, c) => sum + c.wallTimeMs, 0);
+  const efficiency = totalWallTimeMs > 0 ? effectiveTimeMs / totalWallTimeMs : 0;
+  const totalCost = clicks.reduce((sum, c) => sum + c.estimatedCost, 0);
+  const scoreDelta = clicks.reduce((sum, c) => sum + c.scoreDelta, 0);
+  const issuesFixed = clicks.reduce((sum, c) => sum + c.issuesFixed, 0);
+  const total = clicks.length;
+
+  return {
+    totalWallTimeMs,
+    effectiveTimeMs,
+    wastedTimeMs,
+    efficiency,
+    totalCost,
+    landed: landed.length,
+    rolledBack: rolledBack.length,
+    timedOut: timedOut.length,
+    rollbackRate: total > 0 ? rolledBack.length / total : 0,
+    timeoutRate: total > 0 ? timedOut.length / total : 0,
+    scoreDelta,
+    issuesFixed,
+    clicks,
+    recommendations: generateRecommendations(clicks),
+  };
+}
+
 export interface EngineCallbacks {
   onClickStart?: (clickNumber: number, total: number, hardenPhase?: HardenPhase) => Promise<void> | void;
   onClickPhase?: (phase: ClickPhase, clickNumber: number) => Promise<void> | void;
@@ -73,6 +150,7 @@ export interface EngineCallbacks {
   onEscalate?: (reason: string) => Promise<void> | void;
   onPlanStart?: () => Promise<void> | void;
   onPlanComplete?: (plan: import('../types.js').PlanResult) => Promise<void> | void;
+  onRunEconomics?: (economics: RunEconomics) => Promise<void> | void;
 }
 
 export interface EngineRunOptions {
@@ -237,6 +315,9 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     initialTestFileCount = countTestFiles(cwd);
   }
 
+  // Per-click economics collection
+  const allEconomics: ClickEconomics[] = [];
+
   // Stall detection for adaptive escalation
   let consecutiveRollbacks = 0;
   let consecutiveGuardRejections = 0;
@@ -298,6 +379,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         let click: Click;
         let rolled_back: boolean;
+        let clickEconomics: ClickEconomics | undefined;
 
         if (config.swarm?.enabled) {
           // Swarm mode: run N agents in parallel worktrees, pick best
@@ -341,6 +423,17 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             };
             rolled_back = true;
           }
+          // Synthetic economics for swarm clicks (swarm executor doesn't return per-click timing)
+          clickEconomics = {
+            clickIndex: i,
+            wallTimeMs: Date.now() - clickStartMs,
+            agentTimeMs: Date.now() - clickStartMs,
+            testTimeMs: 0,
+            estimatedCost: 0,
+            outcome: rolled_back ? 'rolled-back' : 'landed',
+            issuesFixed: 0,
+            scoreDelta: 0,
+          };
         } else {
           // Normal single-agent mode
           const result = await executeClick({
@@ -386,6 +479,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             click = result.click;
             rolled_back = result.rolled_back;
           }
+          clickEconomics = result.economics;
         }
 
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
@@ -451,6 +545,12 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
               click.scoreAfterClick = newTotal;
               click.issuesFixedCount = issuesFixedCount;
 
+              // Update economics with post-scan data
+              if (clickEconomics) {
+                clickEconomics.issuesFixed = issuesFixedCount;
+                clickEconomics.scoreDelta = delta;
+              }
+
               // Compute and attach per-category breakdown
               const categoryDeltas = diffCategories(currentScan, newScan);
               click.categoryDeltas = categoryDeltas;
@@ -515,6 +615,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         }
 
         run.clicks.push(click);
+        if (clickEconomics) allEconomics.push(clickEconomics);
         await callbacks.onClickComplete?.(click, rolled_back);
 
         // Smart early stop: if stalled with only architect-mode issues remaining
@@ -615,6 +716,12 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     throw err;
   } finally {
     run.finishedAt = new Date();
+    // Compute and emit run-level economics before onRunComplete
+    if (allEconomics.length > 0 && callbacks.onRunEconomics) {
+      const totalWallTimeMs = run.finishedAt.getTime() - run.startedAt.getTime();
+      const economics = computeRunEconomics(allEconomics, totalWallTimeMs);
+      await callbacks.onRunEconomics(economics).catch(() => {});
+    }
     await callbacks.onRunComplete?.(run);
   }
 
