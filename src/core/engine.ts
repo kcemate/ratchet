@@ -15,6 +15,7 @@ import type { LearningStore } from './learning.js';
 import { clearCache as clearGitNexusCache } from './gitnexus.js';
 import { IncrementalScanner } from './scan-cache.js';
 import { resolveGuards, nextGuardProfile, isGuardRejection } from './engine-guards.js';
+import { captureBaseline } from './test-isolation.js';
 import { runPlanFirst } from './engine-plan.js';
 import { runArchitectEngine } from './engine-architect.js';
 
@@ -252,6 +253,17 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     return 'tight';
   })();
 
+  // --- Baseline test capture: record pre-existing failures to exempt them from rollback ---
+  let baselineFailures: string[] = [];
+  if (config.defaults.baselineTests) {
+    try {
+      const baseline = await captureBaseline(config.defaults.testCommand, cwd);
+      baselineFailures = baseline.failedTests;
+    } catch {
+      // Non-fatal — proceed without baseline
+    }
+  }
+
   // --- Plan-first: click 0 — read-only planning before execution clicks ---
   if (planFirst) {
     await runPlanFirst(run, target, currentScan, agent, cwd, {
@@ -342,6 +354,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             sweepMode: escalated,
             resolvedGuards: escalated ? resolveGuards(target, config, 'sweep') : currentGuards,
             issues: clickIssues,
+            baselineFailures,
             planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
             onPhase: callbacks.onClickPhase
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)

@@ -29,6 +29,17 @@ export const GUARD_PROFILES: Record<GuardProfileName, ClickGuards | null> = {
   atomic:  null,
 };
 
+export interface TestGateResult {
+  passed: boolean;
+  gate: 'lint' | 'related' | 'full';
+  output: string;
+  durationMs: number;
+  failedTests: string[];
+  unrelatedFailures?: string[];
+  landedWithWarning?: boolean;
+  warningMessage?: string;
+}
+
 export interface RatchetConfig {
   agent: 'claude-code' | 'codex' | 'shell';
   model?: string;
@@ -37,6 +48,18 @@ export interface RatchetConfig {
     testCommand: string;
     autoCommit: boolean;
     hardenMode?: boolean;
+    /** Enable targeted test isolation (progressive gates + failure classification) */
+    testIsolation?: boolean;
+    /** Command for running only tests related to changed files (default: 'npx vitest --related') */
+    testRelatedCmd?: string;
+    /** Land commit even if unrelated tests fail (default: false) */
+    allowUnrelatedFailures?: boolean;
+    /** Run full test suite before click loop to record pre-existing failures (default: false) */
+    baselineTests?: boolean;
+    /** Run lint → related → full gates in sequence, failing fast (default: false) */
+    progressiveGates?: boolean;
+    /** Command for lint/typecheck gate (default: 'npx tsc --noEmit') */
+    lintCmd?: string;
   };
   targets: Target[];
   boundaries?: Boundary[];

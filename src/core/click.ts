@@ -3,7 +3,7 @@ import { GUARD_PROFILES } from '../types.js';
 import type { Agent } from './agents/base.js';
 import { createAgentContext } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
-import { runTests } from './runner.js';
+import { progressiveGates } from './test-isolation.js';
 import * as git from './git.js';
 import type { ClickPhase } from './engine.js';
 import { RedTeamAgent, detectTestFile, getOriginalCode } from './adversarial.js';
@@ -43,6 +43,8 @@ export interface ClickContext {
   gitnexusCwd?: string;
   /** Execution plan from click 0 (--plan-first) — injected into agent context */
   planContext?: string;
+  /** Pre-existing test failures captured at baseline — exempt from rollback decisions */
+  baselineFailures?: string[];
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
 }
 
@@ -178,31 +180,27 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       } // end prevalidate block
 
       if (!rolledBack) {
-      // 4. Test (the Pawl)
+      // 4. Test (the Pawl) — progressive gates if testIsolation is enabled
       await onPhase?.('testing');
-      const testResult = await runTests({
-        command: config.defaults.testCommand,
-        cwd,
-      });
+      const gateResult = await progressiveGates(config, cwd, ctx.baselineFailures ?? []);
 
-      testsPassed = testResult.passed;
+      testsPassed = gateResult.passed;
 
       if (!testsPassed) {
-        console.error(`[DEBUG] Tests FAILED. Exit output (last 500 chars): ${testResult.output?.slice(-500)}`);
-        console.error(`[DEBUG] Test error: ${testResult.error}`);
-        const failingNames = extractFailingTestNames(testResult.output ?? '');
-        const failMatch = testResult.output?.match(/(\d+)\s+failing/i) ?? testResult.output?.match(/(\d+)\s+failed/i);
-        if (failingNames.length > 0) {
-          rollbackReason = `tests failed: ${failingNames.join(', ')}`;
-        } else if (failMatch) {
-          rollbackReason = `${failMatch[1]} tests failed`;
+        console.error(`[DEBUG] Tests FAILED at gate=${gateResult.gate}. Output (last 500 chars): ${gateResult.output.slice(-500)}`);
+        if (gateResult.failedTests.length > 0) {
+          rollbackReason = `tests failed (${gateResult.gate}): ${gateResult.failedTests.join(', ')}`;
         } else {
-          const lastLine = testResult.output?.split('\n').filter(l => l.trim()).at(-1)?.trim().slice(0, 80);
-          rollbackReason = lastLine ?? testResult.error?.slice(0, 80) ?? 'tests failed';
+          const lastLine = gateResult.output.split('\n').filter(l => l.trim()).at(-1)?.trim().slice(0, 80);
+          rollbackReason = lastLine ?? `${gateResult.gate} gate failed`;
         }
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
-      } else if (config.defaults.autoCommit) {
+      } else {
+        if (gateResult.landedWithWarning && gateResult.warningMessage) {
+          console.error(`[ratchet] ⚠ Click ${clickNumber}: ${gateResult.warningMessage}`);
+        }
+        if (config.defaults.autoCommit) {
         // 5. Commit on success
         await onPhase?.('committing');
         const message = buildCommitMessage(clickNumber, target, proposal, buildResult.filesModified);
@@ -232,7 +230,8 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
             commitHash = undefined;
           }
         }
-      }
+        } // end if (config.defaults.autoCommit)
+      } // end else (tests passed)
       } // end if (!rolledBack) — click guards
     }
   } catch (err: unknown) {
