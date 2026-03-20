@@ -1,7 +1,7 @@
 {
   "name": "@ratchet-run/cli",
   "version": "1.0.0",
-  "description": "Autonomous iterative code improvement CLI — write tests, fix bugs, harden code",
+  "description": "Autonomous iterative code improvement CLI \u2014 write tests, fix bugs, harden code",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -9,9 +9,7 @@
   },
   "files": [
     "dist/",
-    "action/",
-    "README.md",
-    "CONTRIBUTING.md"
+    "README.md"
   ],
   "scripts": {
     "build": "tsup",
@@ -36,7 +34,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ratchet-run/ratchet.git"
+    "url": "https://github.com/giovanni-labs/ratchet.git"
   },
   "homepage": "https://github.com/ratchet-run/ratchet#readme",
   "bugs": {
@@ -73,5 +71,8 @@
     "puppeteer": "^24.39.1",
     "stripe": "^20.4.1",
     "yaml": "^2.8.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
