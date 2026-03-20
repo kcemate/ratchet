@@ -1,5 +1,5 @@
 {
-  "name": "@ratchet-run/cli",
+  "name": "ratchet-run",
   "version": "1.0.0",
   "description": "Autonomous iterative code improvement CLI \u2014 write tests, fix bugs, harden code",
   "type": "module",
