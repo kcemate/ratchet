@@ -4,7 +4,7 @@ import type { Target, BuildResult, HardenPhase } from '../../types.js';
 import type { ScanResult } from '../../commands/scan.js';
 import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
-import { parseModifiedFiles } from './api.js';
+import { parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt } from './api.js';
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
 import { buildIntelligenceBriefing, queryFlows } from '../gitnexus.js';
@@ -187,14 +187,6 @@ export class ShellAgent implements Agent {
   }
 }
 
-function buildAnalyzePrompt(context: string): string {
-  return (
-    `You are a code improvement assistant. Analyze the following target and provide a concise analysis of what can be improved.\n\n` +
-    `${context}\n\n` +
-    `Focus on: code quality, error handling, performance, maintainability. ` +
-    `Be specific and actionable. List the top 3 improvement opportunities.`
-  );
-}
 
 function buildProposePrompt(analysis: string, target: Target): string {
   return (
@@ -209,14 +201,6 @@ function buildProposePrompt(analysis: string, target: Target): string {
   );
 }
 
-function buildHardenAnalyzePrompt(context: string): string {
-  return (
-    `You are a test-writing assistant. Analyze the following target and identify what test coverage is missing.\n\n` +
-    `${context}\n\n` +
-    `Focus on: untested functions, uncovered edge cases, missing error condition tests. ` +
-    `Be specific and actionable. List the top 3 missing test scenarios.`
-  );
-}
 
 function buildHardenProposePrompt(analysis: string, target: Target): string {
   return (
