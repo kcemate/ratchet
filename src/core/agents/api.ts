@@ -54,7 +54,7 @@ export function buildAnalyzePrompt(context: string): string {
   );
 }
 
-function buildProposePrompt(analysis: string, target: Target): string {
+export function buildProposePrompt(analysis: string, target: Target): string {
   return (
     `You are a code improvement assistant. Based on the following analysis, propose ONE specific, focused improvement.\n\n` +
     `Target path: ${target.path}\n` +
@@ -76,7 +76,7 @@ export function buildHardenAnalyzePrompt(context: string): string {
   );
 }
 
-function buildHardenProposePrompt(analysis: string, target: Target): string {
+export function buildHardenProposePrompt(analysis: string, target: Target): string {
   return (
     `You are a test-writing assistant. Based on the following analysis, propose ONE specific set of tests to write.\n\n` +
     `Target path: ${target.path}\n` +
