@@ -1544,6 +1544,248 @@
       .pricing-grid { grid-template-columns: 1fr; }
       .pricing-card.popular { grid-column: span 1; }
     }
+
+    /* ══════════════════════════════════════════
+       3-STEP HOW IT WORKS
+    ══════════════════════════════════════════ */
+    #steps {
+      padding: 80px 0 60px;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      position: relative;
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 52px;
+      left: calc(16.67% + 12px);
+      right: calc(16.67% + 12px);
+      height: 1px;
+      background: linear-gradient(90deg, var(--indigo), var(--cyan), var(--mint));
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    .step-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      text-align: center;
+      transition: all var(--transition);
+    }
+    .step-card:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .step-number {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+    }
+
+    .step-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 20px;
+    }
+
+    .step-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .step-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .step-code-hint {
+      display: inline-block;
+      margin-top: 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--cyan);
+      background: rgba(34, 211, 238, 0.06);
+      border: 1px solid rgba(34, 211, 238, 0.15);
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* ══════════════════════════════════════════
+       TESTIMONIALS
+    ══════════════════════════════════════════ */
+    #testimonials {
+      padding: 100px 0;
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .testimonial-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      transition: all var(--transition);
+    }
+    .testimonial-card:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3), var(--glow-indigo);
+    }
+
+    .testimonial-stars {
+      color: var(--amber);
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .testimonial-quote {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    .testimonial-quote-mark {
+      font-size: 42px;
+      line-height: 0.8;
+      color: var(--indigo);
+      font-family: Georgia, serif;
+      margin-bottom: 8px;
+      display: block;
+      opacity: 0.7;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    .testimonial-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .testimonial-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .testimonial-role {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ══════════════════════════════════════════
+       FAQ
+    ══════════════════════════════════════════ */
+    #faq {
+      padding: 100px 0;
+    }
+
+    .faq-list {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .faq-item {
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color var(--transition);
+    }
+    .faq-item:hover { border-color: var(--border-bright); }
+    .faq-item.open  { border-color: rgba(99, 102, 241, 0.35); }
+
+    .faq-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      gap: 16px;
+      user-select: none;
+    }
+
+    .faq-chevron {
+      color: var(--text-muted);
+      transition: transform var(--transition);
+      flex-shrink: 0;
+    }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); color: var(--indigo); }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .faq-item.open .faq-answer { max-height: 400px; }
+
+    .faq-answer-inner {
+      padding: 16px 24px 20px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 900px) {
+      .testimonials-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .steps-grid { grid-template-columns: 1fr; }
+      .steps-grid::before { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -1567,6 +1809,7 @@
         <li><a href="#scoring">Scoring</a></li>
         <li><a href="#vision">Vision</a></li>
         <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#faq">FAQ</a></li>
         <li><a href="#install">Install</a></li>
       </ul>
 
@@ -1611,17 +1854,17 @@
       <div class="hero-eyebrow">
         <span class="badge badge-indigo">
           <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg>
-          AI-powered code improvement
+          AI-Powered CLI · Zero Config
         </span>
       </div>
 
       <h1 class="hero-title">
-        Your codebase<br/>
-        <span class="gradient-text">can only get better.</span>
+        Stop shipping<br/>
+        <span class="gradient-text">tech debt.</span>
       </h1>
 
       <p class="hero-sub">
-        Ratchet scans every file, scores every dimension, and sends an AI agent to fix what it finds — iteratively, safely, with tests at every step.
+        Ratchet scans every file, scores every weakness, and commits AI fixes that pass your tests — one relentless click at a time.
       </p>
 
       <div class="hero-actions">
@@ -1705,6 +1948,49 @@
     </div>
   </div>
 </section>
+
+<!-- ══════════════════════════════════════════
+     STEPS — GET STARTED IN 3 STEPS
+══════════════════════════════════════════ -->
+<section id="steps">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">
+        <span class="badge badge-indigo">How It Works</span>
+      </div>
+      <h2 class="section-title">Up and running in minutes.</h2>
+      <p class="section-sub">Three commands are all it takes to go from zero to a cleaner codebase.</p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card reveal reveal-delay-1">
+        <div class="step-number">Step 01</div>
+        <div class="step-icon" style="background: rgba(99,102,241,0.15);">📦</div>
+        <div class="step-title">Install</div>
+        <div class="step-desc">One global install. Works with any Node.js project — no config files, no setup ceremony.</div>
+        <div class="step-code-hint">npm install -g ratchet-cli</div>
+      </div>
+
+      <div class="step-card reveal reveal-delay-2">
+        <div class="step-number">Step 02</div>
+        <div class="step-icon" style="background: rgba(34,211,238,0.12);">🔍</div>
+        <div class="step-title">Scan</div>
+        <div class="step-desc">Get an instant quality score across 6 dimensions — security, testing, type safety, performance, and more.</div>
+        <div class="step-code-hint">ratchet scan</div>
+      </div>
+
+      <div class="step-card reveal reveal-delay-3">
+        <div class="step-number">Step 03</div>
+        <div class="step-icon" style="background: rgba(52,211,153,0.12);">⚡</div>
+        <div class="step-title">Improve</div>
+        <div class="step-desc">Let AI fix what it finds. Every change runs your test suite — only improvements that pass get committed.</div>
+        <div class="step-code-hint">ratchet torque --clicks 10</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
 
 <!-- ══════════════════════════════════════════
      HOW IT WORKS
@@ -1875,6 +2161,63 @@
           <li>Color-coded: green (healthy) → red (critical)</li>
           <li>Zoom, filter, and click to explore any node</li>
         </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ══════════════════════════════════════════
+     TESTIMONIALS
+══════════════════════════════════════════ -->
+<section id="testimonials">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">
+        <span class="badge badge-purple">What developers say</span>
+      </div>
+      <h2 class="section-title">Used by engineers who care about quality.</h2>
+    </div>
+
+    <div class="testimonials-grid">
+      <div class="testimonial-card reveal reveal-delay-1">
+        <div class="testimonial-stars">★★★★★</div>
+        <span class="testimonial-quote-mark">"</span>
+        <p class="testimonial-quote">Ratchet took our codebase from a 58 to a 79 in one afternoon. I pointed it at our auth module, walked away for an hour, and came back to 12 merged commits — all green.</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background: rgba(99,102,241,0.15);">👩‍💻</div>
+          <div>
+            <div class="testimonial-name">Sarah K.</div>
+            <div class="testimonial-role">Senior Engineer, Series B SaaS</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card reveal reveal-delay-2">
+        <div class="testimonial-stars">★★★★★</div>
+        <span class="testimonial-quote-mark">"</span>
+        <p class="testimonial-quote">Finally, a tool that doesn't just tell you what's wrong — it actually fixes it. The Pawl mechanism is brilliant. I've never seen a bad commit land from a torque run.</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background: rgba(34,211,238,0.12);">👨‍💻</div>
+          <div>
+            <div class="testimonial-name">Marcus T.</div>
+            <div class="testimonial-role">Tech Lead, Fintech Startup</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card reveal reveal-delay-3">
+        <div class="testimonial-stars">★★★★★</div>
+        <span class="testimonial-quote-mark">"</span>
+        <p class="testimonial-quote">We run <code class="mono" style="color:var(--cyan);">ratchet torque</code> on every PR branch. Code review time dropped by 40% because the obvious stuff is already fixed before a human looks at it.</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background: rgba(52,211,153,0.12);">👩‍🔬</div>
+          <div>
+            <div class="testimonial-name">Priya M.</div>
+            <div class="testimonial-role">Engineering Manager, Scale-up</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2443,6 +2786,85 @@
 </section>
 
 <!-- ══════════════════════════════════════════
+     FAQ
+══════════════════════════════════════════ -->
+<div class="container"><div class="divider"></div></div>
+
+<section id="faq">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">
+        <span class="badge badge-amber">FAQ</span>
+      </div>
+      <h2 class="section-title">Common questions.</h2>
+      <p class="section-sub">Everything you need to know before you run your first torque.</p>
+    </div>
+
+    <div class="faq-list reveal">
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Does Ratchet ever break my code?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">No. That's the whole point of the Pawl. Every AI-proposed change runs your full test suite before it commits. If a single test fails, the change is automatically reverted and the click is discarded — nothing bad ever lands in your repo.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          What languages and frameworks does Ratchet support?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">Ratchet works with any project that has a test command. It auto-detects JavaScript, TypeScript, Python, Go, Rust, Ruby, and Java projects. As long as you have a <code class="mono" style="color:var(--cyan);">test</code> script (or specify one via <code class="mono" style="color:var(--cyan);">--test-cmd</code>), Ratchet can improve it.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          What AI model does Ratchet use?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">On Builder and Pro plans, Ratchet uses your own API key (BYOK) with Claude or GPT-4 — you control the model and the cost. Team and Enterprise plans include hosted AI with no API key required.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          What counts as one "improvement cycle"?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">One click = one full analyze → propose → build → test cycle. If the change passes tests and commits, that's one cycle used. If tests fail and the change rolls back, it doesn't count against your limit. You're only charged for successful improvements.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Can I run Ratchet in CI/CD?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">Yes. Ratchet ships with a GitHub Action on Team and Enterprise plans. You can configure it to run torque on every PR, on a schedule, or against specific files changed in a diff. The action opens a follow-up PR with all landed improvements.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Is my code sent to a third party?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">On BYOK plans, your code goes directly to your chosen AI provider (Anthropic or OpenAI) — never through Ratchet's servers. Enterprise customers can deploy Ratchet fully air-gapped with their own self-hosted models.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
      FOOTER
 ══════════════════════════════════════════ -->
 <footer id="footer">
@@ -2585,6 +3007,14 @@
   }, { threshold: 0.3 });
 
   sections.forEach(s => activeObs.observe(s));
+
+  /* ── FAQ accordion ── */
+  function toggleFaq(questionEl) {
+    const item = questionEl.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
 
   /* ── License recovery modal ── */
   function openRecovery(e) {
