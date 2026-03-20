@@ -4,6 +4,7 @@ import type { Target, BuildResult, HardenPhase } from '../../types.js';
 import type { ScanResult } from '../../commands/scan.js';
 import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
+import { parseModifiedFiles } from './api.js';
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
 import { buildIntelligenceBriefing, queryFlows } from '../gitnexus.js';
@@ -359,16 +360,6 @@ function buildBuildPrompt(proposal: string): string {
   );
 }
 
-function parseModifiedFiles(output: string): string[] {
-  const files: string[] = [];
-  for (const line of output.split('\n')) {
-    const match = line.match(/^MODIFIED:\s*(.+)$/);
-    if (match) {
-      files.push(match[1].trim());
-    }
-  }
-  return files;
-}
 
 /**
  * Build a single-shot architect prompt that instructs the agent to make ONE
