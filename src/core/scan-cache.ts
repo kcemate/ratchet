@@ -9,6 +9,8 @@ import {
   SECRET_PATTERNS,
   SEVERITY_MAP,
   findSourceFiles,
+  scoreByThresholds,
+  DUP_SCORE_THRESHOLDS,
 } from './scan-constants.js';
 
 // ---------------------------------------------------------------------------
@@ -615,13 +617,7 @@ export function rebuildScanFromMetrics(
   let duplicatedLines = 0;
   for (const [, count] of lineFrequency) { if (count >= 3) duplicatedLines++; }
   let dupScore = 0, dupSummary = '';
-  if (duplicatedLines === 0) { dupScore = 6; dupSummary = 'no significant duplication'; }
-  else if (duplicatedLines <= 10) { dupScore = 5; dupSummary = `${duplicatedLines} repeated lines`; }
-  else if (duplicatedLines <= 30) { dupScore = 4; dupSummary = `${duplicatedLines} repeated lines`; }
-  else if (duplicatedLines <= 100) { dupScore = 3; dupSummary = `${duplicatedLines} repeated lines`; }
-  else if (duplicatedLines <= 300) { dupScore = 2; dupSummary = `${duplicatedLines} repeated lines`; }
-  else if (duplicatedLines <= 700) { dupScore = 1; dupSummary = `${duplicatedLines} repeated lines (high duplication)`; }
-  else { dupSummary = `${duplicatedLines} repeated lines (excessive)`; }
+  ({ score: dupScore, summary: dupSummary } = scoreByThresholds(duplicatedLines, DUP_SCORE_THRESHOLDS));
 
   const codeQualityCategory = {
     name: 'Code Quality', emoji: '📖',

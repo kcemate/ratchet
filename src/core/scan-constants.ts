@@ -151,3 +151,13 @@ export function scoreByThresholds(value: number, thresholds: Threshold[]): { sco
   const summary = typeof last.summary === 'function' ? last.summary(value) : last.summary;
   return { score: last.score, summary };
 }
+
+export const DUP_SCORE_THRESHOLDS: Threshold[] = [
+  { min: 701, score: 0, summary: (n) => `${n} repeated lines (excessive)` },
+  { min: 301, score: 1, summary: (n) => `${n} repeated lines (high duplication)` },
+  { min: 101, score: 2, summary: (n) => `${n} repeated lines` },
+  { min: 31,  score: 3, summary: (n) => `${n} repeated lines` },
+  { min: 11,  score: 4, summary: (n) => `${n} repeated lines` },
+  { min: 1,   score: 5, summary: (n) => `${n} repeated lines` },
+  { min: 0,   score: 6, summary: 'no significant duplication' },
+];
