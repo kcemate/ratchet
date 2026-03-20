@@ -1887,7 +1887,7 @@
       <div class="install-wrap">
         <button class="hero-install" onclick="copyInstall(this)" title="Click to copy">
           <span style="color: var(--text-muted); user-select: none;">$</span>
-          <span>npm install -g ratchet-cli</span>
+          <span>npm install -g ratchet-run</span>
           <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
         </button>
         <span class="install-note">Node.js ≥ 18 required</span>
@@ -1975,7 +1975,7 @@
         <div class="step-icon" style="background: rgba(99,102,241,0.15);">📦</div>
         <div class="step-title">Install</div>
         <div class="step-desc">One global install. Works with any Node.js project — no config files, no setup ceremony.</div>
-        <div class="step-code-hint">npm install -g ratchet-cli</div>
+        <div class="step-code-hint">npm install -g ratchet-run</div>
       </div>
 
       <div class="step-card reveal reveal-delay-2">
@@ -2751,7 +2751,7 @@
             <div class="step-num">1</div>
             <div class="step-content">
               <div class="step-label">Install</div>
-              <div class="step-code">npm install -g ratchet-cli</div>
+              <div class="step-code">npm install -g ratchet-run</div>
             </div>
           </div>
           <div class="install-step">
@@ -2920,7 +2920,7 @@
 
   /* ── Copy install command ── */
   function copyInstall(btn) {
-    const cmd = 'npm install -g ratchet-cli';
+    const cmd = 'npm install -g ratchet-run';
     navigator.clipboard.writeText(cmd).then(() => {
       showToast('✓ Copied to clipboard');
     }).catch(() => {
