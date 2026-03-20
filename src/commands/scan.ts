@@ -1031,6 +1031,9 @@ export function scanCommand(): Command {
       const { resolve } = await import('path');
       const cwd = resolve(dir);
 
+      const { trackEvent } = await import('../core/telemetry.js');
+      trackEvent('scan');
+
       const result = await runScan(cwd);
       renderScan(result);
     });

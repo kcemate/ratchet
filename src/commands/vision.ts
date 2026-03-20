@@ -1247,6 +1247,9 @@ export function visionCommand(): Command {
     }) => {
       const cwd = process.cwd();
 
+      const { trackEvent } = await import('../core/telemetry.js');
+      trackEvent('vision');
+
       printHeader('🔭 Ratchet Vision');
 
       const maxNodes = validateInt(options.maxNodes, 'max-nodes', 1);
