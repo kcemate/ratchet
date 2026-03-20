@@ -4,7 +4,7 @@ import type { Target, BuildResult, HardenPhase } from '../../types.js';
 import type { ScanResult } from '../../commands/scan.js';
 import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
-import { parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt } from './api.js';
+import { parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt, buildProposePrompt, buildHardenProposePrompt } from './api.js';
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
 import { buildIntelligenceBriefing, queryFlows } from '../gitnexus.js';
@@ -188,32 +188,8 @@ export class ShellAgent implements Agent {
 }
 
 
-function buildProposePrompt(analysis: string, target: Target): string {
-  return (
-    `You are a code improvement assistant. Based on the following analysis, propose ONE specific, focused improvement.\n\n` +
-    `Target path: ${target.path}\n` +
-    `Analysis:\n${analysis}\n\n` +
-    `Respond with:\n` +
-    `1. The specific change to make (one sentence)\n` +
-    `2. Which file(s) to modify\n` +
-    `3. The exact code change\n\n` +
-    `Keep it minimal — one change, one commit.`
-  );
-}
 
 
-function buildHardenProposePrompt(analysis: string, target: Target): string {
-  return (
-    `You are a test-writing assistant. Based on the following analysis, propose ONE specific set of tests to write.\n\n` +
-    `Target path: ${target.path}\n` +
-    `Analysis:\n${analysis}\n\n` +
-    `Respond with:\n` +
-    `1. The specific test(s) to write (one sentence)\n` +
-    `2. Which test file to create or modify\n` +
-    `3. The exact test code\n\n` +
-    `Write comprehensive tests for the target code. Focus on correctness, not style.`
-  );
-}
 
 function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
   const issueList = formatIssuesForPrompt(issues);
