@@ -1,5 +1,27 @@
 export type HardenPhase = 'harden:tests' | 'improve';
 
+export type RollbackReason =
+  | 'test-related'
+  | 'test-unrelated'
+  | 'timeout'
+  | 'scope-exceeded'
+  | 'score-regression'
+  | 'lint-error'
+  | 'guard-rejected';
+
+export interface ClickEconomics {
+  clickIndex: number;
+  wallTimeMs: number;
+  agentTimeMs: number;
+  testTimeMs: number;
+  /** USD estimate based on diff size and model pricing */
+  estimatedCost: number;
+  outcome: 'landed' | 'rolled-back' | 'timeout' | 'scope-rejected' | 'guard-rejected';
+  rollbackReason?: RollbackReason;
+  issuesFixed: number;
+  scoreDelta: number;
+}
+
 export interface SwarmConfig {
   enabled: boolean;
   /** Number of competing agents per swarm click (default: 3) */
