@@ -7,11 +7,29 @@ import {
   TEST_PATTERNS,
   LOOP_DB_API_PATTERN,
   SECRET_PATTERNS,
-  SEVERITY_MAP,
   findSourceFiles,
   scoreByThresholds,
   DUP_SCORE_THRESHOLDS,
 } from './scan-constants.js';
+import {
+  scoreCoverageRatio,
+  scoreEdgeCases,
+  scoreTestQuality,
+  scoreSecrets,
+  scoreInputValidation,
+  scoreAuthChecks,
+  scoreAnyTypeDensity,
+  scoreEhCoverage,
+  scoreEmptyCatches,
+  scoreStructuredLogging,
+  scoreAwaitInLoop,
+  scoreConsoleLog,
+  scoreImportHygiene,
+  scoreFunctionLength,
+  scoreLineLength,
+  scoreDeadCode,
+  aggregateAndSortIssues,
+} from './scan-scorers.js';
 
 // ---------------------------------------------------------------------------
 // Per-file metrics for delta-based incremental updates
@@ -33,6 +51,7 @@ export interface PerFileMetrics {
   commentedCodeCount: number;
   todoCount: number;
   secretCount: number;
+  hasEnvVars: boolean;
   edgeCaseTestCount: number;
   testCaseCount: number;
   assertCount: number;
@@ -151,6 +170,7 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
   let commentedCodeCount = 0;
   let todoCount = 0;
   let secretCount = 0;
+  let hasEnvVars = false;
   let edgeCaseTestCount = 0;
   let testCaseCount = 0;
   let assertCount = 0;
@@ -178,6 +198,7 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
       const regex = new RegExp(pattern.source, pattern.flags);
       secretCount += (content.match(regex) ?? []).length;
     }
+    hasEnvVars = /\bprocess\.env\b|\bos\.environ\b|\bos\.getenv\b/.test(content);
   }
 
   // Function length analysis + await-in-loop
@@ -300,6 +321,7 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
     commentedCodeCount,
     todoCount,
     secretCount,
+    hasEnvVars,
     edgeCaseTestCount,
     testCaseCount,
     assertCount,
@@ -342,8 +364,9 @@ export function rebuildScanFromMetrics(
   let totalCommentedCode = 0, totalTodo = 0, totalSecrets = 0;
   let totalEdgeCases = 0, totalTestCases = 0, totalAsserts = 0, totalDescribes = 0;
   let validationFileCount = 0, routeFileCount = 0;
-  let hasAuth = false, hasRate = false, hasCorsFlag = false;
+  let hasAuth = false, hasRate = false, hasCorsFlag = false, hasEnvVarsFlag = false;
   let totalImportIssues = 0;
+  let srcTsLineCount = 0;
 
   const consoleLogFiles: string[] = [];
   const anyTypeFiles: string[] = [];
@@ -373,6 +396,7 @@ export function rebuildScanFromMetrics(
     totalCommentedCode += m.commentedCodeCount;
     totalTodo += m.todoCount;
     totalSecrets += m.secretCount;
+    if (m.hasEnvVars) hasEnvVarsFlag = true;
     totalEdgeCases += m.edgeCaseTestCount;
     totalTestCases += m.testCaseCount;
     totalAsserts += m.assertCount;
@@ -383,15 +407,15 @@ export function rebuildScanFromMetrics(
     if (m.hasRateLimit) hasRate = true;
     if (m.hasCors) hasCorsFlag = true;
     totalImportIssues += m.importIssueCount;
+    if (!m.isTestFile && !fp.endsWith('.d.ts') && (fp.endsWith('.ts') || fp.endsWith('.tsx'))) {
+      srcTsLineCount += m.lineCount;
+    }
     for (const line of m.significantLines) {
       lineFrequency.set(line, (lineFrequency.get(line) ?? 0) + 1);
     }
   }
 
   // ========== Testing (25 pts) ==========
-  const ratio = sourceFiles.length > 0 ? testFiles.length / sourceFiles.length : 0;
-  const ratioStr = `${testFiles.length} test files, ${Math.round(ratio * 100)}% ratio`;
-
   let hasTestScript = false;
   if (existsSync(pkgPath)) {
     try {
@@ -401,37 +425,11 @@ export function rebuildScanFromMetrics(
     } catch { /* ignore */ }
   }
 
-  let coverageScore = 0, coverageSummary = '', coverageIssues = 0;
-  if (testFiles.length === 0) {
-    coverageSummary = hasTestScript ? 'test script configured, no test files' : 'no test files';
-    coverageIssues = sourceFiles.length;
-  } else {
-    const pct = ratio * 100;
-    if (pct >= 50) coverageScore = 8;
-    else if (pct >= 35) coverageScore = 7.5;
-    else if (pct >= 22) coverageScore = 6;
-    else if (pct >= 12) coverageScore = 4;
-    else if (pct >= 5) coverageScore = 2;
-    coverageSummary = ratioStr;
-    if (pct < 50) coverageIssues = Math.floor(sourceFiles.length * (1 - ratio));
-  }
-
-  let edgeCaseScore = 0, edgeCaseSummary = '';
-  if (totalEdgeCases >= 50) { edgeCaseScore = 9; edgeCaseSummary = `${totalEdgeCases} edge/error test cases`; }
-  else if (totalEdgeCases >= 20) { edgeCaseScore = 7; edgeCaseSummary = `${totalEdgeCases} edge/error test cases`; }
-  else if (totalEdgeCases >= 10) { edgeCaseScore = 5; edgeCaseSummary = `${totalEdgeCases} edge/error test cases`; }
-  else if (totalEdgeCases >= 3) { edgeCaseScore = 3; edgeCaseSummary = `${totalEdgeCases} edge/error test cases`; }
-  else if (totalEdgeCases >= 1) { edgeCaseScore = 1; edgeCaseSummary = `${totalEdgeCases} edge/error test case${totalEdgeCases !== 1 ? 's' : ''}`; }
-  else { edgeCaseSummary = 'no edge case tests detected'; }
-
-  const assertsPerTest = totalTestCases > 0 ? totalAsserts / totalTestCases : 0;
-  const hasDescribe = totalDescribes > 0;
-  let testQualityScore = 0, testQualitySummary = '';
-  if (totalTestCases >= 50 && assertsPerTest >= 2 && hasDescribe) { testQualityScore = 8; testQualitySummary = `${assertsPerTest.toFixed(1)} assertions per test`; }
-  else if (totalTestCases >= 10 && assertsPerTest >= 1.5 && hasDescribe) { testQualityScore = 6; testQualitySummary = `${assertsPerTest.toFixed(1)} assertions per test`; }
-  else if (totalTestCases >= 5 && assertsPerTest >= 1) { testQualityScore = 4; testQualitySummary = `${assertsPerTest.toFixed(1)} assertions per test`; }
-  else if (totalTestCases > 0) { testQualityScore = 2; testQualitySummary = `${totalTestCases} test case${totalTestCases !== 1 ? 's' : ''}, low assertion density`; }
-  else { testQualitySummary = 'no test cases found'; }
+  const { score: coverageScore, summary: coverageSummary, issues: coverageIssues } =
+    scoreCoverageRatio(testFiles.length, sourceFiles.length, hasTestScript);
+  const { score: edgeCaseScore, summary: edgeCaseSummary } = scoreEdgeCases(totalEdgeCases);
+  const { score: testQualityScore, summary: testQualitySummary } =
+    scoreTestQuality(totalTestCases, totalAsserts, totalDescribes > 0);
 
   const testingCategory = {
     name: 'Testing', emoji: '🧪',
@@ -445,23 +443,11 @@ export function rebuildScanFromMetrics(
   };
 
   // ========== Security (15 pts) ==========
-  let secretsScore = totalSecrets === 0 ? 2 : 0;
-  const secretsSummary = totalSecrets === 0 ? 'no hardcoded secrets' : `${totalSecrets} potential secret${totalSecrets !== 1 ? 's' : ''}`;
-
-  let inputValScore = 0, inputValSummary = '', inputValIssues = 0;
-  const totalCheckableFiles = Math.max(routeFileCount, validationFileCount, 1);
-  const validationRatio = validationFileCount / totalCheckableFiles;
-  if (validationFileCount >= 3 && validationRatio >= 0.6) { inputValScore = 6; inputValSummary = `validation on ${validationFileCount} files`; }
-  else if (validationFileCount >= 2) { inputValScore = 4; inputValSummary = `Zod/validation on ${validationFileCount} files`; inputValIssues = routeFileCount > validationFileCount ? routeFileCount - validationFileCount : 0; }
-  else if (validationFileCount === 1) { inputValScore = 2; inputValSummary = 'minimal input validation detected'; inputValIssues = Math.max(0, routeFileCount - 1); }
-  else { inputValSummary = 'no input validation detected'; inputValIssues = routeFileCount; }
-
-  const authChecks = [hasAuth, hasRate, hasCorsFlag].filter(Boolean).length;
-  let authScore = 0, authSummary = '', authIssues = 0;
-  if (authChecks >= 3) { authScore = 6; authSummary = 'auth middleware, rate limiting, CORS configured'; }
-  else if (authChecks === 2) { authScore = 4; const f: string[] = []; if (hasAuth) f.push('auth middleware'); if (hasRate) f.push('rate limiting'); if (hasCorsFlag) f.push('CORS'); authSummary = f.join(', '); authIssues = 1; }
-  else if (authChecks === 1) { authScore = 2; if (hasAuth) authSummary = 'auth middleware only'; else if (hasRate) authSummary = 'rate limiting only'; else authSummary = 'CORS only'; authIssues = 2; }
-  else { authSummary = 'no auth/rate-limit/CORS detected'; authIssues = 3; }
+  const { score: secretsScore, summary: secretsSummary } = scoreSecrets(totalSecrets, hasEnvVarsFlag);
+  const { score: inputValScore, summary: inputValSummary, issues: inputValIssues } =
+    scoreInputValidation(validationFileCount, routeFileCount);
+  const { score: authScore, summary: authSummary, issues: authIssues } =
+    scoreAuthChecks(hasAuth, hasRate, hasCorsFlag);
 
   const securityCategory = {
     name: 'Security', emoji: '🔒',
@@ -500,18 +486,7 @@ export function rebuildScanFromMetrics(
       } catch { strictScore = 1; strictSummary = 'TypeScript (tsconfig parse error)'; }
     } else { strictScore = 1; strictSummary = 'TypeScript, no tsconfig found'; }
 
-    const srcTsLineCount = Object.entries(allFileMetrics)
-      .filter(([f, m]) => !m.isTestFile && !f.endsWith('.d.ts') && (f.endsWith('.ts') || f.endsWith('.tsx')))
-      .reduce((sum, [, m]) => sum + m.lineCount, 0);
-    const anyDensity = srcTsLineCount > 0 ? totalAnyType / (srcTsLineCount / 1000) : 0;
-    let anyScore = 0, anySummary = '';
-    if (totalAnyType === 0 || anyDensity < 1) { anyScore = 8; anySummary = totalAnyType === 0 ? 'zero any types' : `${totalAnyType} any type${totalAnyType !== 1 ? 's' : ''} (very low density)`; }
-    else if (anyDensity < 2) { anyScore = 7; anySummary = `${totalAnyType} any type${totalAnyType !== 1 ? 's' : ''} (low density)`; }
-    else if (anyDensity < 4) { anyScore = 6; anySummary = `${totalAnyType} any types (low density)`; }
-    else if (anyDensity < 7) { anyScore = 5; anySummary = `${totalAnyType} any types (moderate)`; }
-    else if (anyDensity < 12) { anyScore = 4; anySummary = `${totalAnyType} any types (moderate-high)`; }
-    else if (anyDensity < 20) { anyScore = 2; anySummary = `${totalAnyType} any types (high)`; }
-    else { anySummary = `${totalAnyType} any types (very high density)`; }
+    const { score: anyScore, summary: anySummary } = scoreAnyTypeDensity(totalAnyType, srcTsLineCount);
 
     typeCategory = {
       name: 'Type Safety', emoji: '📝',
@@ -525,23 +500,10 @@ export function rebuildScanFromMetrics(
   }
 
   // ========== Error Handling (20 pts) ==========
-  let ehCovScore = 0, ehCovSummary = '';
-  if (totalTryCatch === 0) { ehCovSummary = 'no try/catch found'; }
-  else if (totalAsync === 0 || totalTryCatch >= totalAsync * 0.6) { ehCovScore = 8; ehCovSummary = `${totalTryCatch} try/catch block${totalTryCatch !== 1 ? 's' : ''}`; }
-  else { const pct = Math.round((totalTryCatch / totalAsync) * 100); ehCovScore = Math.round((pct / 100) * 8); ehCovSummary = `${totalTryCatch} try/catch (${pct}% async coverage)`; }
-
-  let ecScore = 0, ecSummary = '';
-  if (totalEmptyCatch >= 13) { ecSummary = `${totalEmptyCatch} empty catches`; }
-  else if (totalEmptyCatch >= 8) { ecScore = 1; ecSummary = `${totalEmptyCatch} empty catches`; }
-  else if (totalEmptyCatch >= 5) { ecScore = 2; ecSummary = `${totalEmptyCatch} empty catches`; }
-  else if (totalEmptyCatch >= 3) { ecScore = 3; ecSummary = `${totalEmptyCatch} empty catches`; }
-  else if (totalEmptyCatch === 2) { ecScore = 4; ecSummary = '2 empty catches'; }
-  else if (totalEmptyCatch === 1) { ecScore = 4.5; ecSummary = '1 empty catch'; }
-  else { ecScore = 5; ecSummary = 'no empty catch blocks'; }
-
-  // Simplified structured logging (incremental doesn't track console.error vs console.log separately)
-  const loggingScore = 0;
-  const loggingSummary = 'no error logging detected';
+  const { score: ehCovScore, summary: ehCovSummary } = scoreEhCoverage(totalTryCatch, totalAsync);
+  const { score: ecScore, summary: ecSummary } = scoreEmptyCatches(totalEmptyCatch);
+  // Incremental doesn't track console.error separately — use simplified logging score
+  const { score: loggingScore, summary: loggingSummary } = scoreStructuredLogging(0, 0);
 
   const errorHandlingCategory = {
     name: 'Error Handling', emoji: '⚠️ ',
@@ -555,25 +517,9 @@ export function rebuildScanFromMetrics(
   };
 
   // ========== Performance (10 pts) ==========
-  let asyncPScore = 0, asyncPSummary = '';
-  if (totalAwaitInLoop === 0) { asyncPScore = 5; asyncPSummary = 'no await-in-loop'; }
-  else if (totalAwaitInLoop === 1) { asyncPScore = 4; asyncPSummary = '1 await-in-loop pattern'; }
-  else if (totalAwaitInLoop <= 3) { asyncPScore = 3; asyncPSummary = `${totalAwaitInLoop} await-in-loop patterns`; }
-  else if (totalAwaitInLoop <= 6) { asyncPScore = 2; asyncPSummary = `${totalAwaitInLoop} await-in-loop patterns`; }
-  else { asyncPScore = 1; asyncPSummary = `${totalAwaitInLoop} await-in-loop patterns`; }
-
-  let consoleScore = 0, consoleSummary = '';
-  if (totalConsoleLog === 0) { consoleScore = 5; consoleSummary = 'no console.log in src'; }
-  else if (totalConsoleLog <= 3) { consoleScore = 4; consoleSummary = `${totalConsoleLog} console.log`; }
-  else if (totalConsoleLog <= 10) { consoleScore = 3; consoleSummary = `${totalConsoleLog} console.log calls`; }
-  else if (totalConsoleLog <= 25) { consoleScore = 2; consoleSummary = `${totalConsoleLog} console.log calls`; }
-  else if (totalConsoleLog <= 75) { consoleScore = 1; consoleSummary = `${totalConsoleLog} console.log calls`; }
-  else { consoleSummary = `${totalConsoleLog} console.log calls (excessive)`; }
-
-  let importScore = 0, importSummary = '';
-  if (totalImportIssues === 0) { importScore = 4; importSummary = 'clean imports'; }
-  else if (totalImportIssues <= 2) { importScore = 2; importSummary = `${totalImportIssues} import issue${totalImportIssues !== 1 ? 's' : ''} detected`; }
-  else { importSummary = `${totalImportIssues} import issues detected`; }
+  const { score: asyncPScore, summary: asyncPSummary } = scoreAwaitInLoop(totalAwaitInLoop);
+  const { score: consoleScore, summary: consoleSummary } = scoreConsoleLog(totalConsoleLog);
+  const { score: importScore, summary: importSummary } = scoreImportHygiene(totalImportIssues);
 
   const perfCategory = {
     name: 'Performance', emoji: '⚡',
@@ -588,36 +534,13 @@ export function rebuildScanFromMetrics(
 
   // ========== Code Quality (15 pts) ==========
   const avgLen = totalFunctionCount > 0 ? totalFunctionLength / totalFunctionCount : 0;
-  let fnLenScore = 0, fnLenSummary = '';
-  if (totalFunctionCount === 0 || avgLen <= 20) { fnLenScore = 6; fnLenSummary = totalFunctionCount === 0 ? 'no functions detected' : 'short functions'; }
-  else if (avgLen <= 30) { fnLenScore = 6; fnLenSummary = `avg ${Math.round(avgLen)}-line functions`; }
-  else if (avgLen <= 40) { fnLenScore = 5; fnLenSummary = `avg ${Math.round(avgLen)}-line functions`; }
-  else if (avgLen <= 50) { fnLenScore = 4; fnLenSummary = `avg ${Math.round(avgLen)}-line functions`; }
-  else if (avgLen <= 65) { fnLenScore = 3; fnLenSummary = `avg ${Math.round(avgLen)}-line functions`; }
-  else if (avgLen <= 80) { fnLenScore = 2; fnLenSummary = `avg ${Math.round(avgLen)}-line functions`; }
-  else { fnLenScore = 1; fnLenSummary = `long avg (${Math.round(avgLen)} lines)`; }
-
-  let lineLenScore = 0, lineLenSummary = '';
-  if (totalLongLines === 0) { lineLenScore = 6; lineLenSummary = 'no long lines'; }
-  else if (totalLongLines <= 5) { lineLenScore = 5; lineLenSummary = `${totalLongLines} long line${totalLongLines !== 1 ? 's' : ''}`; }
-  else if (totalLongLines <= 15) { lineLenScore = 4; lineLenSummary = `${totalLongLines} long lines`; }
-  else if (totalLongLines <= 50) { lineLenScore = 3; lineLenSummary = `${totalLongLines} long lines`; }
-  else if (totalLongLines <= 150) { lineLenScore = 2; lineLenSummary = `${totalLongLines} long lines`; }
-  else if (totalLongLines <= 500) { lineLenScore = 1; lineLenSummary = `${totalLongLines} long lines`; }
-  else { lineLenSummary = `${totalLongLines} long lines (excessive)`; }
-
-  const deadCodeTotal = totalCommentedCode + totalTodo;
-  let deadCodeScore = 0, deadCodeSummary = '';
-  if (deadCodeTotal === 0) { deadCodeScore = 6; deadCodeSummary = 'no dead code detected'; }
-  else if (totalCommentedCode === 0 && totalTodo <= 3) { deadCodeScore = 5; deadCodeSummary = `${totalTodo} TODO${totalTodo !== 1 ? 's' : ''}`; }
-  else if (totalCommentedCode <= 3 && totalTodo <= 5) { deadCodeScore = 4; deadCodeSummary = `${totalCommentedCode} commented-out, ${totalTodo} TODOs`; }
-  else if (totalCommentedCode <= 10) { deadCodeScore = 2; deadCodeSummary = `${totalCommentedCode} commented-out lines, ${totalTodo} TODOs`; }
-  else { deadCodeSummary = `${totalCommentedCode} commented-out lines, ${totalTodo} TODOs`; }
+  const { score: fnLenScore, summary: fnLenSummary } = scoreFunctionLength(avgLen, totalFunctionCount);
+  const { score: lineLenScore, summary: lineLenSummary } = scoreLineLength(totalLongLines);
+  const { score: deadCodeScore, summary: deadCodeSummary } = scoreDeadCode(totalCommentedCode, totalTodo);
 
   let duplicatedLines = 0;
   for (const [, count] of lineFrequency) { if (count >= 3) duplicatedLines++; }
-  let dupScore = 0, dupSummary = '';
-  ({ score: dupScore, summary: dupSummary } = scoreByThresholds(duplicatedLines, DUP_SCORE_THRESHOLDS));
+  const { score: dupScore, summary: dupSummary } = scoreByThresholds(duplicatedLines, DUP_SCORE_THRESHOLDS);
 
   const codeQualityCategory = {
     name: 'Code Quality', emoji: '📖',
@@ -626,32 +549,15 @@ export function rebuildScanFromMetrics(
     subcategories: [
       { name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary, issuesFound: totalLongFunctions, issuesDescription: 'functions >50 lines', locations: longFuncFiles },
       { name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary, issuesFound: totalLongLines, issuesDescription: 'lines >120 chars', locations: longLineFiles },
-      { name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary, issuesFound: deadCodeTotal, issuesDescription: 'dead code indicators (TODO, commented code)' },
+      { name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary, issuesFound: totalCommentedCode + totalTodo, issuesDescription: 'dead code indicators (TODO, commented code)' },
       { name: 'Duplication', score: Math.min(dupScore, 3), max: 3, summary: dupSummary, issuesFound: duplicatedLines, issuesDescription: 'repeated code lines' },
     ],
   };
 
-  // Build final result
   const categories = [testingCategory, securityCategory, typeCategory, errorHandlingCategory, perfCategory, codeQualityCategory];
   const total = categories.reduce((sum, c) => sum + c.score, 0);
   const maxTotal = categories.reduce((sum, c) => sum + c.max, 0);
-
-  const issuesByType: import('../commands/scan.js').IssueType[] = [];
-  let totalIssuesFound = 0;
-  for (const cat of categories) {
-    for (const sub of cat.subcategories) {
-      if (sub.issuesFound > 0 && sub.issuesDescription) {
-        const severity = SEVERITY_MAP[cat.name]?.[sub.name] ?? 'low';
-        issuesByType.push({ category: cat.name, subcategory: sub.name, count: sub.issuesFound, description: sub.issuesDescription, severity, locations: 'locations' in sub ? (sub.locations ?? []) : [] });
-        totalIssuesFound += sub.issuesFound;
-      }
-    }
-  }
-  const severityOrder = { high: 0, medium: 1, low: 2 };
-  issuesByType.sort((a, b) => {
-    const d = severityOrder[a.severity] - severityOrder[b.severity];
-    return d !== 0 ? d : b.count - a.count;
-  });
+  const { totalIssuesFound, issuesByType } = aggregateAndSortIssues(categories);
 
   return { projectName, total, maxTotal, categories, totalIssuesFound, issuesByType };
 }
@@ -766,7 +672,6 @@ export class IncrementalScanner {
       return cache.lastFullScan;
     }
 
-    // TRUE INCREMENTAL: only re-analyze changed files
     return this._incrementalRescan(cache, filesToRescan);
   }
 
@@ -838,4 +743,3 @@ export class IncrementalScanner {
     return scan;
   }
 }
-
