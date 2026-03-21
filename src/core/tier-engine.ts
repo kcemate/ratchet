@@ -31,6 +31,7 @@ import { executeClick } from './click.js';
 import { runScan } from '../commands/scan.js';
 import * as git from './git.js';
 import { randomUUID } from 'crypto';
+import { validateScope } from './scope.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -66,6 +67,10 @@ export interface TierEngineOptions {
   scanResult?: ScanResult;
   learningStore?: LearningStore;
   callbacks?: EngineCallbacks;
+  /** Resolved scope file paths (absolute). When provided, out-of-scope clicks are rolled back. */
+  scope?: string[];
+  /** Raw --scope argument for display. */
+  scopeArg?: string;
 }
 
 // ─── Prompt builders ─────────────────────────────────────────────────────────
@@ -205,7 +210,7 @@ export function planTierTargets(scan: ScanResult, totalClicks: number): TierTarg
 // ─── Engine ──────────────────────────────────────────────────────────────────
 
 export async function runTierEngine(options: TierEngineOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore } = options;
+  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore, scope: scopeFiles = [] } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -298,8 +303,21 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
               : undefined,
           });
 
-          const { click, rolled_back } = result;
+          let { click, rolled_back } = result;
           const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
+
+          // Scope guard: roll back if any modified file is outside scope
+          if (scopeFiles.length > 0 && !rolled_back) {
+            const scopeCheck = validateScope(click.filesModified, scopeFiles, cwd);
+            if (!scopeCheck.valid) {
+              console.error(`[ratchet] ✗ click ${globalClickNum} ROLLED BACK — scope violation: ${scopeCheck.scopeViolations.join(', ')}`);
+              if (click.commitHash) await git.revertLastCommit(cwd).catch(() => {});
+              click.testsPassed = false;
+              click.rollbackReason = `scope-exceeded: ${scopeCheck.scopeViolations.join(', ')}`;
+              click.commitHash = undefined;
+              rolled_back = true;
+            }
+          }
 
           if (rolled_back) {
             console.error(`[ratchet] ✗ click ${globalClickNum} ROLLED BACK (${elapsedSec}s) — ${gap.subcategory}`);

@@ -20,6 +20,7 @@ import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
 import { analyzeScoreGaps } from '../core/score-optimizer.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
+import { parseScopeArg, resolveScope, formatScopeForDisplay } from '../core/scope.js';
 import type { Click, RatchetRun } from '../types.js';
 import { GUARD_PROFILES } from '../types.js';
 import type { GuardProfileName } from '../types.js';
@@ -107,6 +108,7 @@ export function torqueCommand(): Command {
     .option('--json', 'Output full run economics as JSON (for CI/CD integration)', false)
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
     .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
+    .option('--scope <spec>', 'Limit changes to specific files: diff, branch, staged, <glob>, or file:a.ts,b.ts')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -139,6 +141,7 @@ export function torqueCommand(): Command {
         json: boolean;
         prComment: boolean;
         prCommentFooter: boolean;
+        scope?: string;
       }) => {
         const cwd = process.cwd();
 
@@ -266,6 +269,16 @@ export function torqueCommand(): Command {
         }
         // Otherwise leave config.guards as-is (from .ratchet.yml) or undefined (engine uses mode defaults)
 
+        // Resolve scope to concrete file list
+        let scopeFiles: string[] = [];
+        if (options.scope) {
+          const scopeSpec = parseScopeArg(options.scope);
+          scopeFiles = await resolveScope(scopeSpec, cwd);
+          if (scopeFiles.length === 0) {
+            process.stdout.write(chalk.yellow(`  ⚠  Scope "${options.scope}" matched no files — no restriction applied.\n\n`));
+          }
+        }
+
         // Print run summary
         const fields: Array<[string, string]> = options.sweep
           ? [['Mode', chalk.yellow('sweep') + (options.category ? chalk.dim(` (${options.category})`) : '')]]
@@ -285,6 +298,7 @@ export function torqueCommand(): Command {
           })()],
           ['Mode',   hardenMode ? chalk.yellow('harden') : chalk.dim('normal')],
         );
+        if (options.scope) fields.push(['Scope', chalk.cyan(formatScopeForDisplay(options.scope, scopeFiles, cwd))]);
         if (options.architect) fields.push(['Architect', chalk.yellow('enabled')]);
         if (options.planFirst) fields.push(['Plan-first', chalk.yellow('enabled')]);
         if (options.adversarial) fields.push(['QA', chalk.yellow('adversarial')]);
@@ -379,6 +393,8 @@ export function torqueCommand(): Command {
             architectEscalation: options.architect !== false,
             guardEscalation: options.guardEscalation !== false,
             planFirst: options.planFirst,
+            scope: scopeFiles,
+            scopeArg: options.scope,
             callbacks: {
               onScanComplete: (scan: ScanResult) => {
                 const topIssues = scan.issuesByType.slice(0, 3);

@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { readdirSync } from 'fs';
-import { join } from 'path';
+import { join, isAbsolute, resolve } from 'path';
 import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickEconomics } from '../types.js';
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
@@ -15,6 +15,7 @@ import type { LearningStore } from './learning.js';
 import { clearCache as clearGitNexusCache } from './gitnexus.js';
 import { IncrementalScanner } from './scan-cache.js';
 import { resolveGuards, nextGuardProfile, isGuardRejection } from './engine-guards.js';
+import { validateScope } from './scope.js';
 import { captureBaseline } from './test-isolation.js';
 import { runPlanFirst } from './engine-plan.js';
 import { runArchitectEngine } from './engine-architect.js';
@@ -182,6 +183,10 @@ export interface EngineRunOptions {
   clickOffset?: number;
   /** Run a read-only planning click 0 before execution clicks (default: false) */
   planFirst?: boolean;
+  /** Resolved scope file paths (absolute). When provided, clicks touching files outside this list are rolled back. */
+  scope?: string[];
+  /** Raw --scope argument for display purposes. */
+  scopeArg?: string;
 }
 
 export interface RunSummary {
@@ -250,7 +255,7 @@ export function summarizeRun(run: RatchetRun): RunSummary {
  * re-scans to measure progress and update the backlog.
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true, architectEscalation: architectEscalationEnabled = true, guardEscalation: guardEscalationEnabled = true, planFirst = false } = options;
+  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true, architectEscalation: architectEscalationEnabled = true, guardEscalation: guardEscalationEnabled = true, planFirst = false, scope: scopeFiles = [], scopeArg } = options;
   let target = options.target;
 
   const run: RatchetRun = {
@@ -259,6 +264,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     clicks: [],
     startedAt: new Date(),
     status: 'running',
+    ...(scopeFiles.length > 0 && { scope: scopeFiles, scopeArg }),
   };
 
   // Guard: detached HEAD means the user checked out a commit hash or tag directly.
@@ -480,6 +486,23 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             rolled_back = result.rolled_back;
           }
           clickEconomics = result.economics;
+        }
+
+        // Scope guard: if scope was specified, roll back any click that touched out-of-scope files
+        if (scopeFiles.length > 0 && !rolled_back) {
+          const scopeValidation = validateScope(click.filesModified, scopeFiles, cwd);
+          if (!scopeValidation.valid) {
+            console.error(
+              `[ratchet] click ${i} ROLLED BACK — scope violation: ${scopeValidation.scopeViolations.join(', ')}`,
+            );
+            if (click.commitHash) {
+              await git.revertLastCommit(cwd).catch(() => {});
+            }
+            click.testsPassed = false;
+            click.rollbackReason = `scope-exceeded: ${scopeValidation.scopeViolations.join(', ')}`;
+            click.commitHash = undefined;
+            rolled_back = true;
+          }
         }
 
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
