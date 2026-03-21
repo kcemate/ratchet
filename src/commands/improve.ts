@@ -17,6 +17,7 @@ import { writePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
+import { parseScopeArg, resolveScope, formatScopeForDisplay } from '../core/scope.js';
 import type { Click, RatchetRun, SwarmConfig } from '../types.js';
 import { formatDuration } from '../core/utils.js';
 import { readFileSync } from 'fs';
@@ -42,8 +43,9 @@ export function improveCommand(): Command {
     .option('--no-swarm', 'Disable swarm mode (swarm is on by default)')
     .option('--no-adversarial', 'Disable adversarial QA (adversarial is on by default)')
     .option('--no-architect', 'Disable architect phase (architect+surgical is the default)')
+    .option('--scope <spec>', 'Limit changes to specific files: diff, branch, staged, <glob>, or file:a.ts,b.ts')
     .addHelpText('after', '\nExample:\n  $ ratchet improve\n  $ ratchet improve --clicks 14\n  $ ratchet improve --no-swarm --no-adversarial\n')
-    .action(async (options: { clicks: string; out?: string; swarm: boolean; adversarial: boolean; architect: boolean }) => {
+    .action(async (options: { clicks: string; out?: string; swarm: boolean; adversarial: boolean; architect: boolean; scope?: string }) => {
       const cwd = process.cwd();
 
       printHeader('⚙  Ratchet Improve');
@@ -57,10 +59,26 @@ export function improveCommand(): Command {
 
       const outPath = options.out ?? join(cwd, 'docs', 'improve-report.pdf');
 
+      // Resolve scope to concrete file list
+      let scopeFiles: string[] = [];
+      if (options.scope) {
+        const scopeSpec = parseScopeArg(options.scope);
+        scopeFiles = await resolveScope(scopeSpec, cwd);
+        if (scopeFiles.length === 0) {
+          process.stdout.write(chalk.yellow(`  ⚠  Scope "${options.scope}" matched no files — no restriction applied.\n\n`));
+        }
+      }
+
+      const scopeFields: Array<[string, string]> = [];
+      if (options.scope) {
+        scopeFields.push(['Scope', chalk.cyan(formatScopeForDisplay(options.scope, scopeFiles, cwd))]);
+      }
+
       printFields([
         ['Clicks', chalk.yellow(String(clickCount))],
         ['Tests',  chalk.dim(config.defaults.testCommand)],
         ['Output', chalk.dim(outPath)],
+        ...scopeFields,
       ]);
 
       // ── Step 1: Scan (before) ──
@@ -207,6 +225,8 @@ export function improveCommand(): Command {
             scanResult: scoreBefore,
             learningStore,
             scoreOptimized: true,
+            scope: scopeFiles,
+            scopeArg: options.scope,
             callbacks: makeCallbacks(clickCount, 0),
           });
           // Use scan after architect as input to surgical
@@ -242,6 +262,8 @@ export function improveCommand(): Command {
           adversarial: useAdversarial,
           scanResult: scanAfterArchitect,
           learningStore,
+          scope: scopeFiles,
+          scopeArg: options.scope,
           callbacks: makeCallbacks(clickCount, architectClicks),
         });
 

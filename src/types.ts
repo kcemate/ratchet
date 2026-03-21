@@ -158,6 +158,10 @@ export interface RatchetRun {
   earlyStopReason?: string; // set when the engine stopped early (e.g. architect-only issues remain)
   architectEscalated?: boolean; // set when the engine escalated to architect mode mid-run
   planResult?: PlanResult; // set when --plan-first generates a click 0 plan
+  /** Resolved scope file paths (absolute). Present when --scope was specified. */
+  scope?: string[];
+  /** Raw --scope argument for display. */
+  scopeArg?: string;
 }
 
 export interface BuildResult {
