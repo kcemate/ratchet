@@ -56,6 +56,10 @@
             overflow-x: hidden;
         }
 
+        html {
+            overflow-x: hidden;
+        }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-primary); }
         ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
@@ -1090,11 +1094,14 @@
 
         .pricing-grid {
             display: grid;
-            gap: 20px;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            width: 100%;
+            max-width: 100%;
         }
 
         @media (min-width: 640px) {
-            .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+            .pricing-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
             .pricing-card.popular { grid-column: span 2; max-width: 460px; justify-self: center; }
         }
 
@@ -1114,6 +1121,8 @@
             flex-direction: column;
             transition: all var(--transition);
             position: relative;
+            min-width: 0;
+            box-sizing: border-box;
         }
 
         .pricing-card:hover {
