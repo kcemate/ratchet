@@ -1,373 +1,232 @@
 # Ratchet
 
-**Every click ships code.**
+[![npm version](https://img.shields.io/npm/v/ratchet-run)](https://npmjs.com/package/ratchet-run) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/node/v/ratchet-run)](https://nodejs.org)
 
-Ratchet is an autonomous iterative code improvement CLI. Point it at a target — it analyzes your code, proposes one focused change, builds, tests, and commits. Then repeats. Only improvements that pass tests are kept. The codebase can only ever get better.
-
-```
-ratchet torque --target error-handling --clicks 7
-```
+> AI-powered CLI that scores your codebase and autonomously improves it. Each "click" is one full cycle: analyze → propose → build → test → commit. Only improvements that pass tests are kept. The score can only go up.
 
 ```
-  Target : error-handling
-  Path   : src/api/
-  Agent  : shell
-  Clicks : 7
-  Tests  : npm test
+$ ratchet scan
 
-  Score: 62/100 (14 issues found)
-     Targeting: Empty catches (5/6), any types (4/5), functions >50 lines (3/4)
+  Production Readiness Score: 72/100
 
-  ✓ Click 1 — passed [a3f9b21] — Score: 62 → 65 (+3) — 2 issues fixed
-  ✗ Click 2 — rolled back
-  ✓ Click 3 — passed [7bc1d44] — Score: 65 → 68 (+3) — 1 issues fixed
-  ✓ Click 4 — passed [2e8f053] — Score: 68 → 71 (+3)
-  ✓ Click 5 — passed [9da3c17] — Score: 71 → 73 (+2) — 1 issues fixed
-  ✗ Click 6 — rolled back
-  ✓ Click 7 — passed [f81b44a] — Score: 73 → 76 (+3) — 2 issues fixed
-
-  Done. 5 landed · 2 rolled back · 4m 12s
+  Testing          ████████████████████   18/25
+  Security         ██████████████         10/15
+  Type Safety      ████████████████████   15/15
+  Error Handling   ████████████████       12/20
+  Performance      ████████████           7/10
+  Code Quality     ██████████████         10/15
 ```
+
+A ratchet wrench only turns one way. So does Ratchet — every change it makes is tested and committed. No rollback risk. No breaking builds. Just steady, one-direction improvement.
 
 ---
 
-## What is Ratchet?
+## Install
 
-A ratchet wrench only turns one way. Each click advances the socket — it can never slip back.
+```bash
+npm install -g ratchet-run
+```
 
-Ratchet works the same way on your codebase:
-
-- **Click** — one full improve cycle: analyze → propose → build → test → commit
-- **Torque** — the command that applies force to the codebase
-- **The Pawl** — the anti-rollback mechanism: if tests fail, the change is reverted automatically
-- **Tighten** — finalize the run and open a pull request
-
-The result: a branch of real, tested commits — each one a measurable improvement.
+Requires Node.js >= 18 and git.
 
 ---
 
 ## Quick Start
 
 ```bash
-# Install globally
-npm install -g @ratchet-run/cli
-
-# Step 1: Initialize Ratchet in your project
+# Initialize in your project
 ratchet init
 
-# Step 2: Run improvement clicks on a target
-ratchet torque --target error-handling
+# Score your codebase
+ratchet scan
 
-# Step 3: Check progress
+# Let AI autonomously improve it
+ratchet torque --target error-handling --clicks 7
+
+# Check progress
 ratchet status
-
-# Step 4: Ship it — create a PR with all improvements
-ratchet tighten --pr
 ```
 
-**Prerequisites:** Node.js >=18, git, and an AI coding agent available on your PATH.
+---
 
-### Zero-config mode
+## How It Works
 
-If no `.ratchet.yml` exists, Ratchet auto-detects your project type, test command, and source paths. Just run:
+Every click runs one full cycle:
 
-```bash
-ratchet torque
-```
+1. **Analyze** — Read your code, identify the highest-impact issue
+2. **Propose** — Plan a focused, single-concern fix
+3. **Build** — Write the code change
+4. **Test** — Run your test suite
+5. **Commit** — Only committed if all tests pass. Otherwise, rolled back.
+
+The Pawl is the anti-rollback mechanism: if tests fail, the change is reverted automatically. Your score can never go down.
 
 ---
 
 ## Scoring System
 
-Ratchet scans your codebase and produces a **Production Readiness Score** out of 100 points across 6 categories:
+Ratchet scores your codebase 0–100 across six categories:
 
-| Category | Max Points | What it measures |
-|----------|-----------|------------------|
-| Code Quality | 24 | Function length, line length, dead code, duplication |
-| Testing | 20 | Coverage ratio, edge case depth, test quality |
-| Security | 16 | Secrets, input validation, auth & rate limiting |
-| Error Handling | 14 | Try/catch coverage, empty catches, structured logging |
-| Performance | 14 | Async patterns, console cleanup, import hygiene |
-| Type Safety | 12 | Strict config, `any` type count |
+| Category | Max | What it measures |
+|---|---|---|
+| **Testing** | 25 | Coverage ratio, edge case depth, test quality |
+| **Security** | 15 | Secrets & env vars, input validation, auth & rate limiting |
+| **Type Safety** | 15 | Strict config, any type count, coverage |
+| **Error Handling** | 20 | Empty catches, structured logging, async patterns |
+| **Performance** | 10 | Console cleanup, import hygiene |
+| **Code Quality** | 15 | Function length, line length, dead code, duplication |
 
-Each click targets specific issues from the scan. After each successful click, Ratchet re-scans to measure progress and update the issue backlog.
+Use `ratchet scan --explain` to see why each subcategory scored the way it did and how to fix it.
+
+---
+
+## Features
+
+### Guard Profiles
+
+Control how aggressive Ratchet is with `--guards`:
+
+| Profile | Files | Lines | Use case |
+|---|---|---|---|
+| `tight` | 3 | 40 | Conservative, low-risk fixes |
+| `refactor` | 5 | 80 | Rename, extract, restructure |
+| `broad` | 10 | 120 | Cross-file improvements |
+| `atomic` | 1 | 20 | One concept per commit |
+
+Smart guard escalation: if Ratchet gets stuck (2+ consecutive rollbacks), it auto-escalates from tight → refactor → broad.
+
+### Scope Locking
+
+Lock Ratchet to specific files with `--scope`:
 
 ```bash
-# Run a standalone scan
-ratchet scan
+ratchet torque --scope diff           # Only uncommitted changes
+ratchet torque --scope branch         # Only files changed vs main
+ratchet torque --scope staged         # Only staged files
+ratchet torque --scope "src/**/*.ts"  # Glob pattern
+ratchet torque --scope file:src/api/routes.ts,src/api/auth.ts
 ```
+
+### Planning Mode
+
+```bash
+ratchet torque --plan-first
+```
+
+Read-only click 0 generates a structured plan before making changes.
+
+### Interactive Dependency Graph
+
+```bash
+ratchet vision
+```
+
+Generates a self-contained HTML with a Cytoscape.js graph. Nodes colored by score, sized by blast radius. Filterable, searchable, dark cyberpunk theme.
 
 ---
 
 ## Commands
 
-### `ratchet init [dir]`
-
-Initialize Ratchet in your project. Auto-detects project type and test command.
-
-```
-Options:
-  --force   Overwrite existing .ratchet.yml
-```
-
-### `ratchet scan [dir]`
-
-Scan the project and generate a Production Readiness Score (0–100).
-
-```bash
-ratchet scan
-ratchet scan ./my-project
-```
-
-### `ratchet torque`
-
-Run the click loop — the main command.
-
-```
-Options:
-  -t, --target <name>     Target from .ratchet.yml (omit for auto-detection)
-  -n, --clicks <number>   Number of clicks (default: from config)
-  --dry-run               Preview mode — no commits made
-  --verbose               Show per-click timing, proposals, and modified files
-  --no-branch             Skip creating a ratchet branch
-  --mode <mode>           "normal" (default) or "harden" (write tests first)
-  --swarm                 Enable swarm mode (N agents compete per click)
-  --agents <number>       Number of agents in swarm mode (1–5, default: 3)
-  --focus <specs>         Comma-separated specializations (see Swarm Mode)
-  --adversarial           Enable adversarial QA (red team tests each change)
-```
-
-Creates branch `ratchet/<target>-<timestamp>` and writes a live log to `docs/<target>-ratchet.md`.
-
-### `ratchet status`
-
-Show the current or last run progress.
-
-### `ratchet log`
-
-Display the Ratchet log for a target.
-
-```
-Options:
-  -t, --target <name>   Target to show log for
-  --raw                 Print raw markdown
-```
-
-### `ratchet tighten`
-
-Finalize a run and optionally open a pull request.
-
-```
-Options:
-  --pr      Create a GitHub pull request (requires gh CLI)
-  --draft   Create as draft PR
-```
-
-### `ratchet report`
-
-Generate a detailed report (Markdown + PDF) of the last run.
-
-### `ratchet simulate`
-
-Simulate user personas navigating your product to find UX friction.
-
-```
-Options:
-  -s, --scenario <name>    Scenario: onboarding, daily-use, premium-upgrade, or custom
-  -p, --personas <number>  Number of persona agents (1–20, default: 5)
-  -u, --url <url>          API base URL to test against
-  -o, --output <path>      Save report as markdown file
-  -m, --model <model>      Override LLM model
-  --timeout <ms>           Timeout per persona call (default: 120000)
-```
-
-Built-in persona archetypes: power-user, casual, new-user, mobile, accessibility, api-developer.
-
-```bash
-ratchet simulate --scenario onboarding --personas 5 --output report.md
-ratchet simulate --scenario daily-use --personas 10
-```
+| Command | Description | Tier |
+|---|---|---|
+| `scan [dir]` | Score the codebase (0-100) | Free |
+| `init [dir]` | Initialize .ratchet.yml | Free |
+| `status` | Show current/last run progress | Free |
+| `log` | View ratchet log for a target | Free |
+| `report` | Generate markdown/PDF report | Free |
+| `badge [dir]` | Generate shields.io score badge | Free |
+| `vision` | Interactive dependency graph | Free |
+| `build` | Rebuild CLI binary | Free |
+| `login <key>` | Activate license key | Free |
+| `logout` | Remove license key | Free |
+| `improve` | Scan → fix → rescan → report | Builder+ |
+| `torque` | Autonomous click loop | Pro+ |
+| `tighten` | Finalize run, create PR | Free |
 
 ---
 
-## The Pawl (Rollback)
-
-The Pawl is Ratchet's anti-regression mechanism. After each click:
-
-1. Ratchet stashes your working tree state
-2. The AI agent proposes and implements a change
-3. Your full test suite runs against the change
-4. **If tests pass** → commit the change, drop the stash
-5. **If tests fail** → revert all changes, restore the stash
-
-The codebase can only ever get better. Failed changes are silently discarded — no broken commits, no manual cleanup.
-
----
-
-## Swarm Mode
-
-Swarm mode runs multiple specialized AI agents **in parallel**, each in its own git worktree. The best result wins.
-
-```bash
-ratchet torque --target src --swarm --agents 3 --focus security,quality,errors
-```
-
-### How it works
-
-1. Ratchet forks N git worktrees from HEAD
-2. Each agent gets a specialization focus and runs independently
-3. After all agents finish, Ratchet scores each result via `ratchet scan`
-4. The agent with the highest score delta wins
-5. The winning diff is applied to the main working directory
-6. All worktrees are cleaned up
-
-### Specializations
-
-| Focus | What the agent prioritizes |
-|-------|---------------------------|
-| `security` | Auth flaws, injection, secrets, input validation |
-| `performance` | Async patterns, N+1 queries, caching, memory leaks |
-| `quality` | Code duplication, readability, complexity, dead code |
-| `errors` | Empty catches, error propagation, logging, boundaries |
-| `types` | `any` types, missing annotations, strict null checks |
-
-Default specializations (when `--focus` is omitted): `security`, `quality`, `errors`.
-
----
-
-## Adversarial QA
-
-Adversarial mode adds a red team challenge after each successful click.
-
-```bash
-ratchet torque --target src --adversarial
-```
-
-### How it works
-
-1. A click lands and passes tests
-2. A red team agent analyzes the diff between original and new code
-3. It writes a targeted regression test designed to catch subtle bugs
-4. The test is appended to the existing test file and run
-5. **If the regression test fails** → the change is reverted (the red team caught a bug)
-6. **If the regression test passes** → the change is solid
-7. The temporary test is always removed after the challenge
-
-Combine with swarm mode for maximum rigor:
-
-```bash
-ratchet torque --target src --swarm --adversarial
-```
-
----
-
-## Harden Mode
-
-When no test command is detected (or `--mode harden` is passed), Ratchet enters harden mode:
-
-1. **Clicks 1–3**: Focus on writing tests for untested code
-2. **Clicks 4+**: Switch to normal improvement mode, now protected by the new tests
-
-```bash
-ratchet torque --target src --mode harden
-```
-
----
-
-## Configuration (.ratchet.yml)
+## CI/CD Integration
 
 ```yaml
-agent: shell
+# .github/workflows/ratchet.yml
+name: Ratchet Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install -g ratchet-run
+      - run: ratchet scan --fail-on 80
+      - run: ratchet scan --fail-on-category Security=12 --fail-on-category Testing=20
+      - run: ratchet scan --output-json > ratchet-scan.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ratchet-scan
+          path: ratchet-scan.json
+```
+
+`--fail-on <score>` exits with code 1 if the total score is below the threshold. `--fail-on-category` does the same per category.
+
+---
+
+## Configuration
+
+```yaml
+# .ratchet.yml
+agent: claude-code
 model: claude-sonnet-4-6
 
 defaults:
   clicks: 7
   test_command: npm test
   auto_commit: true
-  harden_mode: false
 
 targets:
   - name: error-handling
     path: src/api/
-    description: "Improve error handling across all API routes"
-
-  - name: types
-    path: src/types/
-    description: "Strengthen TypeScript types and remove any casts"
+    description: "Fix error handling in the API layer"
 
 boundaries:
   - path: src/auth/
     rule: no-modify
-    reason: "Auth architecture is intentional"
-
+    reason: "Auth logic is security-sensitive"
+  - path: "**/*.test.ts"
+    rule: preserve-pattern
+    reason: "Test structure follows team convention"
   - path: migrations/
     rule: no-delete
     reason: "Migration files are append-only"
-
-swarm:
-  enabled: false
-  agent_count: 3
-  specializations: [security, quality, errors]
-  parallel: true
 ```
-
-Run `ratchet init` to generate this file automatically.
-
-### Configuration Fields
-
-| Field | Description | Default |
-|-------|-------------|---------|
-| `agent` | AI backend: `shell`, `claude-code`, `codex` | `shell` |
-| `model` | Model override (agent-specific) | — |
-| `defaults.clicks` | Number of clicks per run | `7` |
-| `defaults.test_command` | Command to run tests | `npm test` |
-| `defaults.auto_commit` | Auto-commit passing clicks | `true` |
-| `defaults.harden_mode` | Start in harden mode | `false` |
-| `targets` | List of named targets | — |
-| `boundaries` | Paths the agent must not touch | — |
-| `swarm` | Swarm mode configuration | — |
-
-### Boundary Rules
-
-| Rule | Effect |
-|------|--------|
-| `no-modify` | Agent cannot change any file under this path |
-| `no-delete` | Agent cannot delete files under this path |
-| `preserve-pattern` | File structure and naming must be preserved |
 
 ---
 
-## Project Layout
+## Pricing
 
-```
-.ratchet.yml                     — configuration
-.ratchet-state.json              — last run state (add to .gitignore)
-docs/
-  error-handling-ratchet.md      — living run log (commit this)
-  error-handling-ratchet-report.md — run report with scores
-```
-
-Add `.ratchet-state.json` and `.ratchet.lock` to `.gitignore`. Commit the `docs/*-ratchet.md` logs — they're the receipts for what the agent did.
+| Plan | Price | Cycles | Includes |
+|---|---|---|---|
+| **Free** | $0 | — | scan, badge, status, log, report, vision |
+| **Builder** | $9/mo or $86/yr | 30 | + improve |
+| **Pro** | $19/mo or $182/yr | 150 | + torque |
+| **Team** | $49/mo or $470/yr | 500 | Priority support |
+| **Enterprise** | Custom | Unlimited | SSO, SLA, custom profiles |
 
 ---
 
-## Exit Codes
+## Links
 
-| Code | Meaning |
-|------|---------|
-| `0` | All clicks passed |
-| `1` | Partial success (some clicks rolled back) |
-| `2` | All clicks rolled back |
+- **Website:** [ratchetcli.com](https://ratchetcli.com)
+- **NPM:** [npmjs.com/package/ratchet-run](https://npmjs.com/package/ratchet-run)
 
 ---
 
-## Contributing
+## License
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
-
-```bash
-git clone https://github.com/ratchet-run/ratchet
-cd ratchet
-npm install
-npm test
-```
+MIT
