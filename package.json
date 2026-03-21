@@ -1,7 +1,7 @@
 {
   "name": "ratchet-run",
-  "version": "1.0.0",
-  "description": "Autonomous iterative code improvement CLI \u2014 write tests, fix bugs, harden code",
+  "version": "1.0.2",
+  "description": "Autonomous iterative code improvement CLI — write tests, fix bugs, harden code",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -36,9 +36,9 @@
     "type": "git",
     "url": "https://github.com/giovanni-labs/ratchet.git"
   },
-  "homepage": "https://github.com/ratchet-run/ratchet#readme",
+  "homepage": "https://ratchetcli.com",
   "bugs": {
-    "url": "https://github.com/ratchet-run/ratchet/issues"
+    "url": "https://github.com/giovanni-labs/ratchet/issues"
   },
   "engines": {
     "node": ">=18"

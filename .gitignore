@@ -8,3 +8,4 @@ coverage/
 .ratchet/
 .gitnexus
 stripe-config.json
+.npmrc
