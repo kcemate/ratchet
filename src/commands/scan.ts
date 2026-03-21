@@ -5,7 +5,94 @@ import { join } from 'path';
 import type { IssueSubcategory, IssueCategoryName } from '../core/taxonomy.js';
 import { printHeader, severityColor, scoreColor } from '../lib/cli.js';
 import { classifyIssues, summarizeClassifications } from '../core/cross-cutting.js';
+import { getExplanation } from '../core/explanations.js';
 import type { ClickGuards } from '../types.js';
+
+// --- Quality Gate Types ---
+
+export interface CategoryThreshold {
+  categoryName: string;
+  threshold: number;
+  max: number;
+}
+
+export interface GateResult {
+  passed: boolean;
+  failedCategories: Array<{ name: string; score: number; threshold: number }>;
+  totalScore: number;
+  totalThreshold: number | null;
+}
+
+function parseCategoryThreshold(raw: string): CategoryThreshold {
+  const eqIndex = raw.indexOf('=');
+  if (eqIndex === -1) {
+    throw new Error(
+      `Invalid --fail-on-category format: "${raw}". Expected "CategoryName=Score" (e.g., Security=12).`,
+    );
+  }
+  const name = raw.slice(0, eqIndex).trim();
+  const scoreStr = raw.slice(eqIndex + 1).trim();
+  const score = parseInt(scoreStr, 10);
+  if (isNaN(score) || score < 0) {
+    throw new Error(
+      `Invalid threshold score in --fail-on-category "${raw}". Score must be a non-negative integer.`,
+    );
+  }
+  return { categoryName: name, threshold: score, max: 0 };
+}
+
+function evaluateGates(
+  result: ScanResult,
+  totalThreshold: number | null,
+  categoryThresholds: CategoryThreshold[],
+): GateResult {
+  const failedCategories: GateResult['failedCategories'] = [];
+
+  const resolvedThresholds = categoryThresholds.map((ct) => {
+    const cat = result.categories.find(
+      (c) => c.name.toLowerCase() === ct.categoryName.toLowerCase(),
+    );
+    if (!cat) {
+      throw new Error(
+        `Category "${ct.categoryName}" not found. Available: ${result.categories.map((c) => c.name).join(', ')}.`,
+      );
+    }
+    return { ...ct, score: cat.score, max: cat.max };
+  });
+
+  for (const ct of resolvedThresholds) {
+    if (ct.score < ct.threshold) {
+      failedCategories.push({ name: ct.categoryName, score: ct.score, threshold: ct.threshold });
+    }
+  }
+
+  const totalPassed = totalThreshold === null || result.total >= totalThreshold;
+
+  return { passed: totalPassed && failedCategories.length === 0, failedCategories, totalScore: result.total, totalThreshold };
+}
+
+function exitWithGateFailure(gate: GateResult): never {
+  process.stdout.write('\n');
+  process.stdout.write(chalk.red.bold('❌ Quality Gate Failed\n\n'));
+
+  if (gate.totalThreshold !== null && gate.totalScore < gate.totalThreshold) {
+    process.stdout.write(
+      `  ${chalk.red('✗')} Overall score ${chalk.red(`${gate.totalScore}`)} below required threshold of ${gate.totalThreshold}\n`,
+    );
+  }
+
+  if (gate.failedCategories.length > 0) {
+    process.stdout.write('\n  Failed category thresholds:\n');
+    for (const fc of gate.failedCategories) {
+      process.stdout.write(
+        `    ${chalk.red('✗')} ${fc.name}: ${chalk.red(String(fc.score))} — required ≥${fc.threshold}\n`,
+      );
+    }
+  }
+
+  process.stdout.write('\n');
+  process.exit(1);
+}
 import {
   LOOP_DB_API_PATTERN,
   SECRET_PATTERNS,
@@ -478,7 +565,8 @@ export async function runScan(cwd: string): Promise<ScanResult> {
   return { projectName, total, maxTotal, categories, totalIssuesFound, issuesByType };
 }
 
-function renderScan(result: ScanResult): void {
+function renderScan(result: ScanResult, opts?: { explain?: boolean }): void {
+  const showExplain = opts?.explain ?? false;
   printHeader('🔧 Ratchet Scan — Production Readiness');
   process.stdout.write(`Your app: ${chalk.cyan(result.projectName)}\n`);
 
@@ -499,6 +587,19 @@ function renderScan(result: ScanResult): void {
       const subLabel = sub.name.padEnd(24);
       const subScore = `${sub.score}/${sub.max}`.padEnd(6);
       process.stdout.write(`     ${chalk.dim(subLabel)} ${subColor(`${subScore}`)}  ${chalk.dim(sub.summary)}\n`);
+
+      if (showExplain) {
+        const explanation = getExplanation(sub.name);
+        if (explanation) {
+          process.stdout.write(`       ${chalk.cyan('Why?')} ${explanation.why}\n`);
+          process.stdout.write(`       ${chalk.green('Fix:')} ${explanation.fix}\n`);
+          if (explanation.example) {
+            for (const line of explanation.example.split('\n')) {
+              process.stdout.write(`       ${chalk.dim(line)}\n`);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -559,13 +660,34 @@ export function scanCommand(): Command {
       'Analyzes testing, security, types, error handling, performance, and code quality.',
     )
     .argument('[dir]', 'Directory to scan (default: current directory)', '.')
+    .option(
+      '--fail-on <score>',
+      'Exit with code 1 if the overall score is below this threshold (0-100).',
+      (value) => {
+        const n = parseInt(value, 10);
+        if (isNaN(n) || n < 0 || n > 100) throw new Error('--fail-on must be an integer between 0 and 100');
+        return n;
+      },
+    )
+    .option(
+      '--fail-on-category <name=score>',
+      'Exit with code 1 if a category score is below its threshold. Repeatable.',
+      (value, prev: string[]) => [...(prev ?? []), value],
+      [] as string[],
+    )
+    .option('--output-json', 'Output the full scan result as JSON for CI/CD integration.')
+    .option('--explain', "Show human-readable explanations for each subcategory's issues.")
     .addHelpText(
       'after',
       '\nExamples:\n' +
       '  $ ratchet scan\n' +
-      '  $ ratchet scan ./my-project\n',
+      '  $ ratchet scan ./my-project\n' +
+      '  $ ratchet scan --fail-on 80\n' +
+      '  $ ratchet scan --fail-on 80 --fail-on-category Security=12\n' +
+      '  $ ratchet scan --output-json > scan-result.json\n' +
+      '  $ ratchet scan --explain\n',
     )
-    .action(async (dir: string) => {
+    .action(async (dir: string, options: Record<string, unknown>) => {
       const { resolve } = await import('path');
       const cwd = resolve(dir);
 
@@ -573,7 +695,23 @@ export function scanCommand(): Command {
       trackEvent('scan');
 
       const result = await runScan(cwd);
-      renderScan(result);
+
+      if (options['outputJson']) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+        return;
+      }
+
+      renderScan(result, { explain: options['explain'] as boolean | undefined });
+
+      const failOn = options['failOn'] as number | undefined;
+      const failOnCategory = (options['failOnCategory'] as string[] | undefined) ?? [];
+
+      if (failOn !== undefined || failOnCategory.length > 0) {
+        const categoryThresholds = failOnCategory.map(parseCategoryThreshold);
+        const gate = evaluateGates(result, failOn ?? null, categoryThresholds);
+        if (!gate.passed) exitWithGateFailure(gate);
+        process.stdout.write(chalk.green('  ✔ Quality gates passed\n\n'));
+      }
     });
 
   return cmd;
