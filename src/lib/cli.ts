@@ -67,7 +67,7 @@ export function severityColor(severity: string): typeof chalk.red {
 
 /**
  * Write content to a file, appending `.md` if the path lacks that extension.
- * Logs the saved path to stdout. Shared by simulate and debate commands.
+ * Logs the saved path to stdout.
  */
 export async function writeOutputFile(outputPath: string, content: string): Promise<void> {
   const resolved = outputPath.endsWith('.md') ? outputPath : `${outputPath}.md`;
@@ -99,7 +99,7 @@ export function printFields(
 
 /**
  * Print a titled bullet list to stdout with a given chalk color function.
- * Shared by simulate, debate, and improve commands.
+ * Shared by improve commands.
  *
  * @param title  - bold heading
  * @param items  - array of strings to render as bullets

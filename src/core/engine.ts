@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { readdirSync } from 'fs';
 import { join, isAbsolute, resolve } from 'path';
-import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickEconomics } from '../types.js';
+import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickEconomics, ClickGuards } from '../types.js';
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
 import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
@@ -246,21 +246,60 @@ export function summarizeRun(run: RatchetRun): RunSummary {
   };
 }
 
+// ── Run state ──────────────────────────────────────────
+
+/** Mutable state threaded through per-click helpers. */
+interface RunState {
+  currentScan: ScanResult | undefined;
+  backlogGroups: IssueTask[][];
+  previousTotal: number;
+  consecutiveRollbacks: number;
+  /** Snapshot of consecutiveRollbacks taken before processClickOutcome; used by postClickRescan. */
+  prevConsecutiveRollbacks: number;
+  consecutiveGuardRejections: number;
+  totalLanded: number;
+  totalRolled: number;
+  scoreAtMidpoint: number | undefined;
+  escalated: boolean;
+  currentGuards: ClickGuards;
+  currentGuardProfileName: string;
+  allEconomics: ClickEconomics[];
+  target: Target;
+}
+
+// ── Helpers ────────────────────────────────────────────
+
 /**
- * The Click Loop Engine.
- * Runs N clicks sequentially on a target, applying the Pawl (rollback on failure).
- *
- * Scan-driven: at the start, runs a scan to get the current score and build an issue backlog.
- * Each click is given specific issues to fix (compound click). After each successful click,
- * re-scans to measure progress and update the backlog.
+ * Format a consistent rollback message for console.error output.
  */
-export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, createBranch = true, hardenMode = false, adversarial = false, callbacks = {}, scanResult: providedScan, learningStore, scoreOptimized = false, escalate: escalateEnabled = true, architectEscalation: architectEscalationEnabled = true, guardEscalation: guardEscalationEnabled = true, planFirst = false, scope: scopeFiles = [], scopeArg } = options;
-  let target = options.target;
+function formatRollbackMessage(
+  clickNumber: number,
+  reason: string | undefined,
+  elapsedSec?: string,
+  detail?: string,
+): string {
+  const timeStr = elapsedSec ? ` (${elapsedSec}s)` : '';
+  const reasonStr = reason ? ` — ${reason}` : ' — tests failed or build errored';
+  const detailStr = detail ? `\n  ${detail}` : '';
+  return `[ratchet] click ${clickNumber} ROLLED BACK${timeStr}${reasonStr}${detailStr}`;
+}
+
+/**
+ * Initialize a run: create RatchetRun, check detached HEAD, create branch,
+ * run initial scan, build backlog, and capture baseline failures.
+ */
+async function initializeRun(options: EngineRunOptions): Promise<{
+  run: RatchetRun;
+  state: RunState;
+  incrementalScanner: IncrementalScanner;
+  baselineFailures: string[];
+}> {
+  const { config, cwd, createBranch = true, scoreOptimized = false, scope: scopeFiles = [], scopeArg } = options;
+  const callbacks = options.callbacks ?? {};
 
   const run: RatchetRun = {
     id: randomUUID(),
-    target,
+    target: options.target,
     clicks: [],
     startedAt: new Date(),
     status: 'running',
@@ -279,12 +318,12 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
   // Create a ratchet branch
   if (createBranch) {
-    const branch = git.branchName(target.name);
+    const branch = git.branchName(options.target.name);
     await git.createBranch(branch, cwd);
   }
 
   // --- Scan-driven: get initial scan and build issue backlog ---
-  let currentScan: ScanResult | undefined = providedScan;
+  let currentScan: ScanResult | undefined = options.scanResult;
   let backlogGroups: IssueTask[][] = [];
   let previousTotal = 0;
 
@@ -313,28 +352,9 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     backlogGroups = groupBacklogBySubcategory(backlog);
   }
 
-  // Harden mode: track initial test file count to detect when tests are written
-  let initialTestFileCount = 0;
-  let phaseTransitioned = false;
-
-  if (hardenMode) {
-    initialTestFileCount = countTestFiles(cwd);
-  }
-
-  // Per-click economics collection
-  const allEconomics: ClickEconomics[] = [];
-
-  // Stall detection for adaptive escalation
-  let consecutiveRollbacks = 0;
-  let consecutiveGuardRejections = 0;
-  let totalLanded = 0;
-  let totalRolled = 0;
-  let scoreAtMidpoint: number | undefined;
-  let escalated = false;
-
   // Smart guard escalation: mutable guards that can be bumped mid-run
-  let currentGuards = resolveGuards(options.target, config, 'normal');
-  let currentGuardProfileName: string = (() => {
+  const currentGuards = resolveGuards(options.target, config, 'normal');
+  const currentGuardProfileName: string = (() => {
     const source = config.guards ?? options.target.guards;
     if (typeof source === 'string') return source;
     return 'tight';
@@ -351,9 +371,288 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     }
   }
 
+  const state: RunState = {
+    currentScan,
+    backlogGroups,
+    previousTotal,
+    consecutiveRollbacks: 0,
+    prevConsecutiveRollbacks: 0,
+    consecutiveGuardRejections: 0,
+    totalLanded: 0,
+    totalRolled: 0,
+    scoreAtMidpoint: undefined,
+    escalated: false,
+    currentGuards,
+    currentGuardProfileName,
+    allEconomics: [],
+    target: options.target,
+  };
+
+  return { run, state, incrementalScanner, baselineFailures };
+}
+
+/**
+ * Handle the outcome of a click: log the result, update consecutive counters,
+ * and trigger guard escalation if needed. Mutates state in place.
+ */
+async function processClickOutcome(
+  clickNumber: number,
+  click: Click,
+  rolled_back: boolean,
+  elapsedSec: string,
+  state: RunState,
+  guardEscalationEnabled: boolean,
+  callbacks: EngineCallbacks,
+): Promise<void> {
+  state.prevConsecutiveRollbacks = state.consecutiveRollbacks;
+
+  if (rolled_back) {
+    console.error(formatRollbackMessage(clickNumber, click.rollbackReason, elapsedSec));
+    state.consecutiveRollbacks++;
+    state.totalRolled++;
+
+    // Track guard-rejection rollbacks separately for smart guard escalation
+    if (isGuardRejection(click.rollbackReason)) {
+      state.consecutiveGuardRejections++;
+    } else {
+      state.consecutiveGuardRejections = 0;
+    }
+
+    // Smart guard escalation: auto-bump to next profile after 2+ guard rejections
+    if (guardEscalationEnabled && !state.escalated && state.consecutiveGuardRejections >= 2) {
+      const next = nextGuardProfile(state.currentGuards);
+      if (next) {
+        const prevName = state.currentGuardProfileName;
+        state.currentGuards = next.guards;
+        state.currentGuardProfileName = next.name;
+        state.consecutiveGuardRejections = 0;
+        console.error(`[ratchet] 🛡 Guard escalation: ${prevName} → ${next.name} (${state.consecutiveGuardRejections + 2} consecutive guard rejections)`);
+        await callbacks.onEscalate?.(`guard escalation: ${prevName} → ${next.name}`);
+      }
+    }
+  } else {
+    console.error(`[ratchet] click ${clickNumber} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
+    state.consecutiveRollbacks = 0;
+    state.consecutiveGuardRejections = 0;
+    state.totalLanded++;
+  }
+}
+
+/**
+ * Re-scan after a successful click, detect score regression, compute category deltas,
+ * and update the backlog. Returns the (possibly updated) rolled_back flag.
+ */
+async function postClickRescan(
+  clickNumber: number,
+  click: Click,
+  rolled_back: boolean,
+  clickEconomics: ClickEconomics | undefined,
+  state: RunState,
+  scoreOptimized: boolean,
+  cwd: string,
+  incrementalScanner: IncrementalScanner,
+  callbacks: EngineCallbacks,
+): Promise<{ rolled_back: boolean }> {
+  if (!click.testsPassed || rolled_back || !state.currentScan) {
+    return { rolled_back };
+  }
+
+  try {
+    const newScan = await incrementalScanner.incrementalScan(state.currentScan);
+    const newTotal = newScan.total;
+    const delta = newTotal - state.previousTotal;
+
+    // Score regression guard: if score dropped, revert the commit
+    if (newTotal < state.previousTotal && click.commitHash) {
+      const regressionDelta = state.previousTotal - newTotal;
+      console.error(formatRollbackMessage(clickNumber, `score regression: ${state.previousTotal} → ${newTotal} (-${regressionDelta}pts)`));
+      await git.revertLastCommit(cwd).catch(() => {});
+      click.testsPassed = false;
+      click.rollbackReason = `score regression: ${state.previousTotal} → ${newTotal} (-${regressionDelta}pts)`;
+      click.commitHash = undefined;
+      // Restore consecutive count from before the "landed" reset, then add this one
+      state.consecutiveRollbacks = state.prevConsecutiveRollbacks + 1;
+      state.totalLanded--;
+      state.totalRolled++;
+      return { rolled_back: true };
+    } else {
+      // Count how many issues were resolved
+      const prevIssueCount = state.currentScan.totalIssuesFound;
+      const newIssueCount = newScan.totalIssuesFound;
+      const issuesFixedCount = Math.max(0, prevIssueCount - newIssueCount);
+
+      click.scoreAfterClick = newTotal;
+      click.issuesFixedCount = issuesFixedCount;
+
+      // Update economics with post-scan data
+      if (clickEconomics) {
+        clickEconomics.issuesFixed = issuesFixedCount;
+        clickEconomics.scoreDelta = delta;
+      }
+
+      // Compute and attach per-category breakdown
+      const categoryDeltas = diffCategories(state.currentScan, newScan);
+      click.categoryDeltas = categoryDeltas;
+
+      // Print per-category breakdown for non-zero or wasted-effort categories
+      for (const cd of categoryDeltas) {
+        if (cd.delta !== 0) {
+          const sign = cd.delta > 0 ? '+' : '';
+          console.error(`   ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} (${sign}${cd.delta})${cd.issuesFixed > 0 ? ` — ${cd.issuesFixed} issues fixed` : ''}`);
+        } else if (cd.wastedEffort) {
+          console.error(`   ⚠ ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} — ${cd.issuesFixed} issues fixed but category already maxed`);
+        }
+      }
+
+      await callbacks.onClickScoreUpdate?.(clickNumber, state.previousTotal, newTotal, delta);
+
+      // Update backlog from fresh scan
+      state.previousTotal = newTotal;
+      state.currentScan = newScan;
+      const newBacklog = scoreOptimized
+        ? buildScoreOptimizedBacklog(newScan)
+        : buildBacklog(newScan);
+      state.backlogGroups = groupBacklogBySubcategory(newBacklog);
+    }
+  } catch {
+    // Non-fatal — skip live scoring for this click
+  }
+
+  return { rolled_back };
+}
+
+/**
+ * Check for stall conditions and escalate to cross-file sweep mode if needed.
+ * Also captures the midpoint score for stall detection. Mutates state in place.
+ */
+async function checkStallAndEscalate(
+  clickNumber: number,
+  clicks: number,
+  state: RunState,
+  hardenMode: boolean,
+  escalateEnabled: boolean,
+  callbacks: EngineCallbacks,
+): Promise<void> {
+  // Capture midpoint score for stall detection
+  if (clickNumber === Math.floor(clicks / 2) && state.scoreAtMidpoint === undefined) {
+    state.scoreAtMidpoint = state.previousTotal;
+  }
+
+  if (!escalateEnabled || state.escalated || hardenMode || !state.currentScan) return;
+
+  const rollbackRate = clickNumber > 0 ? state.totalRolled / clickNumber : 0;
+  const scoreDelta = state.scoreAtMidpoint !== undefined ? state.previousTotal - state.scoreAtMidpoint : undefined;
+  const backlogExhausted = state.backlogGroups.length === 0;
+
+  let escalateReason: string | undefined;
+  if (state.consecutiveRollbacks >= 3) {
+    escalateReason = '3 consecutive rollbacks';
+  } else if (clickNumber >= Math.floor(clicks / 2) && scoreDelta === 0 && rollbackRate > 0.4) {
+    escalateReason = 'no score progress at midpoint';
+  } else if (backlogExhausted && clickNumber < clicks) {
+    escalateReason = 'backlog exhausted';
+  }
+
+  if (escalateReason) {
+    console.error('[ratchet] 🔄 Stall detected — escalating to cross-file sweep mode');
+    await callbacks.onEscalate?.(escalateReason);
+
+    const fullBacklog = buildScoreOptimizedBacklog(state.currentScan);
+    const sweepableBacklog = fullBacklog.filter((task) => !task.architectPrompt);
+    if (sweepableBacklog.length > 0) {
+      state.backlogGroups = groupBacklogBySubcategory(sweepableBacklog);
+      state.target = { name: 'sweep', path: '.', description: 'auto-escalated cross-file sweep' };
+      state.escalated = true;
+    }
+  }
+}
+
+/**
+ * Check for smart stop conditions: architect-only backlog or high rollback rate.
+ * May trigger architect engine escalation. Returns whether the run loop should stop.
+ */
+async function checkSmartStop(
+  clickNumber: number,
+  run: RatchetRun,
+  state: RunState,
+  options: EngineRunOptions,
+): Promise<{ shouldStop: boolean }> {
+  const { clicks, architectEscalation: architectEscalationEnabled = true } = options;
+
+  // Smart early stop: if stalled with only architect-mode issues remaining
+  if (state.consecutiveRollbacks >= 2 && state.totalLanded > 0 && state.backlogGroups.length > 0) {
+    const allArchitect = state.backlogGroups.every(group => group.every(task => !!task.architectPrompt));
+    if (allArchitect) {
+      const remainingClicks = clicks - clickNumber;
+      if (architectEscalationEnabled && remainingClicks > 0) {
+        console.error(`[ratchet] 🏗️ Escalating to architect mode — ${remainingClicks} clicks remaining`);
+        const architectRun = await runArchitectEngine({
+          ...options,
+          clicks: remainingClicks,
+          createBranch: false,
+          scanResult: state.currentScan,
+          clickOffset: clickNumber,
+        });
+        run.clicks.push(...architectRun.clicks);
+        run.architectEscalated = true;
+      } else {
+        run.earlyStopReason = 'remaining issues need architect mode';
+        console.error(`[ratchet] ⏹ Smart stop — remaining issues need architect mode. ${state.totalLanded} cycles used, ${clicks - clickNumber} returned.`);
+      }
+      return { shouldStop: true };
+    }
+  }
+
+  // Practical smart stop: sweepable items that keep rolling back are effectively unsweepable
+  if (!run.earlyStopReason && state.consecutiveRollbacks >= 3 && state.totalLanded > 0) {
+    const totalAttempted = state.totalLanded + state.totalRolled;
+    const rollbackRate = totalAttempted > 0 ? state.totalRolled / totalAttempted : 0;
+    if (rollbackRate > 0.6) {
+      const ratePct = Math.round(rollbackRate * 100);
+      run.earlyStopReason = `high rollback rate (${ratePct}%) — remaining issues may need manual intervention`;
+      console.error(`[ratchet] ⏹ Smart stop — ${run.earlyStopReason}. ${state.totalLanded} cycles used, ${clicks - clickNumber} returned.`);
+      return { shouldStop: true };
+    }
+  }
+
+  return { shouldStop: false };
+}
+
+// ── Engine ─────────────────────────────────────────────
+
+/**
+ * The Click Loop Engine.
+ * Runs N clicks sequentially on a target, applying the Pawl (rollback on failure).
+ *
+ * Scan-driven: at the start, runs a scan to get the current score and build an issue backlog.
+ * Each click is given specific issues to fix (compound click). After each successful click,
+ * re-scans to measure progress and update the backlog.
+ */
+export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
+  const {
+    clicks, config, cwd, agent,
+    hardenMode = false, adversarial = false,
+    callbacks = {},
+    learningStore,
+    scoreOptimized = false,
+    escalate: escalateEnabled = true,
+    guardEscalation: guardEscalationEnabled = true,
+    planFirst = false,
+    scope: scopeFiles = [],
+  } = options;
+
+  const { run, state, incrementalScanner, baselineFailures } = await initializeRun(options);
+
+  // Harden mode: track initial test file count to detect when tests are written
+  let initialTestFileCount = 0;
+  let phaseTransitioned = false;
+  if (hardenMode) {
+    initialTestFileCount = countTestFiles(cwd);
+  }
+
   // --- Plan-first: click 0 — read-only planning before execution clicks ---
   if (planFirst) {
-    await runPlanFirst(run, target, currentScan, agent, cwd, {
+    await runPlanFirst(run, state.target, state.currentScan, agent, cwd, {
       onPlanStart: callbacks.onPlanStart,
       onPlanComplete: callbacks.onPlanComplete,
     });
@@ -376,8 +675,8 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
       // Pop the next group of issues from the backlog
       // In harden mode, don't use backlog (focus on test writing)
       let clickIssues: IssueTask[] | undefined;
-      if (!hardenMode && backlogGroups.length > 0) {
-        clickIssues = backlogGroups.shift();
+      if (!hardenMode && state.backlogGroups.length > 0) {
+        clickIssues = state.backlogGroups.shift();
       }
 
       try {
@@ -392,12 +691,12 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           const swarm = new SwarmExecutor(config.swarm, learningStore ?? options.learningStore);
           const clickCtx = {
             clickNumber: i,
-            target,
+            target: state.target,
             config,
             agent,
             cwd,
             hardenPhase,
-            resolvedGuards: escalated ? resolveGuards(target, config, 'sweep') : currentGuards,
+            resolvedGuards: state.escalated ? resolveGuards(state.target, config, 'sweep') : state.currentGuards,
             issues: clickIssues,
             planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
             onPhase: callbacks.onClickPhase
@@ -420,7 +719,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             // All agents failed — create a dummy failed click
             click = {
               number: i,
-              target: target.name,
+              target: state.target.name,
               analysis: '',
               proposal: 'swarm: all agents failed',
               filesModified: [],
@@ -444,14 +743,14 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           // Normal single-agent mode
           const result = await executeClick({
             clickNumber: i,
-            target,
+            target: state.target,
             config,
             agent,
             cwd,
             hardenPhase,
             adversarial,
-            sweepMode: escalated,
-            resolvedGuards: escalated ? resolveGuards(target, config, 'sweep') : currentGuards,
+            sweepMode: state.escalated,
+            resolvedGuards: state.escalated ? resolveGuards(state.target, config, 'sweep') : state.currentGuards,
             issues: clickIssues,
             baselineFailures,
             planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
@@ -465,7 +764,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             console.error(`[ratchet] Escalating click ${i} to swarm mode (risk gate triggered)`);
             const swarm = new SwarmExecutor({ agentCount: 3, parallel: true }, learningStore);
             const swarmResult = await swarm.execute({
-              clickNumber: i, target, config, agent, cwd, hardenPhase,
+              clickNumber: i, target: state.target, config, agent, cwd, hardenPhase,
               issues: clickIssues,
               planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
               onPhase: callbacks.onClickPhase
@@ -507,180 +806,23 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
 
-        const prevConsecutiveRollbacks = consecutiveRollbacks;
-        if (rolled_back) {
-          console.error(`[ratchet] click ${i} ROLLED BACK (${elapsedSec}s) — tests failed or build errored`);
-          consecutiveRollbacks++;
-          totalRolled++;
+        await processClickOutcome(i, click, rolled_back, elapsedSec, state, guardEscalationEnabled, callbacks);
 
-          // Track guard-rejection rollbacks separately for smart guard escalation
-          if (isGuardRejection(click.rollbackReason)) {
-            consecutiveGuardRejections++;
-          } else {
-            consecutiveGuardRejections = 0;
-          }
+        ({ rolled_back } = await postClickRescan(i, click, rolled_back, clickEconomics, state, scoreOptimized, cwd, incrementalScanner, callbacks));
 
-          // Smart guard escalation: auto-bump to next profile after 2+ guard rejections
-          if (guardEscalationEnabled && !escalated && consecutiveGuardRejections >= 2) {
-            const next = nextGuardProfile(currentGuards);
-            if (next) {
-              const prevName = currentGuardProfileName;
-              currentGuards = next.guards;
-              currentGuardProfileName = next.name;
-              consecutiveGuardRejections = 0;
-              console.error(`[ratchet] 🛡 Guard escalation: ${prevName} → ${next.name} (${consecutiveGuardRejections + 2} consecutive guard rejections)`);
-              await callbacks.onEscalate?.(`guard escalation: ${prevName} → ${next.name}`);
-            }
-          }
-        } else {
-          console.error(`[ratchet] click ${i} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
-          consecutiveRollbacks = 0;
-          consecutiveGuardRejections = 0;
-          totalLanded++;
-        }
-
-        // After a successful click, re-scan for live scoring (incremental for speed)
-        if (click.testsPassed && !rolled_back && currentScan) {
-          try {
-            const newScan = await incrementalScanner.incrementalScan(currentScan);
-            const newTotal = newScan.total;
-            const delta = newTotal - previousTotal;
-
-            // Score regression guard: if score dropped, revert the commit
-            if (newTotal < previousTotal && click.commitHash) {
-              const regressionDelta = previousTotal - newTotal;
-              console.error(`[ratchet] click ${i} ROLLED BACK — score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`);
-              await git.revertLastCommit(cwd).catch(() => {});
-              click.testsPassed = false;
-              click.rollbackReason = `score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`;
-              click.commitHash = undefined;
-              rolled_back = true;
-              // Restore consecutive count from before the "landed" reset, then add this one
-              consecutiveRollbacks = prevConsecutiveRollbacks + 1;
-              totalLanded--;
-              totalRolled++;
-            } else {
-              // Count how many issues were resolved
-              const prevIssueCount = currentScan.totalIssuesFound;
-              const newIssueCount = newScan.totalIssuesFound;
-              const issuesFixedCount = Math.max(0, prevIssueCount - newIssueCount);
-
-              click.scoreAfterClick = newTotal;
-              click.issuesFixedCount = issuesFixedCount;
-
-              // Update economics with post-scan data
-              if (clickEconomics) {
-                clickEconomics.issuesFixed = issuesFixedCount;
-                clickEconomics.scoreDelta = delta;
-              }
-
-              // Compute and attach per-category breakdown
-              const categoryDeltas = diffCategories(currentScan, newScan);
-              click.categoryDeltas = categoryDeltas;
-
-              // Print per-category breakdown for non-zero or wasted-effort categories
-              for (const cd of categoryDeltas) {
-                if (cd.delta !== 0) {
-                  const sign = cd.delta > 0 ? '+' : '';
-                  console.error(`   ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} (${sign}${cd.delta})${cd.issuesFixed > 0 ? ` — ${cd.issuesFixed} issues fixed` : ''}`);
-                } else if (cd.wastedEffort) {
-                  console.error(`   ⚠ ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} — ${cd.issuesFixed} issues fixed but category already maxed`);
-                }
-              }
-
-              await callbacks.onClickScoreUpdate?.(i, previousTotal, newTotal, delta);
-
-              // Update backlog from fresh scan
-              previousTotal = newTotal;
-              currentScan = newScan;
-              const newBacklog = scoreOptimized
-                ? buildScoreOptimizedBacklog(newScan)
-                : buildBacklog(newScan);
-              backlogGroups = groupBacklogBySubcategory(newBacklog);
-            }
-          } catch {
-            // Non-fatal — skip live scoring for this click
-          }
-        }
-
-        // Capture midpoint score for stall detection
-        if (i === Math.floor(clicks / 2) && scoreAtMidpoint === undefined) {
-          scoreAtMidpoint = previousTotal;
-        }
-
-        // Adaptive escalation: switch to cross-file sweep when stalled
-        if (escalateEnabled && !escalated && !hardenMode && currentScan) {
-          const rollbackRate = i > 0 ? totalRolled / i : 0;
-          const scoreDelta = scoreAtMidpoint !== undefined ? previousTotal - scoreAtMidpoint : undefined;
-          const backlogExhausted = backlogGroups.length === 0;
-
-          let escalateReason: string | undefined;
-          if (consecutiveRollbacks >= 3) {
-            escalateReason = '3 consecutive rollbacks';
-          } else if (i >= Math.floor(clicks / 2) && scoreDelta === 0 && rollbackRate > 0.4) {
-            escalateReason = 'no score progress at midpoint';
-          } else if (backlogExhausted && i < clicks) {
-            escalateReason = 'backlog exhausted';
-          }
-
-          if (escalateReason) {
-            console.error('[ratchet] 🔄 Stall detected — escalating to cross-file sweep mode');
-            await callbacks.onEscalate?.(escalateReason);
-
-            const fullBacklog = buildScoreOptimizedBacklog(currentScan);
-            const sweepableBacklog = fullBacklog.filter((task) => !task.architectPrompt);
-            if (sweepableBacklog.length > 0) {
-              backlogGroups = groupBacklogBySubcategory(sweepableBacklog);
-              target = { name: 'sweep', path: '.', description: 'auto-escalated cross-file sweep' };
-              escalated = true;
-            }
-          }
-        }
+        await checkStallAndEscalate(i, clicks, state, hardenMode, escalateEnabled, callbacks);
 
         run.clicks.push(click);
-        if (clickEconomics) allEconomics.push(clickEconomics);
+        if (clickEconomics) state.allEconomics.push(clickEconomics);
         await callbacks.onClickComplete?.(click, rolled_back);
 
-        // Smart early stop: if stalled with only architect-mode issues remaining
-        if (consecutiveRollbacks >= 2 && totalLanded > 0 && backlogGroups.length > 0) {
-          const allArchitect = backlogGroups.every(group => group.every(task => !!task.architectPrompt));
-          if (allArchitect) {
-            const remainingClicks = clicks - i;
-            if (architectEscalationEnabled && remainingClicks > 0) {
-              console.error(`[ratchet] 🏗️ Escalating to architect mode — ${remainingClicks} clicks remaining`);
-              const architectRun = await runArchitectEngine({
-                ...options,
-                clicks: remainingClicks,
-                createBranch: false,
-                scanResult: currentScan,
-                clickOffset: i,
-              });
-              run.clicks.push(...architectRun.clicks);
-              run.architectEscalated = true;
-            } else {
-              run.earlyStopReason = 'remaining issues need architect mode';
-              console.error(`[ratchet] ⏹ Smart stop — remaining issues need architect mode. ${totalLanded} cycles used, ${clicks - i} returned.`);
-            }
-            break;
-          }
-        }
-
-        // Practical smart stop: sweepable items that keep rolling back are effectively unsweepable
-        if (!run.earlyStopReason && consecutiveRollbacks >= 3 && totalLanded > 0) {
-          const totalAttempted = totalLanded + totalRolled;
-          const rollbackRate = totalAttempted > 0 ? totalRolled / totalAttempted : 0;
-          if (rollbackRate > 0.6) {
-            const ratePct = Math.round(rollbackRate * 100);
-            run.earlyStopReason = `high rollback rate (${ratePct}%) — remaining issues may need manual intervention`;
-            console.error(`[ratchet] ⏹ Smart stop — ${run.earlyStopReason}. ${totalLanded} cycles used, ${clicks - i} returned.`);
-            break;
-          }
-        }
+        const { shouldStop } = await checkSmartStop(i, run, state, options);
+        if (shouldStop) break;
 
         // Cross-run learning: record the outcome for future recommendations
         if (learningStore && clickIssues && clickIssues.length > 0) {
           const elapsedMs = Date.now() - clickStartMs;
-          const scoreDelta = click.scoreAfterClick != null ? click.scoreAfterClick - previousTotal : 0;
+          const scoreDelta = click.scoreAfterClick != null ? click.scoreAfterClick - state.previousTotal : 0;
           const specName = config.swarm?.enabled
             ? (config.swarm.specializations?.[0] ?? 'default')
             : 'default';
@@ -731,7 +873,8 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         '[ratchet] All clicks rolled back. Possible causes:\n' +
         '  • Tests are failing before ratchet starts — run the test command manually to check\n' +
         '  • The agent is not making changes (check build output above)\n' +
-        '  • Test suite is flaky or has a long timeout — check test output for details',
+        '  • Test suite is flaky or has a long timeout — check test output for details\n' +
+        '  Tip: run ratchet scan --explain to understand what issues ratchet is trying to fix',
       );
     }
   } catch (err: unknown) {
@@ -740,9 +883,9 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
   } finally {
     run.finishedAt = new Date();
     // Compute and emit run-level economics before onRunComplete
-    if (allEconomics.length > 0 && callbacks.onRunEconomics) {
+    if (state.allEconomics.length > 0 && callbacks.onRunEconomics) {
       const totalWallTimeMs = run.finishedAt.getTime() - run.startedAt.getTime();
-      const economics = computeRunEconomics(allEconomics, totalWallTimeMs);
+      const economics = computeRunEconomics(state.allEconomics, totalWallTimeMs);
       await callbacks.onRunEconomics(economics).catch(() => {});
     }
     await callbacks.onRunComplete?.(run);

@@ -118,7 +118,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   if (!config.swarm?.enabled && !ctx.sweepMode) {
     const riskGate = checkRiskGate(target.path, ctx.gitnexusCwd ?? cwd);
     if (riskGate.requiresSwarm) {
-      console.error(`[ratchet] Risk gate: ${target.path} has ${riskGate.dependentCount} dependents — escalating to swarm`);
+      console.error(`[ratchet] ⚠ Risk gate: ${target.path} has ${riskGate.dependentCount} dependents — escalating to swarm`);
       return {
         click: {
           number: clickNumber,
@@ -206,7 +206,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       const guardResult = checkClickGuards(cwd, effectiveGuards, ctx.sweepMode);
       if (guardResult.linesChanged) linesChanged = guardResult.linesChanged;
       if (!guardResult.passed && !ctx.atomicSweep && effectiveGuards !== null) {
-        console.error(`[ratchet] Click ${clickNumber} REJECTED by guards: ${guardResult.reason}`);
+        console.error(`[ratchet] 🛡 Click ${clickNumber} rejected by guards: ${guardResult.reason}`);
         console.error(`[ratchet]   ${guardResult.detail}`);
         rollbackReason = guardResult.reason;
         await rollback(cwd, clickNumber, stashCreated);
@@ -222,7 +222,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         const prevalidateOpts: PrevalidateOptions = { strict: false };
         prevalidateResult = await prevalidate(cwd, config.model, prevalidateOpts);
         if (prevalidateResult.concerns.length > 0) {
-          console.error(`[ratchet] Prevalidate click ${clickNumber}: confidence=${prevalidateResult.confidence.toFixed(2)}, recommendation=${prevalidateResult.recommendation}`);
+          console.error(`[ratchet] 🔍 Prevalidate click ${clickNumber}: confidence=${prevalidateResult.confidence.toFixed(2)}, recommendation=${prevalidateResult.recommendation}`);
           for (const concern of prevalidateResult.concerns.slice(0, 3)) {
             console.error(`[ratchet]   concern: ${concern}`);
           }

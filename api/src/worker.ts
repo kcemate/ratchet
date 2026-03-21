@@ -282,9 +282,9 @@ function welcomePage(key: string, tier: string, email: string): Response {
     </div>
     <div class="steps">
       <h3>Get started</h3>
-      <code>npm i -g ratchet-cli</code>
+      <code>npm i -g ratchet-run</code>
       <code>ratchet login ${key}</code>
-      <code>ratchet torque --target src/ -c 7</code>
+      <code>ratchet torque --target src/ --clicks 7</code>
     </div>
     <p class="email-note">A copy has been sent to <strong>${email}</strong></p>
     <p style="margin-top: 16px;"><a href="https://ratchetcli.com">← Back to ratchetcli.com</a></p>
@@ -410,6 +410,17 @@ async function handleStats(env: Env): Promise<Response> {
 
 // ── Router ─────────────────────────────────────────────
 
+const API_VERSION = "v1";
+
+function withVersion(response: Response): Response {
+  response.headers.set("API-Version", API_VERSION);
+  return response;
+}
+
+function route(path: string, target: string): boolean {
+  return path === target || path === `/${API_VERSION}${target}`;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -417,14 +428,23 @@ export default {
 
     if (request.method === "OPTIONS") return handleOptions();
 
-    if (path === "/webhook" && request.method === "POST") return handleWebhook(request, env);
-    if (path === "/validate" && request.method === "GET") return handleValidate(request, env);
-    if (path === "/usage" && request.method === "POST") return handleUsage(request, env);
-    if (path === "/lookup" && request.method === "GET") return handleLookup(request, env);
-    if (path === "/welcome" && request.method === "GET") return handleWelcome(request, env);
-    if (path === "/telemetry" && request.method === "POST") return handleTelemetry(request, env);
-    if (path === "/stats" && request.method === "GET") return handleStats(env);
+    if (route(path, "/webhook") && request.method === "POST") return withVersion(await handleWebhook(request, env));
+    if (route(path, "/validate") && request.method === "GET") return withVersion(await handleValidate(request, env));
+    if (route(path, "/usage") && request.method === "POST") return withVersion(await handleUsage(request, env));
+    if (route(path, "/lookup") && request.method === "GET") return withVersion(await handleLookup(request, env));
+    if (route(path, "/welcome") && request.method === "GET") return withVersion(await handleWelcome(request, env));
+    if (route(path, "/telemetry") && request.method === "POST") return withVersion(await handleTelemetry(request, env));
+    if (route(path, "/stats") && request.method === "GET") return withVersion(await handleStats(env));
 
-    return json({ api: "ratchet", version: "1.0.0", status: "ok" });
+    return withVersion(json({
+      api: "ratchet",
+      version: API_VERSION,
+      status: "ok",
+      routes: [
+        "POST /webhook", "GET /validate?key=", "POST /usage",
+        "GET /lookup?email=", "GET /welcome?session_id=",
+        "POST /telemetry", "GET /stats"
+      ]
+    }));
   },
 };
