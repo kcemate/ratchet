@@ -1,6 +1,6 @@
 {
   "name": "ratchet-run",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Autonomous iterative code improvement CLI — write tests, fix bugs, harden code",
   "type": "module",
   "main": "dist/index.js",
