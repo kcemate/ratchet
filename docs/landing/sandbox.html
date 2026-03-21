@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en" style="overflow-x:hidden;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ratchet — Try It Now</title>
+    <meta name="description" content="See how Ratchet scores and fixes codebases. Try the interactive demo — no install required." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #0f0f18;
+            --bg-card: rgba(15, 15, 24, 0.72);
+            --bg-glass: rgba(15, 15, 24, 0.85);
+            --accent: #00d4ff;
+            --accent-dim: #00a8cc;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --green: #00ff88;
+            --green-dim: #00cc6a;
+            --yellow: #ffcc00;
+            --red: #ff4466;
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --text-muted: #5a5a6e;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(0, 212, 255, 0.3);
+            --terminal-green: #00ff9f;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { scroll-behavior: smooth; overflow-x: hidden; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Dot grid */
+        .dot-grid {
+            position: fixed; inset: 0;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px);
+            background-size: 32px 32px;
+            pointer-events: none; z-index: 0;
+        }
+
+        /* Ambient glow */
+        .ambient-glow {
+            position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+            width: 800px; height: 600px;
+            background: radial-gradient(ellipse, rgba(0, 212, 255, 0.06) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .container {
+            position: relative; z-index: 1;
+            max-width: 1100px; margin: 0 auto; padding: 0 1.5rem;
+        }
+
+        /* Header */
+        header {
+            padding: 1.25rem 0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .back-link {
+            display: flex; align-items: center; gap: 0.5rem;
+            color: var(--text-secondary); text-decoration: none;
+            font-size: 0.8125rem; transition: color var(--transition);
+        }
+        .back-link:hover { color: var(--accent); }
+
+        .logo {
+            font-weight: 700; font-size: 1.125rem;
+            color: var(--text-primary);
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 26px; height: 26px;
+            background: linear-gradient(135deg, var(--accent), var(--green));
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .logo-icon svg { width: 16px; height: 16px; fill: var(--bg-primary); }
+
+        .badge {
+            font-size: 0.625rem; font-family: var(--font-mono);
+            background: rgba(0, 212, 255, 0.1); color: var(--accent);
+            padding: 0.2rem 0.5rem; border-radius: 4px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center; padding: 2.5rem 0 1.5rem;
+        }
+        .hero h1 {
+            font-size: clamp(1.75rem, 4vw, 2.75rem);
+            font-weight: 800; margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 60%, var(--green) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 1rem; color: var(--text-secondary);
+            max-width: 520px; margin: 0 auto;
+        }
+        .hero-hint {
+            display: inline-flex; align-items: center; gap: 0.375rem;
+            margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+        .hero-hint .pulse-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--green); animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(0, 255, 136, 0); }
+        }
+
+        /* Project Cards */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem; padding: 1.5rem 0 2.5rem;
+        }
+
+        .project-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 1.5rem;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+        }
+        .project-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), transparent);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .project-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 212, 255, 0.4);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 212, 255, 0.08);
+        }
+        .project-card:hover::before { opacity: 1; }
+        .project-card:active { transform: translateY(-2px); }
+
+        .project-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px; display: flex;
+            align-items: center; justify-content: center;
+            margin-bottom: 0.875rem; font-size: 1.375rem;
+        }
+        .project-card[data-project="express-api"] .project-icon {
+            background: rgba(255, 68, 102, 0.12);
+        }
+        .project-card[data-project="react-dashboard"] .project-icon {
+            background: rgba(255, 204, 0, 0.12);
+        }
+        .project-card[data-project="clean-library"] .project-icon {
+            background: rgba(0, 255, 136, 0.12);
+        }
+
+        .project-name {
+            font-size: 1.0625rem; font-weight: 600;
+            font-family: var(--font-mono); margin-bottom: 0.125rem;
+        }
+        .project-desc {
+            font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;
+        }
+
+        .project-score {
+            display: flex; align-items: center; gap: 0.75rem;
+        }
+        .score-badge {
+            display: flex; align-items: center; justify-content: center;
+            width: 48px; height: 48px; border-radius: 50%;
+            font-size: 1rem; font-weight: 700; font-family: var(--font-mono);
+            flex-shrink: 0;
+        }
+        .score-low { background: rgba(255, 68, 102, 0.12); color: var(--red); border: 1.5px solid rgba(255, 68, 102, 0.25); }
+        .score-mid { background: rgba(255, 204, 0, 0.12); color: var(--yellow); border: 1.5px solid rgba(255, 204, 0, 0.25); }
+        .score-high { background: rgba(0, 255, 136, 0.12); color: var(--green); border: 1.5px solid rgba(0, 255, 136, 0.25); }
+
+        .score-info { flex: 1; min-width: 0; }
+        .score-label {
+            font-size: 0.6875rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.25rem;
+        }
+        .score-bar-bg {
+            height: 5px; background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px; overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%; border-radius: 3px; transition: width 1s ease-out;
+        }
+        .score-bar-fill.fill-low { background: var(--red); }
+        .score-bar-fill.fill-mid { background: var(--yellow); }
+        .score-bar-fill.fill-high { background: var(--green); }
+
+        /* Scan View */
+        .scan-view { display: none; padding-bottom: 3rem; }
+        .scan-view.active { display: block; animation: fadeIn 0.3s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            color: var(--text-secondary); background: none; border: none;
+            cursor: pointer; font-size: 0.8125rem; font-family: var(--font-sans);
+            margin-bottom: 1.25rem; transition: color var(--transition);
+            padding: 0.375rem 0;
+        }
+        .back-btn:hover { color: var(--accent); }
+
+        /* Terminal */
+        .terminal {
+            background: rgba(8, 8, 12, 0.95);
+            border: 1px solid rgba(0, 255, 159, 0.15);
+            border-radius: var(--radius-lg); overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(0, 255, 159, 0.04);
+        }
+        .terminal-header {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.6875rem 1rem;
+            display: flex; align-items: center; gap: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .terminal-dot.red { background: #ff5f57; }
+        .terminal-dot.yellow { background: #febc2e; }
+        .terminal-dot.green { background: #28c840; }
+        .terminal-title {
+            flex: 1; text-align: center;
+            font-size: 0.6875rem; color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+        .terminal-body {
+            padding: 1.25rem 1.5rem;
+            font-family: var(--font-mono); font-size: 0.8125rem;
+            line-height: 1.8; min-height: 340px; color: var(--terminal-green);
+        }
+        .terminal-line { white-space: pre-wrap; word-break: break-all; }
+        .terminal-cmd { color: #e0e0e0; }
+        .terminal-dim { color: var(--text-muted); }
+        .terminal-cursor {
+            display: inline-block; width: 7px; height: 14px;
+            background: var(--terminal-green); animation: blink 1s infinite;
+            vertical-align: middle; border-radius: 1px;
+        }
+        @keyframes blink {
+            0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; }
+        }
+
+        /* Score Display */
+        .score-display {
+            display: none; text-align: center; padding: 2rem 0 1rem;
+        }
+        .score-display.active {
+            display: block; animation: fadeIn 0.5s ease-out;
+        }
+
+        .score-ring-container {
+            position: relative; width: 160px; height: 160px;
+            margin: 0 auto 1.25rem;
+        }
+        .score-ring { transform: rotate(-90deg); }
+        .score-ring-bg { fill: none; stroke: rgba(255, 255, 255, 0.06); stroke-width: 10; }
+        .score-ring-fill {
+            fill: none; stroke-width: 10; stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s ease-out;
+            filter: drop-shadow(0 0 6px currentColor);
+        }
+        .score-ring-text {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .score-value {
+            font-size: 2.75rem; font-weight: 700;
+            font-family: var(--font-mono); line-height: 1;
+        }
+        .score-max { font-size: 0.875rem; color: var(--text-muted); margin-top: 0.125rem; }
+        .score-title {
+            font-size: 1rem; color: var(--text-secondary); margin-bottom: 2rem;
+        }
+
+        /* Categories */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 0.875rem; margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .category-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 1.125rem 1.25rem;
+            cursor: pointer; transition: all var(--transition);
+            user-select: none;
+        }
+        .category-card:hover { border-color: rgba(255, 255, 255, 0.12); }
+        .category-card.expanded { border-color: var(--border-accent); }
+
+        .category-header {
+            display: flex; align-items: center; gap: 0.625rem;
+        }
+        .category-emoji { font-size: 1.125rem; }
+        .category-name { flex: 1; font-weight: 600; font-size: 0.9375rem; }
+        .category-score {
+            font-family: var(--font-mono); font-weight: 600; font-size: 0.875rem;
+        }
+        .expand-icon {
+            transition: transform 0.2s; color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .category-card.expanded .expand-icon { transform: rotate(180deg); }
+
+        .category-bar-bg {
+            height: 6px; background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px; overflow: hidden; margin-top: 0.75rem;
+        }
+        .category-bar-fill {
+            height: 100%; border-radius: 3px;
+            transition: width 0.8s ease-out;
+        }
+        .category-bar-fill.high { background: var(--green); }
+        .category-bar-fill.mid { background: var(--yellow); }
+        .category-bar-fill.low { background: var(--red); }
+
+        /* Subcategories */
+        .subcategories {
+            display: none; margin-top: 0.875rem;
+            padding-top: 0.875rem; border-top: 1px solid var(--border);
+        }
+        .category-card.expanded .subcategories {
+            display: block; animation: slideDown 0.25s ease-out;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .subcategory {
+            padding: 0.625rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .subcategory:last-child { border-bottom: none; }
+
+        .subcategory-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 0.375rem;
+        }
+        .subcategory-name { font-size: 0.8125rem; color: var(--text-secondary); }
+        .subcategory-score {
+            font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted);
+        }
+        .subcategory-bar-bg {
+            height: 3px; background: rgba(255, 255, 255, 0.06);
+            border-radius: 2px; overflow: hidden; margin-bottom: 0.375rem;
+        }
+        .subcategory-bar-fill {
+            height: 100%; border-radius: 2px; background: var(--accent);
+            transition: width 0.6s ease-out;
+        }
+        .subcategory-summary { font-size: 0.6875rem; color: var(--text-muted); }
+        .subcategory-issues {
+            display: inline-block; background: rgba(255, 68, 102, 0.12);
+            color: var(--red); font-size: 0.625rem;
+            padding: 0.1rem 0.4rem; border-radius: 3px; margin-left: 0.375rem;
+        }
+
+        /* Torque Section */
+        .torque-section { display: none; margin-top: 2.5rem; }
+        .torque-section.active {
+            display: block; animation: fadeIn 0.5s ease-out;
+        }
+
+        .section-label {
+            display: inline-flex; align-items: center; gap: 0.375rem;
+            font-size: 0.6875rem; font-family: var(--font-mono);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--accent); margin-bottom: 0.5rem;
+        }
+        .torque-title {
+            font-size: 1.375rem; font-weight: 700; margin-bottom: 0.375rem;
+        }
+        .torque-subtitle {
+            color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9375rem;
+        }
+        .torque-subtitle code {
+            color: var(--accent); font-family: var(--font-mono);
+            background: rgba(0, 212, 255, 0.08); padding: 0.125rem 0.375rem;
+            border-radius: 4px; font-size: 0.875rem;
+        }
+
+        .diffs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        .diff-card {
+            background: rgba(8, 8, 12, 0.8);
+            border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden;
+            font-family: var(--font-mono); font-size: 0.75rem;
+            transition: border-color var(--transition);
+        }
+        .diff-card:hover { border-color: rgba(255, 255, 255, 0.12); }
+
+        .diff-header {
+            background: rgba(0, 212, 255, 0.06);
+            padding: 0.625rem 1rem;
+            font-size: 0.6875rem; color: var(--accent);
+            display: flex; align-items: center; gap: 0.375rem;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.08);
+        }
+        .diff-body { padding: 0.875rem 1rem; line-height: 1.9; }
+        .diff-line { white-space: pre-wrap; word-break: break-all; }
+        .diff-removed {
+            color: var(--red); background: rgba(255, 68, 102, 0.08);
+            display: block; padding: 0.0625rem 0.375rem;
+            border-radius: 2px; margin: 0.0625rem 0;
+        }
+        .diff-added {
+            color: var(--green); background: rgba(0, 255, 136, 0.06);
+            display: block; padding: 0.0625rem 0.375rem;
+            border-radius: 2px; margin: 0.0625rem 0;
+        }
+
+        /* CTA */
+        .cta-section {
+            display: none; text-align: center;
+            padding: 2.5rem 0 1rem; margin-top: 2rem;
+        }
+        .cta-section.active {
+            display: block; animation: fadeIn 0.5s ease-out;
+        }
+
+        .cta-divider {
+            width: 60px; height: 2px; margin: 0 auto 2rem;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .cta-title {
+            font-size: 1.5rem; font-weight: 700; margin-bottom: 0.375rem;
+        }
+        .cta-subtitle {
+            color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9375rem;
+        }
+
+        .install-cmd {
+            display: inline-flex; align-items: center; gap: 0.75rem;
+            background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0.75rem 1.25rem;
+            font-family: var(--font-mono); font-size: 0.875rem;
+            color: var(--terminal-green); margin-bottom: 1.5rem;
+            cursor: pointer; transition: all var(--transition);
+            position: relative;
+        }
+        .install-cmd:hover {
+            border-color: var(--border-accent);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.08);
+        }
+        .install-cmd .copy-icon {
+            color: var(--text-muted); transition: color var(--transition);
+        }
+        .install-cmd:hover .copy-icon { color: var(--accent); }
+        .install-cmd .copied-toast {
+            position: absolute; top: -28px; left: 50%; transform: translateX(-50%);
+            background: var(--green); color: var(--bg-primary);
+            font-size: 0.6875rem; font-family: var(--font-sans); font-weight: 600;
+            padding: 0.25rem 0.625rem; border-radius: 4px;
+            opacity: 0; transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .install-cmd.copied .copied-toast { opacity: 1; }
+
+        .cta-buttons {
+            display: flex; gap: 0.875rem;
+            justify-content: center; flex-wrap: wrap;
+        }
+
+        .cta-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.875rem 1.75rem; border-radius: 8px;
+            font-weight: 600; text-decoration: none;
+            transition: all 0.2s; font-size: 0.9375rem;
+            font-family: var(--font-sans);
+        }
+        .cta-btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--green));
+            color: var(--bg-primary);
+        }
+        .cta-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.25);
+        }
+        .cta-btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border); color: var(--text-primary);
+        }
+        .cta-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Social proof */
+        .social-proof {
+            display: flex; align-items: center; justify-content: center;
+            gap: 1.5rem; padding: 1.5rem 0; margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .social-stat {
+            display: flex; align-items: center; gap: 0.375rem;
+            font-size: 0.75rem; color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+        .social-stat strong { color: var(--text-secondary); }
+
+        /* Footer */
+        .footer {
+            text-align: center; padding: 2rem 0 1.5rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+        .footer a {
+            color: var(--text-muted); text-decoration: none;
+            font-size: 0.75rem; transition: color var(--transition);
+        }
+        .footer a:hover { color: var(--accent); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .projects-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem; padding: 1.25rem 0 2rem;
+            }
+            .hero { padding: 2rem 0 1rem; }
+            .hero h1 { font-size: 1.5rem; }
+            .terminal-body {
+                font-size: 0.6875rem; padding: 1rem;
+                min-height: 280px; line-height: 1.7;
+            }
+            .score-ring-container { width: 130px; height: 130px; }
+            .score-ring { width: 130px; height: 130px; }
+            .score-value { font-size: 2.25rem; }
+            .categories-grid { grid-template-columns: 1fr; }
+            .diffs-grid { grid-template-columns: 1fr; }
+            .cta-buttons { flex-direction: column; align-items: center; }
+            .cta-btn { width: 100%; max-width: 260px; justify-content: center; }
+            .install-cmd { font-size: 0.75rem; padding: 0.625rem 1rem; }
+            .social-proof { gap: 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 0 1rem; }
+            .terminal-body { font-size: 0.625rem; min-height: 240px; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="dot-grid"></div>
+    <div class="ambient-glow"></div>
+
+    <div class="container">
+        <header>
+            <a href="/" class="back-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                ratchetcli.com
+            </a>
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                </div>
+                Ratchet
+            </div>
+            <span class="badge">SANDBOX</span>
+        </header>
+
+        <!-- Selection View -->
+        <div id="selection-view">
+            <div class="hero">
+                <h1>See Ratchet in action</h1>
+                <p>Pick a sample codebase. Watch the scan. See what Ratchet would fix — automatically.</p>
+                <div class="hero-hint">
+                    <span class="pulse-dot"></span>
+                    Choose a project to begin
+                </div>
+            </div>
+
+            <div class="projects-grid">
+                <div class="project-card" data-project="express-api">
+                    <div class="project-icon">🔥</div>
+                    <div class="project-name">express-api</div>
+                    <div class="project-desc">Messy Express backend — typical startup code</div>
+                    <div class="project-score">
+                        <div class="score-badge score-low">52</div>
+                        <div class="score-info">
+                            <div class="score-label">Quality Score</div>
+                            <div class="score-bar-bg"><div class="score-bar-fill fill-low" style="width: 52%"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" data-project="react-dashboard">
+                    <div class="project-icon">📊</div>
+                    <div class="project-name">react-dashboard</div>
+                    <div class="project-desc">React app with growing tech debt</div>
+                    <div class="project-score">
+                        <div class="score-badge score-mid">67</div>
+                        <div class="score-info">
+                            <div class="score-label">Quality Score</div>
+                            <div class="score-bar-bg"><div class="score-bar-fill fill-mid" style="width: 67%"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" data-project="clean-library">
+                    <div class="project-icon">✨</div>
+                    <div class="project-name">clean-library</div>
+                    <div class="project-desc">Well-maintained TypeScript library</div>
+                    <div class="project-score">
+                        <div class="score-badge score-high">91</div>
+                        <div class="score-info">
+                            <div class="score-label">Quality Score</div>
+                            <div class="score-bar-bg"><div class="score-bar-fill fill-high" style="width: 91%"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan View -->
+        <div id="scan-view" class="scan-view">
+            <button class="back-btn" id="back-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Choose another project
+            </button>
+
+            <div class="terminal" id="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                    <div class="terminal-title" id="terminal-title">bash — ratchet</div>
+                </div>
+                <div class="terminal-body" id="terminal-body">
+                    <span class="terminal-cursor"></span>
+                </div>
+            </div>
+
+            <div class="score-display" id="score-display">
+                <div class="score-ring-container">
+                    <svg class="score-ring" viewBox="0 0 160 160" width="100%" height="100%">
+                        <circle class="score-ring-bg" cx="80" cy="80" r="68"/>
+                        <circle class="score-ring-fill" id="score-ring-fill" cx="80" cy="80" r="68"
+                            stroke-dasharray="427" stroke-dashoffset="427"/>
+                    </svg>
+                    <div class="score-ring-text">
+                        <div class="score-value" id="score-value">0</div>
+                        <div class="score-max">/ 100</div>
+                    </div>
+                </div>
+                <div class="score-title" id="score-title">Code Quality Score</div>
+                <div class="categories-grid" id="categories-grid"></div>
+            </div>
+
+            <div class="torque-section" id="torque-section">
+                <div class="section-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    AUTONOMOUS FIXES
+                </div>
+                <div class="torque-title">What Ratchet would fix</div>
+                <div class="torque-subtitle">Each fix is tested and committed automatically via <code>ratchet torque</code></div>
+                <div class="diffs-grid" id="diffs-grid"></div>
+            </div>
+
+            <div class="cta-section" id="cta-section">
+                <div class="cta-divider"></div>
+                <div class="cta-title">Now run it on YOUR code</div>
+                <div class="cta-subtitle">Install globally. Scan in 8 seconds.</div>
+
+                <div class="install-cmd" id="install-cmd" onclick="copyInstall()">
+                    <span>$ npm i -g ratchet-run && ratchet scan</span>
+                    <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    <span class="copied-toast">Copied!</span>
+                </div>
+
+                <div class="cta-buttons">
+                    <a href="https://ratchetcli.com/#pricing" class="cta-btn cta-btn-primary">
+                        View Plans
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="https://github.com/giovanni-labs/ratchet" class="cta-btn cta-btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                        GitHub
+                    </a>
+                </div>
+
+                <div class="social-proof">
+                    <div class="social-stat">
+                        <strong>941</strong> tests passing
+                    </div>
+                    <div class="social-stat">
+                        <strong>13</strong> commands
+                    </div>
+                    <div class="social-stat">
+                        <strong>v1.0.8</strong> latest
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <a href="https://ratchetcli.com">ratchetcli.com</a>
+        </div>
+    </div>
+
+    <script>
+        const projectsData = {
+            'express-api': {
+                projectName: 'express-api',
+                total: 52, maxTotal: 100,
+                fileCount: 47,
+                categories: [
+                    {name:'Testing',emoji:'🧪',score:12,max:25,subcategories:[
+                        {name:'Coverage ratio',score:3,max:8,summary:'12 test files, 22% ratio',issuesFound:42},
+                        {name:'Edge case depth',score:5,max:9,summary:'34 edge/error test cases',issuesFound:0},
+                        {name:'Test quality',score:4,max:8,summary:'1.2 assertions per test',issuesFound:0}
+                    ]},
+                    {name:'Security',emoji:'🔒',score:6,max:15,subcategories:[
+                        {name:'Secrets & env vars',score:0,max:3,summary:'5 potential secrets found',issuesFound:5},
+                        {name:'Input validation',score:3,max:6,summary:'validation on 3 files',issuesFound:8},
+                        {name:'Auth & rate limiting',score:3,max:6,summary:'basic auth, no rate limiting',issuesFound:4}
+                    ]},
+                    {name:'Type Safety',emoji:'📝',score:8,max:15,subcategories:[
+                        {name:'Strict config',score:4,max:7,summary:'partial strict mode',issuesFound:3},
+                        {name:'Any type count',score:4,max:8,summary:'47 any types',issuesFound:47}
+                    ]},
+                    {name:'Error Handling',emoji:'⚠️',score:10,max:20,subcategories:[
+                        {name:'Coverage',score:5,max:8,summary:'23 try/catch blocks',issuesFound:31},
+                        {name:'Empty catches',score:2,max:5,summary:'8 empty catches',issuesFound:8},
+                        {name:'Structured logging',score:3,max:7,summary:'console only, no structured logger',issuesFound:0}
+                    ]},
+                    {name:'Performance',emoji:'⚡',score:4,max:10,subcategories:[
+                        {name:'Async patterns',score:1,max:3,summary:'18 await-in-loop patterns',issuesFound:18},
+                        {name:'Console cleanup',score:1,max:5,summary:'42 console.log calls',issuesFound:42},
+                        {name:'Import hygiene',score:2,max:2,summary:'clean imports',issuesFound:0}
+                    ]},
+                    {name:'Code Quality',emoji:'📖',score:12,max:15,subcategories:[
+                        {name:'Function length',score:2,max:4,summary:'avg 68-line functions',issuesFound:24},
+                        {name:'Line length',score:3,max:4,summary:'89 long lines',issuesFound:89},
+                        {name:'Dead code',score:1,max:4,summary:'34 commented-out lines, 18 TODOs',issuesFound:52},
+                        {name:'Duplication',score:2,max:3,summary:'234 repeated lines',issuesFound:234}
+                    ]}
+                ],
+                diffs: [
+                    {title:'Empty catch → structured error logging',lines:[
+                        {type:'removed',text:'} catch (err) {}'},
+                        {type:'added',text:'} catch (err) {'},
+                        {type:'added',text:"  logger.error({ err, handler: 'createUser' }, 'Failed to create user');"},
+                        {type:'added',text:'}'}
+                    ]},
+                    {title:'Overly-broad rate limiter → scoped',lines:[
+                        {type:'removed',text:"app.use('/api/users', rateLimiter);"},
+                        {type:'added',text:"app.post('/api/users', rateLimiter);"},
+                        {type:'added',text:"app.put('/api/users/:id', rateLimiter);"}
+                    ]},
+                    {title:'console.log → structured logging',lines:[
+                        {type:'removed',text:"console.log('Payment processed:', amount);"},
+                        {type:'added',text:"logger.info({ event: 'payment_processed', amount, userId }, 'Payment processed');"}
+                    ]}
+                ]
+            },
+            'react-dashboard': {
+                projectName: 'react-dashboard',
+                total: 67, maxTotal: 100,
+                fileCount: 62,
+                categories: [
+                    {name:'Testing',emoji:'🧪',score:18,max:25,subcategories:[
+                        {name:'Coverage ratio',score:5,max:8,summary:'28 test files, 45% ratio',issuesFound:34},
+                        {name:'Edge case depth',score:7,max:9,summary:'92 edge/error test cases',issuesFound:0},
+                        {name:'Test quality',score:6,max:8,summary:'1.8 assertions per test',issuesFound:0}
+                    ]},
+                    {name:'Security',emoji:'🔒',score:11,max:15,subcategories:[
+                        {name:'Secrets & env vars',score:2,max:3,summary:'1 potential secret',issuesFound:1},
+                        {name:'Input validation',score:5,max:6,summary:'validation on 9 files',issuesFound:2},
+                        {name:'Auth & rate limiting',score:4,max:6,summary:'auth middleware, basic rate limiting',issuesFound:2}
+                    ]},
+                    {name:'Type Safety',emoji:'📝',score:12,max:15,subcategories:[
+                        {name:'Strict config',score:7,max:7,summary:'strict mode enabled',issuesFound:0},
+                        {name:'Any type count',score:5,max:8,summary:'23 any types',issuesFound:23}
+                    ]},
+                    {name:'Error Handling',emoji:'⚠️',score:13,max:20,subcategories:[
+                        {name:'Coverage',score:7,max:8,summary:'67 try/catch blocks',issuesFound:12},
+                        {name:'Empty catches',score:3,max:5,summary:'4 empty catches',issuesFound:4},
+                        {name:'Structured logging',score:3,max:7,summary:'mixed console + winston',issuesFound:0}
+                    ]},
+                    {name:'Performance',emoji:'⚡',score:6,max:10,subcategories:[
+                        {name:'Async patterns',score:2,max:3,summary:'8 await-in-loop patterns',issuesFound:8},
+                        {name:'Console cleanup',score:2,max:5,summary:'24 console.log calls',issuesFound:24},
+                        {name:'Import hygiene',score:2,max:2,summary:'clean imports',issuesFound:0}
+                    ]},
+                    {name:'Code Quality',emoji:'📖',score:7,max:15,subcategories:[
+                        {name:'Function length',score:3,max:4,summary:'avg 42-line functions',issuesFound:15},
+                        {name:'Line length',score:2,max:4,summary:'156 long lines',issuesFound:156},
+                        {name:'Dead code',score:1,max:4,summary:'12 commented-out lines, 22 TODOs',issuesFound:34},
+                        {name:'Duplication',score:1,max:3,summary:'412 repeated lines',issuesFound:412}
+                    ]}
+                ],
+                diffs: [
+                    {title:'any type → proper interface',lines:[
+                        {type:'removed',text:'const handleData = (response: any) => {'},
+                        {type:'added',text:'interface DashboardResponse {'},
+                        {type:'added',text:'  metrics: Metric[];'},
+                        {type:'added',text:'  period: string;'},
+                        {type:'added',text:'}'},
+                        {type:'added',text:'const handleData = (response: DashboardResponse) => {'}
+                    ]},
+                    {title:'await-in-loop → Promise.all',lines:[
+                        {type:'removed',text:'for (const widget of widgets) {'},
+                        {type:'removed',text:'  const data = await fetchWidgetData(widget.id);'},
+                        {type:'removed',text:'}'},
+                        {type:'added',text:'const data = await Promise.all('},
+                        {type:'added',text:'  widgets.map(w => fetchWidgetData(w.id))'},
+                        {type:'added',text:');'}
+                    ]}
+                ]
+            },
+            'clean-library': {
+                projectName: 'clean-library',
+                total: 91, maxTotal: 100,
+                fileCount: 38,
+                categories: [
+                    {name:'Testing',emoji:'🧪',score:24,max:25,subcategories:[
+                        {name:'Coverage ratio',score:8,max:8,summary:'45 test files, 94% ratio',issuesFound:0},
+                        {name:'Edge case depth',score:9,max:9,summary:'210 edge/error test cases',issuesFound:0},
+                        {name:'Test quality',score:7,max:8,summary:'2.4 assertions per test',issuesFound:0}
+                    ]},
+                    {name:'Security',emoji:'🔒',score:14,max:15,subcategories:[
+                        {name:'Secrets & env vars',score:3,max:3,summary:'no hardcoded secrets',issuesFound:0},
+                        {name:'Input validation',score:6,max:6,summary:'validation on all endpoints',issuesFound:0},
+                        {name:'Auth & rate limiting',score:5,max:6,summary:'comprehensive auth + rate limiting',issuesFound:1}
+                    ]},
+                    {name:'Type Safety',emoji:'📝',score:15,max:15,subcategories:[
+                        {name:'Strict config',score:7,max:7,summary:'strict mode enabled',issuesFound:0},
+                        {name:'Any type count',score:8,max:8,summary:'zero any types',issuesFound:0}
+                    ]},
+                    {name:'Error Handling',emoji:'⚠️',score:18,max:20,subcategories:[
+                        {name:'Coverage',score:8,max:8,summary:'89 try/catch blocks',issuesFound:0},
+                        {name:'Empty catches',score:5,max:5,summary:'no empty catches',issuesFound:0},
+                        {name:'Structured logging',score:5,max:7,summary:'pino structured logging',issuesFound:0}
+                    ]},
+                    {name:'Performance',emoji:'⚡',score:9,max:10,subcategories:[
+                        {name:'Async patterns',score:3,max:3,summary:'no await-in-loop',issuesFound:0},
+                        {name:'Console cleanup',score:4,max:5,summary:'2 debug console.log calls',issuesFound:2},
+                        {name:'Import hygiene',score:2,max:2,summary:'clean imports',issuesFound:0}
+                    ]},
+                    {name:'Code Quality',emoji:'📖',score:11,max:15,subcategories:[
+                        {name:'Function length',score:4,max:4,summary:'avg 24-line functions',issuesFound:4},
+                        {name:'Line length',score:3,max:4,summary:'18 long lines',issuesFound:18},
+                        {name:'Dead code',score:3,max:4,summary:'0 commented-out lines, 2 TODOs',issuesFound:2},
+                        {name:'Duplication',score:1,max:3,summary:'45 repeated lines',issuesFound:45}
+                    ]}
+                ],
+                diffs: [
+                    {title:'Debug console → conditional logger',lines:[
+                        {type:'removed',text:"console.log('Cache hit ratio:', ratio);"},
+                        {type:'added',text:"if (process.env.DEBUG) logger.debug({ ratio }, 'Cache hit ratio');"}
+                    ]},
+                    {title:'Long line → clean parameter formatting',lines:[
+                        {type:'removed',text:'export function processTransformation(input: TransformInput, options: TransformOptions, callback: TransformCallback): Promise<TransformResult> {'},
+                        {type:'added',text:'export function processTransformation('},
+                        {type:'added',text:'  input: TransformInput,'},
+                        {type:'added',text:'  options: TransformOptions,'},
+                        {type:'added',text:'  callback: TransformCallback'},
+                        {type:'added',text:'): Promise<TransformResult> {'}
+                    ]}
+                ]
+            }
+        };
+
+        // DOM
+        const selectionView = document.getElementById('selection-view');
+        const scanView = document.getElementById('scan-view');
+        const terminalBody = document.getElementById('terminal-body');
+        const terminalTitle = document.getElementById('terminal-title');
+        const scoreDisplay = document.getElementById('score-display');
+        const scoreValue = document.getElementById('score-value');
+        const scoreRingFill = document.getElementById('score-ring-fill');
+        const categoriesGrid = document.getElementById('categories-grid');
+        const torqueSection = document.getElementById('torque-section');
+        const diffsGrid = document.getElementById('diffs-grid');
+        const ctaSection = document.getElementById('cta-section');
+        const backBtn = document.getElementById('back-btn');
+        const scoreTitle = document.getElementById('score-title');
+
+        function getScoreClass(score, max) {
+            const p = (score / max) * 100;
+            return p >= 80 ? 'high' : p >= 50 ? 'mid' : 'low';
+        }
+
+        function getScoreColor(score, max) {
+            const p = (score / max) * 100;
+            return p >= 80 ? 'var(--green)' : p >= 50 ? 'var(--yellow)' : 'var(--red)';
+        }
+
+        // Build dynamic progress bar string
+        function makeBar(score, max, width) {
+            const filled = Math.round((score / max) * width);
+            return '█'.repeat(filled) + '░'.repeat(width - filled);
+        }
+
+        // Typewriter
+        async function typewriter(el, text, speed) {
+            for (let i = 0; i < text.length; i++) {
+                el.textContent += text[i];
+                await new Promise(r => setTimeout(r, speed));
+            }
+        }
+
+        // Animate number
+        function animateNumber(el, target, duration) {
+            const start = performance.now();
+            function tick(now) {
+                const p = Math.min((now - start) / duration, 1);
+                const ease = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(target * ease);
+                if (p < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        // Score ring
+        function animateScoreRing(score) {
+            const circ = 2 * Math.PI * 68;
+            const offset = circ * (1 - score / 100);
+            scoreRingFill.style.stroke = getScoreColor(score, 100);
+            scoreRingFill.style.strokeDasharray = circ;
+            scoreRingFill.style.strokeDashoffset = circ;
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    scoreRingFill.style.transition = 'stroke-dashoffset 1.5s ease-out';
+                    scoreRingFill.style.strokeDashoffset = offset;
+                }, 50);
+            });
+        }
+
+        function animateBar(el, pct, delay) {
+            el.style.width = '0%';
+            setTimeout(() => {
+                el.style.transition = 'width 0.8s ease-out';
+                el.style.width = pct + '%';
+            }, delay);
+        }
+
+        function renderCategories(data) {
+            categoriesGrid.innerHTML = '';
+            data.categories.forEach((cat, idx) => {
+                const pct = Math.round((cat.score / cat.max) * 100);
+                const cls = getScoreClass(cat.score, cat.max);
+                const color = getScoreColor(cat.score, cat.max);
+
+                const card = document.createElement('div');
+                card.className = 'category-card';
+                card.innerHTML = `
+                    <div class="category-header">
+                        <span class="category-emoji">${cat.emoji}</span>
+                        <span class="category-name">${cat.name}</span>
+                        <span class="category-score" style="color:${color}">${cat.score}/${cat.max}</span>
+                        <svg class="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <div class="category-bar-bg">
+                        <div class="category-bar-fill ${cls}" style="width:0%"></div>
+                    </div>
+                    <div class="subcategories">
+                        ${cat.subcategories.map(s => {
+                            const sp = Math.round((s.score / s.max) * 100);
+                            return `<div class="subcategory">
+                                <div class="subcategory-header">
+                                    <span class="subcategory-name">${s.name}</span>
+                                    <span class="subcategory-score">${s.score}/${s.max}${s.issuesFound > 0 ? `<span class="subcategory-issues">${s.issuesFound} issues</span>` : ''}</span>
+                                </div>
+                                <div class="subcategory-bar-bg"><div class="subcategory-bar-fill" style="width:0%" data-target="${sp}"></div></div>
+                                <div class="subcategory-summary">${s.summary}</div>
+                            </div>`;
+                        }).join('')}
+                    </div>`;
+
+                card.addEventListener('click', () => {
+                    card.classList.toggle('expanded');
+                    if (card.classList.contains('expanded')) {
+                        card.querySelectorAll('.subcategory-bar-fill').forEach((b, i) => {
+                            animateBar(b, b.dataset.target, 50 + i * 80);
+                        });
+                    }
+                });
+
+                categoriesGrid.appendChild(card);
+                animateBar(card.querySelector('.category-bar-fill'), pct, 80 + idx * 120);
+            });
+        }
+
+        function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+        function renderDiffs(diffs) {
+            diffsGrid.innerHTML = '';
+            diffs.forEach((diff, i) => {
+                const card = document.createElement('div');
+                card.className = 'diff-card';
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(12px)';
+                card.innerHTML = `
+                    <div class="diff-header">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                        ${diff.title}
+                    </div>
+                    <div class="diff-body">
+                        ${diff.lines.map(l =>
+                            l.type === 'removed' ? `<div class="diff-line"><span class="diff-removed">- ${esc(l.text)}</span></div>` :
+                            l.type === 'added' ? `<div class="diff-line"><span class="diff-added">+ ${esc(l.text)}</span></div>` :
+                            `<div class="diff-line">  ${esc(l.text)}</div>`
+                        ).join('')}
+                    </div>`;
+                diffsGrid.appendChild(card);
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.4s, transform 0.4s';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 150 * i);
+            });
+        }
+
+        // Terminal animation
+        async function runTerminal(data) {
+            terminalBody.innerHTML = '';
+            const cats = data.categories;
+            const pad = (s, n) => s + ' '.repeat(Math.max(0, n - s.length));
+
+            const lines = [
+                {type:'cmd', text:`$ cd ${data.projectName}/`, speed: 35},
+                {type:'cmd', text:'$ ratchet scan', speed: 35},
+                {type:'empty'},
+                {type:'info', text:`  ⚡ Scanning ${data.projectName}...`},
+                {type:'empty'},
+                {type:'progress', label:'Analyzing files', count: data.fileCount},
+                {type:'progress2', label:'Scanning categories'},
+                {type:'empty'},
+                {type:'box', score: data.total},
+                {type:'empty'},
+                ...cats.map(c => ({
+                    type:'cat',
+                    emoji: c.emoji,
+                    name: c.name,
+                    score: c.score,
+                    max: c.max
+                })),
+            ];
+
+            for (const line of lines) {
+                if (line.type === 'cmd') {
+                    const el = document.createElement('div');
+                    el.className = 'terminal-line terminal-cmd';
+                    terminalBody.appendChild(el);
+                    await typewriter(el, line.text, line.speed);
+                    await new Promise(r => setTimeout(r, 200));
+                }
+                else if (line.type === 'empty') {
+                    terminalBody.appendChild(document.createElement('div'));
+                    await new Promise(r => setTimeout(r, 60));
+                }
+                else if (line.type === 'info') {
+                    const el = document.createElement('div');
+                    el.className = 'terminal-line';
+                    el.textContent = line.text;
+                    terminalBody.appendChild(el);
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                else if (line.type === 'progress') {
+                    const el = document.createElement('div');
+                    el.className = 'terminal-line terminal-dim';
+                    terminalBody.appendChild(el);
+                    const barW = 20;
+                    for (let i = 0; i <= barW; i++) {
+                        el.textContent = `  ${'█'.repeat(i)}${'░'.repeat(barW - i)} ${line.label}... (${line.count} files)`;
+                        await new Promise(r => setTimeout(r, 40));
+                    }
+                    await new Promise(r => setTimeout(r, 100));
+                }
+                else if (line.type === 'progress2') {
+                    const el = document.createElement('div');
+                    el.className = 'terminal-line terminal-dim';
+                    terminalBody.appendChild(el);
+                    const barW = 20;
+                    for (let i = 0; i <= barW; i++) {
+                        el.textContent = `  ${'█'.repeat(i)}${'░'.repeat(barW - i)} ${line.label}...`;
+                        await new Promise(r => setTimeout(r, 25));
+                    }
+                    await new Promise(r => setTimeout(r, 200));
+                }
+                else if (line.type === 'box') {
+                    const s = line.score;
+                    const bar = makeBar(s, 100, 20);
+                    const boxLines = [
+                        '  ╭────────────────────────────────────╮',
+                        `  │  Score: ${s}/100${' '.repeat(25 - String(s).length)}│`,
+                        `  │  ${bar}  ${s}%${' '.repeat(22 - bar.length - String(s).length)}│`,
+                        '  ╰────────────────────────────────────╯'
+                    ];
+                    for (const bl of boxLines) {
+                        const el = document.createElement('div');
+                        el.className = 'terminal-line terminal-cmd';
+                        el.textContent = bl;
+                        terminalBody.appendChild(el);
+                        await new Promise(r => setTimeout(r, 80));
+                    }
+                    await new Promise(r => setTimeout(r, 200));
+                }
+                else if (line.type === 'cat') {
+                    const el = document.createElement('div');
+                    el.className = 'terminal-line';
+                    const bar = makeBar(line.score, line.max, 12);
+                    const nameStr = pad(line.name, 16);
+                    const scoreStr = `${pad(String(line.score), 2)}/${line.max}`;
+                    el.textContent = `  ${line.emoji} ${nameStr}${bar}  ${scoreStr}`;
+                    terminalBody.appendChild(el);
+                    await new Promise(r => setTimeout(r, 120));
+                }
+            }
+
+            // Final cursor
+            terminalBody.appendChild(document.createElement('div'));
+            const cursor = document.createElement('span');
+            cursor.className = 'terminal-cursor';
+            terminalBody.appendChild(cursor);
+        }
+
+        // Copy install command
+        function copyInstall() {
+            navigator.clipboard.writeText('npm i -g ratchet-run && ratchet scan');
+            const cmd = document.getElementById('install-cmd');
+            cmd.classList.add('copied');
+            setTimeout(() => cmd.classList.remove('copied'), 1500);
+        }
+
+        // Show scan
+        async function showScan(key) {
+            const data = projectsData[key];
+            if (!data) return;
+
+            selectionView.style.display = 'none';
+            scanView.classList.add('active');
+            scoreDisplay.classList.remove('active');
+            torqueSection.classList.remove('active');
+            ctaSection.classList.remove('active');
+
+            terminalTitle.textContent = `bash — ${data.projectName}`;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+
+            await runTerminal(data);
+
+            await new Promise(r => setTimeout(r, 400));
+            scoreDisplay.classList.add('active');
+            scoreTitle.textContent = `${data.projectName} — Code Quality Score`;
+            animateNumber(scoreValue, data.total, 1200);
+            animateScoreRing(data.total);
+            renderCategories(data);
+
+            await new Promise(r => setTimeout(r, 1200));
+            torqueSection.classList.add('active');
+            renderDiffs(data.diffs);
+
+            await new Promise(r => setTimeout(r, 600));
+            ctaSection.classList.add('active');
+        }
+
+        function showSelection() {
+            scanView.classList.remove('active');
+            scoreDisplay.classList.remove('active');
+            torqueSection.classList.remove('active');
+            ctaSection.classList.remove('active');
+            selectionView.style.display = 'block';
+            // Reset ring
+            scoreRingFill.style.transition = 'none';
+            scoreRingFill.style.strokeDashoffset = 427;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        // Events
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('click', () => showScan(card.dataset.project));
+        });
+        backBtn.addEventListener('click', showSelection);
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && scanView.classList.contains('active')) showSelection();
+        });
+    </script>
+</body>
+</html>
