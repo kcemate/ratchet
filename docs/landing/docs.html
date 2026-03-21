@@ -1,0 +1,2643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ratchet Docs — AI-Powered Codebase Improvement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0f;
+  --bg2: #0f0f18;
+  --bg3: #14141f;
+  --surface: #161b22;
+  --surface2: #1c2430;
+  --border: #2a3343;
+  --border2: #3a4a5e;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #6e7681;
+  --accent: #00d4ff;
+  --accent2: #00b8e6;
+  --accent-dim: rgba(0,212,255,0.08);
+  --accent-dim2: rgba(0,212,255,0.15);
+  --green: #3fb950;
+  --yellow: #d29922;
+  --red: #f85149;
+  --orange: #e3b341;
+  --purple: #bc8cff;
+  --font: 'Inter', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --sidebar-w: 280px;
+  --header-h: 56px;
+  --radius: 8px;
+  --radius2: 12px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent-dim2); color: var(--accent); }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ===== LAYOUT ===== */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--accent), #0066ff);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.sidebar-brand {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.sidebar-brand span { color: var(--accent); }
+
+.sidebar-subtitle {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 14px 20px 6px;
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 12px 20px;
+}
+
+.nav-section { margin-bottom: 4px; }
+
+.nav-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 10px 8px 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.nav-section-title:hover { color: var(--text2); }
+
+.nav-section-title .chevron {
+  transition: transform 0.2s;
+  font-size: 10px;
+}
+
+.nav-section.collapsed .nav-section-title .chevron {
+  transform: rotate(-90deg);
+}
+
+.nav-section.collapsed .nav-items {
+  display: none;
+}
+
+.nav-items { }
+
+.nav-link {
+  display: block;
+  padding: 6px 8px;
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 400;
+  border-radius: var(--radius);
+  transition: all 0.15s;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: var(--text);
+  background: var(--accent-dim);
+}
+
+.nav-link.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  font-weight: 500;
+}
+
+.nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-link.sub {
+  padding-left: 20px;
+  font-size: 13px;
+}
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-footer a {
+  color: var(--text3);
+  text-decoration: none;
+  font-size: 12px;
+  display: block;
+  padding: 3px 0;
+  transition: color 0.15s;
+}
+
+.sidebar-footer a:hover { color: var(--accent); }
+
+/* ===== MAIN ===== */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 32px;
+  height: var(--header-h);
+}
+
+.topbar-search {
+  flex: 1;
+  max-width: 360px;
+  position: relative;
+}
+
+.topbar-search input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 12px 7px 36px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.topbar-search input::placeholder { color: var(--text3); }
+
+.topbar-search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.topbar-search .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.topbar-actions a {
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: var(--radius);
+  transition: all 0.15s;
+}
+
+.topbar-actions a:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.topbar-actions .btn-accent {
+  background: var(--accent);
+  color: #000 !important;
+  font-weight: 600;
+  padding: 6px 14px;
+}
+
+.topbar-actions .btn-accent:hover {
+  background: var(--accent2);
+}
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+}
+
+.mobile-menu-btn:hover { background: var(--surface); }
+
+/* ===== CONTENT ===== */
+.content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+/* ===== SECTIONS ===== */
+.section {
+  margin-bottom: 64px;
+  scroll-margin-top: calc(var(--header-h) + 24px);
+}
+
+.section:first-child { margin-top: 0; }
+
+.section-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.section-subtitle {
+  font-size: 15px;
+  color: var(--text2);
+  font-weight: 400;
+}
+
+h2 { font-size: 20px; font-weight: 600; margin: 36px 0 14px; color: var(--text); letter-spacing: -0.3px; }
+h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--text2); }
+
+p { margin: 0 0 14px; color: var(--text2); line-height: 1.75; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+ul, ol { margin: 0 0 14px 20px; color: var(--text2); }
+li { margin-bottom: 4px; line-height: 1.7; }
+
+strong { color: var(--text); font-weight: 600; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--surface); padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+
+/* ===== CODE BLOCKS ===== */
+.code-block {
+  position: relative;
+  margin: 16px 0;
+  border-radius: var(--radius2);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-block-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 16px 18px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.65;
+  color: #c9d1d9;
+  background: var(--surface);
+}
+
+.code-block pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+  border-radius: 0;
+}
+
+.code-block .copy-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.code-block .copy-btn:hover {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.code-block .copy-btn.copied {
+  background: rgba(63,185,80,0.15);
+  color: var(--green);
+  border-color: var(--green);
+}
+
+/* ===== INLINE CODE ===== */
+:not(.code-block) > pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.65;
+  color: #c9d1d9;
+  margin: 14px 0;
+}
+
+/* ===== TABLES ===== */
+.table-wrap {
+  overflow-x: auto;
+  margin: 16px 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+thead { background: var(--bg3); }
+
+th {
+  text-align: left;
+  padding: 10px 14px;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 10px 14px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--bg2); }
+
+/* ===== CALLOUTS ===== */
+.callout {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  margin: 16px 0;
+  border: 1px solid;
+}
+
+.callout.info {
+  background: rgba(0,212,255,0.06);
+  border-color: rgba(0,212,255,0.2);
+}
+
+.callout.warning {
+  background: rgba(227,179,65,0.06);
+  border-color: rgba(227,179,65,0.2);
+}
+
+.callout.danger {
+  background: rgba(248,81,73,0.06);
+  border-color: rgba(248,81,73,0.2);
+}
+
+.callout.success {
+  background: rgba(63,185,80,0.06);
+  border-color: rgba(63,185,80,0.2);
+}
+
+.callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.callout.info .callout-icon { color: var(--accent); }
+.callout.warning .callout-icon { color: var(--yellow); }
+.callout.danger .callout-icon { color: var(--red); }
+.callout.success .callout-icon { color: var(--green); }
+
+.callout-content { flex: 1; }
+.callout-content p { margin: 0; color: var(--text2); font-size: 14px; }
+.callout-content strong { color: var(--text); }
+
+/* ===== BADGES ===== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.badge-free { background: rgba(63,185,80,0.15); color: var(--green); }
+.badge-builder { background: rgba(0,212,255,0.12); color: var(--accent); }
+.badge-pro { background: rgba(188,140,255,0.15); color: var(--purple); }
+.badge-team { background: rgba(227,179,65,0.12); color: var(--orange); }
+.badge-enterprise { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--border); }
+
+/* ===== FLAGS TABLE ===== */
+.flag-table td:first-child code {
+  white-space: nowrap;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+}
+
+/* ===== SCORE BARS ===== */
+.score-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+}
+
+.score-bar-label {
+  font-size: 13px;
+  color: var(--text2);
+  min-width: 120px;
+  font-weight: 500;
+}
+
+.score-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--surface);
+  border-radius: 3px;
+  overflow: hidden;
+  max-width: 200px;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.score-bar-value {
+  font-size: 12px;
+  color: var(--text3);
+  font-family: var(--mono);
+  min-width: 36px;
+}
+
+/* ===== PRICING CARDS ===== */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.pricing-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  padding: 24px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pricing-card:hover {
+  border-color: var(--border2);
+  box-shadow: var(--shadow);
+}
+
+.pricing-card.popular {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(0,212,255,0.05) 0%, var(--surface) 100%);
+}
+
+.pricing-card.popular .badge { background: var(--accent); color: #000; }
+
+.pricing-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.pricing-price {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 12px 0 4px;
+}
+
+.pricing-price span {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text3);
+}
+
+.pricing-price .yearly {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--green);
+  display: block;
+  margin-top: 2px;
+}
+
+.pricing-features {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.pricing-features li {
+  font-size: 13px;
+  color: var(--text2);
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pricing-features li::before {
+  content: '✓';
+  color: var(--green);
+  font-weight: 700;
+}
+
+/* ===== STEPS ===== */
+.steps {
+  counter-reset: step;
+  margin: 20px 0;
+}
+
+.step {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 36px;
+  bottom: -20px;
+  width: 2px;
+  background: var(--border);
+}
+
+.step-num {
+  counter-increment: step;
+  width: 36px;
+  height: 36px;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+
+.step-content { flex: 1; padding-top: 6px; }
+
+.step-content h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.step-content p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* ===== BANNER ===== */
+.top-banner {
+  background: linear-gradient(135deg, #0f1a2e 0%, #1a1040 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 32px;
+  text-align: center;
+}
+
+.top-banner p {
+  color: var(--text2);
+  font-size: 14px;
+  margin: 0;
+}
+
+.top-banner a { color: var(--accent); font-weight: 600; }
+
+/* ===== HERO ===== */
+.hero {
+  padding: 48px 40px 32px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero h1 {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero p {
+  font-size: 17px;
+  color: var(--text2);
+  max-width: 560px;
+  margin: 0 auto 24px;
+}
+
+.hero-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--green);
+}
+
+/* ===== SEARCH RESULTS ===== */
+#search-results {
+  display: none;
+  padding: 16px 40px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+#search-results.active { display: block; }
+
+.search-result {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-result-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.search-result-title:hover { text-decoration: underline; }
+
+.search-result-path {
+  font-size: 12px;
+  color: var(--text3);
+  font-family: var(--mono);
+  margin-bottom: 4px;
+}
+
+.search-result-excerpt {
+  font-size: 13.5px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.search-no-results {
+  text-align: center;
+  padding: 40px;
+  color: var(--text3);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar {
+    transform: translateX(-280px);
+    transition: transform 0.3s ease;
+    width: 280px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .mobile-menu-btn { display: block; }
+  .content { padding: 32px 20px 60px; }
+  .hero { padding: 32px 20px 24px; }
+  .hero h1 { font-size: 28px; }
+  .topbar { padding: 0 16px; }
+  .topbar-search { max-width: none; }
+}
+
+@media (max-width: 600px) {
+  .pricing-grid { grid-template-columns: 1fr; }
+  h1, .section-title { font-size: 22px; }
+}
+
+/* ===== ANCHOR LINKS ===== */
+.anchor-link {
+  opacity: 0;
+  color: var(--text3);
+  margin-left: 6px;
+  font-size: 0.85em;
+  transition: opacity 0.15s;
+}
+
+h2:hover .anchor-link,
+h3:hover .anchor-link,
+h4:hover .anchor-link {
+  opacity: 1;
+}
+
+.anchor-link:hover { color: var(--accent); text-decoration: none; }
+
+/* ===== GRADIENT DIVIDER ===== */
+.gradient-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.3;
+  margin: 32px 0;
+}
+
+/* ===== MOBILE OVERLAY ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 99;
+}
+
+.sidebar-overlay.active { display: block; }
+
+/* highlight */
+.search-highlight { background: rgba(0,212,255,0.2); border-radius: 2px; color: var(--accent); }
+
+/* diff syntax */
+.diff-add { color: var(--green); }
+.diff-remove { color: var(--red); }
+.diff-meta { color: var(--text3); font-style: italic; }
+</style>
+</head>
+<body>
+
+<!-- MOBILE OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">⚡</div>
+    <div>
+      <div class="sidebar-brand">Ratchet<span>.</span></div>
+    </div>
+  </div>
+
+  <div class="sidebar-subtitle">Documentation</div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section" id="nav-overview">
+      <div class="nav-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+        Overview
+        <span class="chevron">▼</span>
+      </div>
+      <div class="nav-items">
+        <a href="#getting-started" class="nav-link" data-section="getting-started">Getting Started</a>
+        <a href="#cli-reference" class="nav-link" data-section="cli-reference">CLI Reference</a>
+        <a href="#configuration" class="nav-link" data-section="configuration">Configuration</a>
+      </div>
+    </div>
+
+    <div class="nav-section" id="nav-core">
+      <div class="nav-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+        Core Concepts
+        <span class="chevron">▼</span>
+      </div>
+      <div class="nav-items">
+        <a href="#scoring-system" class="nav-link" data-section="scoring-system">Scoring System</a>
+        <a href="#guard-profiles" class="nav-link" data-section="guard-profiles">Guard Profiles</a>
+        <a href="#scope-locking" class="nav-link" data-section="scope-locking">Scope Locking</a>
+        <a href="#cicd" class="nav-link" data-section="cicd">CI/CD Integration</a>
+      </div>
+    </div>
+
+    <div class="nav-section" id="nav-pricing">
+      <div class="nav-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+        Pricing
+        <span class="chevron">▼</span>
+      </div>
+      <div class="nav-items">
+        <a href="#pricing" class="nav-link" data-section="pricing">Plans &amp; Pricing</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <a href="https://github.com/ratchet-run/ratchet" target="_blank">GitHub</a>
+    <a href="https://ratchet.run/changelog" target="_blank">Changelog</a>
+    <a href="https://ratchet.run" target="_blank">ratchet.run ↗</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search docs..." autocomplete="off" spellcheck="false">
+    </div>
+    <div class="topbar-actions">
+      <a href="https://github.com/ratchet-run/ratchet" target="_blank">GitHub</a>
+      <a href="https://ratchet.run" target="_blank">Home</a>
+      <a href="#pricing" class="btn-accent">Get Started</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Ratchet Documentation</h1>
+    <p>The AI-powered CLI that scores, guards, and autonomously improves your codebase — one controlled click at a time.</p>
+    <div class="hero-install">
+      <span>$</span>
+      <span>npm install -g ratchet-run</span>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content" id="docsContent">
+
+    <!-- ===== GETTING STARTED ===== -->
+    <section class="section" id="getting-started">
+      <div class="section-header">
+        <div class="section-title">Getting Started<span class="anchor-link">#</span></div>
+        <div class="section-subtitle">Install, configure, and run your first autonomous improvement cycle in under 5 minutes.</div>
+      </div>
+
+      <h2>Prerequisites</h2>
+      <p>Ratchet requires <strong>Node.js 18+</strong> and <strong>Git</strong>. You'll also need an API key from your Ratchet account.</p>
+
+      <h2>Installation</h2>
+      <p>Install Ratchet globally via npm:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>npm install -g ratchet-run</code></pre>
+      </div>
+
+      <p>Verify the installation:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet --version
+# ratchet v1.4.2</code></pre>
+      </div>
+
+      <h2>Authentication</h2>
+      <p>Log in with your API key. Get one at <a href="https://ratchet.run/dashboard" target="_blank">ratchet.run/dashboard</a>:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet login your-api-key-here</code></pre>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ</span>
+        <div class="callout-content">
+          <p><strong>API Key Safety:</strong> Your key is stored encrypted in <code>~/.ratchet/credentials</code>. Never commit it to version control. Use environment variables in CI via <code>RATCHET_API_KEY</code>.</p>
+        </div>
+      </div>
+
+      <h2>Initialize Your Project</h2>
+      <p>Navigate to your project root and run <code>ratchet init</code>. Ratchet auto-detects your project type (Node.js, Python, Rust, Go, etc.) and writes a <code>.ratchet.yml</code> configuration file:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>cd my-project
+ratchet init</code></pre>
+      </div>
+
+      <p>Ratchet will detect your framework, test runner, and project structure, then generate a starter config:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">Output</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>✓ Detected: Node.js / TypeScript (Express)
+✓ Wrote .ratchet.yml
+✓ Detected test runner: Jest
+✓ Set test_command: "npm test"
+✓ Guard profile: refactor (default)
+
+Run `ratchet scan` to score your codebase, or `ratchet torque` to start improving.</code></pre>
+      </div>
+
+      <h2>Your First Torque Run</h2>
+      <p><code>torque</code> is Ratchet's autonomous improvement engine. By default it runs <strong>7 clicks</strong> — each click is a bounded AI agent cycle: read → analyze → edit → verify. You can configure the click count, scope, and guard profiles.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Scan first</h4>
+            <p>Get a baseline score before making changes.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Run torque</h4>
+            <p>Start the autonomous improvement loop with default settings.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Review the log</h4>
+            <p>Check <code>ratchet log</code> to see every change Ratchet made and why.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Tighten &amp; PR</h4>
+            <p>Finalize the run with <code>ratchet tighten --pr</code> to create a pull request.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Baseline score
+ratchet scan
+
+# Run 7 autonomous improvement clicks (default)
+ratchet torque
+
+# Run 3 clicks on a specific target
+ratchet torque --target api --clicks 3
+
+# Plan first, then execute (review mode)
+ratchet torque --plan-first</code></pre>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ</span>
+        <div class="callout-content">
+          <p><strong>What to expect:</strong> Each click takes 30–90 seconds depending on project size. Ratchet makes targeted, scoped edits — never rewrites entire files unless necessary. Every change is logged with a reason. If a change breaks tests, the guard system reverts and escalates.</p>
+        </div>
+      </div>
+
+      <h2>Typical First Run Output</h2>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>$ ratchet torque
+
+  ⚡ Ratchet v1.4.2 — Torque Mode
+  ─────────────────────────────────
+  Target:     full codebase
+  Guard:      refactor (3 files / 60 lines max)
+  Scope:      staged (auto-detected clean state)
+  Clicks:     7 (default)
+
+  Click 1/7  ✓ Error handling — added try/catch to auth middleware
+  Click 2/7  ✓ Type safety — inferred missing TypeScript types in user.ts
+  Click 3/7  ✓ Security — sanitized SQL input in user queries
+  Click 4/7  ✓ Testing — added edge case tests for payment module
+  Click 5/7  ✓ Code quality — extracted duplicate validation logic
+  Click 6/7  ✓ Performance — added DB index hint for hot query
+  Click 7/7  ✓ Error handling — centralized error response format
+
+  ─────────────────────────────────
+  Score: 68 → 84 (+16 pts)
+  Status: GUARDED  (all tests passing)
+  ─────────────────────────────────
+
+  Run `ratchet tighten` to finalize or `ratchet log` to review changes.</code></pre>
+      </div>
+    </section>
+
+    <div class="gradient-divider"></div>
+
+    <!-- ===== CLI REFERENCE ===== -->
+    <section class="section" id="cli-reference">
+      <div class="section-header">
+        <div class="section-title">CLI Reference<span class="anchor-link">#</span></div>
+        <div class="section-subtitle">Complete reference for every Ratchet command and flag.</div>
+      </div>
+
+      <h2 id="cli-init">init [dir]</h2>
+      <p>Auto-detects your project type and writes a <code>.ratchet.yml</code> configuration file. Run this once per repository.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Argument</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>dir</code></td><td>Target directory (default: current working directory)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Ratchet detects: language/framework, test runner, package manager, build system, and coding conventions. The generated config uses sensible defaults — review and tweak as needed.</p>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ</span>
+        <div class="callout-content">
+          <p>You can also manually create <code>.ratchet.yml</code>. See the <a href="#configuration">Configuration section</a> for a full annotated example.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet init
+ratchet init ./my-service</code></pre>
+      </div>
+
+      <h2 id="cli-torque">torque</h2>
+      <p>The core autonomous improvement engine. Runs a bounded loop of AI agent cycles ("clicks") that scan, plan, edit, verify, and iterate on your codebase. Each click is self-contained and guarded.</p>
+
+      <div class="table-wrap flag-table">
+        <table>
+          <thead>
+            <tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--target</code></td><td>all</td><td>Target name from <code>.ratchet.yml</code> targets[].name to scope improvements to.</td></tr>
+            <tr><td><code>--clicks</code></td><td>7</td><td>Number of improvement cycles to run (1–50). Each click is a bounded agent cycle.</td></tr>
+            <tr><td><code>--plan-first</code></td><td>false</td><td>Plan all changes first, print a summary, then execute. Use for review mode.</td></tr>
+            <tr><td><code>--scope</code></td><td>diff</td><td>Scope mode: <code>diff</code> (current changes), <code>branch</code> (all branch changes), <code>staged</code> (git staged), <code>glob</code> (glob pattern), <code>file:paths</code> (comma-separated paths).</td></tr>
+            <tr><td><code>--guards</code></td><td>refactor</td><td>Guard profile: <code>tight</code>, <code>refactor</code>, <code>broad</code>, or <code>atomic</code>. Controls how aggressively Ratchet modifies files per click.</td></tr>
+            <tr><td><code>--no-escalate</code></td><td>false</td><td>Disable smart guard escalation. Ratchet will not broaden scope on consecutive passes.</td></tr>
+            <tr><td><code>--no-guard-escalation</code></td><td>false</td><td>Alias for <code>--no-escalate</code>. Prevents the guard system from escalating its own limits.</td></tr>
+            <tr><td><code>--no-architect</code></td><td>false</td><td>Skip architect-level analysis (import graphs, dependency structure). Run only targeted file edits.</td></tr>
+            <tr><td><code>--no-pr-comment</code></td><td>false</td><td>Skip posting PR comments on completion (if connected to GitHub/GitLab).</td></tr>
+            <tr><td><code>--timeout</code></td><td>300</td><td>Per-click timeout in seconds. Set to 0 for no timeout.</td></tr>
+            <tr><td><code>--json</code></td><td>false</td><td>Output machine-readable JSON instead of the human-readable progress view.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Standard 7-click run
+ratchet torque
+
+# Aggressive: 15 clicks, broad guards, no PR comments
+ratchet torque --clicks 15 --guards broad --no-pr-comment
+
+# Review mode: plan first, then confirm
+ratchet torque --clicks 3 --plan-first
+
+# Targeted: only the "api" target, tight guards
+ratchet torque --target api --guards tight --clicks 5
+
+# Glob scope: only TypeScript files in src/
+ratchet torque --scope "glob:src/**/*.ts"
+
+# Staged files only (for PRs)
+ratchet torque --scope staged
+
+# JSON output (for scripting)
+ratchet torque --clicks 3 --json > run.json</code></pre>
+      </div>
+
+      <h2 id="cli-improve">improve</h2>
+      <p>Full autonomous improvement pipeline: <strong>scan → fix → rescan → report</strong>. Runs the full loop until the score threshold is met or click budget is exhausted. Simpler than <code>torque</code> for goal-oriented runs.</p>
+
+      <div class="table-wrap flag-table">
+        <table>
+          <thead>
+            <tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--scope</code></td><td>diff</td><td>Scope mode (same options as torque): <code>diff</code>, <code>branch</code>, <code>staged</code>, <code>glob</code>, <code>file:paths</code>.</td></tr>
+            <tr><td><code>--target</code></td><td>all</td><td>Target name to improve (from <code>.ratchet.yml</code>).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Improve until score ≥ 85 or budget exhausted
+ratchet improve
+
+# Improve only staged files
+ratchet improve --scope staged</code></pre>
+      </div>
+
+      <h2 id="cli-scan">scan [dir]</h2>
+      <p>Scores the codebase across 6 categories (Testing, Security, Type Safety, Error Handling, Performance, Code Quality). Provides a baseline before running improvements. Works on any directory.</p>
+
+      <div class="table-wrap flag-table">
+        <table>
+          <thead>
+            <tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--fail-on</code></td><td>—</td><td>Exit with code 1 if the overall score falls below this threshold (0–100). Use in CI.</td></tr>
+            <tr><td><code>--fail-on-category</code></td><td>—</td><td>Fail if a specific category drops below a score. Format: <code>name=score</code> (e.g., <code>security=70</code>).</td></tr>
+            <tr><td><code>--output-json</code></td><td>false</td><td>Output results as JSON for programmatic consumption.</td></tr>
+            <tr><td><code>--explain</code></td><td>false</td><td>Print detailed reasoning for each score deduction.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Score the current project
+ratchet scan
+
+# Score with detailed explanations
+ratchet scan --explain
+
+# CI mode: fail if score < 80
+ratchet scan --fail-on 80
+
+# JSON output for pipelines
+ratchet scan --output-json > score.json
+
+# Fail on specific category
+ratchet scan --fail-on-category "security=70" --fail-on-category "testing=60"
+
+# Scan a specific subdirectory
+ratchet scan ./packages/api</code></pre>
+      </div>
+
+      <h2 id="cli-status">status</h2>
+      <p>Shows the current or most recent Ratchet run — its state (running, guarded, failed, complete), score delta, click count, and any active guards. Essential for monitoring long-running <code>torque</code> sessions.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>$ ratchet status
+
+  Run ID:    run_k8s2x9m
+  Status:    RUNNING  (Click 4/7)
+  Started:   2 minutes ago
+  Score:     71 → 79 (+8 pts)
+  Guards:    active (refactor — 3 files / 60 lines)
+  Scope:     branch
+  Target:    full codebase
+
+  Last click: ✓ Type Safety — added missing null checks in payment.ts
+  Next:      (3 more clicks queued)</code></pre>
+      </div>
+
+      <h2 id="cli-log">log</h2>
+      <p>Displays the Ratchet change log for a target or run. Shows every file modified, the AI reasoning behind the change, the guard level used, and whether tests passed.</p>
+
+      <div class="table-wrap flag-table">
+        <table>
+          <thead>
+            <tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--target</code></td><td>—</td><td>Filter log to a specific target name from <code>.ratchet.yml</code>.</td></tr>
+            <tr><td><code>--run</code></td><td>last</td><td>Show log for a specific run ID.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Show log from the last run
+ratchet log
+
+# Show log for a specific run
+ratchet log --run run_k8s2x9m
+
+# Filter by target
+ratchet log --target api</code></pre>
+      </div>
+
+      <h2 id="cli-tighten">tighten</h2>
+      <p>Finalizes the current run. Validates that all changes are committed, tests pass, and guards are satisfied. Optionally creates a pull request if <code>--pr</code> is specified and a remote is detected.</p>
+
+      <div class="table-wrap flag-table">
+        <table>
+          <thead>
+            <tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--pr</code></td><td>false</td><td>Create a pull request on the current branch. Detects GitHub, GitLab, or Bitbucket.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Finalize without PR
+ratchet tighten
+
+# Finalize and create a pull request
+ratchet tighten --pr</code></pre>
+      </div>
+
+      <h2 id="cli-report">report</h2>
+      <p>Generates a detailed markdown or PDF report of a completed run, including score breakdown, file changes, AI reasoning, and recommendations for next steps.</p>
+
+      <div class="table-wrap flag-table">
+        <table>
+          <thead>
+            <tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--run</code></td><td>last</td><td>Run ID to generate a report for. Defaults to the most recent run.</td></tr>
+            <tr><td><code>--format</code></td><td>markdown</td><td>Output format: <code>markdown</code> or <code>pdf</code>.</td></tr>
+            <tr><td><code>--output</code></td><td>stdout</td><td>Output file path. Use <code>-o report.md</code> to write to file.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Generate markdown report for last run
+ratchet report > improvements.md
+
+# Generate PDF for a specific run
+ratchet report --run run_k8s2x9m --format pdf -o report.pdf
+
+# Inline markdown to stdout
+ratchet report --run run_k8s2x9m</code></pre>
+      </div>
+
+      <h2 id="cli-vision">vision</h2>
+      <p>Opens an interactive dependency graph visualization in your browser. Ratchet analyzes import/export relationships, module boundaries, and coupling to show you the architecture of your codebase.</p>
+
+      <div class="table-wrap flag-table">
+        <table>
+          <thead>
+            <tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--static</code></td><td>false</td><td>Generate a static HTML file instead of launching a live server.</td></tr>
+            <tr><td><code>--focus</code></td><td>—</td><td>Focus the graph on a specific module/package name.</td></tr>
+            <tr><td><code>--filter</code></td><td>—</td><td>Show only nodes matching this pattern (regex).</td></tr>
+            <tr><td><code>--export-pdf</code></td><td>false</td><td>Export the graph as a PDF instead of opening the browser.</td></tr>
+            <tr><td><code>--max-nodes</code></td><td>500</td><td>Maximum number of nodes to render (for large codebases).</td></tr>
+            <tr><td><code>--focus-hops</code></td><td>2</td><td>When using <code>--focus</code>, how many dependency hops to include.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Interactive dependency graph
+ratchet vision
+
+# Focus on a specific module with 3 hops
+ratchet vision --focus auth-service --focus-hops 3
+
+# Static HTML for sharing
+ratchet vision --static -o graph.html
+
+# Export PDF
+ratchet vision --export-pdf -o architecture.pdf
+
+# Large codebase: limit nodes
+ratchet vision --max-nodes 300</code></pre>
+      </div>
+
+      <h2 id="cli-badge">badge [dir]</h2>
+      <p>Generates a <a href="https://shields.io" target="_blank">shields.io</a> badge URL for embedding in your README. The badge reflects the current score category (A/B/C/D/F) and color-codes it.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Generate badge URL for current project
+ratchet badge
+
+# Generate badge for a subdirectory
+ratchet badge ./packages/api
+
+# Output:
+# https://img.shields.io/badge/ratchet-B%20(79)-00d4ff?style=flat-square</code></pre>
+      </div>
+
+      <p>Embed in your README:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">markdown</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>![Ratchet Score](https://img.shields.io/badge/ratchet-B%20(79)-00d4ff?style=flat-square)</code></pre>
+      </div>
+
+      <h2 id="cli-build">build</h2>
+      <p>Rebuilds the Ratchet CLI binary from source. Useful when you've modified Ratchet's core or are running from the git repository. Downloads the latest runner and recompiles the native binary.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet build</code></pre>
+      </div>
+
+      <h2 id="cli-login">login &amp; logout</h2>
+      <p>Authenticate with your Ratchet account or clear stored credentials.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet login your-api-key-here
+ratchet logout</code></pre>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ</span>
+        <div class="callout-content">
+          <p><strong>Environment variable:</strong> Set <code>RATCHET_API_KEY</code> to authenticate without storing credentials on disk. Useful for CI environments and containers.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="gradient-divider"></div>
+
+    <!-- ===== CONFIGURATION ===== -->
+    <section class="section" id="configuration">
+      <div class="section-header">
+        <div class="section-title">Configuration (.ratchet.yml)<span class="anchor-link">#</span></div>
+        <div class="section-subtitle">Full annotated reference for every configuration option.</div>
+      </div>
+
+      <p>The <code>.ratchet.yml</code> file lives in your project root. Run <code>ratchet init</code> to generate a starter, then customize.</p>
+
+      <h2>Complete Example</h2>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">.ratchet.yml</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># =============================================================================
+# Ratchet Configuration — Full Reference
+# =============================================================================
+
+# --- Agent & Model Settings ---
+agent:
+  # The AI model provider to use for improvement cycles.
+  # Options: openai, anthropic, ollama, azure, google
+  provider: anthropic
+
+  # Model name. Must be available for the selected provider.
+  model: claude-sonnet-4-6
+
+  # Temperature for generation (0.0 = deterministic, 1.0 = creative)
+  temperature: 0.3
+
+  # Maximum tokens per response (affects context window usage)
+  max_tokens: 8192
+
+  # Base URL for self-hosted / proxy providers
+  # base_url: https://api.openai.com/v1
+
+# --- Global Defaults ---
+defaults:
+  # Default number of improvement clicks per torque/improve run
+  clicks: 7
+
+  # Shell command to run tests. Ratchet verifies this passes after each click.
+  # Empty string disables test gating.
+  test_command: "npm test"
+
+  # Auto-commit changes after each click (default: false — manual review mode)
+  auto_commit: false
+
+  # Default guard profile for new runs
+  guard_profile: refactor
+
+  # Default scope mode
+  scope: diff
+
+  # Timeout per click in seconds (0 = no timeout)
+  timeout: 300
+
+  # Fail the run if tests fail after any click
+  fail_on_test: true
+
+  # Skip CI checks (for local runs)
+  skip_ci: false
+
+# --- Targets ---
+targets:
+  # Define multiple scopes within the same repository.
+  # Each target can be scoped to a subdirectory or feature area.
+
+  - name: api
+    path: ./src/api
+    description: "REST API layer — controllers, routes, middleware"
+    guard_profile: tight
+    scope: staged
+
+  - name: core
+    path: ./src/core
+    description: "Core business logic and domain models"
+    guard_profile: refactor
+
+  - name: full
+    path: ./
+    description: "Full codebase improvement"
+    guard_profile: broad
+    scope: diff
+
+# --- Boundaries ---
+boundaries:
+  # Hard constraints that Ratchet will never cross.
+
+  - path: "./node_modules/**"
+    rule: no-modify
+    reason: "Third-party code — never modify"
+
+  - path: "./dist/**"
+    rule: no-modify
+    reason: "Build output — generated files"
+
+  - path: "./src/**/*.test.ts"
+    rule: preserve-pattern
+    reason: "Test files must retain their structure for IDE integration"
+
+  - path: "./src/migrations/**"
+    rule: no-delete
+    reason: "Database migrations are immutable once merged"
+
+  - path: "./config/secrets.*"
+    rule: no-modify
+    reason: "Secret files — never touch"
+
+  - path: "./generated/**"
+    rule: preserve-pattern
+    reason: "Auto-generated code — modify source, not generated output"
+
+# Valid rule types:
+#   no-modify     — Ratchet will not edit files matching this path
+#   preserve-pattern — Ratchet will not change file structure, only contents
+#   no-delete     — Ratchet will not delete files matching this path
+
+# --- Guard Profiles (inline overrides) ---
+# Guard profiles control how many files/lines Ratchet can touch per click.
+# You can reference named profiles or define them inline:
+
+guards:
+  # Named reference
+  profile: refactor
+
+  # Or inline definition:
+  inline:
+    max_files_per_click: 5
+    max_lines_per_file: 80
+    allow架构_refactors: true
+    allow_new_files: true
+    allow_delete: false
+
+# --- Score Thresholds ---
+thresholds:
+  # Minimum score to consider a run "successful"
+  target_score: 85
+
+  # Fail categories below these scores
+  fail_on_category:
+    testing: 60
+    security: 75
+    error_handling: 50
+
+# --- Notifications ---
+notifications:
+  # Post run summary to GitHub PR
+  github_pr_comment: true
+
+  # Post to Slack webhook
+  slack_webhook: null   # set to your Slack webhook URL
+
+  # Emit CI status checks
+  ci_status: true
+
+# --- Advanced ---
+advanced:
+  # Parallel clicks (experimental — default: 1)
+  parallel_clicks: 1
+
+  # Enable architect-level analysis (import graphs, coupling)
+  architect_enabled: true
+
+  # Cache analysis between runs (faster subsequent runs)
+  cache_enabled: true
+
+  # Custom file extensions to scan
+  extensions:
+    - .ts
+    - .tsx
+    - .js
+    - .jsx
+    - .py
+    - .go
+    - .rs
+
+  # Files/folders to always exclude from analysis
+  exclude:
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/.git/**"
+    - "**/*.test.*"
+    - "**/*.spec.*"
+    - "**/__tests__/**"
+</code></pre>
+      </div>
+
+      <h2>Configuration Precedence</h2>
+      <p>Ratchet resolves config in this order (later overrides earlier):</p>
+
+      <ol>
+        <li>Built-in defaults (hard-coded)</li>
+        <li>Project <code>.ratchet.yml</code> in project root</li>
+        <li>User-level <code>~/.ratchet/config.yml</code></li>
+        <li>Environment variables (<code>RATCHET_*</code>)</li>
+        <li>CLI flags (highest precedence)</li>
+      </ol>
+
+      <h2>Environment Variables</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>RATCHET_API_KEY</code></td><td>API key for authentication (overrides stored credentials)</td></tr>
+            <tr><td><code>RATCHET_CONFIG</code></td><td>Path to a custom config file</td></tr>
+            <tr><td><code>RATCHET_MODEL</code></td><td>Default model override</td></tr>
+            <tr><td><code>RATCHET_NO_CACHE</code></td><td>Set to <code>1</code> to disable caching</td></tr>
+            <tr><td><code>RATCHET_LOG_LEVEL</code></td><td>Debug logging: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="gradient-divider"></div>
+
+    <!-- ===== SCORING SYSTEM ===== -->
+    <section class="section" id="scoring-system">
+      <div class="section-header">
+        <div class="section-title">Scoring System<span class="anchor-link">#</span></div>
+        <div class="section-subtitle">How Ratchet evaluates and scores your codebase across 6 weighted categories.</div>
+      </div>
+
+      <h2>Score Overview</h2>
+      <p>The Ratchet Score is a 0–100 weighted composite of 6 categories. Higher is better. Scores ≥ 90 are <strong>A</strong>, 80–89 is <strong>B</strong>, 70–79 is <strong>C</strong>, 60–69 is <strong>D</strong>, and below 60 is <strong>F</strong>.</p>
+
+      <div class="score-bar">
+        <span class="score-bar-label">Testing</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:62.5%; background:var(--accent);"></div></div>
+        <span class="score-bar-value">25 pts</span>
+      </div>
+      <div class="score-bar">
+        <span class="score-bar-label">Security</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:37.5%; background:#f85149;"></div></div>
+        <span class="score-bar-value">15 pts</span>
+      </div>
+      <div class="score-bar">
+        <span class="score-bar-label">Type Safety</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:37.5%; background:#bc8cff;"></div></div>
+        <span class="score-bar-value">15 pts</span>
+      </div>
+      <div class="score-bar">
+        <span class="score-bar-label">Error Handling</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:50%; background:#d29922;"></div></div>
+        <span class="score-bar-value">20 pts</span>
+      </div>
+      <div class="score-bar">
+        <span class="score-bar-label">Performance</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:25%; background:#3fb950;"></div></div>
+        <span class="score-bar-value">10 pts</span>
+      </div>
+      <div class="score-bar">
+        <span class="score-bar-label">Code Quality</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:37.5%; background:#e3b341;"></div></div>
+        <span class="score-bar-value">15 pts</span>
+      </div>
+
+      <h2>Category Breakdown</h2>
+
+      <h3>Testing (25 points)</h3>
+      <p>Measures test coverage, edge case handling, and test quality.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Subcategory</th><th>Max Pts</th><th>Checks</th></tr></thead>
+          <tbody>
+            <tr><td>Coverage</td><td>10</td><td>Lines/functions covered by tests vs. total</td></tr>
+            <tr><td>Edge Cases</td><td>8</td><td>Null/undefined inputs, boundary conditions, error paths</td></tr>
+            <tr><td>Test Quality</td><td>7</td><td>Use of assertions over conditionals, no flaky sleeps</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Security (15 points)</h3>
+      <p>Detects common vulnerabilities and insecure patterns.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Subcategory</th><th>Max Pts</th><th>Checks</th></tr></thead>
+          <tbody>
+            <tr><td>Input Validation</td><td>5</td><td>SQL injection, XSS, command injection patterns</td></tr>
+            <tr><td>Auth/Authz</td><td>4</td><td>Missing auth checks, hardcoded secrets, weak crypto</td></tr>
+            <tr><td>Dependency Health</td><td>3</td><td>Known CVEs in package dependencies</td></tr>
+            <tr><td>Secrets Management</td><td>3</td><td>API keys, tokens, credentials in source</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Type Safety (15 points)</h3>
+      <p>Measures how well your codebase uses type systems to prevent runtime errors.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Subcategory</th><th>Max Pts</th><th>Checks</th></tr></thead>
+          <tbody>
+            <tr><td>Type Coverage</td><td>7</td><td>Percentage of code with explicit type annotations</td></tr>
+            <tr><td>Strict Mode</td><td>4</td><td>strictNullChecks, noImplicitAny enabled</td></tr>
+            <tr><td>Discriminated Unions</td><td>2</td><td>Use of exhaustive type unions over loose enums</td></tr>
+            <tr><td>Generics Usage</td><td>2</td><td>Appropriate use of generics over any types</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Error Handling (20 points)</h3>
+      <p>Evaluates how gracefully your code handles and reports failures.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Subcategory</th><th>Max Pts</th><th>Checks</th></tr></thead>
+          <tbody>
+            <tr><td>Try/Catch Coverage</td><td>8</td><td>Async operations, external I/O wrapped in error handlers</td></tr>
+            <tr><td>Error Propagation</td><td>5</td><td>Errors not silently swallowed, meaningful error messages</td></tr>
+            <tr><td>Fallback Behavior</td><td>4</td><td>Graceful degradation, circuit breakers, retry logic</td></tr>
+            <tr><td>Centralized Error Format</td><td>3</td><td>Consistent error response structures</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Performance (10 points)</h3>
+      <p>Identifies common performance anti-patterns.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Subcategory</th><th>Max Pts</th><th>Checks</th></tr></thead>
+          <tbody>
+            <tr><td>Query Efficiency</td><td>4</td><td>N+1 queries, missing indexes, full scans</td></tr>
+            <tr><td>Memory Patterns</td><td>3</td><td>Memory leaks, unbounded collections, large allocations</td></tr>
+            <tr><td>Async/Await Usage</td><td>3</td><td>Sequential awaits that could be parallel</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Code Quality (15 points)</h3>
+      <p>General code cleanliness, maintainability, and best practices.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Subcategory</th><th>Max Pts</th><th>Checks</th></tr></thead>
+          <tbody>
+            <tr><td>DRY / Duplication</td><td>5</td><td>Repeated logic, copy-paste patterns</td></tr>
+            <tr><td>Naming &amp; Clarity</td><td>4</td><td>Descriptive names, consistent conventions</td></tr>
+            <tr><td>Function Size</td><td>3</td><td>Functions within 50 lines, no god functions</td></tr>
+            <tr><td>Dead Code</td><td>3</td><td>Unused exports, unreachable code, commented-out blocks</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Score Calculation</h2>
+      <p>Each subcategory score is normalized to its point maximum, then summed. The final score is:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">formula</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>total_score = (
+  (testing_score / 25) * 100 * 0.25 +
+  (security_score / 15) * 100 * 0.15 +
+  (type_safety_score / 15) * 100 * 0.15 +
+  (error_handling_score / 20) * 100 * 0.20 +
+  (performance_score / 10) * 100 * 0.10 +
+  (code_quality_score / 15) * 100 * 0.15
+)
+
+# Final score: 0–100 (rounded to 1 decimal)</code></pre>
+      </div>
+
+      <h2>Score History</h2>
+      <p>Ratchet stores score history in <code>~/.ratchet/history/</code>. Each run logs a timestamped score snapshot so you can track improvement over time. View it with:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet scan --output-json | jq '.score_history'</code></pre>
+      </div>
+    </section>
+
+    <div class="gradient-divider"></div>
+
+    <!-- ===== GUARD PROFILES ===== -->
+    <section class="section" id="guard-profiles">
+      <div class="section-header">
+        <div class="section-title">Guard Profiles<span class="anchor-link">#</span></div>
+        <div class="section-subtitle">Control how aggressively Ratchet modifies files per improvement click.</div>
+      </div>
+
+      <p>Guard profiles are Ratchet's safety system. They define hard limits on how many files can be modified per click and how many lines can be changed — preventing a single click from rewriting your entire codebase.</p>
+
+      <h2>Profile Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Profile</th><th>Max Files/Click</th><th>Max Lines/File</th><th>Best For</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>tight</code></td><td>3</td><td>40</td><td>Production, sensitive codebases, PRs</td></tr>
+            <tr><td><code>refactor</code> <em>(default)</em></td><td>5</td><td>80</td><td>General improvement, most projects</td></tr>
+            <tr><td><code>broad</code></td><td>10</td><td>150</td><td>Greenfield, large refactors</td></tr>
+            <tr><td><code>atomic</code></td><td>1</td><td>20</td><td>Maximum safety, surgical changes only</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Profile Details</h2>
+
+      <h3>Tight</h3>
+      <p>The most conservative profile. Designed for production codebases where stability is paramount. Maximum 3 files and 40 lines changed per click. Ideal for CI runs on <code>main</code> or critical modules.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">yaml</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>guards:
+  profile: tight
+# Equivalent inline:
+# max_files_per_click: 3
+# max_lines_per_file: 40
+# allow_new_files: false
+# allow_delete: false</code></pre>
+      </div>
+
+      <h3>Refactor (Default)</h3>
+      <p>Balanced between safety and productivity. Allows up to 5 files and 80 lines per click. This is the default and recommended profile for most projects.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">yaml</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>guards:
+  profile: refactor</code></pre>
+      </div>
+
+      <h3>Broad</h3>
+      <p>For large refactoring tasks or greenfield projects. Allows up to 10 files and 150 lines per click. Use with <code>--plan-first</code> to review before execution.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">yaml</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>guards:
+  profile: broad</code></pre>
+      </div>
+
+      <h3>Atomic</h3>
+      <p>Maximum safety. One file, up to 20 lines changed. Each change is reviewed before the next. Useful for running Ratchet as a reviewer alongside human approval.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">yaml</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>guards:
+  profile: atomic</code></pre>
+      </div>
+
+      <h2>Smart Guard Escalation</h2>
+      <p>By default, Ratchet employs <strong>smart escalation</strong>: if a click succeeds (tests pass, no boundary violations), the next click may slightly increase its scope budget — but never beyond the defined profile maximum. This lets Ratchet "warm up" while staying within your safety limits.</p>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠</span>
+        <div class="callout-content">
+          <p><strong>Smart escalation</strong> only broadens per-click scope incrementally. Ratchet will never escalate past the profile's hard maximums. Disable with <code>--no-escalate</code> or <code>--no-guard-escalation</code> if you need strict constant limits.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Disable escalation — all clicks stay at tight limits
+ratchet torque --guards tight --no-escalate
+
+# Disable escalation via config
+guards:
+  profile: refactor
+  auto_escalate: false</code></pre>
+      </div>
+
+      <h2>Disabling Guards</h2>
+      <p>You cannot fully disable guards — they are a core safety mechanism. However, <code>broad</code> profile with a high click count provides the most expansive improvement surface while still maintaining basic scope limits.</p>
+
+      <div class="callout danger">
+        <span class="callout-icon">🚫</span>
+        <div class="callout-content">
+          <p><strong>Never run <code>torque</code> without guards in production.</strong> The guard system is what prevents Ratchet from making uncontrolled mass changes. Use <code>--plan-first</code> to review all changes before they execute.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="gradient-divider"></div>
+
+    <!-- ===== SCOPE LOCKING ===== -->
+    <section class="section" id="scope-locking">
+      <div class="section-header">
+        <div class="section-title">Scope Locking<span class="anchor-link">#</span></div>
+        <div class="section-subtitle">Control exactly which files Ratchet can touch using Git-aware scoping.</div>
+      </div>
+
+      <p>Scope locking ensures Ratchet only modifies files within your intended change boundary. This prevents AI agent "hallucination drift" — where an agent might wander into unrelated parts of the codebase. All scopes are Git-aware and validated against your repository state.</p>
+
+      <h2>Scope Modes</h2>
+
+      <h3>diff (Default)</h3>
+      <p>Only touches files that have uncommitted changes in the current working tree. Ideal for in-progress work where you want Ratchet to improve what you're already touching.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet torque --scope diff</code></pre>
+      </div>
+
+      <h3>branch</h3>
+      <p>Scopes to all files changed on the current branch compared to <code>main</code> (or your default branch). Useful for reviewing all changes in a feature branch before merging.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet torque --scope branch</code></pre>
+      </div>
+
+      <h3>staged</h3>
+      <p>Only touches files that are currently staged in Git (<code>git add</code>). Excellent for PR workflows: stage the files you want improved, then run Ratchet on exactly those.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Stage files you want improved
+git add src/api/*.ts
+
+# Run Ratchet on staged changes
+ratchet torque --scope staged</code></pre>
+      </div>
+
+      <h3>glob</h3>
+      <p>Scope to files matching a glob pattern. Ratchet will only touch files matching the pattern, regardless of their Git status.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Only TypeScript files in src/
+ratchet torque --scope "glob:src/**/*.ts"
+
+# Only test files
+ratchet torque --scope "glob:**/*.test.ts"
+
+# Only files in the utils directory
+ratchet torque --scope "glob:src/utils/**"</code></pre>
+      </div>
+
+      <h3>file:paths</h3>
+      <p>Explicit list of file paths. Ratchet will only touch those exact files. Paths are comma-separated.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet torque --scope "file:src/auth/login.ts,src/auth/logout.ts,src/auth/session.ts"
+
+# Alias (no "file:" prefix also works)
+ratchet torque --scope "src/auth/login.ts,src/auth/logout.ts"</code></pre>
+      </div>
+
+      <h2>Git-Aware Enforcement</h2>
+      <p>Ratchet validates scopes against Git state at the start of each click. If the Git working tree changes (e.g., a <code>git checkout</code> mid-run), Ratchet pauses and asks for confirmation before continuing.</p>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ</span>
+        <div class="callout-content">
+          <p><strong>Branch protection:</strong> When connected to GitHub/GitLab, Ratchet automatically detects protected branches and applies <code>tight</code> guards + <code>staged</code> scope on protected branches, even if a broader scope is configured.</p>
+        </div>
+      </div>
+
+      <h2>Scope in Configuration</h2>
+      <p>Set default scope per target in <code>.ratchet.yml</code>:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">yaml</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>targets:
+  - name: api
+    path: ./src/api
+    scope: staged      # default scope for this target
+    guard_profile: tight
+
+  - name: full
+    path: ./
+    scope: diff        # default scope
+    guard_profile: refactor</code></pre>
+      </div>
+    </section>
+
+    <div class="gradient-divider"></div>
+
+    <!-- ===== CI/CD ===== -->
+    <section class="section" id="cicd">
+      <div class="section-header">
+        <div class="section-title">CI/CD Integration<span class="anchor-link">#</span></div>
+        <div class="section-subtitle">Run Ratchet in GitHub Actions, GitLab CI, and other CI systems with proper exit codes and badge generation.</div>
+      </div>
+
+      <h2>GitHub Actions</h2>
+      <p>Ratchet integrates with GitHub Actions using <code>ratchet scan --fail-on --output-json</code>. The JSON output parses cleanly into step summaries.</p>
+
+      <h3>Basic Setup</h3>
+      <p>Add this workflow to <code>.github/workflows/ratchet.yml</code>:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">.github/workflows/ratchet.yml</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>name: Ratchet Code Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ratchet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Ratchet
+        run: npm install -g ratchet-run
+
+      - name: Run Ratchet scan
+        env:
+          RATCHET_API_KEY: ${{ secrets.RATCHET_API_KEY }}
+        run: |
+          ratchet scan \
+            --fail-on 80 \
+            --fail-on-category "security=70" \
+            --fail-on-category "testing=60" \
+            --output-json | tee ratchet-report.json
+
+      - name: Upload Ratchet Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ratchet-report
+          path: ratchet-report.json
+
+      - name: Add Ratchet Badge to PR
+        if: github.event_name == 'pull_request'
+        run: |
+          BADGE_URL=$(ratchet badge --output-url)
+          echo "::set-output name=badge::$BADGE_URL"
+        id: badge
+
+      - name: Post Ratchet Score Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## Ratchet Score\n\n' +
+                '🤖 Ratchet has analyzed this PR. View the full report in the artifacts.\n\n' +
+                '![Ratchet](' + process.env.BADGE_URL + ')'
+            })
+</code></pre>
+      </div>
+
+      <h3>Improve on Merge to Main</h3>
+      <p>Only run autonomous improvement on merges to <code>main</code>, not on every PR:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">.github/workflows/ratchet-torque.yml</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>name: Ratchet Torque
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  torque:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Ratchet
+        run: npm install -g ratchet-run
+
+      - name: Run Torque
+        env:
+          RATCHET_API_KEY: ${{ secrets.RATCHET_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ratchet torque \
+            --guards refactor \
+            --clicks 7 \
+            --scope branch \
+            --pr
+
+      - name: Tighten &amp; Finalize
+        env:
+          RATCHET_API_KEY: ${{ secrets.RATCHET_API_KEY }}
+        run: ratchet tighten --pr</code></pre>
+      </div>
+
+      <h2>Exit Codes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Exit Code</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>0</code></td><td>Success — score above threshold, all checks passed</td></tr>
+            <tr><td><code>1</code></td><td>Failure — score below <code>--fail-on</code> threshold or category failed</td></tr>
+            <tr><td><code>2</code></td><td>Error — Ratchet encountered an error (missing API key, bad config, etc.)</td></tr>
+            <tr><td><code>3</code></td><td>Guard violation — click exceeded guard limits and was reverted</td></tr>
+            <tr><td><code>4</code></td><td>Tests failed — <code>test_command</code> returned non-zero after a click</td></tr>
+            <tr><td><code>5</code></td><td>Timeout — click exceeded the <code>--timeout</code> limit</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Badge Generation in CI</h2>
+      <p>Use <code>ratchet badge</code> to generate a dynamic shields.io URL from CI, then use it in your README or PR comments:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Get the badge URL (returns JSON with url field)
+ratchet badge --json
+
+# Example output:
+# {"url":"https://img.shields.io/badge/ratchet-B%20(82)-00d4ff?style=flat-square","grade":"B","score":82}</code></pre>
+      </div>
+
+      <h2>GitLab CI</h2>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">.gitlab-ci.yml</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet_scan:
+  image: node:20-alpine
+  variables:
+    RATCHET_API_KEY: $RATCHET_API_KEY
+  script:
+    - npm install -g ratchet-run
+    - ratchet scan --fail-on 80 --output-json | tee ratchet-report.json
+  artifacts:
+    reports:
+      json: ratchet-report.json
+    when: always
+    paths:
+      - ratchet-report.json</code></pre>
+      </div>
+    </section>
+
+    <div class="gradient-divider"></div>
+
+    <!-- ===== PRICING ===== -->
+    <section class="section" id="pricing">
+      <div class="section-header">
+        <div class="section-title">Pricing<span class="anchor-link">#</span></div>
+        <div class="section-subtitle">Plans for individuals, startups, teams, and enterprises.</div>
+      </div>
+
+      <div class="pricing-grid">
+
+        <!-- Free -->
+        <div class="pricing-card">
+          <span class="badge badge-free">Free</span>
+          <div class="pricing-name" style="margin-top:10px;">Free</div>
+          <div class="pricing-price">$0<span>/mo</span></div>
+          <p style="font-size:13px;color:var(--text3);margin:0;">Forever free. No credit card required.</p>
+          <ul class="pricing-features">
+            <li>scan</li>
+            <li>badge</li>
+            <li>status</li>
+            <li>log</li>
+            <li>report</li>
+            <li>vision</li>
+            <li>1 target</li>
+          </ul>
+        </div>
+
+        <!-- Builder -->
+        <div class="pricing-card">
+          <span class="badge badge-builder">Builder</span>
+          <div class="pricing-name" style="margin-top:10px;">Builder</div>
+          <div class="pricing-price">$9<span>/mo</span><span class="yearly">$86/yr (save 20%)</span></div>
+          <p style="font-size:13px;color:var(--text3);margin:0;">For individual developers improving personal projects.</p>
+          <ul class="pricing-features">
+            <li>Everything in Free</li>
+            <li><strong>30 cycles/mo</strong></li>
+            <li>improve command</li>
+            <li>5 targets</li>
+            <li>All guard profiles</li>
+            <li>Email support</li>
+          </ul>
+        </div>
+
+        <!-- Pro -->
+        <div class="pricing-card popular">
+          <span class="badge">Popular</span>
+          <div class="pricing-name" style="margin-top:10px;">Pro</div>
+          <div class="pricing-price">$19<span>/mo</span><span class="yearly">$182/yr (save 20%)</span></div>
+          <p style="font-size:13px;color:var(--text3);margin:0;">For professional developers shipping production code.</p>
+          <ul class="pricing-features">
+            <li>Everything in Builder</li>
+            <li><strong>150 cycles/mo</strong></li>
+            <li>torque command</li>
+            <li>Unlimited targets</li>
+            <li>GitHub/GitLab integration</li>
+            <li>PR creation</li>
+            <li>Priority support</li>
+          </ul>
+        </div>
+
+        <!-- Team -->
+        <div class="pricing-card">
+          <span class="badge badge-team">Team</span>
+          <div class="pricing-name" style="margin-top:10px;">Team</div>
+          <div class="pricing-price">$49<span>/mo</span><span class="yearly">$470/yr (save 20%)</span></div>
+          <p style="font-size:13px;color:var(--text3);margin:0;">For small teams moving fast on shared codebases.</p>
+          <ul class="pricing-features">
+            <li>Everything in Pro</li>
+            <li><strong>500 cycles/mo</strong></li>
+            <li>5 seats included</li>
+            <li>Shared team config</li>
+            <li>Team analytics</li>
+            <li>Slack notifications</li>
+            <li>Dedicated support</li>
+          </ul>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="pricing-card">
+          <span class="badge badge-enterprise">Enterprise</span>
+          <div class="pricing-name" style="margin-top:10px;">Enterprise</div>
+          <div class="pricing-price">Custom</div>
+          <p style="font-size:13px;color:var(--text3);margin:0;">Unlimited everything. White-glove onboarding.</p>
+          <ul class="pricing-features">
+            <li>Everything in Team</li>
+            <li><strong>Unlimited cycles</strong></li>
+            <li>Unlimited seats</li>
+            <li>Self-hosted runner</li>
+            <li>Custom model providers</li>
+            <li>SLA guarantee</li>
+            <li>Custom contract &amp; invoicing</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <h2>What's a "Cycle"?</h2>
+      <p>A cycle is one complete <code>ratchet improve</code> run or one <code>ratchet torque</code> run — regardless of how many clicks are in it. If you run <code>ratchet torque --clicks 7</code>, that counts as 1 cycle.</p>
+
+      <h2>Cycle Tracking</h2>
+      <p>Check your cycle usage at any time:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code>ratchet status
+# Cycles used this month: 23 / 150 (Pro)
+# Resets in 11 days</code></pre>
+      </div>
+
+      <h2>Need More Cycles?</h2>
+      <p>Add cycle top-ups at any time (billed per-use, no commitment):</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="code-block-label">bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code># Buy 10 extra cycles
+ratchet buy --cycles 10
+
+# Upgrade plan
+ratchet upgrade --plan pro</code></pre>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ</span>
+        <div class="callout-content">
+          <p><strong>Annual billing</strong> saves 20% across all plans. All plans include a 14-day free trial on paid features. See full pricing at <a href="https://ratchet.run/pricing" target="_blank">ratchet.run/pricing</a>.</p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</main><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// ===== SEARCH =====
+const searchInput = document.getElementById('searchInput');
+const docsContent = document.getElementById('docsContent');
+const allSections = Array.from(document.querySelectorAll('.section'));
+const allNavLinks = Array.from(document.querySelectorAll('.nav-link'));
+
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+}
+
+function tokenize(text) {
+  return text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+}
+
+function highlight(text, query) {
+  if (!query) return text;
+  const terms = tokenize(query);
+  let result = text;
+  terms.forEach(term => {
+    const re = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    result = result.replace(re, '<span class="search-highlight">$1</span>');
+  });
+  return result;
+}
+
+function getSectionContent(section) {
+  const clone = section.cloneNode(true);
+  clone.querySelectorAll('.code-block').forEach(cb => {
+    const header = cb.querySelector('.code-block-header');
+    if (header) header.remove();
+  });
+  clone.querySelectorAll('.copy-btn').forEach(b => b.remove());
+  clone.querySelectorAll('.callout').forEach(c => c.remove());
+  return stripHtml(clone.innerHTML);
+}
+
+function search(query) {
+  const q = query.toLowerCase().trim();
+  if (!q) {
+    docsContent.style.display = '';
+    document.getElementById('search-results').classList.remove('active');
+    allSections.forEach(s => s.style.display = '');
+    allNavLinks.forEach(l => l.classList.remove('active'));
+    return;
+  }
+
+  docsContent.style.display = 'none';
+  const resultsEl = document.getElementById('search-results') || createSearchResults();
+  resultsEl.classList.add('active');
+  resultsEl.innerHTML = '';
+
+  let found = 0;
+  allSections.forEach(section => {
+    const title = section.querySelector('.section-title');
+    const sectionTitle = title ? title.textContent.replace(/#/g, '').trim() : '';
+    const sectionId = section.id;
+    const content = getSectionContent(section);
+    const tokens = tokenize(content);
+    const titleTokens = tokenize(sectionTitle);
+
+    const score = tokens.filter(t => tokenize(q).some(qt => t.includes(qt) || qt.includes(t))).length
+                + titleTokens.filter(t => tokenize(q).some(qt => t.includes(qt) || qt.includes(t))).length * 3;
+
+    if (score > 0) {
+      found++;
+      const heading = section.querySelector('h2, h3');
+      const headingText = heading ? heading.textContent.replace(/#/g, '').trim() : sectionTitle;
+
+      // Create result
+      const result = document.createElement('div');
+      result.className = 'search-result';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'search-result-title';
+      titleEl.textContent = sectionTitle;
+
+      const pathEl = document.createElement('div');
+      pathEl.className = 'search-result-path';
+      pathEl.textContent = '#' + sectionId;
+
+      const excerpt = document.createElement('div');
+      excerpt.className = 'search-result-excerpt';
+
+      // Find snippet
+      const lowerContent = content.toLowerCase();
+      const lowerQ = q.toLowerCase();
+      const idx = lowerContent.indexOf(lowerQ);
+      let snippet = '';
+      if (idx !== -1) {
+        const start = Math.max(0, idx - 60);
+        const end = Math.min(content.length, idx + q.length + 120);
+        snippet = (start > 0 ? '…' : '') + content.slice(start, end) + (end < content.length ? '…' : '');
+      } else {
+        snippet = content.slice(0, 180) + '…';
+      }
+      excerpt.innerHTML = highlight(snippet, q);
+
+      result.appendChild(titleEl);
+      result.appendChild(pathEl);
+      result.appendChild(excerpt);
+      resultsEl.appendChild(result);
+
+      titleEl.addEventListener('click', () => {
+        document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+      });
+    }
+  });
+
+  if (found === 0) {
+    resultsEl.innerHTML = '<div class="search-no-results">No results found for "' + query + '"</div>';
+  }
+}
+
+function createSearchResults() {
+  const el = document.createElement('div');
+  el.id = 'search-results';
+  docsContent.parentNode.insertBefore(el, docsContent.nextSibling);
+  return el;
+}
+
+let searchTimeout;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => search(searchInput.value), 150);
+});
+
+// ===== COPY CODE =====
+function copyCode(btn) {
+  const codeBlock = btn.closest('.code-block');
+  const code = codeBlock.querySelector('pre code') || codeBlock.querySelector('pre');
+  const text = code ? code.textContent : '';
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ===== ACTIVE NAV =====
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      allNavLinks.forEach(l => {
+        l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+
+allSections.forEach(s => observer.observe(s));
+
+// ===== SIDEBAR TOGGLE (MOBILE) =====
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('active');
+}
+
+document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+
+// Close sidebar on nav link click (mobile)
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', () => {
+    if (window.innerWidth <= 900) toggleSidebar();
+  });
+});
+
+// ===== RESIZE HANDLER =====
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 900) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('active');
+  }
+});
+
+// ===== ANCHOR LINKS =====
+document.querySelectorAll('.anchor-link').forEach(link => {
+  link.textContent = '#';
+  link.href = '#';
+  const section = link.closest('.section') || link.closest('div[id]');
+  if (section) {
+    link.href = '#' + section.id;
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById(section.id).scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+});
+</script>
+
+</body>
+</html>
