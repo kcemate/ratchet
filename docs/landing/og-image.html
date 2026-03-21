@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;800&display=swap');
+
+  body {
+    width: 1200px;
+    height: 630px;
+    background: #0a0a0f;
+    font-family: 'Inter', sans-serif;
+    color: #f0f0f5;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Subtle grid */
+  body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .layout {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    height: 100%;
+    padding: 48px 56px;
+    gap: 48px;
+  }
+
+  .left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #00d4ff, #00ff9d);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0a0a0f;
+    box-shadow: 0 0 24px rgba(0,212,255,0.4);
+  }
+
+  .logo-text {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .headline {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+
+  .headline span { color: #00d4ff; }
+
+  .subline {
+    font-size: 18px;
+    color: #a1a1aa;
+    line-height: 1.5;
+    max-width: 420px;
+  }
+
+  .url {
+    margin-top: 28px;
+    font-size: 15px;
+    color: #00d4ff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .right {
+    width: 480px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  /* Score transformation */
+  .scores {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+  }
+
+  .score-box {
+    text-align: center;
+  }
+
+  .score-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #71717a;
+    margin-bottom: 8px;
+  }
+
+  .score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .score-num.before { color: #f87171; }
+  .score-num.after { color: #00d4ff; text-shadow: 0 0 32px rgba(0,212,255,0.5); }
+
+  .score-arrow {
+    font-size: 36px;
+    color: #3f3f46;
+    margin-top: 16px;
+  }
+
+  .score-sub {
+    font-size: 14px;
+    color: #52525b;
+    margin-top: 4px;
+  }
+
+  /* Terminal */
+  .terminal {
+    background: #161b22;
+    border: 1px solid #27272a;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+
+  .term-header {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .term-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .term-dot.red { background: #ff5f57; }
+  .term-dot.yellow { background: #febc2e; }
+  .term-dot.green { background: #28c840; }
+
+  .term-line { color: #8b949e; }
+  .term-cmd { color: #e6edf3; }
+  .term-success { color: #00d4ff; }
+  .term-pass { color: #00ff9d; }
+  .term-dim { color: #484f58; }
+</style>
+</head>
+<body>
+  <div class="layout">
+    <div class="left">
+      <div class="logo">
+        <div class="logo-icon">⚙</div>
+        <div class="logo-text">ratchet</div>
+      </div>
+      <div class="headline">Your Codebase<br>Improves <span>While<br>You Sleep</span></div>
+      <div class="subline">AI CLI that audits, rewrites, and tests your code. Only improvements that pass tests get committed.</div>
+      <div class="url">ratchetcli.com</div>
+    </div>
+    <div class="right">
+      <div class="scores">
+        <div class="score-box">
+          <div class="score-label">Before</div>
+          <div class="score-num before">47</div>
+          <div class="score-sub">/100</div>
+        </div>
+        <div class="score-arrow">→</div>
+        <div class="score-box">
+          <div class="score-label">After</div>
+          <div class="score-num after">91</div>
+          <div class="score-sub">/100</div>
+        </div>
+      </div>
+      <div class="terminal">
+        <div class="term-header">
+          <div class="term-dot red"></div>
+          <div class="term-dot yellow"></div>
+          <div class="term-dot green"></div>
+        </div>
+        <div class="term-line"><span class="term-dim">$</span> <span class="term-cmd">ratchet torque --clicks 7</span></div>
+        <div class="term-line"><span class="term-success">✓</span> Scanned 847 files</div>
+        <div class="term-line"><span class="term-success">✓</span> Click 1: +4 pts <span class="term-pass">tests passing</span></div>
+        <div class="term-line"><span class="term-success">✓</span> Click 2: +6 pts <span class="term-pass">tests passing</span></div>
+        <div class="term-line"><span class="term-success">✓</span> Click 3: +8 pts <span class="term-pass">tests passing</span></div>
+        <div class="term-line"><span class="term-dim">⚠ Click 4: rolled back (test failure)</span></div>
+        <div class="term-line"><span class="term-success">✓</span> Click 5-7: +26 pts <span class="term-pass">committed</span></div>
+        <div class="term-line"><br><span class="term-success">Score: 47 → 91 (+44)</span> <span class="term-pass">■■■■■■■■■░</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
