@@ -113,6 +113,14 @@
             justify-content: space-between;
             align-items: center;
             height: 64px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        @media (max-width: 639px) {
+            nav .container { height: auto; padding-top: 10px; padding-bottom: 10px; }
+            .nav-links { order: 3; width: 100%; gap: 8px; padding-bottom: 4px; }
+            .nav-links a { font-size: 0.8rem; padding: 2px 6px; }
         }
 
         .logo {
@@ -140,12 +148,14 @@
         }
 
         .nav-links {
-            display: none;
-            gap: 32px;
+            display: flex;
+            gap: 16px;
             list-style: none;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        @media (min-width: 640px) { .nav-links { display: flex; } }
+        @media (min-width: 640px) { .nav-links { gap: 32px; } }
 
         .nav-links a {
             color: var(--text-secondary);
