@@ -937,9 +937,9 @@ h4:hover .anchor-link {
   </div>
 
   <div class="sidebar-footer">
-    <a href="https://github.com/ratchet-run/ratchet" target="_blank">GitHub</a>
-    <a href="https://ratchet.run/changelog" target="_blank">Changelog</a>
-    <a href="https://ratchet.run" target="_blank">ratchet.run ↗</a>
+    <a href="https://npmjs.com/package/ratchet-run" target="_blank">NPM Package</a>
+    <a href="https://ratchetcli.com" target="_blank">ratchetcli.com ↗</a>
+    <a href="https://ratchetcli.com/sandbox" target="_blank">Try Sandbox</a>
   </div>
 </nav>
 
@@ -953,8 +953,8 @@ h4:hover .anchor-link {
       <input type="text" id="searchInput" placeholder="Search docs..." autocomplete="off" spellcheck="false">
     </div>
     <div class="topbar-actions">
-      <a href="https://github.com/ratchet-run/ratchet" target="_blank">GitHub</a>
-      <a href="https://ratchet.run" target="_blank">Home</a>
+      <a href="https://npmjs.com/package/ratchet-run" target="_blank">NPM</a>
+      <a href="https://ratchetcli.com" target="_blank">Home</a>
       <a href="#pricing" class="btn-accent">Get Started</a>
     </div>
   </header>
@@ -980,7 +980,7 @@ h4:hover .anchor-link {
       </div>
 
       <h2>Prerequisites</h2>
-      <p>Ratchet requires <strong>Node.js 18+</strong> and <strong>Git</strong>. You'll also need an API key from your Ratchet account.</p>
+      <p>Ratchet requires <strong>Node.js 18+</strong> and <strong>Git</strong>. Paid features (torque, improve) require a license key from <a href="https://ratchetcli.com/#pricing" target="_blank">ratchetcli.com</a>.</p>
 
       <h2>Installation</h2>
       <p>Install Ratchet globally via npm:</p>
@@ -1001,29 +1001,29 @@ h4:hover .anchor-link {
           <button class="copy-btn" onclick="copyCode(this)">copy</button>
         </div>
         <pre><code>ratchet --version
-# ratchet v1.4.2</code></pre>
+# ratchet v1.0.8</code></pre>
       </div>
 
       <h2>Authentication</h2>
-      <p>Log in with your API key. Get one at <a href="https://ratchet.run/dashboard" target="_blank">ratchet.run/dashboard</a>:</p>
+      <p>Log in with your license key. You'll receive one via email after purchasing a plan at <a href="https://ratchetcli.com/#pricing" target="_blank">ratchetcli.com</a>:</p>
 
       <div class="code-block">
         <div class="code-block-header">
           <span class="code-block-label">bash</span>
           <button class="copy-btn" onclick="copyCode(this)">copy</button>
         </div>
-        <pre><code>ratchet login your-api-key-here</code></pre>
+        <pre><code>ratchet login your-license-key-here</code></pre>
       </div>
 
       <div class="callout info">
         <span class="callout-icon">ℹ</span>
         <div class="callout-content">
-          <p><strong>API Key Safety:</strong> Your key is stored encrypted in <code>~/.ratchet/credentials</code>. Never commit it to version control. Use environment variables in CI via <code>RATCHET_API_KEY</code>.</p>
+          <p><strong>License Key Safety:</strong> Your key is stored locally in <code>~/.ratchet/license.json</code>. Never commit it to version control. Use the <code>RATCHET_LICENSE_KEY</code> environment variable in CI.</p>
         </div>
       </div>
 
       <h2>Initialize Your Project</h2>
-      <p>Navigate to your project root and run <code>ratchet init</code>. Ratchet auto-detects your project type (Node.js, Python, Rust, Go, etc.) and writes a <code>.ratchet.yml</code> configuration file:</p>
+      <p>Navigate to your project root and run <code>ratchet init</code>. Ratchet auto-detects your project type and writes a <code>.ratchet.yml</code> configuration file:</p>
 
       <div class="code-block">
         <div class="code-block-header">
@@ -1118,7 +1118,7 @@ ratchet torque --plan-first</code></pre>
         </div>
         <pre><code>$ ratchet torque
 
-  ⚡ Ratchet v1.4.2 — Torque Mode
+  ⚡ Ratchet v1.0.8 — Torque Mode
   ─────────────────────────────────
   Target:     full codebase
   Guard:      refactor (3 files / 60 lines max)
@@ -2430,7 +2430,7 @@ ratchet upgrade --plan pro</code></pre>
       <div class="callout info">
         <span class="callout-icon">ℹ</span>
         <div class="callout-content">
-          <p><strong>Annual billing</strong> saves 20% across all plans. All plans include a 14-day free trial on paid features. See full pricing at <a href="https://ratchet.run/pricing" target="_blank">ratchet.run/pricing</a>.</p>
+          <p><strong>Annual billing</strong> saves 20% across all plans. <code>scan</code>, <code>vision</code>, <code>badge</code>, <code>status</code>, <code>log</code>, and <code>report</code> are free forever. See full pricing at <a href="https://ratchetcli.com/#pricing" target="_blank">ratchetcli.com</a>.</p>
         </div>
       </div>
     </section>
