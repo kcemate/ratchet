@@ -1,0 +1,54 @@
+name: "Ratchet Code Quality Scan"
+description: "Scan your codebase with Ratchet and get a production readiness score. Optionally fail the build if score is below threshold."
+author: "giovanni-labs"
+
+inputs:
+  threshold:
+    description: "Minimum total score required (0–100). If set, the action exits with failure when the score falls below this value."
+    required: false
+    default: ""
+  category-thresholds:
+    description: 'Comma-separated category minimums in "Category=Score" format, e.g. "Security=12,Testing=20". Each specified category gates independently.'
+    required: false
+    default: ""
+  explain:
+    description: "Pass --explain to ratchet scan to include category-level detail in the output."
+    required: false
+    default: "false"
+  working-directory:
+    description: "Directory to run the scan in (relative to the repository root)."
+    required: false
+    default: "."
+  version:
+    description: "ratchet-run version to install. Use 'latest' or a specific semver tag."
+    required: false
+    default: "latest"
+
+outputs:
+  score:
+    description: "The overall ratchet score (0–100)."
+  json:
+    description: "Absolute path to the ratchet-scan.json output file."
+  badge-url:
+    description: "shields.io dynamic badge URL encoding the current score."
+  pr-comment-id:
+    description: "GitHub API ID of the posted PR comment (empty if not in a PR)."
+
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      run: ${{ github.action_path }}/action/run.sh
+      env:
+        INPUT_THRESHOLD: ${{ inputs.threshold }}
+        INPUT_CATEGORY_THRESHOLDS: ${{ inputs.category-thresholds }}
+        INPUT_EXPLAIN: ${{ inputs.explain }}
+        INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        INPUT_VERSION: ${{ inputs.version }}
+        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_SHA: ${{ github.sha }}
+        GITHUB_REF: ${{ github.ref }}
+        GITHUB_EVENT_NAME: ${{ github.event_name }}
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
