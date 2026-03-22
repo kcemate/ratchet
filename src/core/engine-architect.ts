@@ -90,9 +90,9 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
 
         if (rolled_back) {
-          console.error(`[ratchet] architect click ${clickNumber} ROLLED BACK (${elapsedSec}s)`);
+          logger.error({ clickNumber, elapsedSec }, 'architect click ROLLED BACK');
         } else {
-          console.error(`[ratchet] architect click ${clickNumber} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
+          logger.info({ clickNumber, elapsedSec, commitHash: click.commitHash?.slice(0, 7) }, 'architect click LANDED');
         }
 
         // Re-scan after successful click to measure impact and refresh the prompt
@@ -104,7 +104,7 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
             // Score regression guard: if score dropped, revert the commit
             if (newTotal < previousTotal && click.commitHash) {
               const regressionDelta = previousTotal - newTotal;
-              console.error(`[ratchet] architect click ${clickNumber} ROLLED BACK — score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`);
+              logger.error({ clickNumber, before: previousTotal, after: newTotal, delta: regressionDelta }, 'architect click ROLLED BACK — score regression');
               await git.revertLastCommit(cwd).catch(() => {});
               click.testsPassed = false;
               click.rollbackReason = `score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`;

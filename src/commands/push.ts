@@ -76,9 +76,8 @@ export function pushCommand(): Command {
         process.exit(1);
       }
 
-      console.log(`  ${chalk.dim('Repo:')}   ${chalk.cyan(`${ownerRepo.owner}/${ownerRepo.repo}`)}`);
-      console.log(`  ${chalk.dim('Score:')}  ${chalk.bold(`${result.total}/${result.maxTotal}`)}`);
-      console.log('');
+      logger.info({ repo: `${ownerRepo.owner}/${ownerRepo.repo}` }, 'Pushing to repo');
+      logger.info({ score: `${result.total}/${result.maxTotal}` }, 'Score');
 
       // Push
       const spinner = ora('Pushing scan results…').start();
@@ -95,12 +94,7 @@ export function pushCommand(): Command {
       }
 
       spinner.succeed(chalk.green('Scan results pushed!'));
-      console.log('');
-      console.log(
-        `  ${chalk.dim('Badge URL:')} ` +
-        chalk.cyan(`https://ratchetcli.com/badge/${ownerRepo.owner}/${ownerRepo.repo}`),
-      );
-      console.log('');
+      logger.info({ badgeUrl: `https://ratchetcli.com/badge/${ownerRepo.owner}/${ownerRepo.repo}` }, 'Badge URL');
 
       // Auto-PR on first push
       if (options.autoPr && pushResult.isFirstPush) {
@@ -114,7 +108,6 @@ export function pushCommand(): Command {
         } else {
           prSpinner.warn(chalk.yellow(`Auto-PR: ${prResult.reason ?? 'unknown error'}`));
         }
-        console.log('');
       }
     });
 

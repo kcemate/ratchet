@@ -14,6 +14,7 @@ import { ShellAgent } from '../core/agents/shell.js';
 import { buildSwarmConfig } from '../core/swarm.js';
 import { isValidSpecialization } from '../core/agents/specialized.js';
 import { RatchetLogger } from '../core/logger.js';
+import { logger as pinoLogger } from '../lib/logger.js';
 import { generateReport, writeReport } from '../core/report.js';
 import { writePDF } from '../core/pdf-report.js';
 import { generateScoreCard, generatePRDescription } from '../core/pr-comment.js';
@@ -26,7 +27,10 @@ import type { Click, RatchetRun, Target } from '../types.js';
 import { GUARD_PROFILES } from '../types.js';
 import type { GuardProfileName } from '../types.js';
 import { formatDuration } from '../core/utils.js';
-import { printHeader, exitWithError, validateInt, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
+import {
+  printHeader, exitWithError, validateInt, printFields,
+  validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable,
+} from '../lib/cli.js';
 import { STATE_FILE } from './status.js';
 import { requireLicense } from '../core/license.js';
 import { startBackgroundRun, updateProgress } from '../core/background.js';
@@ -38,7 +42,9 @@ function printEconomics(economics: RunEconomics): void {
 
   process.stdout.write('\n' + chalk.bold('  📊 Run Economics') + '\n');
   process.stdout.write(`  Wall time:     ${formatDuration(economics.totalWallTimeMs)}\n`);
-  process.stdout.write(`  Effective:     ${formatDuration(economics.effectiveTimeMs)} (${efficiencyPct}% efficiency)\n`);
+  process.stdout.write(
+    `  Effective:     ${formatDuration(economics.effectiveTimeMs)} (${efficiencyPct}% efficiency)\n`,
+  );
   process.stdout.write(`  Wasted:        ${formatDuration(economics.wastedTimeMs)}\n`);
   process.stdout.write('\n');
   process.stdout.write(`  Landed:        ${economics.landed}/${total} clicks (${landedPct}%)\n`);
@@ -86,8 +92,14 @@ export function torqueCommand(): Command {
     .option('--dry-run', 'Preview mode — analyze and propose without committing any changes', false)
     .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
     .option('--no-branch', 'Run on the current branch instead of creating a ratchet branch', false)
-    .option('--mode <mode>', 'Run mode: "normal" (default), "harden" (write tests first, then improve), or "feature" (build from spec)')
-    .option('--spec <text-or-file>', 'Feature specification — quoted string or path to a .md file (required with --mode feature)')
+    .option(
+      '--mode <mode>',
+      'Run mode: "normal" (default), "harden" (write tests first, then improve), or "feature" (build from spec)',
+    )
+    .option(
+      '--spec <text-or-file>',
+      'Feature specification — quoted string or path to a .md file (required with --mode feature)',
+    )
     .option('--swarm', 'Enable swarm mode — N agents compete per click, best change wins', false)
     .option('--agents <number>', 'Number of competing agents in swarm mode (default: 3)')
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
@@ -96,7 +108,10 @@ export function torqueCommand(): Command {
     .option('--personalities <names>', 'Comma-separated personality names for swarm agents (e.g. the-surgeon,the-hawk)')
     .option('--adversarial', 'Enable adversarial QA — red team tests each landed change for regressions', false)
     .option('--sweep', 'Sweep mode — fix one issue type across the entire codebase', false)
-    .option('--category <type>', 'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)')
+    .option(
+      '--category <type>',
+      'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)',
+    )
     .option('--guards <profile>', 'Guard profile: tight (3/40), refactor (12/280), broad (20/500), atomic (no limits)')
     .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (overrides --guards)')
     .option('--max-files <number>', 'Max files changed per click before auto-rollback (overrides --guards)')
@@ -285,10 +300,7 @@ export function torqueCommand(): Command {
               chalk.dim(' Run ' + chalk.cyan('ratchet init') + ' to create a config.\n') + '\n',
           );
           if (config._noTestCommand) {
-            console.warn(
-              chalk.yellow('  ⚠  No test command detected — harden mode auto-enabled.') +
-                chalk.dim(' Changes will be validated more conservatively.\n'),
-            );
+            pinoLogger.warn('No test command detected — harden mode auto-enabled');
           }
         }
 
@@ -347,7 +359,7 @@ export function torqueCommand(): Command {
               ...findIncompleteTargets(rawYml),
             ];
             for (const w of warnings) {
-              console.warn(chalk.yellow(`  ⚠  ${w}`));
+              pinoLogger.warn(w);
             }
             if (warnings.length > 0) process.stdout.write('\n');
           } catch {
@@ -636,7 +648,7 @@ export function torqueCommand(): Command {
             });
           } catch (err) {
             if (spinner) (spinner as ReturnType<typeof ora>).fail();
-            console.error(chalk.red('\nFatal error: ') + String(err));
+            pinoLogger.error({ err }, 'Fatal error');
             process.exit(1);
           } finally {
             process.removeListener('SIGINT', sigintHandler);
@@ -881,7 +893,7 @@ export function torqueCommand(): Command {
           });
         } catch (err) {
           if (spinner) (spinner as ReturnType<typeof ora>).fail();
-          console.error(chalk.red('\nFatal error: ') + String(err));
+          pinoLogger.error({ err }, 'Fatal error');
           process.exit(1);
         } finally {
           process.removeListener('SIGINT', sigintHandler);

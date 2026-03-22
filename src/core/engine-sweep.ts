@@ -168,9 +168,9 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
 
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
         if (rolled_back) {
-          console.error(`[ratchet] sweep click ${clickNumber} ROLLED BACK (${elapsedSec}s)`);
+          logger.error({ clickNumber, elapsedSec }, 'sweep click ROLLED BACK');
         } else {
-          console.error(`[ratchet] sweep click ${clickNumber} LANDED (${elapsedSec}s)`);
+          logger.info({ clickNumber, elapsedSec }, 'sweep click LANDED');
         }
 
         run.clicks.push(click);

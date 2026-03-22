@@ -52,6 +52,6 @@ export async function runPlanFirst(
     }
   } catch {
     // Non-fatal — if plan generation fails, continue without plan
-    console.error('[ratchet] Plan generation failed — continuing without plan');
+    logger.error('Plan generation failed — continuing without plan');
   }
 }

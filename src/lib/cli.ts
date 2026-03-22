@@ -9,6 +9,7 @@ import chalk, { type ChalkInstance } from 'chalk';
 import ora, { type Ora } from 'ora';
 import { writeFile } from 'fs/promises';
 import { loadConfig } from '../core/config.js';
+import { logger } from './logger.js';
 import { toErrorMessage } from '../core/utils.js';
 import { checkStaleBinary } from '../core/stale-check.js';
 import { status as gitStatus, isRepo } from '../core/git.js';
@@ -22,7 +23,7 @@ export function printHeader(text: string): void {
 
 /** Write a red error message to stderr and exit. Never returns. */
 export function exitWithError(message: string): never {
-  console.error(chalk.red(message));
+  logger.error(message);
   process.exit(1);
 }
 
@@ -142,7 +143,7 @@ export async function withSpinner<T>(
     const label = failLabel ? `  ${failLabel}` : `  ${toErrorMessage(err)}`;
     spinner.fail(chalk.red(label));
     if (failLabel) {
-      console.error(chalk.red(`\n  ${toErrorMessage(err)}`) + '\n');
+      logger.error({ err }, toErrorMessage(err));
     }
     process.exit(1);
   }
@@ -151,7 +152,7 @@ export async function withSpinner<T>(
 /** Warn once if the compiled binary is older than source files. */
 export function warnIfStaleBinary(): void {
   const warning = checkStaleBinary();
-  if (warning) console.warn(chalk.yellow(`  ${warning}\n`));
+  if (warning) logger.warn(warning);
 }
 
 /**
@@ -163,14 +164,8 @@ export async function warnIfDirtyWorktree(cwd: string): Promise<void> {
   const allDirty = [...ws.staged, ...ws.unstaged, ...ws.untracked];
   const dirtyFiles = allDirty.length;
   if (dirtyFiles > 0) {
-    const fileWord = dirtyFiles === 1 ? 'file' : 'files';
     const shown = allDirty.slice(0, 3).join(', ');
-    const extra = dirtyFiles > 3 ? ` +${dirtyFiles - 3} more` : '';
-    console.warn(
-      chalk.yellow(`  ⚠  Dirty worktree: ${dirtyFiles} uncommitted ${fileWord}`) +
-        chalk.dim(` (${shown}${extra}).`) +
-        chalk.dim(' Ratchet will stash these before each click and restore them on rollback.\n'),
-    );
+    logger.warn({ dirtyFiles, files: shown }, 'Dirty worktree');
   }
 }
 
@@ -234,12 +229,7 @@ export async function validateProjectEnv(cwd: string): Promise<ReturnType<typeof
  */
 export async function assertIsRepo(cwd: string): Promise<void> {
   if (!(await isRepo(cwd))) {
-    console.error(
-      chalk.red('  Not a git repository.') +
-        '\n  Ratchet requires git to track changes and roll back on failure.' +
-        '\n\n  ' + chalk.dim('To initialize a git repo:') +
-        '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
-    );
+    logger.error('Not a git repository');
     process.exit(1);
   }
 }
@@ -250,12 +240,7 @@ export async function assertIsRepo(cwd: string): Promise<void> {
  */
 export async function warnIfNotRepo(cwd: string): Promise<void> {
   if (!(await isRepo(cwd))) {
-    console.warn(
-      chalk.yellow('  ⚠  Not a git repository.') +
-        ' Ratchet requires git to track changes and roll back on failure.\n' +
-        '\n  ' + chalk.dim('Initialize git before running ratchet torque:') +
-        '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
-    );
+    logger.warn('Not a git repository');
   }
 }
 
