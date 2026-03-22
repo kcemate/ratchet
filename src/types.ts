@@ -170,6 +170,10 @@ export interface RatchetRun {
     scoreAtStart?: number;
     interruptedAt: string;
   };
+  /** Set when the run stopped due to --timeout being reached. */
+  timeoutReached?: boolean;
+  /** Set when the run stopped due to --budget being exhausted. */
+  budgetReached?: boolean;
 }
 
 export interface BuildResult {

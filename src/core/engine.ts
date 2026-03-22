@@ -855,12 +855,24 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         await processClickOutcome(i, click, rolled_back, elapsedSec, state, guardEscalationEnabled, callbacks);
 
-        ({ rolled_back } = await postClickRescan(i, click, rolled_back, clickEconomics, state, scoreOptimized, cwd, incrementalScanner, callbacks));
+        let regressionDetected: boolean;
+        ({ rolled_back, regressionDetected } = await postClickRescan(i, click, rolled_back, clickEconomics, state, scoreOptimized, cwd, incrementalScanner, callbacks));
 
         await checkStallAndEscalate(i, clicks, state, hardenMode, escalateEnabled, callbacks);
 
         run.clicks.push(click);
         if (clickEconomics) state.allEconomics.push(clickEconomics);
+
+        // Track cumulative cost and consecutive zero-delta clicks for stop conditions
+        if (clickEconomics) {
+          state.cumulativeCost += clickEconomics.estimatedCost;
+        }
+        const clickDelta = (click.testsPassed && !rolled_back && clickEconomics) ? clickEconomics.scoreDelta : 0;
+        if (clickDelta !== 0) {
+          state.consecutiveZeroDeltaClicks = 0;
+        } else {
+          state.consecutiveZeroDeltaClicks++;
+        }
 
         // Auto-checkpoint: after a landed click, persist resume state
         if (!rolled_back && click.testsPassed) {
@@ -877,6 +889,51 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         const { shouldStop } = await checkSmartStop(i, run, state, options);
         if (shouldStop) break;
+
+        // ── Stop-condition checks (between clicks) ───────────────────────────
+
+        // Stop-on-regression: the click was already rolled back — stop the run
+        if (options.stopOnRegression) {
+          const regressionStop = checkRegressionStop(regressionDetected, click.rollbackReason);
+          if (regressionStop.stop) {
+            run.earlyStopReason = regressionStop.earlyStopReason;
+            console.error(`[ratchet] ⏹ Stop-on-regression — ${regressionStop.earlyStopReason}`);
+            break;
+          }
+        }
+
+        // Plateau detection: active in normal mode (skipped in harden mode, which intentionally has many zero-delta clicks)
+        if (!hardenMode) {
+          const plateauStop = checkPlateauStop(state.consecutiveZeroDeltaClicks, clicks);
+          if (plateauStop.stop) {
+            run.earlyStopReason = plateauStop.earlyStopReason;
+            console.error(`[ratchet] ⏹ Plateau detected — ${plateauStop.earlyStopReason}`);
+            break;
+          }
+        }
+
+        // Timeout check (between clicks)
+        if (options.timeoutMs) {
+          const timeoutStop = checkTimeoutStop(run.startedAt, options.timeoutMs, i);
+          if (timeoutStop.stop) {
+            run.earlyStopReason = timeoutStop.earlyStopReason;
+            run.timeoutReached = true;
+            process.stdout.write(`  ⏱ ${timeoutStop.earlyStopReason} — stopping after click ${i}\n`);
+            console.error(`[ratchet] ⏱ ${timeoutStop.earlyStopReason} — stopping after click ${i}`);
+            break;
+          }
+        }
+
+        // Budget check (between clicks)
+        if (options.budgetUsd) {
+          const budgetStop = checkBudgetStop(state.cumulativeCost, options.budgetUsd);
+          if (budgetStop.stop) {
+            run.earlyStopReason = budgetStop.earlyStopReason;
+            run.budgetReached = true;
+            console.error(`[ratchet] 💰 ${budgetStop.earlyStopReason} — stopping after click ${i}`);
+            break;
+          }
+        }
 
         // Cross-run learning: record the outcome for future recommendations
         if (learningStore && clickIssues && clickIssues.length > 0) {
