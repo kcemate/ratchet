@@ -50,7 +50,10 @@ function renderList(entries: Awaited<ReturnType<typeof listRuns>>): void {
     'Date',
   ].join('  ');
 
-  process.stdout.write('\n' + chalk.bold('⚙  Ratchet Run History') + '\n\n  ' + chalk.dim(header) + '\n  ' + chalk.dim('─'.repeat(header.length)) + '\n');
+  process.stdout.write(
+    '\n' + chalk.bold('⚙  Ratchet Run History') + '\n\n  ' +
+    chalk.dim(header) + '\n  ' + chalk.dim('─'.repeat(header.length)) + '\n',
+  );
 
   for (const entry of entries) {
     const { run, scoreBefore, scoreAfter } = entry;

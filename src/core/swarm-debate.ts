@@ -5,8 +5,7 @@ import { logger } from '../lib/logger.js';
 const execFileAsync = promisify(execFile);
 const log = logger;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// ─── Types
 export interface AgentProposal {
   agentName: string;
   personality: string;
@@ -53,8 +52,7 @@ export interface DebateConfig {
   strategyContext?: string;
 }
 
-// ─── Core Functions ───────────────────────────────────────────────────────────
-
+// ─── Core Functions
 /**
  * Skip debate if there is only 1 proposal or all proposals have the same scoreDelta.
  */

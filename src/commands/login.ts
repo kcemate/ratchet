@@ -28,7 +28,10 @@ export function loginCommand(): Command {
         logger.info({ email: result.license!.email }, 'License email');
       }
       if (result.license!.cyclesTotal) {
-        logger.info({ cyclesRemaining: result.license!.cyclesRemaining ?? result.license!.cyclesTotal, cyclesTotal: result.license!.cyclesTotal }, 'License cycles');
+        logger.info(
+          { cyclesRemaining: result.license!.cyclesRemaining ?? result.license!.cyclesTotal, cyclesTotal: result.license!.cyclesTotal },
+          'License cycles',
+        );
       }
       logger.info({ path: getLicensePath() }, 'License saved');
     });
