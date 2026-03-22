@@ -3,6 +3,10 @@ worker/
 site/
 action/
 action-torque/
+api/
+
+# Root-level scripts (not part of src)
+analyze-dup.mjs
 
 # Generated / vendored
 dist/
