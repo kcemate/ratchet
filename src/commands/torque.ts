@@ -112,6 +112,7 @@ export function torqueCommand(): Command {
     .option('--timeout <minutes>', 'Maximum wall time in minutes (stops cleanly after current click finishes)')
     .option('--budget <dollars>', 'Maximum estimated cost in USD (stops when budget would be exceeded)')
     .option('--stop-on-regression', 'Stop immediately when a score regression is detected', false)
+    .option('--no-strategy', 'Disable self-evolving strategy loading and evolution for this run')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -585,6 +586,7 @@ export function torqueCommand(): Command {
             timeoutMs: options.timeout ? parseFloat(options.timeout) * 60 * 1000 : undefined,
             budgetUsd: options.budget ? parseFloat(options.budget) : undefined,
             stopOnRegression: options.stopOnRegression,
+            noStrategy: (options as Record<string, unknown>)['strategy'] === false,
             scope: scopeFiles,
             scopeArg: options.scope,
             callbacks: {
@@ -887,6 +889,24 @@ export function torqueCommand(): Command {
           }
         } else if (capturedEconomics) {
           printEconomics(capturedEconomics);
+        }
+
+        // Print strategy evolution summary
+        if ((options as Record<string, unknown>)['strategy'] !== false && run.clicks.length > 0) {
+          try {
+            const { loadStrategy } = await import('../core/strategy.js');
+            const updatedStrategy = await loadStrategy(cwd);
+            if (updatedStrategy && updatedStrategy.runSummaries.length > 0) {
+              const lastSummary = updatedStrategy.runSummaries[updatedStrategy.runSummaries.length - 1];
+              const prevVersion = updatedStrategy.version - 1;
+              process.stdout.write(
+                chalk.dim(`  📝 Strategy updated (v${prevVersion} → v${updatedStrategy.version}): `) +
+                chalk.dim(lastSummary.keyInsight) + '\n\n',
+              );
+            }
+          } catch {
+            // Non-fatal
+          }
         }
 
         // Print report summary
