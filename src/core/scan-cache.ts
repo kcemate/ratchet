@@ -7,6 +7,7 @@ import {
   TEST_PATTERNS,
   LOOP_DB_API_PATTERN,
   SECRET_PATTERNS,
+  isTestFile,
   findSourceFiles,
   scoreByThresholds,
   DUP_SCORE_THRESHOLDS,
@@ -145,17 +146,13 @@ function buildFileHashes(filePaths: string[], cwd: string): Record<string, strin
 // Per-file analysis
 // ---------------------------------------------------------------------------
 
-function isTestFilePath(filePath: string): boolean {
-  return TEST_PATTERNS.some(p => filePath.includes(p));
-}
-
 /**
  * Analyze a single file and return per-file metrics.
  * This is the core building block for incremental scanning.
  */
 export function analyzeFile(filePath: string, content: string): PerFileMetrics {
   const lines = content.split('\n');
-  const isTest = isTestFilePath(filePath);
+  const isTest = isTestFile(filePath);
   const isScript = filePath.replace(/\\/g, '/').includes('/scripts/');
 
   let consoleLogCount = 0;
