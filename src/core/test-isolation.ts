@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { runTests } from './runner.js';
 import type { RatchetConfig } from '../types.js';
+import { logger } from '../lib/logger.js';
 
 export interface TestGateResult {
   passed: boolean;
@@ -61,10 +62,10 @@ export async function progressiveGates(
   if (useProgressiveGates) {
     // Gate 1: lint / typecheck
     const lintStart = Date.now();
-    console.error('[ratchet] Gate 1/3: lint/typecheck...');
+    logger.info('Gate 1/3: lint/typecheck');
     const lintResult = runCommandSync(lintCmd, cwd);
     const lintDuration = Date.now() - lintStart;
-    console.error(`[ratchet] Gate 1/3: lint ${lintResult.success ? '✓' : '✗'} (${lintDuration}ms)`);
+    logger.info({ success: lintResult.success, durationMs: lintDuration }, 'Gate 1/3: lint');
 
     if (!lintResult.success) {
       return {
@@ -80,10 +81,10 @@ export async function progressiveGates(
     if (changedFiles.length > 0) {
       const relatedStart = Date.now();
       const relatedCmd = `${testRelatedCmd} ${changedFiles.join(' ')}`;
-      console.error(`[ratchet] Gate 2/3: related tests (${changedFiles.length} changed file${changedFiles.length > 1 ? 's' : ''})...`);
+      logger.info({ changedFiles: changedFiles.length }, 'Gate 2/3: related tests');
       const relatedResult = await runTests({ command: relatedCmd, cwd });
       const relatedDuration = Date.now() - relatedStart;
-      console.error(`[ratchet] Gate 2/3: related tests ${relatedResult.passed ? '✓' : '✗'} (${relatedDuration}ms)`);
+      logger.info({ passed: relatedResult.passed, durationMs: relatedDuration }, 'Gate 2/3: related tests');
 
       if (!relatedResult.passed) {
         return {
@@ -100,10 +101,10 @@ export async function progressiveGates(
   // Final gate: full suite with failure classification
   const gateLabel = useProgressiveGates ? 'Gate 3/3' : 'Gate 1/1';
   const fullStart = Date.now();
-  console.error(`[ratchet] ${gateLabel}: full test suite...`);
+  logger.info({ gate: gateLabel }, 'Full test suite');
   const fullResult = await runTests({ command: testCmd, cwd });
   const fullDuration = Date.now() - fullStart;
-  console.error(`[ratchet] ${gateLabel}: full suite ${fullResult.passed ? '✓' : '✗'} (${fullDuration}ms)`);
+  logger.info({ gate: gateLabel, passed: fullResult.passed, durationMs: fullDuration }, 'Full suite result');
 
   if (fullResult.passed) {
     return {
@@ -124,7 +125,7 @@ export async function progressiveGates(
   );
 
   if (newFailures.length === 0) {
-    console.error(`[ratchet] All ${allFailed.length} failure(s) are pre-existing (baseline) — treating as passed`);
+    logger.info({ count: allFailed.length }, 'All failures are pre-existing baseline');
     return {
       passed: true,
       gate: 'full',
@@ -150,7 +151,7 @@ export async function progressiveGates(
   // All new failures are unrelated to our changes
   if (allowUnrelated && unrelatedFailures.length > 0) {
     const warningMessage = `Landed with unrelated test failures (${unrelatedFailures.join(', ')})`;
-    console.error(`[ratchet] ⚠ ${warningMessage}`);
+    logger.warn(warningMessage);
     return {
       passed: true,
       gate: 'full',
@@ -198,7 +199,7 @@ export function classifyFailures(
  * Records pre-existing failures so they can be exempted from rollback decisions.
  */
 export async function captureBaseline(testCmd: string, cwd: string): Promise<BaselineResult> {
-  console.error('[ratchet] Capturing baseline test suite state...');
+  logger.info('Capturing baseline test suite state');
   const result = await runTests({ command: testCmd, cwd });
   const failedTests = extractFailingTestFiles(result.output ?? '');
 
@@ -208,14 +209,12 @@ export async function captureBaseline(testCmd: string, cwd: string): Promise<Bas
   const passingTests = Math.max(0, totalTests - failedTests.length);
 
   if (failedTests.length > 0) {
-    console.error(
-      `[ratchet] Baseline: ${passingTests}/${totalTests} passing (${failedTests.length} pre-existing failure${failedTests.length > 1 ? 's' : ''})`,
-    );
+    logger.info({ failureCount: failedTests.length, passingTests, totalTests }, 'Baseline pre-existing failures');
     for (const f of failedTests) {
-      console.error(`[ratchet]   pre-existing: ${f}`);
+      logger.info({ file: f }, 'Pre-existing failure');
     }
   } else {
-    console.error('[ratchet] Baseline: all tests passing');
+    logger.info('Baseline: all tests passing');
   }
 
   return { failedTests, totalTests, passingTests };

@@ -9,6 +9,7 @@ import { promisify } from 'util';
 import { loadRunState } from './status.js';
 import { currentBranch, hasRemote } from '../core/git.js';
 import { printHeader, exitWithError, printFields } from '../lib/cli.js';
+import { logger } from '../lib/logger.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -39,12 +40,7 @@ export function tightenCommand(): Command {
       const run = await loadRunState(cwd);
 
       if (!run) {
-        console.error(
-          chalk.red('  No run state found.') +
-            '\n  Run ' +
-            chalk.cyan('ratchet torque') +
-            ' first.\n',
-        );
+        logger.error('No run state found');
         process.exit(1);
       }
 
@@ -96,13 +92,7 @@ export function tightenCommand(): Command {
 
       // Guard: gh pr create requires a remote to push to
       if (!(await hasRemote(cwd))) {
-        console.error(
-          chalk.red('  No git remote configured.') +
-            '\n  A remote is required to create a pull request.\n' +
-            '\n  ' + chalk.dim('Add one with:') +
-            '\n    ' + chalk.cyan('git remote add origin <url>') +
-            '\n    ' + chalk.cyan('git push -u origin HEAD') + '\n',
-        );
+        logger.error('No git remote configured');
         process.exit(1);
       }
 
@@ -141,14 +131,9 @@ export function tightenCommand(): Command {
         spinner.fail('Failed to create pull request');
         const msg = String(err);
         if (msg.includes('gh: command not found') || msg.includes('ENOENT')) {
-          console.error(
-            chalk.red('\n  gh CLI not found.') +
-              ' Install it from ' +
-              chalk.cyan('https://cli.github.com') +
-              '\n',
-          );
+          logger.error('gh CLI not found');
         } else {
-          console.error(chalk.red('\n  ' + msg) + '\n');
+          logger.error({ err: msg }, 'Failed to create pull request');
         }
         process.exit(1);
       }

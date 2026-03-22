@@ -14,6 +14,7 @@ import { runTierEngine, planTierTargets } from '../core/tier-engine.js';
 import type { ClickPhase } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { RatchetLogger } from '../core/logger.js';
+import { logger as pinoLogger } from '../lib/logger.js';
 import { writePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
@@ -284,7 +285,7 @@ export function improveCommand(): Command {
         }
       } catch (err) {
         if (spinner) (spinner as ReturnType<typeof ora>).fail();
-        console.error(chalk.red('\nFatal error: ') + String(err));
+        pinoLogger.error({ err }, 'Fatal error');
         releaseLock(cwd);
         process.exit(1);
       }

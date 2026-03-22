@@ -266,7 +266,7 @@ interface RunState {
 // ── Helpers ────────────────────────────────────────────
 
 /**
- * Format a consistent rollback message for console.error output.
+ * Format a consistent rollback message for logger.error output.
  */
 function formatRollbackMessage(
   clickNumber: number,
@@ -405,7 +405,7 @@ async function processClickOutcome(
   state.prevConsecutiveRollbacks = state.consecutiveRollbacks;
 
   if (rolled_back) {
-    console.error(formatRollbackMessage(clickNumber, click.rollbackReason, elapsedSec));
+    logger.error({ clickNumber, elapsedSec, reason: click.rollbackReason }, formatRollbackMessage(clickNumber, click.rollbackReason, elapsedSec));
     state.consecutiveRollbacks++;
     state.totalRolled++;
 
@@ -424,12 +424,12 @@ async function processClickOutcome(
         state.currentGuards = next.guards;
         state.currentGuardProfileName = next.name;
         state.consecutiveGuardRejections = 0;
-        console.error(`[ratchet] 🛡 Guard escalation: ${prevName} → ${next.name} (${state.consecutiveGuardRejections + 2} consecutive guard rejections)`);
+        logger.info({ from: prevName, to: next.name }, 'Guard escalation');
         await callbacks.onEscalate?.(`guard escalation: ${prevName} → ${next.name}`);
       }
     }
   } else {
-    console.error(`[ratchet] click ${clickNumber} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
+    logger.info({ clickNumber, elapsedSec, commitHash: click.commitHash?.slice(0, 7) }, 'click LANDED');
     state.consecutiveRollbacks = 0;
     state.consecutiveGuardRejections = 0;
     state.totalLanded++;
@@ -463,7 +463,7 @@ async function postClickRescan(
     // Score regression guard: if score dropped, revert the commit
     if (newTotal < state.previousTotal && click.commitHash) {
       const regressionDelta = state.previousTotal - newTotal;
-      console.error(formatRollbackMessage(clickNumber, `score regression: ${state.previousTotal} → ${newTotal} (-${regressionDelta}pts)`));
+      logger.error({ clickNumber, before: state.previousTotal, after: newTotal }, 'Score regression rollback');
       await git.revertLastCommit(cwd).catch(() => {});
       click.testsPassed = false;
       click.rollbackReason = `score regression: ${state.previousTotal} → ${newTotal} (-${regressionDelta}pts)`;
@@ -495,10 +495,9 @@ async function postClickRescan(
       // Print per-category breakdown for non-zero or wasted-effort categories
       for (const cd of categoryDeltas) {
         if (cd.delta !== 0) {
-          const sign = cd.delta > 0 ? '+' : '';
-          console.error(`   ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} (${sign}${cd.delta})${cd.issuesFixed > 0 ? ` — ${cd.issuesFixed} issues fixed` : ''}`);
+          logger.info({ category: cd.category, before: cd.before, after: cd.after, delta: cd.delta }, 'Category delta');
         } else if (cd.wastedEffort) {
-          console.error(`   ⚠ ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} — ${cd.issuesFixed} issues fixed but category already maxed`);
+          logger.warn({ category: cd.category, before: cd.before, after: cd.after, issuesFixed: cd.issuesFixed }, 'Category already maxed');
         }
       }
 
@@ -552,7 +551,7 @@ async function checkStallAndEscalate(
   }
 
   if (escalateReason) {
-    console.error('[ratchet] 🔄 Stall detected — escalating to cross-file sweep mode');
+    logger.warn('Stall detected — escalating to cross-file sweep mode');
     await callbacks.onEscalate?.(escalateReason);
 
     const fullBacklog = buildScoreOptimizedBacklog(state.currentScan);
@@ -583,7 +582,7 @@ async function checkSmartStop(
     if (allArchitect) {
       const remainingClicks = clicks - clickNumber;
       if (architectEscalationEnabled && remainingClicks > 0) {
-        console.error(`[ratchet] 🏗️ Escalating to architect mode — ${remainingClicks} clicks remaining`);
+        logger.info({ remainingClicks }, 'Escalating to architect mode');
         const architectRun = await runArchitectEngine({
           ...options,
           clicks: remainingClicks,
@@ -595,7 +594,7 @@ async function checkSmartStop(
         run.architectEscalated = true;
       } else {
         run.earlyStopReason = 'remaining issues need architect mode';
-        console.error(`[ratchet] ⏹ Smart stop — remaining issues need architect mode. ${state.totalLanded} cycles used, ${clicks - clickNumber} returned.`);
+        logger.info({ landed: state.totalLanded, returned: clicks - clickNumber }, 'Smart stop: remaining issues need architect mode');
       }
       return { shouldStop: true };
     }
@@ -608,7 +607,7 @@ async function checkSmartStop(
     if (rollbackRate > 0.6) {
       const ratePct = Math.round(rollbackRate * 100);
       run.earlyStopReason = `high rollback rate (${ratePct}%) — remaining issues may need manual intervention`;
-      console.error(`[ratchet] ⏹ Smart stop — ${run.earlyStopReason}. ${state.totalLanded} cycles used, ${clicks - clickNumber} returned.`);
+      logger.info({ reason: run.earlyStopReason, landed: state.totalLanded, returned: clicks - clickNumber }, 'Smart stop');
       return { shouldStop: true };
     }
   }
@@ -876,7 +875,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
           // Risk gate escalation: if single-agent was blocked, retry with swarm
           if (result.requiresSwarm) {
-            console.error(`[ratchet] Escalating click ${i} to swarm mode (risk gate triggered)`);
+            logger.info({ click: i }, 'Escalating to swarm mode');
             const swarm = new SwarmExecutor({ agentCount: 3, parallel: true }, learningStore);
             const swarmResult = await swarm.execute({
               clickNumber: i, target: state.target, config, agent, cwd, hardenPhase,
@@ -906,8 +905,8 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         if (scopeFiles.length > 0 && !rolled_back) {
           const scopeValidation = validateScope(click.filesModified, scopeFiles, cwd);
           if (!scopeValidation.valid) {
-            console.error(
-              `[ratchet] click ${i} ROLLED BACK — scope violation: ${scopeValidation.scopeViolations.join(', ')}`,
+            logger.error(
+              `click ${i} ROLLED BACK — scope violation: ${scopeValidation.scopeViolations.join(', ')}`,
             );
             if (click.commitHash) {
               await git.revertLastCommit(cwd).catch(() => {});
@@ -983,7 +982,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           const regressionStop = checkRegressionStop(regressionDetected, click.rollbackReason);
           if (regressionStop.stop) {
             run.earlyStopReason = regressionStop.earlyStopReason;
-            console.error(`[ratchet] ⏹ Stop-on-regression — ${regressionStop.earlyStopReason}`);
+            logger.info({ reason: regressionStop.earlyStopReason }, 'Stop-on-regression');
             break;
           }
         }
@@ -993,7 +992,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           const plateauStop = checkPlateauStop(state.consecutiveZeroDeltaClicks, clicks);
           if (plateauStop.stop) {
             run.earlyStopReason = plateauStop.earlyStopReason;
-            console.error(`[ratchet] ⏹ Plateau detected — ${plateauStop.earlyStopReason}`);
+            logger.info({ reason: plateauStop.earlyStopReason }, 'Plateau detected');
             break;
           }
         }
@@ -1005,7 +1004,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             run.earlyStopReason = timeoutStop.earlyStopReason;
             run.timeoutReached = true;
             process.stdout.write(`  ⏱ ${timeoutStop.earlyStopReason} — stopping after click ${i}\n`);
-            console.error(`[ratchet] ⏱ ${timeoutStop.earlyStopReason} — stopping after click ${i}`);
+            logger.info({ reason: timeoutStop.earlyStopReason }, 'Timeout stop');
             break;
           }
         }
@@ -1016,7 +1015,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           if (budgetStop.stop) {
             run.earlyStopReason = budgetStop.earlyStopReason;
             run.budgetReached = true;
-            console.error(`[ratchet] 💰 ${budgetStop.earlyStopReason} — stopping after click ${i}`);
+            logger.info({ reason: budgetStop.earlyStopReason }, 'Budget stop');
             break;
           }
         }
@@ -1071,13 +1070,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
     // Diagnostic: if every click rolled back, surface a hint
     if (run.clicks.length > 0 && run.clicks.every((c) => !c.testsPassed)) {
-      console.error(
-        '[ratchet] All clicks rolled back. Possible causes:\n' +
-        '  • Tests are failing before ratchet starts — run the test command manually to check\n' +
-        '  • The agent is not making changes (check build output above)\n' +
-        '  • Test suite is flaky or has a long timeout — check test output for details\n' +
-        '  Tip: run ratchet scan --explain to understand what issues ratchet is trying to fix',
-      );
+      logger.error('All clicks rolled back. Possible causes: tests failing before ratchet starts, agent not making changes, or flaky test suite');
     }
   } catch (err: unknown) {
     run.status = 'failed';
