@@ -19,6 +19,7 @@ import { captureBaseline } from './test-isolation.js';
 import { runPlanFirst } from './engine-plan.js';
 import { runArchitectEngine } from './engine-architect.js';
 import { countTestFiles } from './detect.js';
+import { logger } from '../lib/logger.js';
 
 // Re-export public API from sub-modules
 export { nextGuardProfile, isGuardRejection } from './engine-guards.js';
@@ -154,6 +155,8 @@ export interface EngineCallbacks {
   onRunEconomics?: (economics: RunEconomics) => Promise<void> | void;
   /** Fires immediately after the run object is created, before any clicks run. */
   onRunInit?: (run: RatchetRun) => void;
+  /** Fires after each successfully landed click (tests passed, committed). */
+  onCheckpoint?: (run: RatchetRun) => Promise<void> | void;
 }
 
 export interface EngineRunOptions {
@@ -793,6 +796,18 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         run.clicks.push(click);
         if (clickEconomics) state.allEconomics.push(clickEconomics);
+
+        // Auto-checkpoint: after a landed click, persist resume state
+        if (!rolled_back && click.testsPassed) {
+          run.resumeState = {
+            completedClicks: run.clicks.filter(c => c.testsPassed).length,
+            totalClicks: clicks,
+            target: state.target.name,
+            interruptedAt: new Date().toISOString(),
+          };
+          await callbacks.onCheckpoint?.(run);
+        }
+
         await callbacks.onClickComplete?.(click, rolled_back);
 
         const { shouldStop } = await checkSmartStop(i, run, state, options);
