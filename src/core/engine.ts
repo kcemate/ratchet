@@ -1,5 +1,4 @@
 import { randomUUID } from 'crypto';
-import { readdirSync } from 'fs';
 import { join, isAbsolute, resolve } from 'path';
 import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickEconomics, ClickGuards } from '../types.js';
 import type { Agent } from './agents/base.js';
@@ -19,6 +18,7 @@ import { validateScope } from './scope.js';
 import { captureBaseline } from './test-isolation.js';
 import { runPlanFirst } from './engine-plan.js';
 import { runArchitectEngine } from './engine-architect.js';
+import { countTestFiles } from './detect.js';
 
 // Re-export public API from sub-modules
 export { nextGuardProfile, isGuardRejection } from './engine-guards.js';
@@ -200,32 +200,6 @@ export interface RunSummary {
   status: RatchetRun['status'];
 }
 
-const TEST_FILE_PATTERNS = [
-  /\.test\.[a-z]+$/i,
-  /\.spec\.[a-z]+$/i,
-  /^test_.*\.[a-z]+$/i,
-  /.*_test\.[a-z]+$/i,
-];
-
-const IGNORE_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.cache']);
-
-function countTestFiles(dir: string): number {
-  let count = 0;
-  try {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        if (!IGNORE_DIRS.has(entry.name)) {
-          count += countTestFiles(join(dir, entry.name));
-        }
-      } else if (TEST_FILE_PATTERNS.some((p) => p.test(entry.name))) {
-        count++;
-      }
-    }
-  } catch {
-    // ignore permission errors
-  }
-  return count;
-}
 
 export function summarizeRun(run: RatchetRun): RunSummary {
   const passed = run.clicks.filter((c) => c.testsPassed).length;
