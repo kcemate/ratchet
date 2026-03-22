@@ -107,6 +107,9 @@ export function torqueCommand(): Command {
     .option('--no-auto-resume', 'Start fresh even if an interrupted run exists')
     .option('--background', 'Detach from terminal and run in background', false)
     .option('--fast', 'Enable context pruning for faster clicks — inject focused issue context into agent prompts (experimental)', false)
+    .option('--timeout <minutes>', 'Maximum wall time in minutes (stops cleanly after current click finishes)')
+    .option('--budget <dollars>', 'Maximum estimated cost in USD (stops when budget would be exceeded)')
+    .option('--stop-on-regression', 'Stop immediately when a score regression is detected', false)
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -144,6 +147,9 @@ export function torqueCommand(): Command {
         autoResume: boolean;
         background: boolean;
         fast: boolean;
+        timeout?: string;
+        budget?: string;
+        stopOnRegression: boolean;
       }) => {
         const cwd = process.cwd();
 
@@ -463,6 +469,9 @@ export function torqueCommand(): Command {
             guardEscalation: options.guardEscalation !== false,
             planFirst: options.planFirst,
             contextPruning: options.fast,
+            timeoutMs: options.timeout ? parseFloat(options.timeout) * 60 * 1000 : undefined,
+            budgetUsd: options.budget ? parseFloat(options.budget) : undefined,
+            stopOnRegression: options.stopOnRegression,
             scope: scopeFiles,
             scopeArg: options.scope,
             callbacks: {
@@ -755,7 +764,13 @@ export function torqueCommand(): Command {
         // Print economics summary (or JSON output)
         if (options.json) {
           if (capturedEconomics) {
-            process.stdout.write(JSON.stringify(capturedEconomics, null, 2) + '\n');
+            const jsonOutput = {
+              ...capturedEconomics,
+              earlyStopReason: run.earlyStopReason ?? null,
+              timeoutReached: run.timeoutReached ?? false,
+              budgetReached: run.budgetReached ?? false,
+            };
+            process.stdout.write(JSON.stringify(jsonOutput, null, 2) + '\n');
           }
         } else if (capturedEconomics) {
           printEconomics(capturedEconomics);
