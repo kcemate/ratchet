@@ -27,12 +27,17 @@ const scanData = {
     after: 112,
   },
   categories: [
-    { name: 'Testing', emoji: '🧪', score: 17, max: 20, items: ['41 test files, 27% ratio', '149 edge/error test cases', '2.2 assertions per test'] },
-    { name: 'Security', emoji: '🔒', score: 14, max: 16, items: ['No hardcoded secrets', 'Validation on 13 files', 'Auth middleware + rate limiting'] },
+    { name: 'Testing', emoji: '🧪', score: 17, max: 20,
+      items: ['41 test files, 27% ratio', '149 edge/error test cases', '2.2 assertions per test'] },
+    { name: 'Security', emoji: '🔒', score: 14, max: 16,
+      items: ['No hardcoded secrets', 'Validation on 13 files', 'Auth middleware + rate limiting'] },
     { name: 'Type Safety', emoji: '📝', score: 8, max: 12, items: ['Strict mode enabled', '182 any types (moderate)'] },
-    { name: 'Error Handling', emoji: '⚠️', score: 9, max: 14, items: ['167 try/catch blocks', '3 empty catches', 'No structured logger'] },
-    { name: 'Performance', emoji: '⚡', score: 8, max: 14, items: ['3 await-in-loop patterns', '37 console.log calls', 'Clean imports'] },
-    { name: 'Code Quality', emoji: '📖', score: 11, max: 24, items: ['Avg 62-line functions', '481 long lines', '685 repeated lines'] },
+    { name: 'Error Handling', emoji: '⚠️', score: 9, max: 14,
+      items: ['167 try/catch blocks', '3 empty catches', 'No structured logger'] },
+    { name: 'Performance', emoji: '⚡', score: 8, max: 14,
+      items: ['3 await-in-loop patterns', '37 console.log calls', 'Clean imports'] },
+    { name: 'Code Quality', emoji: '📖', score: 11, max: 24,
+      items: ['Avg 62-line functions', '481 long lines', '685 repeated lines'] },
   ],
   topIssues: [
     { count: 112, desc: 'source files without tests', severity: 'high' },
@@ -112,7 +117,9 @@ const html = `<!DOCTYPE html>
 
 <!-- ═══ PAGE 1: HERO ═══ -->
 <div class="page" style="padding-top: 80px;">
-  <div style="display:inline-block; background:#1f1a0f; color:#f59e0b; padding:5px 14px; border-radius:16px; font-size:12px; font-weight:600; letter-spacing:0.4px; border:1px solid #3d2e0a; margin-bottom:28px;">
+  <div style="display:inline-block; background:#1f1a0f; color:#f59e0b; padding:5px 14px;
+    border-radius:16px; font-size:12px; font-weight:600; letter-spacing:0.4px;
+    border:1px solid #3d2e0a; margin-bottom:28px;">
     ⚙️ AUTONOMOUS CODE IMPROVEMENT
   </div>
   
@@ -130,7 +137,8 @@ const html = `<!DOCTYPE html>
   </div>
   
   <div style="font-size:17px; color:#71717a; line-height:1.55; max-width:520px; margin-bottom:56px;">
-    AI-powered autonomous code improvement. Scans your codebase, identifies production risks, and fixes them iteratively — with tests passing after every change.
+    AI-powered autonomous code improvement. Scans your codebase, identifies production risks,
+    and fixes them iteratively — with tests passing after every change.
   </div>
   
   <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px;">
@@ -160,8 +168,12 @@ const html = `<!DOCTYPE html>
   <div style="font-size:28px; font-weight:700; margin-bottom:6px;">Production Readiness Scan</div>
   <div style="font-size:14px; color:#71717a; margin-bottom:28px;">Real results from a live Express/TypeScript/PostgreSQL app (809+ tests)</div>
   
-  <div style="background:#151518; border:1px solid #27272a; border-radius:16px; padding:24px 32px; margin-bottom:28px; display:flex; align-items:center; gap:28px;">
-    <div style="width:100px; height:100px; border-radius:50%; border:5px solid ${scoreColor(scanData.score / scanData.maxScore)}; display:flex; align-items:center; justify-content:center; font-size:38px; font-weight:800; color:${scoreColor(scanData.score / scanData.maxScore)}; flex-shrink:0;">
+  <div style="background:#151518; border:1px solid #27272a; border-radius:16px;
+    padding:24px 32px; margin-bottom:28px; display:flex; align-items:center; gap:28px;">
+    <div style="width:100px; height:100px; border-radius:50%;
+      border:5px solid ${scoreColor(scanData.score / scanData.maxScore)};
+      display:flex; align-items:center; justify-content:center;
+      font-size:38px; font-weight:800; color:${scoreColor(scanData.score / scanData.maxScore)}; flex-shrink:0;">
       ${scanData.score}
     </div>
     <div>
@@ -183,7 +195,8 @@ const html = `<!DOCTYPE html>
 <!-- ═══ PAGE 3: ISSUES + SWEEP RESULTS ═══ -->
 <div class="page">
   <div style="font-size:28px; font-weight:700; margin-bottom:6px;">Issues Detected</div>
-  <div style="font-size:14px; color:#71717a; margin-bottom:24px;">${scanData.totalIssues} issues across ${scanData.topIssues.length} categories, prioritized by severity</div>
+  <div style="font-size:14px; color:#71717a; margin-bottom:24px;">
+    ${scanData.totalIssues} issues across ${scanData.topIssues.length} categories, prioritized by severity</div>
   
   <table style="width:100%; border-collapse:collapse; margin-bottom:28px;">
     <thead>

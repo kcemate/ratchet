@@ -1,7 +1,9 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, extname } from 'path';
 
-const IGNORE_DIRS = new Set(['node_modules', 'dist', '.git', '.next', 'build', 'coverage', '__pycache__', '.cache', 'vendor', 'out']);
+const IGNORE_DIRS = new Set([
+  'node_modules', 'dist', '.git', '.next', 'build', 'coverage', '__pycache__', '.cache', 'vendor', 'out'
+]);
 const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.go', '.rs']);
 const TEST_PATTERNS = ['.test.', '.spec.', '_test.', '_spec.', '/test/', '/tests/', '/spec/'];
 
@@ -44,7 +46,9 @@ for (const file of files) {
 const exactly3Files = [];
 for (const [line, data] of lineFiles) {
   if (data.files.size === 3) {
-    exactly3Files.push({ line: line.slice(0, 100), files: [...data.files].map(f => f.replace('/Users/giovanni/Projects/ratchet/', '')), count: data.count });
+    exactly3Files.push({ line: line.slice(0, 100),
+      files: [...data.files].map(f => f.replace('/Users/giovanni/Projects/ratchet/', '')),
+      count: data.count });
   }
 }
 exactly3Files.sort((a, b) => b.count - a.count);

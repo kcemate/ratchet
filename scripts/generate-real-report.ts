@@ -152,7 +152,9 @@ const outPath = '/Users/giovanni/.openclaw/workspace/dd-report-real.pdf';
 await writeFile(outPath, buffer);
 console.log(`✅ Real report generated: ${outPath} (${(buffer.length / 1024).toFixed(0)} KB)`);
 console.log(`   Run: ${run.id}`);
-console.log(`   Clicks: ${run.clicks.length} (${run.clicks.filter(c => c.testsPassed).length} landed, ${run.clicks.filter(c => !c.testsPassed).length} rolled back)`);
+console.log(`   Clicks: ${run.clicks.length}` +
+  ` (${run.clicks.filter(c => c.testsPassed).length} landed,` +
+  ` ${run.clicks.filter(c => !c.testsPassed).length} rolled back)`);
 console.log(`   Score: ${scoreBefore.total} → ${scoreAfter.total}`);
 console.log(`   Duration: ${Math.round((run.finishedAt!.getTime() - run.startedAt.getTime()) / 1000)}s`);
 console.log(`   Commits: ${run.clicks.filter(c => c.commitHash).map(c => c.commitHash).join(', ')}`);
