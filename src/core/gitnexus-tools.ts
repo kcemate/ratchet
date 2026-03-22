@@ -112,8 +112,10 @@ export async function fulfillGitNexusQueries(
             results.push(
               `GITNEXUS RESULT [impact ${query.target}]:\n` +
               `  Risk: ${impact.riskLevel} (confidence: ${(impact.confidence * 100).toFixed(0)}%)\n` +
-              `  Dependents: ${dependentCount} (${impact.directCallers.length} direct callers, ${impact.affectedFiles.length} affected files)\n` +
-              `  Affected files: ${impact.affectedFiles.slice(0, 10).join(', ')}${impact.affectedFiles.length > 10 ? ` (+${impact.affectedFiles.length - 10} more)` : ''}`,
+              `  Dependents: ${dependentCount} (${impact.directCallers.length} direct callers, ` +
+              `${impact.affectedFiles.length} affected files)\n` +
+              `  Affected files: ${impact.affectedFiles.slice(0, 10).join(', ')}` +
+              `${impact.affectedFiles.length > 10 ? ` (+${impact.affectedFiles.length - 10} more)` : ''}`,
             );
           } else {
             results.push(`GITNEXUS RESULT [impact ${query.target}]: no data found`);

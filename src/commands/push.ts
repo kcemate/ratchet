@@ -62,7 +62,10 @@ export function pushCommand(): Command {
       // Load cached scan result
       const result = loadScanCache(cwd);
       if (!result) {
-        logger.error({ file: SCAN_CACHE_FILE }, 'No scan cache found. Run `ratchet scan --push` to scan and push in one step.');
+        logger.error(
+          { file: SCAN_CACHE_FILE },
+          'No scan cache found. Run `ratchet scan --push` to scan and push in one step.',
+        );
         process.exit(1);
       }
 

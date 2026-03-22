@@ -260,7 +260,8 @@ export function renderClickTable(clicks: Click[]): void {
     const files =
       click.filesModified.length > 0
         ? chalk.dim(
-            ` — ${click.filesModified.slice(0, 2).join(', ')}${click.filesModified.length > 2 ? ` +${click.filesModified.length - 2}` : ''}`,
+            ` — ${click.filesModified.slice(0, 2).join(', ')}` +
+            `${click.filesModified.length > 2 ? ` +${click.filesModified.length - 2}` : ''}`,
           )
         : '';
     process.stdout.write(`  ${icon} Click ${chalk.bold(String(click.number))}  ${label}${hash}${files}\n`);

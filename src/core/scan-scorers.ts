@@ -9,8 +9,7 @@
 import { scoreByThresholds, SEVERITY_MAP } from './scan-constants.js';
 import type { CategoryResult, IssueType } from '../commands/scan.js';
 
-// ── Testing ─────────────────────────────────────────────────────────────────
-
+// ── Testing
 export function scoreCoverageRatio(
   testCount: number,
   sourceCount: number,
@@ -63,8 +62,7 @@ export function scoreTestQuality(
   return { score: 0, summary: 'no test cases found' };
 }
 
-// ── Security ─────────────────────────────────────────────────────────────────
-
+// ── Security
 export function scoreSecrets(secretCount: number, usesEnvVars: boolean): { score: number; summary: string } {
   if (secretCount === 0 && usesEnvVars) return { score: 3, summary: 'no hardcoded secrets, uses env vars' };
   if (secretCount === 0) return { score: 2, summary: 'no hardcoded secrets' };
@@ -128,8 +126,7 @@ export function scoreAuthChecks(
   return { score, summary, issues };
 }
 
-// ── Type Safety ───────────────────────────────────────────────────────────────
-
+// ── Type Safety
 export function scoreAnyTypeDensity(anyCount: number, totalLines: number): { score: number; summary: string } {
   const density = totalLines > 0 ? anyCount / (totalLines / 1000) : 0;
   if (anyCount === 0 || density < 1) {
@@ -146,8 +143,7 @@ export function scoreAnyTypeDensity(anyCount: number, totalLines: number): { sco
   return { score: 0, summary: `${anyCount} any types (very high density)` };
 }
 
-// ── Error Handling ───────────────────────────────────────────────────────────
-
+// ── Error Handling
 export function scoreEhCoverage(tryCatchCount: number, asyncCount: number): { score: number; summary: string } {
   if (tryCatchCount === 0) return { score: 0, summary: 'no try/catch found' };
   if (asyncCount === 0 || tryCatchCount >= asyncCount * 0.6)
@@ -183,8 +179,7 @@ export function scoreStructuredLogging(
   return { score: 0, summary: 'no error logging detected' };
 }
 
-// ── Performance ───────────────────────────────────────────────────────────────
-
+// ── Performance
 export function scoreAwaitInLoop(count: number): { score: number; summary: string } {
   if (count === 0) return { score: 5, summary: 'no await-in-loop' };
   if (count === 1) return { score: 4, summary: '1 await-in-loop pattern' };
@@ -208,8 +203,7 @@ export function scoreImportHygiene(issues: number): { score: number; summary: st
   return { score: 0, summary: `${issues} import issues detected` };
 }
 
-// ── Code Quality ──────────────────────────────────────────────────────────────
-
+// ── Code Quality
 export function scoreFunctionLength(avgLen: number, fnCount: number): { score: number; summary: string } {
   if (fnCount === 0 || avgLen <= 20)
     return { score: 6, summary: fnCount === 0 ? 'no functions detected' : 'short functions' };
@@ -242,8 +236,7 @@ export function scoreDeadCode(commentedCount: number, todoCount: number): { scor
   return { score: 0, summary: `${commentedCount} commented-out lines, ${todoCount} TODOs` };
 }
 
-// ── Issue aggregation ────────────────────────────────────────────────────────
-
+// ── Issue aggregation
 export function aggregateAndSortIssues(
   categories: CategoryResult[],
 ): { totalIssuesFound: number; issuesByType: IssueType[] } {

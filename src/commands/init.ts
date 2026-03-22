@@ -123,7 +123,10 @@ export function initCommand(): Command {
       // Guard: already initialized
       if (await exists(configPath)) {
         if (!options.force) {
-          process.stdout.write(chalk.yellow('  .ratchet.yml already exists.') + chalk.dim(' Use --force to overwrite.') + '\n');
+          process.stdout.write(
+            chalk.yellow('  .ratchet.yml already exists.') +
+            chalk.dim(' Use --force to overwrite.') + '\n',
+          );
           process.exit(1);
         }
         process.stdout.write(chalk.dim('  Overwriting existing .ratchet.yml…') + '\n');
@@ -164,7 +167,10 @@ export function initCommand(): Command {
         process.exit(1);
       }
 
-      process.stdout.write(`\n${chalk.bold('Next steps:')}\n  ${chalk.dim('1.')} Edit ${chalk.cyan('.ratchet.yml')} — set your targets and boundaries\n  ${chalk.dim('2.')} Run ${chalk.green(`ratchet torque --target ${detectedTargetName}`)} to start the loop\n\n`);
+      process.stdout.write(
+        `\n${chalk.bold('Next steps:')}\n  ${chalk.dim('1.')} Edit ${chalk.cyan('.ratchet.yml')} — set your targets and boundaries\n` +
+        `  ${chalk.dim('2.')} Run ${chalk.green(`ratchet torque --target ${detectedTargetName}`)} to start the loop\n\n`,
+      );
     });
 
   return cmd;

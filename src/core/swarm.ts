@@ -38,8 +38,7 @@ async function git(args: string[], cwd: string): Promise<string> {
   return stdout.trim();
 }
 
-// ─── Extended SwarmAgentResult with personality ────────────────────────────
-
+// ─── Extended SwarmAgentResult with personality
 export interface SwarmAgentResultV2 extends SwarmAgentResult {
   personality: string;
   personalityObj?: AgentPersonality;

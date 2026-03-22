@@ -192,7 +192,10 @@ export function statusCommand(): Command {
             : chalk.dim(' [rolled back]');
           const files =
             click.filesModified.length > 0
-              ? chalk.dim(` — ${click.filesModified.slice(0, 3).join(', ')}${click.filesModified.length > 3 ? ` +${click.filesModified.length - 3} more` : ''}`)
+              ? chalk.dim(
+                ` — ${click.filesModified.slice(0, 3).join(', ')}` +
+                `${click.filesModified.length > 3 ? ` +${click.filesModified.length - 3} more` : ''}`,
+              )
               : '';
           log(`    ${icon} Click ${click.number}${commit}${files}`);
         }

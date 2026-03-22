@@ -246,8 +246,7 @@ export interface SwarmResult {
   timedOut: boolean;
 }
 
-// ─── Swarm v2: MiroFish types ──────────────────────────────────────────────
-
+// ─── Swarm v2: MiroFish types
 export interface AgentProposal {
   agentName: string;
   personality: string;
