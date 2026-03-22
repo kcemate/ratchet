@@ -64,18 +64,27 @@ const SPECIALIZATION_PROMPTS: Record<Specialization, string> = {
  * A ShellAgent with a specialization prompt prefix that gets prepended
  * to all prompts sent to Claude. This steers the agent toward a specific
  * focus area without changing any execution mechanics.
+ *
+ * Optionally accepts a `personalityPrompt` that is prepended before the
+ * specialization prompt — personality defines HOW, specialization defines WHAT.
  */
 export class SpecializedAgent extends ShellAgent {
   readonly specialization: Specialization;
+  private readonly personalityPrompt?: string;
 
-  constructor(specialization: Specialization, config: ShellAgentConfig = {}) {
+  constructor(specialization: Specialization, config: ShellAgentConfig & { personalityPrompt?: string } = {}) {
     super(config);
     this.specialization = specialization;
+    this.personalityPrompt = config.personalityPrompt;
   }
 
-  /** Returns the specialization prompt prefix for this agent */
+  /** Returns the full prompt prefix for this agent (personality + specialization) */
   get promptPrefix(): string {
-    return SPECIALIZATION_PROMPTS[this.specialization];
+    const specPrompt = SPECIALIZATION_PROMPTS[this.specialization];
+    if (this.personalityPrompt) {
+      return `${this.personalityPrompt}\n\n${specPrompt}`;
+    }
+    return specPrompt;
   }
 
   override async analyze(
@@ -90,10 +99,11 @@ export class SpecializedAgent extends ShellAgent {
 
 /**
  * Create a specialized agent for a given focus area.
+ * Optionally accepts a `personalityPrompt` to prepend before the specialization prompt.
  */
 export function createSpecializedAgent(
   specialization: Specialization,
-  config: ShellAgentConfig = {},
+  config: ShellAgentConfig & { personalityPrompt?: string } = {},
 ): SpecializedAgent {
   return new SpecializedAgent(specialization, config);
 }

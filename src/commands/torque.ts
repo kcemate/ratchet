@@ -91,6 +91,9 @@ export function torqueCommand(): Command {
     .option('--swarm', 'Enable swarm mode — N agents compete per click, best change wins', false)
     .option('--agents <number>', 'Number of competing agents in swarm mode (default: 3)')
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
+    .option('--debate', 'Enable debate round in swarm mode — judge picks winner (default: true)', true)
+    .option('--no-debate', 'Disable debate round — pick winner by score only')
+    .option('--personalities <names>', 'Comma-separated personality names for swarm agents (e.g. the-surgeon,the-hawk)')
     .option('--adversarial', 'Enable adversarial QA — red team tests each landed change for regressions', false)
     .option('--sweep', 'Sweep mode — fix one issue type across the entire codebase', false)
     .option('--category <type>', 'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)')
@@ -134,6 +137,8 @@ export function torqueCommand(): Command {
         swarm: boolean;
         agents?: string;
         focus?: string;
+        debate: boolean;
+        personalities?: string;
         adversarial: boolean;
         sweep: boolean;
         category?: string;
@@ -225,10 +230,22 @@ export function torqueCommand(): Command {
             }
           }
 
+          // Support personality overrides from env (set by `ratchet swarm` command)
+          const envPersonalities = process.env['RATCHET_PERSONALITIES'];
+          const personalitiesArg = options.personalities ?? (envPersonalities || undefined);
+          const personalityList = personalitiesArg
+            ? personalitiesArg.split(',').map((p: string) => p.trim())
+            : undefined;
+
+          // Debate flag: respect --no-debate env or CLI flag
+          const debateEnabled = options.debate !== false && !process.env['RATCHET_NO_DEBATE'];
+
           config.swarm = buildSwarmConfig({
             swarm: true,
             agents: agentCount,
             focus: focusSpecs,
+            debate: debateEnabled,
+            personalities: personalityList,
           });
         }
 
