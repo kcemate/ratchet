@@ -42,8 +42,10 @@ const scoreAfter = entry.scoreAfter ?? undefined;
 if (scoreBefore && scoreAfter) {
   const bPct = Math.round((scoreBefore.total / scoreBefore.maxTotal) * 100);
   const aPct = Math.round((scoreAfter.total / scoreAfter.maxTotal) * 100);
-  console.log(`Score: ${bPct} → ${aPct} (${scoreBefore.total}/${scoreBefore.maxTotal} → ${scoreAfter.total}/${scoreAfter.maxTotal})`);
-  console.log(`Issues: ${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound} (${scoreBefore.totalIssuesFound - scoreAfter.totalIssuesFound} fixed)`);
+  console.log(`Score: ${bPct} → ${aPct} ` +
+    `(${scoreBefore.total}/${scoreBefore.maxTotal} → ${scoreAfter.total}/${scoreAfter.maxTotal})`);
+  console.log(`Issues: ${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}` +
+    ` (${scoreBefore.totalIssuesFound - scoreAfter.totalIssuesFound} fixed)`);
 } else {
   console.log('Warning: No before/after scores available — hero card will not render');
 }

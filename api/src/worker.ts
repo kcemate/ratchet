@@ -276,7 +276,8 @@ function welcomePage(key: string, tier: string, email: string): Response {
   <div class="card">
     <h1>🔧 You're in.</h1>
     <div class="tier">${tier} Plan</div>
-    <div class="key-box" onclick="navigator.clipboard.writeText('${key}'); this.querySelector('.copy-hint').textContent = 'Copied!'">
+    <div class="key-box"
+      onclick="navigator.clipboard.writeText('${key}'); this.querySelector('.copy-hint').textContent = 'Copied!'">
       ${key}
       <span class="copy-hint">Click to copy</span>
     </div>
@@ -433,7 +434,8 @@ export default {
     if (route(path, "/usage") && request.method === "POST") return withVersion(await handleUsage(request, env));
     if (route(path, "/lookup") && request.method === "GET") return withVersion(await handleLookup(request, env));
     if (route(path, "/welcome") && request.method === "GET") return withVersion(await handleWelcome(request, env));
-    if (route(path, "/telemetry") && request.method === "POST") return withVersion(await handleTelemetry(request, env));
+    if (route(path, "/telemetry") && request.method === "POST")
+      return withVersion(await handleTelemetry(request, env));
     if (route(path, "/stats") && request.method === "GET") return withVersion(await handleStats(env));
 
     return withVersion(json({
