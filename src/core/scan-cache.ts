@@ -343,11 +343,14 @@ export function rebuildScanFromMetrics(
   cwd: string,
 ): ScanResult {
   let projectName = cwd.split('/').pop() ?? 'unknown';
+  let hasTestScript = false;
   const pkgPath = join(cwd, 'package.json');
   if (existsSync(pkgPath)) {
     try {
-      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { name?: string };
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { name?: string; scripts?: Record<string, string> };
       if (pkg.name) projectName = pkg.name;
+      const ts = pkg.scripts?.test ?? '';
+      if (ts && !ts.includes('no test') && !ts.includes('echo "Error')) hasTestScript = true;
     } catch { /* ignore */ }
   }
 
@@ -414,15 +417,6 @@ export function rebuildScanFromMetrics(
   }
 
   // ========== Testing (25 pts) ==========
-  let hasTestScript = false;
-  if (existsSync(pkgPath)) {
-    try {
-      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { scripts?: Record<string, string> };
-      const ts = pkg.scripts?.test ?? '';
-      if (ts && !ts.includes('no test') && !ts.includes('echo "Error')) hasTestScript = true;
-    } catch { /* ignore */ }
-  }
-
   const { score: coverageScore, summary: coverageSummary, issues: coverageIssues } =
     scoreCoverageRatio(testFiles.length, sourceFiles.length, hasTestScript);
   const { score: edgeCaseScore, summary: edgeCaseSummary } = scoreEdgeCases(totalEdgeCases);
