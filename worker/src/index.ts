@@ -27,7 +27,7 @@ export default {
     // Route: GET /api/scores/{owner}/{repo}
     const scoresMatch = pathname.match(/^\/api\/scores\/([^/]+)\/([^/]+)$/);
     if (request.method === 'GET' && scoresMatch) {
-      return handleGetScores(scoresMatch[1], scoresMatch[2], env);
+      return handleGetScores(scoresMatch[1], scoresMatch[2], request, env);
     }
 
     // Route: GET /badge/{owner}/{repo}[/{category|trend}]
@@ -99,7 +99,26 @@ async function handleBadge(
 // API: GET /api/scores/{owner}/{repo}
 // ---------------------------------------------------------------------------
 
-async function handleGetScores(owner: string, repo: string, env: Env): Promise<Response> {
+async function rateLimit(
+  request: Request,
+  env: Env,
+  endpoint: string,
+  limit: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const window = Math.floor(Date.now() / (windowSeconds * 1000));
+  const key = `rl:${endpoint}:${ip}:${window}`;
+  const current = parseInt((await env.RATCHET_SCORES.get(key)) || '0');
+  if (current >= limit) return false;
+  await env.RATCHET_SCORES.put(key, String(current + 1), { expirationTtl: windowSeconds * 2 });
+  return true;
+}
+
+async function handleGetScores(owner: string, repo: string, request: Request, env: Env): Promise<Response> {
+  if (!await rateLimit(request, env, 'scores', 60, 60)) {
+    return jsonResponse({ error: 'Too many requests' }, 429);
+  }
   const stored = await loadScores(owner, repo, env);
   if (!stored) {
     return jsonResponse({ error: 'Not found' }, 404);

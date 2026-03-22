@@ -1,101 +1,832 @@
 {
-  "id": "a3beffde-2da1-4080-bbe6-5df0abb2da7e",
+  "id": "d8ef1eaf-894e-4fca-8cd0-3d5f89494889",
   "target": {
-    "name": "improve",
-    "path": ".",
-    "description": "Improve all issue types across the codebase"
+    "name": "src",
+    "path": "src/",
+    "description": "Iteratively improve code quality in src/"
   },
   "clicks": [
     {
       "number": 1,
-      "target": "improve",
-      "analysis": "You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\nTOP ISSUES BY VOLUME (score: 83/100, 699 total issues):\n  - [medium] repeated code lines: 351 occurrences\n  - [low] lines >120 chars: 256 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts, /Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-sample-pdf.ts\n  - [low] console.log calls in src: 46 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/commands/simulate.ts, /Users/giovanni/Projects/ratchet/src/commands/tighten.ts, /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - [medium] functions >50 lines: 29 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/debate.ts, /Users/giovanni/Projects/ratchet/src/commands/improve.ts, /Users/giovanni/Projects/ratchet/src/commands/init.ts, /Users/giovanni/Projects/ratchet/src/commands/log.ts\n  - [low] dead code indicators (TODO, commented code): 8 occurrences\n  - [medium] any types: 4 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/core/pdf-report.ts, /Users/giovanni/Projects/ratchet/src/core/scan-cache.ts\n  - [medium] await-in-loop patterns: 4 occurrences\n  - [medium] missing auth/security controls: 1 occurrences\n\nARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n  - If multiple files share duplicated logic → extract a shared module/utility\n  - If a file is a god class/module → split it into focused modules\n  - If many files import the same pattern differently → consolidate with a shared abstraction\n  - If error handling is scattered → centralize error types/handlers\n  - If types are duplicated across files → extract to a shared types module\n\nRELAXED CONSTRAINTS (architect mode):\n  - You may change up to 20 files and 500 lines total\n  - You MAY create new files (shared modules, utilities, type definitions)\n  - You MUST update all import paths when extracting or moving code\n  - All existing tests MUST still pass — if tests break, the change will be rolled back\n  - Make ONE cohesive structural change, not many unrelated fixes\n\nINSTRUCTIONS:\n1. Analyze the top issues and identify the highest-leverage architectural improvement\n2. Make the structural change (extract module, consolidate, refactor)\n3. Update all import paths throughout the codebase\n4. Verify the change is cohesive and tests would pass\n\nAfter making changes, output each modified or created file:\nMODIFIED: <filepath>",
-      "proposal": "You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\nTOP ISSUES BY VOLUME (score: 83/100, 699 total issues):\n  - [medium] repeated code lines: 351 occurrences\n  - [low] lines >120 chars: 256 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts, /Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-sample-pdf.ts\n  - [low] console.log calls in src: 46 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/commands/simulate.ts, /Users/giovanni/Projects/ratchet/src/commands/tighten.ts, /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - [medium] functions >50 lines: 29 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/debate.ts, /Users/giovanni/Projects/ratchet/src/commands/improve.ts, /Users/giovanni/Projects/ratchet/src/commands/init.ts, /Users/giovanni/Projects/ratchet/src/commands/log.ts\n  - [low] dead code indicators (TODO, commented code): 8 occurrences\n  - [medium] any types: 4 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/core/pdf-report.ts, /Users/giovanni/Projects/ratchet/src/core/scan-cache.ts\n  - [medium] await-in-loop patterns: 4 occurrences\n  - [medium] missing auth/security controls: 1 occurrences\n\nARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n  - If multiple files share duplicated logic → extract a shared module/utility\n  - If a file is a god class/module → split it into focused modules\n  - If many files import the same pattern differently → consolidate with a shared abstraction\n  - If error handling is scattered → centralize error types/handlers\n  - If types are duplicated across files → extract to a shared types module\n\nRELAXED CONSTRAINTS (architect mode):\n  - You may change up to 20 files and 500 lines total\n  - You MAY create new files (shared modules, utilities, type definitions)\n  - You MUST update all import paths when extracting or moving code\n  - All existing tests MUST still pass — if tests break, the change will be rolled back\n  - Make ONE cohesive structural change, not many unrelated fixes\n\nINSTRUCTIONS:\n1. Analyze the top issues and identify the highest-leverage architectural improvement\n2. Make the structural change (extract module, consolidate, refactor)\n3. Update all import paths throughout the codebase\n4. Verify the change is cohesive and tests would pass\n\nAfter making changes, output each modified or created file:\nMODIFIED: <filepath>",
+      "target": "src",
+      "analysis": "SCORE OPTIMIZATION TARGET: Auth & rate limiting\nCurrent: 4/6 (1 issues)\nGoal: Reduce to 0 issues for +2 points\nMax: Reduce to 0 issues for +2 points\nINSTRUCTION: Add authentication middleware or rate limiting to unprotected routes/endpoints.",
+      "proposal": "SCORE OPTIMIZATION TARGET: Auth & rate limiting\nCurrent: 4/6 (1 issues)\nGoal: Reduce to 0 issues for +2 points\nMax: Reduce to 0 issues for +2 points\nINSTRUCTION: Add authentication middleware or rate limiting to unprotected routes/endpoints.",
       "filesModified": [],
       "testsPassed": false,
-      "timestamp": "2026-03-16T06:26:45.951Z"
-    },
-    {
-      "number": 2,
-      "target": "improve",
-      "analysis": "You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\nTOP ISSUES BY VOLUME (score: 83/100, 699 total issues):\n  - [medium] repeated code lines: 351 occurrences\n  - [low] lines >120 chars: 256 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts, /Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-sample-pdf.ts\n  - [low] console.log calls in src: 46 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/commands/simulate.ts, /Users/giovanni/Projects/ratchet/src/commands/tighten.ts, /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - [medium] functions >50 lines: 29 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/debate.ts, /Users/giovanni/Projects/ratchet/src/commands/improve.ts, /Users/giovanni/Projects/ratchet/src/commands/init.ts, /Users/giovanni/Projects/ratchet/src/commands/log.ts\n  - [low] dead code indicators (TODO, commented code): 8 occurrences\n  - [medium] any types: 4 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/core/pdf-report.ts, /Users/giovanni/Projects/ratchet/src/core/scan-cache.ts\n  - [medium] await-in-loop patterns: 4 occurrences\n  - [medium] missing auth/security controls: 1 occurrences\n\nARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n  - If multiple files share duplicated logic → extract a shared module/utility\n  - If a file is a god class/module → split it into focused modules\n  - If many files import the same pattern differently → consolidate with a shared abstraction\n  - If error handling is scattered → centralize error types/handlers\n  - If types are duplicated across files → extract to a shared types module\n\nRELAXED CONSTRAINTS (architect mode):\n  - You may change up to 20 files and 500 lines total\n  - You MAY create new files (shared modules, utilities, type definitions)\n  - You MUST update all import paths when extracting or moving code\n  - All existing tests MUST still pass — if tests break, the change will be rolled back\n  - Make ONE cohesive structural change, not many unrelated fixes\n\nINSTRUCTIONS:\n1. Analyze the top issues and identify the highest-leverage architectural improvement\n2. Make the structural change (extract module, consolidate, refactor)\n3. Update all import paths throughout the codebase\n4. Verify the change is cohesive and tests would pass\n\nAfter making changes, output each modified or created file:\nMODIFIED: <filepath>",
-      "proposal": "You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\nTOP ISSUES BY VOLUME (score: 83/100, 699 total issues):\n  - [medium] repeated code lines: 351 occurrences\n  - [low] lines >120 chars: 256 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts, /Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-sample-pdf.ts\n  - [low] console.log calls in src: 46 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/commands/simulate.ts, /Users/giovanni/Projects/ratchet/src/commands/tighten.ts, /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - [medium] functions >50 lines: 29 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/debate.ts, /Users/giovanni/Projects/ratchet/src/commands/improve.ts, /Users/giovanni/Projects/ratchet/src/commands/init.ts, /Users/giovanni/Projects/ratchet/src/commands/log.ts\n  - [low] dead code indicators (TODO, commented code): 8 occurrences\n  - [medium] any types: 4 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/core/pdf-report.ts, /Users/giovanni/Projects/ratchet/src/core/scan-cache.ts\n  - [medium] await-in-loop patterns: 4 occurrences\n  - [medium] missing auth/security controls: 1 occurrences\n\nARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n  - If multiple files share duplicated logic → extract a shared module/utility\n  - If a file is a god class/module → split it into focused modules\n  - If many files import the same pattern differently → consolidate with a shared abstraction\n  - If error handling is scattered → centralize error types/handlers\n  - If types are duplicated across files → extract to a shared types module\n\nRELAXED CONSTRAINTS (architect mode):\n  - You may change up to 20 files and 500 lines total\n  - You MAY create new files (shared modules, utilities, type definitions)\n  - You MUST update all import paths when extracting or moving code\n  - All existing tests MUST still pass — if tests break, the change will be rolled back\n  - Make ONE cohesive structural change, not many unrelated fixes\n\nINSTRUCTIONS:\n1. Analyze the top issues and identify the highest-leverage architectural improvement\n2. Make the structural change (extract module, consolidate, refactor)\n3. Update all import paths throughout the codebase\n4. Verify the change is cohesive and tests would pass\n\nAfter making changes, output each modified or created file:\nMODIFIED: <filepath>",
-      "filesModified": [
-        "`src/lib/cli.ts` — added `export function scoreColor(score, max): ChalkInstance` with proper type; imported `ChalkInstance` from chalk",
-        "`src/commands/scan.ts` — removed local `scoreColor` function, imported from `cli.ts`, replaced inline ternary with the shared function",
-        "`src/core/report.ts` — added `projectName?: string` to `ReportOptions` interface",
-        "`src/core/pdf-report.ts` — replaced `(options as any).projectName` with `options.projectName` (type-safe now)",
-        "`src/core/scan-cache.ts` — fixed pre-existing `locations` property access on inferred union type using `'locations' in sub` narrowing"
-      ],
-      "testsPassed": true,
-      "commitHash": "b92cd023f360139335615868fea96f1abb57e850",
-      "timestamp": "2026-03-16T06:36:46.317Z",
-      "scoreAfterClick": 83,
-      "issuesFixedCount": 1
-    },
-    {
-      "number": 3,
-      "target": "improve",
-      "analysis": "You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\nTOP ISSUES BY VOLUME (score: 83/100, 698 total issues):\n  - [medium] repeated code lines: 351 occurrences\n  - [low] lines >120 chars: 256 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts, /Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-sample-pdf.ts\n  - [low] console.log calls in src: 46 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/commands/simulate.ts, /Users/giovanni/Projects/ratchet/src/commands/tighten.ts, /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - [medium] functions >50 lines: 29 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/debate.ts, /Users/giovanni/Projects/ratchet/src/commands/improve.ts, /Users/giovanni/Projects/ratchet/src/commands/init.ts, /Users/giovanni/Projects/ratchet/src/commands/log.ts\n  - [low] dead code indicators (TODO, commented code): 8 occurrences\n  - [medium] await-in-loop patterns: 4 occurrences\n  - [medium] any types: 3 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/core/scan-cache.ts\n  - [medium] missing auth/security controls: 1 occurrences\n\nARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n  - If multiple files share duplicated logic → extract a shared module/utility\n  - If a file is a god class/module → split it into focused modules\n  - If many files import the same pattern differently → consolidate with a shared abstraction\n  - If error handling is scattered → centralize error types/handlers\n  - If types are duplicated across files → extract to a shared types module\n\nRELAXED CONSTRAINTS (architect mode):\n  - You may change up to 20 files and 500 lines total\n  - You MAY create new files (shared modules, utilities, type definitions)\n  - You MUST update all import paths when extracting or moving code\n  - All existing tests MUST still pass — if tests break, the change will be rolled back\n  - Make ONE cohesive structural change, not many unrelated fixes\n\nINSTRUCTIONS:\n1. Analyze the top issues and identify the highest-leverage architectural improvement\n2. Make the structural change (extract module, consolidate, refactor)\n3. Update all import paths throughout the codebase\n4. Verify the change is cohesive and tests would pass\n\nAfter making changes, output each modified or created file:\nMODIFIED: <filepath>",
-      "proposal": "You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\nTOP ISSUES BY VOLUME (score: 83/100, 698 total issues):\n  - [medium] repeated code lines: 351 occurrences\n  - [low] lines >120 chars: 256 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts, /Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-sample-pdf.ts\n  - [low] console.log calls in src: 46 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/commands/simulate.ts, /Users/giovanni/Projects/ratchet/src/commands/tighten.ts, /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - [medium] functions >50 lines: 29 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/debate.ts, /Users/giovanni/Projects/ratchet/src/commands/improve.ts, /Users/giovanni/Projects/ratchet/src/commands/init.ts, /Users/giovanni/Projects/ratchet/src/commands/log.ts\n  - [low] dead code indicators (TODO, commented code): 8 occurrences\n  - [medium] await-in-loop patterns: 4 occurrences\n  - [medium] any types: 3 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/core/scan-cache.ts\n  - [medium] missing auth/security controls: 1 occurrences\n\nARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n  - If multiple files share duplicated logic → extract a shared module/utility\n  - If a file is a god class/module → split it into focused modules\n  - If many files import the same pattern differently → consolidate with a shared abstraction\n  - If error handling is scattered → centralize error types/handlers\n  - If types are duplicated across files → extract to a shared types module\n\nRELAXED CONSTRAINTS (architect mode):\n  - You may change up to 20 files and 500 lines total\n  - You MAY create new files (shared modules, utilities, type definitions)\n  - You MUST update all import paths when extracting or moving code\n  - All existing tests MUST still pass — if tests break, the change will be rolled back\n  - Make ONE cohesive structural change, not many unrelated fixes\n\nINSTRUCTIONS:\n1. Analyze the top issues and identify the highest-leverage architectural improvement\n2. Make the structural change (extract module, consolidate, refactor)\n3. Update all import paths throughout the codebase\n4. Verify the change is cohesive and tests would pass\n\nAfter making changes, output each modified or created file:\nMODIFIED: <filepath>",
-      "filesModified": [],
-      "testsPassed": true,
-      "commitHash": "1d30eea3bee13d49caa67ec2da17422811748859",
-      "timestamp": "2026-03-16T06:42:59.620Z",
-      "scoreAfterClick": 83,
-      "issuesFixedCount": 3
-    },
-    {
-      "number": 4,
-      "target": "improve",
-      "analysis": "You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\nTOP ISSUES BY VOLUME (score: 83/100, 695 total issues):\n  - [medium] repeated code lines: 354 occurrences\n  - [low] lines >120 chars: 257 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts, /Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-sample-pdf.ts\n  - [low] console.log calls in src: 39 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/commands/simulate.ts, /Users/giovanni/Projects/ratchet/src/commands/tighten.ts, /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - [medium] functions >50 lines: 29 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/debate.ts, /Users/giovanni/Projects/ratchet/src/commands/improve.ts, /Users/giovanni/Projects/ratchet/src/commands/init.ts, /Users/giovanni/Projects/ratchet/src/commands/log.ts\n  - [low] dead code indicators (TODO, commented code): 8 occurrences\n  - [medium] await-in-loop patterns: 4 occurrences\n  - [medium] any types: 3 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/core/scan-cache.ts\n  - [medium] missing auth/security controls: 1 occurrences\n\nARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n  - If multiple files share duplicated logic → extract a shared module/utility\n  - If a file is a god class/module → split it into focused modules\n  - If many files import the same pattern differently → consolidate with a shared abstraction\n  - If error handling is scattered → centralize error types/handlers\n  - If types are duplicated across files → extract to a shared types module\n\nRELAXED CONSTRAINTS (architect mode):\n  - You may change up to 20 files and 500 lines total\n  - You MAY create new files (shared modules, utilities, type definitions)\n  - You MUST update all import paths when extracting or moving code\n  - All existing tests MUST still pass — if tests break, the change will be rolled back\n  - Make ONE cohesive structural change, not many unrelated fixes\n\nINSTRUCTIONS:\n1. Analyze the top issues and identify the highest-leverage architectural improvement\n2. Make the structural change (extract module, consolidate, refactor)\n3. Update all import paths throughout the codebase\n4. Verify the change is cohesive and tests would pass\n\nAfter making changes, output each modified or created file:\nMODIFIED: <filepath>",
-      "proposal": "You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\nTOP ISSUES BY VOLUME (score: 83/100, 695 total issues):\n  - [medium] repeated code lines: 354 occurrences\n  - [low] lines >120 chars: 257 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts, /Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/scripts/generate-sample-pdf.ts\n  - [low] console.log calls in src: 39 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/commands/simulate.ts, /Users/giovanni/Projects/ratchet/src/commands/tighten.ts, /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - [medium] functions >50 lines: 29 occurrences — in /Users/giovanni/Projects/ratchet/src/commands/debate.ts, /Users/giovanni/Projects/ratchet/src/commands/improve.ts, /Users/giovanni/Projects/ratchet/src/commands/init.ts, /Users/giovanni/Projects/ratchet/src/commands/log.ts\n  - [low] dead code indicators (TODO, commented code): 8 occurrences\n  - [medium] await-in-loop patterns: 4 occurrences\n  - [medium] any types: 3 occurrences — in /Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts, /Users/giovanni/Projects/ratchet/src/commands/scan.ts, /Users/giovanni/Projects/ratchet/src/core/scan-cache.ts\n  - [medium] missing auth/security controls: 1 occurrences\n\nARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n  - If multiple files share duplicated logic → extract a shared module/utility\n  - If a file is a god class/module → split it into focused modules\n  - If many files import the same pattern differently → consolidate with a shared abstraction\n  - If error handling is scattered → centralize error types/handlers\n  - If types are duplicated across files → extract to a shared types module\n\nRELAXED CONSTRAINTS (architect mode):\n  - You may change up to 20 files and 500 lines total\n  - You MAY create new files (shared modules, utilities, type definitions)\n  - You MUST update all import paths when extracting or moving code\n  - All existing tests MUST still pass — if tests break, the change will be rolled back\n  - Make ONE cohesive structural change, not many unrelated fixes\n\nINSTRUCTIONS:\n1. Analyze the top issues and identify the highest-leverage architectural improvement\n2. Make the structural change (extract module, consolidate, refactor)\n3. Update all import paths throughout the codebase\n4. Verify the change is cohesive and tests would pass\n\nAfter making changes, output each modified or created file:\nMODIFIED: <filepath>",
-      "filesModified": [],
-      "testsPassed": false,
-      "timestamp": "2026-03-16T06:47:35.988Z"
-    },
-    {
-      "number": 5,
-      "target": "improve",
-      "analysis": "You are a code improvement assistant. Fix ONE specific issue type across a batch of files.\n\nSCORING CONTEXT:\n  Subcategory: Auth & rate limiting\n  Current count across codebase: 1 (score: 4/6)\n  Tier threshold: ≤0 instances = +2 points\n\nWHAT TO FIX:\n  Add authentication middleware or rate limiting to unprotected routes/endpoints.\n\nFILES IN THIS BATCH:\n\n\nFix every instance of this issue in each file above.\n\nHARD CONSTRAINTS:\n  - Fix ONLY the described issue type\n  - Do NOT refactor, rename, or restructure\n  - Change at most 30 lines per file\n  - All existing tests MUST pass\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "proposal": "You are a code improvement assistant. Fix ONE specific issue type across a batch of files.\n\nSCORING CONTEXT:\n  Subcategory: Auth & rate limiting\n  Current count across codebase: 1 (score: 4/6)\n  Tier threshold: ≤0 instances = +2 points\n\nWHAT TO FIX:\n  Add authentication middleware or rate limiting to unprotected routes/endpoints.\n\nFILES IN THIS BATCH:\n\n\nFix every instance of this issue in each file above.\n\nHARD CONSTRAINTS:\n  - Fix ONLY the described issue type\n  - Do NOT refactor, rename, or restructure\n  - Change at most 30 lines per file\n  - All existing tests MUST pass\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "filesModified": [],
-      "testsPassed": true,
-      "timestamp": "2026-03-16T06:57:36.400Z"
-    },
-    {
-      "number": 6,
-      "target": "improve",
-      "analysis": "You are a code improvement assistant executing an atomic codebase-wide fix.\n\nGOAL: Cross a scoring tier boundary.\n  Subcategory: Console cleanup\n  Current issue count: 39 (current score: 1/5)\n  Target count: ≤0 (this gains +4 points)\n  Must eliminate: at least 40 instances\n\nWHAT TO FIX:\n  Remove or replace console.log calls with the structured logger. For debug-only logs, remove entirely. For operational logs, use logger.info/debug.\n\nALL AFFECTED FILES (fix EVERY instance in ALL of these — partial fixes do NOT cross tiers):\n  - /Users/giovanni/Projects/ratchet/src/commands/scan.ts\n  - /Users/giovanni/Projects/ratchet/src/commands/simulate.ts\n  - /Users/giovanni/Projects/ratchet/src/commands/tighten.ts\n  - /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - /Users/giovanni/Projects/ratchet/src/lib/cli.ts\n\nSTRATEGY: This is a mechanical, repetitive fix. Go file by file. In each file:\n  1. Find every instance of the issue\n  2. Fix each one\n  3. Move to the next file\n  Do NOT stop early. Do NOT skip files. Fix every single instance.\n\nHARD CONSTRAINTS:\n  - Fix ONLY this issue type — do NOT change any other code\n  - Do NOT refactor, rename, or restructure\n  - Do NOT touch any logic\n  - All existing tests MUST pass\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "proposal": "You are a code improvement assistant executing an atomic codebase-wide fix.\n\nGOAL: Cross a scoring tier boundary.\n  Subcategory: Console cleanup\n  Current issue count: 39 (current score: 1/5)\n  Target count: ≤0 (this gains +4 points)\n  Must eliminate: at least 40 instances\n\nWHAT TO FIX:\n  Remove or replace console.log calls with the structured logger. For debug-only logs, remove entirely. For operational logs, use logger.info/debug.\n\nALL AFFECTED FILES (fix EVERY instance in ALL of these — partial fixes do NOT cross tiers):\n  - /Users/giovanni/Projects/ratchet/src/commands/scan.ts\n  - /Users/giovanni/Projects/ratchet/src/commands/simulate.ts\n  - /Users/giovanni/Projects/ratchet/src/commands/tighten.ts\n  - /Users/giovanni/Projects/ratchet/src/commands/torque.ts\n  - /Users/giovanni/Projects/ratchet/src/lib/cli.ts\n\nSTRATEGY: This is a mechanical, repetitive fix. Go file by file. In each file:\n  1. Find every instance of the issue\n  2. Fix each one\n  3. Move to the next file\n  Do NOT stop early. Do NOT skip files. Fix every single instance.\n\nHARD CONSTRAINTS:\n  - Fix ONLY this issue type — do NOT change any other code\n  - Do NOT refactor, rename, or restructure\n  - Do NOT touch any logic\n  - All existing tests MUST pass\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "filesModified": [
-        "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
-        "/Users/giovanni/Projects/ratchet/src/commands/simulate.ts",
-        "/Users/giovanni/Projects/ratchet/src/commands/tighten.ts",
-        "/Users/giovanni/Projects/ratchet/src/commands/torque.ts",
-        "/Users/giovanni/Projects/ratchet/src/lib/cli.ts"
-      ],
-      "testsPassed": true,
-      "commitHash": "3e77849f8ab721f17af0f82525b123801c82fc69",
-      "timestamp": "2026-03-16T06:59:50.133Z",
-      "scoreAfterClick": 86,
-      "issuesFixedCount": 38
-    },
-    {
-      "number": 7,
-      "target": "improve",
-      "analysis": "You are a code improvement assistant. Fix ONE specific issue type across a batch of files.\n\nSCORING CONTEXT:\n  Subcategory: Async patterns\n  Current count across codebase: 4 (score: 2/3)\n  Tier threshold: ≤0 instances = +1 points\n\nWHAT TO FIX:\n  Refactor await-in-loop patterns to use Promise.all or batch operations instead of sequential awaits inside for/while loops.\n\nFILES IN THIS BATCH:\n\n\nFix every instance of this issue in each file above.\n\nHARD CONSTRAINTS:\n  - Fix ONLY the described issue type\n  - Do NOT refactor, rename, or restructure\n  - Change at most 30 lines per file\n  - All existing tests MUST pass\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "proposal": "You are a code improvement assistant. Fix ONE specific issue type across a batch of files.\n\nSCORING CONTEXT:\n  Subcategory: Async patterns\n  Current count across codebase: 4 (score: 2/3)\n  Tier threshold: ≤0 instances = +1 points\n\nWHAT TO FIX:\n  Refactor await-in-loop patterns to use Promise.all or batch operations instead of sequential awaits inside for/while loops.\n\nFILES IN THIS BATCH:\n\n\nFix every instance of this issue in each file above.\n\nHARD CONSTRAINTS:\n  - Fix ONLY the described issue type\n  - Do NOT refactor, rename, or restructure\n  - Change at most 30 lines per file\n  - All existing tests MUST pass\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "filesModified": [
-        "src/core/engine.ts",
-        "src/core/history.ts",
-        "src/core/swarm.ts"
-      ],
-      "testsPassed": false,
-      "timestamp": "2026-03-16T07:03:30.412Z"
+      "timestamp": "2026-03-22T23:39:38.934Z",
+      "rollbackReason": "\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\u001b[22m\u001b[39m"
     }
   ],
-  "startedAt": "2026-03-16T06:26:45.353Z",
+  "startedAt": "2026-03-22T23:39:37.289Z",
   "status": "completed",
-  "finishedAt": "2026-03-16T07:06:57.414Z"
+  "finishedAt": "2026-03-22T23:43:34.350Z",
+  "_scoreBefore": {
+    "projectName": "ratchet-run",
+    "total": 82,
+    "maxTotal": 100,
+    "categories": [
+      {
+        "name": "Testing",
+        "emoji": "🧪",
+        "score": 23,
+        "max": 25,
+        "summary": "83 test files, 84% ratio, 329 edge/error test cases",
+        "subcategories": [
+          {
+            "name": "Coverage ratio",
+            "score": 8,
+            "max": 8,
+            "summary": "83 test files, 84% ratio",
+            "issuesFound": 0,
+            "issuesDescription": "source files without tests",
+            "locations": []
+          },
+          {
+            "name": "Edge case depth",
+            "score": 9,
+            "max": 9,
+            "summary": "329 edge/error test cases",
+            "issuesFound": 0,
+            "issuesDescription": "no edge case tests"
+          },
+          {
+            "name": "Test quality",
+            "score": 6,
+            "max": 8,
+            "summary": "1.6 assertions per test",
+            "issuesFound": 0
+          }
+        ]
+      },
+      {
+        "name": "Security",
+        "emoji": "🔒",
+        "score": 10,
+        "max": 15,
+        "summary": "2 potential secrets, validation on 6 files",
+        "subcategories": [
+          {
+            "name": "Secrets & env vars",
+            "score": 0,
+            "max": 3,
+            "summary": "2 potential secrets",
+            "issuesFound": 2,
+            "issuesDescription": "hardcoded secrets"
+          },
+          {
+            "name": "Input validation",
+            "score": 6,
+            "max": 6,
+            "summary": "validation on 6 files",
+            "issuesFound": 0,
+            "issuesDescription": "route files without validation"
+          },
+          {
+            "name": "Auth & rate limiting",
+            "score": 4,
+            "max": 6,
+            "summary": "auth middleware, rate limiting",
+            "issuesFound": 1,
+            "issuesDescription": "missing auth/security controls"
+          }
+        ]
+      },
+      {
+        "name": "Type Safety",
+        "emoji": "📝",
+        "score": 15,
+        "max": 15,
+        "summary": "strict mode enabled, 7 any types (very low density)",
+        "subcategories": [
+          {
+            "name": "Strict config",
+            "score": 7,
+            "max": 7,
+            "summary": "strict mode enabled",
+            "issuesFound": 0,
+            "issuesDescription": "missing strict TypeScript config"
+          },
+          {
+            "name": "Any type count",
+            "score": 8,
+            "max": 8,
+            "summary": "7 any types (very low density)",
+            "issuesFound": 7,
+            "issuesDescription": "any types",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/explanations.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/license.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/swarm.ts"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Error Handling",
+        "emoji": "⚠️ ",
+        "score": 15,
+        "max": 20,
+        "summary": "215 try/catch blocks, 2 empty catches",
+        "subcategories": [
+          {
+            "name": "Coverage",
+            "score": 8,
+            "max": 8,
+            "summary": "215 try/catch blocks",
+            "issuesFound": 0,
+            "issuesDescription": "async functions without error handling",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/login.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/strategy.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/report.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/runner.ts"
+            ]
+          },
+          {
+            "name": "Empty catches",
+            "score": 4,
+            "max": 5,
+            "summary": "2 empty catches",
+            "issuesFound": 2,
+            "issuesDescription": "empty catch blocks",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
+              "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
+            ]
+          },
+          {
+            "name": "Structured logging",
+            "score": 3,
+            "max": 7,
+            "summary": "logger (207) + console (36)",
+            "issuesFound": 0,
+            "issuesDescription": "no structured logger"
+          }
+        ]
+      },
+      {
+        "name": "Performance",
+        "emoji": "⚡",
+        "score": 8,
+        "max": 10,
+        "summary": "23 await-in-loop patterns, 5 console.log calls",
+        "subcategories": [
+          {
+            "name": "Async patterns",
+            "score": 1,
+            "max": 3,
+            "summary": "23 await-in-loop patterns",
+            "issuesFound": 23,
+            "issuesDescription": "await-in-loop patterns"
+          },
+          {
+            "name": "Console cleanup",
+            "score": 3,
+            "max": 5,
+            "summary": "5 console.log calls",
+            "issuesFound": 5,
+            "issuesDescription": "console.log calls in src",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
+              "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
+            ]
+          },
+          {
+            "name": "Import hygiene",
+            "score": 2,
+            "max": 2,
+            "summary": "clean imports",
+            "issuesFound": 0,
+            "issuesDescription": "import issues"
+          }
+        ]
+      },
+      {
+        "name": "Code Quality",
+        "emoji": "📖",
+        "score": 11,
+        "max": 15,
+        "summary": "avg 32-line functions, 44 long lines",
+        "subcategories": [
+          {
+            "name": "Function length",
+            "score": 4,
+            "max": 4,
+            "summary": "avg 32-line functions",
+            "issuesFound": 39,
+            "issuesDescription": "functions >50 lines",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
+              "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/graph.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/improve.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/init.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/log.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/push.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/report.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/status.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/strategy.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/swarm.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/tighten.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/torque.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/vision.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/allocator.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/click.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/config.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/engine-architect.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/engine-feature.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/engine-sweep.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/engine.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/milestones.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/parallel.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/pdf-report.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/report.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/runner.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/score-optimizer.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/strategy.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/tier-engine.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/vision.ts"
+            ]
+          },
+          {
+            "name": "Line length",
+            "score": 3,
+            "max": 4,
+            "summary": "44 long lines",
+            "issuesFound": 44,
+            "issuesDescription": "lines >120 chars",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts",
+              "/Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts",
+              "/Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts",
+              "/Users/giovanni/Projects/ratchet/scripts/generate-showcase-pdf.mjs",
+              "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/scan-constants.ts",
+              "/Users/giovanni/Projects/ratchet/worker/src/badge.ts"
+            ]
+          },
+          {
+            "name": "Dead code",
+            "score": 2,
+            "max": 4,
+            "summary": "1 commented-out lines, 9 TODOs",
+            "issuesFound": 10,
+            "issuesDescription": "dead code indicators (TODO, commented code)"
+          },
+          {
+            "name": "Duplication",
+            "score": 1,
+            "max": 3,
+            "summary": "532 repeated lines (high duplication)",
+            "issuesFound": 532,
+            "issuesDescription": "repeated code lines"
+          }
+        ]
+      }
+    ],
+    "totalIssuesFound": 665,
+    "issuesByType": [
+      {
+        "category": "Security",
+        "subcategory": "Secrets & env vars",
+        "count": 2,
+        "description": "hardcoded secrets",
+        "severity": "high"
+      },
+      {
+        "category": "Error Handling",
+        "subcategory": "Empty catches",
+        "count": 2,
+        "description": "empty catch blocks",
+        "severity": "high",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
+          "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
+        ]
+      },
+      {
+        "category": "Code Quality",
+        "subcategory": "Duplication",
+        "count": 532,
+        "description": "repeated code lines",
+        "severity": "medium"
+      },
+      {
+        "category": "Code Quality",
+        "subcategory": "Function length",
+        "count": 39,
+        "description": "functions >50 lines",
+        "severity": "medium",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
+          "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/graph.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/improve.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/init.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/log.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/push.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/report.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/status.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/strategy.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/swarm.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/tighten.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/torque.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/vision.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/allocator.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/click.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/config.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/engine-architect.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/engine-feature.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/engine-sweep.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/engine.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/milestones.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/parallel.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/pdf-report.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/report.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/runner.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/score-optimizer.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/strategy.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/tier-engine.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/vision.ts"
+        ]
+      },
+      {
+        "category": "Performance",
+        "subcategory": "Async patterns",
+        "count": 23,
+        "description": "await-in-loop patterns",
+        "severity": "medium"
+      },
+      {
+        "category": "Type Safety",
+        "subcategory": "Any type count",
+        "count": 7,
+        "description": "any types",
+        "severity": "medium",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/explanations.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/license.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/swarm.ts"
+        ]
+      },
+      {
+        "category": "Security",
+        "subcategory": "Auth & rate limiting",
+        "count": 1,
+        "description": "missing auth/security controls",
+        "severity": "medium"
+      },
+      {
+        "category": "Code Quality",
+        "subcategory": "Line length",
+        "count": 44,
+        "description": "lines >120 chars",
+        "severity": "low",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts",
+          "/Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts",
+          "/Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts",
+          "/Users/giovanni/Projects/ratchet/scripts/generate-showcase-pdf.mjs",
+          "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/scan-constants.ts",
+          "/Users/giovanni/Projects/ratchet/worker/src/badge.ts"
+        ]
+      },
+      {
+        "category": "Code Quality",
+        "subcategory": "Dead code",
+        "count": 10,
+        "description": "dead code indicators (TODO, commented code)",
+        "severity": "low"
+      },
+      {
+        "category": "Performance",
+        "subcategory": "Console cleanup",
+        "count": 5,
+        "description": "console.log calls in src",
+        "severity": "low",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
+          "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
+        ]
+      }
+    ]
+  },
+  "_scoreAfter": {
+    "projectName": "ratchet-run",
+    "total": 84,
+    "maxTotal": 100,
+    "categories": [
+      {
+        "name": "Testing",
+        "emoji": "🧪",
+        "score": 23,
+        "max": 25,
+        "summary": "83 test files, 84% ratio, 329 edge/error test cases",
+        "subcategories": [
+          {
+            "name": "Coverage ratio",
+            "score": 8,
+            "max": 8,
+            "summary": "83 test files, 84% ratio",
+            "issuesFound": 0,
+            "issuesDescription": "source files without tests",
+            "locations": []
+          },
+          {
+            "name": "Edge case depth",
+            "score": 9,
+            "max": 9,
+            "summary": "329 edge/error test cases",
+            "issuesFound": 0,
+            "issuesDescription": "no edge case tests"
+          },
+          {
+            "name": "Test quality",
+            "score": 6,
+            "max": 8,
+            "summary": "1.6 assertions per test",
+            "issuesFound": 0
+          }
+        ]
+      },
+      {
+        "name": "Security",
+        "emoji": "🔒",
+        "score": 12,
+        "max": 15,
+        "summary": "2 potential secrets, validation on 6 files",
+        "subcategories": [
+          {
+            "name": "Secrets & env vars",
+            "score": 0,
+            "max": 3,
+            "summary": "2 potential secrets",
+            "issuesFound": 2,
+            "issuesDescription": "hardcoded secrets"
+          },
+          {
+            "name": "Input validation",
+            "score": 6,
+            "max": 6,
+            "summary": "validation on 6 files",
+            "issuesFound": 0,
+            "issuesDescription": "route files without validation"
+          },
+          {
+            "name": "Auth & rate limiting",
+            "score": 6,
+            "max": 6,
+            "summary": "auth middleware, rate limiting, CORS configured",
+            "issuesFound": 0,
+            "issuesDescription": "missing auth/security controls"
+          }
+        ]
+      },
+      {
+        "name": "Type Safety",
+        "emoji": "📝",
+        "score": 15,
+        "max": 15,
+        "summary": "strict mode enabled, 7 any types (very low density)",
+        "subcategories": [
+          {
+            "name": "Strict config",
+            "score": 7,
+            "max": 7,
+            "summary": "strict mode enabled",
+            "issuesFound": 0,
+            "issuesDescription": "missing strict TypeScript config"
+          },
+          {
+            "name": "Any type count",
+            "score": 8,
+            "max": 8,
+            "summary": "7 any types (very low density)",
+            "issuesFound": 7,
+            "issuesDescription": "any types",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/explanations.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/license.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/swarm.ts"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Error Handling",
+        "emoji": "⚠️ ",
+        "score": 15,
+        "max": 20,
+        "summary": "215 try/catch blocks, 2 empty catches",
+        "subcategories": [
+          {
+            "name": "Coverage",
+            "score": 8,
+            "max": 8,
+            "summary": "215 try/catch blocks",
+            "issuesFound": 0,
+            "issuesDescription": "async functions without error handling",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/login.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/strategy.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/report.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/runner.ts"
+            ]
+          },
+          {
+            "name": "Empty catches",
+            "score": 4,
+            "max": 5,
+            "summary": "2 empty catches",
+            "issuesFound": 2,
+            "issuesDescription": "empty catch blocks",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
+              "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
+            ]
+          },
+          {
+            "name": "Structured logging",
+            "score": 3,
+            "max": 7,
+            "summary": "logger (207) + console (36)",
+            "issuesFound": 0,
+            "issuesDescription": "no structured logger"
+          }
+        ]
+      },
+      {
+        "name": "Performance",
+        "emoji": "⚡",
+        "score": 8,
+        "max": 10,
+        "summary": "25 await-in-loop patterns, 5 console.log calls",
+        "subcategories": [
+          {
+            "name": "Async patterns",
+            "score": 1,
+            "max": 3,
+            "summary": "25 await-in-loop patterns",
+            "issuesFound": 25,
+            "issuesDescription": "await-in-loop patterns"
+          },
+          {
+            "name": "Console cleanup",
+            "score": 3,
+            "max": 5,
+            "summary": "5 console.log calls",
+            "issuesFound": 5,
+            "issuesDescription": "console.log calls in src",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
+              "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
+            ]
+          },
+          {
+            "name": "Import hygiene",
+            "score": 2,
+            "max": 2,
+            "summary": "clean imports",
+            "issuesFound": 0,
+            "issuesDescription": "import issues"
+          }
+        ]
+      },
+      {
+        "name": "Code Quality",
+        "emoji": "📖",
+        "score": 11,
+        "max": 15,
+        "summary": "avg 32-line functions, 44 long lines",
+        "subcategories": [
+          {
+            "name": "Function length",
+            "score": 4,
+            "max": 4,
+            "summary": "avg 32-line functions",
+            "issuesFound": 39,
+            "issuesDescription": "functions >50 lines",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
+              "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/graph.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/improve.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/init.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/log.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/push.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/report.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/status.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/strategy.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/swarm.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/tighten.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/torque.ts",
+              "/Users/giovanni/Projects/ratchet/src/commands/vision.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/allocator.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/click.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/config.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/engine-architect.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/engine-feature.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/engine-sweep.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/engine.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/milestones.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/parallel.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/pdf-report.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/report.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/runner.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/score-optimizer.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/strategy.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/tier-engine.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/vision.ts"
+            ]
+          },
+          {
+            "name": "Line length",
+            "score": 3,
+            "max": 4,
+            "summary": "44 long lines",
+            "issuesFound": 44,
+            "issuesDescription": "lines >120 chars",
+            "locations": [
+              "/Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts",
+              "/Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts",
+              "/Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts",
+              "/Users/giovanni/Projects/ratchet/scripts/generate-showcase-pdf.mjs",
+              "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
+              "/Users/giovanni/Projects/ratchet/src/core/scan-constants.ts",
+              "/Users/giovanni/Projects/ratchet/worker/src/badge.ts"
+            ]
+          },
+          {
+            "name": "Dead code",
+            "score": 2,
+            "max": 4,
+            "summary": "1 commented-out lines, 9 TODOs",
+            "issuesFound": 10,
+            "issuesDescription": "dead code indicators (TODO, commented code)"
+          },
+          {
+            "name": "Duplication",
+            "score": 1,
+            "max": 3,
+            "summary": "534 repeated lines (high duplication)",
+            "issuesFound": 534,
+            "issuesDescription": "repeated code lines"
+          }
+        ]
+      }
+    ],
+    "totalIssuesFound": 668,
+    "issuesByType": [
+      {
+        "category": "Security",
+        "subcategory": "Secrets & env vars",
+        "count": 2,
+        "description": "hardcoded secrets",
+        "severity": "high"
+      },
+      {
+        "category": "Error Handling",
+        "subcategory": "Empty catches",
+        "count": 2,
+        "description": "empty catch blocks",
+        "severity": "high",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
+          "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
+        ]
+      },
+      {
+        "category": "Code Quality",
+        "subcategory": "Duplication",
+        "count": 534,
+        "description": "repeated code lines",
+        "severity": "medium"
+      },
+      {
+        "category": "Code Quality",
+        "subcategory": "Function length",
+        "count": 39,
+        "description": "functions >50 lines",
+        "severity": "medium",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
+          "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/graph.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/improve.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/init.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/log.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/push.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/report.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/status.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/strategy.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/swarm.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/tighten.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/torque.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/vision.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/allocator.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/click.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/config.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/engine-architect.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/engine-feature.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/engine-sweep.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/engine.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/milestones.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/parallel.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/pdf-report.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/report.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/runner.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/score-optimizer.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/strategy.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/tier-engine.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/vision.ts"
+        ]
+      },
+      {
+        "category": "Performance",
+        "subcategory": "Async patterns",
+        "count": 25,
+        "description": "await-in-loop patterns",
+        "severity": "medium"
+      },
+      {
+        "category": "Type Safety",
+        "subcategory": "Any type count",
+        "count": 7,
+        "description": "any types",
+        "severity": "medium",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts",
+          "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/explanations.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/license.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/swarm.ts"
+        ]
+      },
+      {
+        "category": "Code Quality",
+        "subcategory": "Line length",
+        "count": 44,
+        "description": "lines >120 chars",
+        "severity": "low",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/scripts/generate-dd-report-v2.ts",
+          "/Users/giovanni/Projects/ratchet/scripts/generate-dd-report.ts",
+          "/Users/giovanni/Projects/ratchet/scripts/generate-real-report.ts",
+          "/Users/giovanni/Projects/ratchet/scripts/generate-showcase-pdf.mjs",
+          "/Users/giovanni/Projects/ratchet/src/commands/scan.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/scan-constants.ts",
+          "/Users/giovanni/Projects/ratchet/worker/src/badge.ts"
+        ]
+      },
+      {
+        "category": "Code Quality",
+        "subcategory": "Dead code",
+        "count": 10,
+        "description": "dead code indicators (TODO, commented code)",
+        "severity": "low"
+      },
+      {
+        "category": "Performance",
+        "subcategory": "Console cleanup",
+        "count": 5,
+        "description": "console.log calls in src",
+        "severity": "low",
+        "locations": [
+          "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
+          "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
+          "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
+        ]
+      }
+    ]
+  }
 }
