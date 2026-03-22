@@ -118,6 +118,13 @@ export interface CategoryDelta {
   wastedEffort: boolean; // true when issuesFixed > 0 but delta === 0 (category already maxed)
 }
 
+export interface HighRiskChange {
+  file: string;
+  symbol: string;
+  risk: string;
+  confidence: number;
+}
+
 export interface Click {
   number: number;
   target: string;
@@ -133,6 +140,8 @@ export interface Click {
   swarmSpecialization?: string; // which swarm agent won (e.g. 'security', 'quality')
   rollbackReason?: string; // short summary of why this click was rolled back
   categoryDeltas?: CategoryDelta[]; // per-category score changes for this click
+  /** High-risk symbols detected by GitNexus confidence gating before commit */
+  highRiskChanges?: HighRiskChange[];
   adversarialResult?: {
     challenged: boolean;
     passed: boolean;
