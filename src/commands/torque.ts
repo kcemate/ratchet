@@ -103,6 +103,7 @@ export function torqueCommand(): Command {
     .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
     .option('--scope <spec>', 'Limit changes to specific files: diff, branch, staged, <glob>, or file:a.ts,b.ts')
     .option('--resume <id>', 'Resume an interrupted run by its run ID')
+    .option('--no-auto-resume', 'Start fresh even if an interrupted run exists')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -137,6 +138,7 @@ export function torqueCommand(): Command {
         prCommentFooter: boolean;
         scope?: string;
         resume?: string;
+        autoResume: boolean;
       }) => {
         const cwd = process.cwd();
 
@@ -348,29 +350,13 @@ export function torqueCommand(): Command {
           }
         };
 
-        // Graceful Ctrl+C handler
-        const sigintHandler = () => {
-          if (spinner) {
-            spinner.fail(chalk.yellow('  Interrupted by user (Ctrl+C)'));
-            spinner = null;
-          } else {
-            process.stdout.write('\n');
-          }
-          releaseLock(cwd);
-          void saveInterruptedRun(clickCount).then(() => process.exit(130));
+        // Graceful Ctrl+C and SIGTERM handlers
+        const makeHandler = (msg: string, code: number) => () => {
+          if (spinner) { spinner.fail(chalk.yellow(msg)); spinner = null; } else { process.stdout.write('\n'); }
+          releaseLock(cwd); void saveInterruptedRun(clickCount).then(() => process.exit(code));
         };
-
-        // Graceful SIGTERM handler (kill, CI timeout, Docker stop, systemd)
-        const sigtermHandler = () => {
-          if (spinner) {
-            spinner.fail(chalk.yellow('  Terminated (SIGTERM)'));
-            spinner = null;
-          } else {
-            process.stdout.write('\n');
-          }
-          releaseLock(cwd);
-          void saveInterruptedRun(clickCount).then(() => process.exit(143));
-        };
+        const sigintHandler = makeHandler('  Interrupted by user (Ctrl+C)', 130);
+        const sigtermHandler = makeHandler('  Terminated (SIGTERM)', 143);
 
         process.once('SIGINT', sigintHandler);
         process.once('SIGTERM', sigtermHandler);
@@ -419,14 +405,15 @@ export function torqueCommand(): Command {
           clickCount = remainingClicks;
         }
 
-        // Hint about any interrupted runs (on fresh start only)
-        if (!options.resume) {
+        // Auto-resume: if no explicit --resume and no explicit --target, check for interrupted runs
+        if (!options.resume && !options.target && options.autoResume !== false) {
           try {
             const allRuns = await listRuns(cwd);
-            const interrupted = allRuns.filter(e => e.run.status === 'interrupted');
-            for (const entry of interrupted.slice(0, 1)) {
+            const interrupted = allRuns.find(e => e.run.status === 'interrupted');
+            if (interrupted) {
+              options.resume = interrupted.run.id;
               process.stdout.write(
-                chalk.dim(`  ⚡ Found interrupted run ${chalk.bold(entry.run.id)}. Use ${chalk.cyan(`--resume ${entry.run.id}`)} to continue.\n\n`),
+                chalk.cyan(`  ⚡ Auto-resuming interrupted run ${chalk.bold(interrupted.run.id)} (click ${(interrupted.run.resumeState?.completedClicks ?? 0) + 1}/${interrupted.run.resumeState?.totalClicks ?? '?'})...\n\n`),
               );
             }
           } catch {
@@ -607,6 +594,14 @@ export function torqueCommand(): Command {
 
               onRunInit: (run: RatchetRun) => {
                 liveRun = run;
+              },
+
+              onCheckpoint: async (run: RatchetRun) => {
+                try {
+                  await saveRun(cwd, run);
+                } catch {
+                  // Non-fatal
+                }
               },
 
               onEscalate: (reason: string) => {
