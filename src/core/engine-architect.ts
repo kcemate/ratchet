@@ -8,6 +8,7 @@ import { runScan } from '../commands/scan.js';
 import { clearCache as clearGitNexusCache } from './gitnexus.js';
 import { resolveGuards } from './engine-guards.js';
 import type { EngineRunOptions, ClickPhase } from './engine.js';
+import { logger } from '../lib/logger.js';
 
 /**
  * Architect engine: make high-leverage structural improvements that eliminate many issues at once.
