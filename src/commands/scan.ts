@@ -104,6 +104,7 @@ import {
   countMatchesWithFiles,
   anyFileHasMatch,
   DUP_SCORE_THRESHOLDS,
+  scoreStrictConfig,
 } from '../core/scan-constants.js';
 import {
   scoreCoverageRatio,
@@ -307,24 +308,7 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
   }
 
   // --- Strict config /7 ---
-  let strictScore = 0;
-  let strictSummary = 'TypeScript (no strict config)';
-  const tsconfigPath = join(cwd, 'tsconfig.json');
-  if (existsSync(tsconfigPath)) {
-    try {
-      const tsconfig = JSON.parse(readFileSync(tsconfigPath, 'utf-8')) as {
-        compilerOptions?: { strict?: boolean; noImplicitAny?: boolean; strictNullChecks?: boolean };
-      };
-      if (tsconfig.compilerOptions?.strict) { strictScore = 7; strictSummary = 'strict mode enabled'; }
-      else if (tsconfig.compilerOptions?.noImplicitAny && tsconfig.compilerOptions?.strictNullChecks) { strictScore = 5; strictSummary = 'noImplicitAny + strictNullChecks'; }
-      else if (tsconfig.compilerOptions?.noImplicitAny) { strictScore = 3; strictSummary = 'noImplicitAny'; }
-      else { strictScore = 1; strictSummary = 'TypeScript, no strict flags'; }
-    } catch {
-      strictScore = 1; strictSummary = 'TypeScript (tsconfig parse error)';
-    }
-  } else {
-    strictScore = 1; strictSummary = 'TypeScript, no tsconfig found';
-  }
+  const { score: strictScore, summary: strictSummary } = scoreStrictConfig(cwd);
 
   // --- Any type count /8 ---
   const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
