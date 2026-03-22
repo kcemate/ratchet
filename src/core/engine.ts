@@ -152,6 +152,8 @@ export interface EngineCallbacks {
   onPlanStart?: () => Promise<void> | void;
   onPlanComplete?: (plan: import('../types.js').PlanResult) => Promise<void> | void;
   onRunEconomics?: (economics: RunEconomics) => Promise<void> | void;
+  /** Fires immediately after the run object is created, before any clicks run. */
+  onRunInit?: (run: RatchetRun) => void;
 }
 
 export interface EngineRunOptions {
@@ -616,6 +618,9 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
   } = options;
 
   const { run, state, incrementalScanner, baselineFailures } = await initializeRun(options);
+
+  // Expose the live run object to the caller (e.g. for signal handler checkpointing)
+  callbacks.onRunInit?.(run);
 
   // Harden mode: track initial test file count to detect when tests are written
   let initialTestFileCount = 0;

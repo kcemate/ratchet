@@ -154,7 +154,7 @@ export interface RatchetRun {
   clicks: Click[];
   startedAt: Date;
   finishedAt?: Date;
-  status: 'running' | 'completed' | 'failed';
+  status: 'running' | 'completed' | 'failed' | 'interrupted';
   earlyStopReason?: string; // set when the engine stopped early (e.g. architect-only issues remain)
   architectEscalated?: boolean; // set when the engine escalated to architect mode mid-run
   planResult?: PlanResult; // set when --plan-first generates a click 0 plan
@@ -162,6 +162,14 @@ export interface RatchetRun {
   scope?: string[];
   /** Raw --scope argument for display. */
   scopeArg?: string;
+  /** Set when a run is interrupted mid-execution — enables --resume. */
+  resumeState?: {
+    completedClicks: number;
+    totalClicks: number;
+    target: string;
+    scoreAtStart?: number;
+    interruptedAt: string;
+  };
 }
 
 export interface BuildResult {
