@@ -28,8 +28,6 @@ export interface TierStep {
 export interface SubcategoryTiers {
   name: string;
   maxScore: number;
-  /** What the tier is measured by: 'count' (issue count) or 'ratio' (computed metric) */
-  metric: 'count' | 'ratio' | 'boolean';
   /** Tiers sorted from best (fewest issues) to worst. threshold = max count for that score. */
   tiers: TierStep[];
   /** Estimated effort per issue fix: 1=trivial (mechanical), 2=easy, 3=moderate, 5=hard */
@@ -49,7 +47,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Structured logging',
     maxScore: 7,
-    metric: 'boolean',
     tiers: [
       // 7 = structured logger only (0 console errors)
       // 5 = structured logger + ≤5 console calls
@@ -67,7 +64,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Empty catches',
     maxScore: 5,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 5 },
       { threshold: 1, score: 4.5 },
@@ -84,7 +80,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Coverage',
     maxScore: 8,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 8 },
       { threshold: 3, score: 7 },
@@ -103,7 +98,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Console cleanup',
     maxScore: 5,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 5 },
       { threshold: 3, score: 4 },
@@ -119,7 +113,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Async patterns',
     maxScore: 3,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 5 },
       { threshold: 1, score: 4 },
@@ -134,7 +127,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Import hygiene',
     maxScore: 2,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 4 },
       { threshold: 2, score: 2 },
@@ -149,7 +141,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Line length',
     maxScore: 4,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 6 },
       { threshold: 5, score: 5 },
@@ -166,7 +157,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Dead code',
     maxScore: 4,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 6 },
       { threshold: 3, score: 5 },  // only TODOs, no commented code
@@ -181,7 +171,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Duplication',
     maxScore: 3,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 6 },
       { threshold: 10, score: 5 },
@@ -198,7 +187,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Function length',
     maxScore: 4,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 4 },
       { threshold: 5, score: 3 },
@@ -213,7 +201,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Auth & rate limiting',
     maxScore: 6,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 6 },
       { threshold: 1, score: 4 },
@@ -227,7 +214,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Input validation',
     maxScore: 6,
-    metric: 'count',
     tiers: [
       { threshold: 0, score: 6 },
       { threshold: 1, score: 4 },
@@ -243,7 +229,6 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   {
     name: 'Test quality',
     maxScore: 8,
-    metric: 'ratio',
     tiers: [
       // Assertions per test ratio thresholds
       { threshold: 0, score: 8 }, // ≥3.0 ratio
