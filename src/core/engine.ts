@@ -1,11 +1,15 @@
 import { randomUUID } from 'crypto';
 import { join, isAbsolute, resolve } from 'path';
-import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickEconomics, ClickGuards } from '../types.js';
+import type {
+  RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickEconomics, ClickGuards,
+} from '../types.js';
 import { loadStrategy, initStrategy, evolveStrategy, buildStrategyContext } from './strategy.js';
 import type { ShellAgent } from './agents/shell.js';
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
-import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
+import {
+  buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster,
+} from './issue-backlog.js';
 import { buildScoreOptimizedBacklog } from './score-optimizer.js';
 import { executeClick } from './click.js';
 import { SwarmExecutor } from './swarm.js';
@@ -151,7 +155,9 @@ export interface EngineCallbacks {
   onRunComplete?: (run: RatchetRun) => Promise<void> | void;
   onError?: (err: Error, clickNumber: number) => Promise<void> | void;
   onScanComplete?: (scan: ScanResult) => Promise<void> | void;
-  onClickScoreUpdate?: (clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number) => Promise<void> | void;
+  onClickScoreUpdate?: (
+    clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number,
+  ) => Promise<void> | void;
   onEscalate?: (reason: string) => Promise<void> | void;
   onPlanStart?: () => Promise<void> | void;
   onPlanComplete?: (plan: import('../types.js').PlanResult) => Promise<void> | void;
@@ -238,7 +244,7 @@ export function summarizeRun(run: RatchetRun): RunSummary {
   };
 }
 
-// ── Run state ──────────────────────────────────────────
+// ── Run state
 
 /** Mutable state threaded through per-click helpers. */
 interface RunState {
@@ -263,7 +269,7 @@ interface RunState {
   cumulativeCost: number;
 }
 
-// ── Helpers ────────────────────────────────────────────
+// ── Helpers
 
 /**
  * Format a consistent rollback message for logger.error output.
@@ -290,7 +296,7 @@ async function initializeRun(options: EngineRunOptions): Promise<{
   incrementalScanner: IncrementalScanner;
   baselineFailures: string[];
 }> {
-  const { config, cwd, createBranch = true, scoreOptimized = false, scope: scopeFiles = [], scopeArg } = options;
+  const { config, cwd, createBranch = true, scoreOptimized = true, scope: scopeFiles = [], scopeArg } = options;
   const callbacks = options.callbacks ?? {};
 
   const run: RatchetRun = {
@@ -405,7 +411,10 @@ async function processClickOutcome(
   state.prevConsecutiveRollbacks = state.consecutiveRollbacks;
 
   if (rolled_back) {
-    logger.error({ clickNumber, elapsedSec, reason: click.rollbackReason }, formatRollbackMessage(clickNumber, click.rollbackReason, elapsedSec));
+    logger.error(
+      { clickNumber, elapsedSec, reason: click.rollbackReason },
+      formatRollbackMessage(clickNumber, click.rollbackReason, elapsedSec),
+    );
     state.consecutiveRollbacks++;
     state.totalRolled++;
 
@@ -497,7 +506,10 @@ async function postClickRescan(
         if (cd.delta !== 0) {
           logger.info({ category: cd.category, before: cd.before, after: cd.after, delta: cd.delta }, 'Category delta');
         } else if (cd.wastedEffort) {
-          logger.warn({ category: cd.category, before: cd.before, after: cd.after, issuesFixed: cd.issuesFixed }, 'Category already maxed');
+          logger.warn(
+            { category: cd.category, before: cd.before, after: cd.after, issuesFixed: cd.issuesFixed },
+            'Category already maxed',
+          );
         }
       }
 
@@ -594,7 +606,10 @@ async function checkSmartStop(
         run.architectEscalated = true;
       } else {
         run.earlyStopReason = 'remaining issues need architect mode';
-        logger.info({ landed: state.totalLanded, returned: clicks - clickNumber }, 'Smart stop: remaining issues need architect mode');
+        logger.info(
+          { landed: state.totalLanded, returned: clicks - clickNumber },
+          'Smart stop: remaining issues need architect mode',
+        );
       }
       return { shouldStop: true };
     }
@@ -607,7 +622,10 @@ async function checkSmartStop(
     if (rollbackRate > 0.6) {
       const ratePct = Math.round(rollbackRate * 100);
       run.earlyStopReason = `high rollback rate (${ratePct}%) — remaining issues may need manual intervention`;
-      logger.info({ reason: run.earlyStopReason, landed: state.totalLanded, returned: clicks - clickNumber }, 'Smart stop');
+      logger.info(
+        { reason: run.earlyStopReason, landed: state.totalLanded, returned: clicks - clickNumber },
+        'Smart stop',
+      );
       return { shouldStop: true };
     }
   }
@@ -664,7 +682,7 @@ export function checkRegressionStop(
   return { stop: true, earlyStopReason: `Score regression detected (${detail})` };
 }
 
-// ── GitNexus confidence gating ──────────────────────────────
+// ── GitNexus confidence gating
 
 /**
  * HIGH_RISK_LEVELS — these risk levels trigger confidence gating.
@@ -706,7 +724,7 @@ export async function runConfidenceGating(
   }
 }
 
-// ── Engine ─────────────────────────────────────────────
+// ── Engine
 
 /**
  * The Click Loop Engine.
@@ -927,13 +945,17 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           const highRiskChanges = await runConfidenceGating(click.filesModified, cwd);
           if (highRiskChanges.length > 0) {
             click.highRiskChanges = highRiskChanges;
-            const riskSummary = highRiskChanges.map(r => `${r.file} (${r.risk}, ${(r.confidence * 100).toFixed(0)}%)`).join(', ');
+            const riskSummary = highRiskChanges
+              .map(r => `${r.file} (${r.risk}, ${(r.confidence * 100).toFixed(0)}%)`)
+              .join(', ');
             logger.warn({ highRiskChanges }, `[ratchet] ⚠ High-risk changes detected: ${riskSummary}`);
           }
         }
 
         let regressionDetected: boolean;
-        ({ rolled_back, regressionDetected } = await postClickRescan(i, click, rolled_back, clickEconomics, state, scoreOptimized, cwd, incrementalScanner, callbacks));
+        ({ rolled_back, regressionDetected } = await postClickRescan(
+          i, click, rolled_back, clickEconomics, state, scoreOptimized, cwd, incrementalScanner, callbacks,
+        ));
 
         await checkStallAndEscalate(i, clicks, state, hardenMode, escalateEnabled, callbacks);
 
@@ -975,7 +997,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         const { shouldStop } = await checkSmartStop(i, run, state, options);
         if (shouldStop) break;
 
-        // ── Stop-condition checks (between clicks) ───────────────────────────
+        // ── Stop-condition checks (between clicks)
 
         // Stop-on-regression: the click was already rolled back — stop the run
         if (options.stopOnRegression) {
@@ -987,7 +1009,8 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           }
         }
 
-        // Plateau detection: active in normal mode (skipped in harden mode, which intentionally has many zero-delta clicks)
+        // Plateau detection: active in normal mode
+        // (skipped in harden mode, which intentionally has many zero-delta clicks)
         if (!hardenMode) {
           const plateauStop = checkPlateauStop(state.consecutiveZeroDeltaClicks, clicks);
           if (plateauStop.stop) {
@@ -1070,7 +1093,10 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
     // Diagnostic: if every click rolled back, surface a hint
     if (run.clicks.length > 0 && run.clicks.every((c) => !c.testsPassed)) {
-      logger.error('All clicks rolled back. Possible causes: tests failing before ratchet starts, agent not making changes, or flaky test suite');
+      logger.error(
+        'All clicks rolled back. Possible causes: tests failing before ratchet starts, ' +
+        'agent not making changes, or flaky test suite',
+      );
     }
   } catch (err: unknown) {
     run.status = 'failed';

@@ -13,7 +13,7 @@
 import type { ScanResult, CategoryResult } from '../commands/scan.js';
 import type { IssueTask } from './issue-backlog.js';
 
-// ─── Tier Definitions ────────────────────────────────────────────────────────
+// ─── Tier Definitions
 // Each tier: [maxIssueCount, scoreAtOrBelow]
 // "If issue count <= maxIssueCount, you get this score."
 // Derived directly from scan.ts scoring logic.
@@ -43,7 +43,7 @@ export interface SubcategoryTiers {
  * The tier thresholds match the exact if/else chains in scan.ts scoring functions.
  */
 export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
-  // ── Error Handling ──
+  // ── Error Handling
   {
     name: 'Structured logging',
     maxScore: 7,
@@ -59,7 +59,8 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 2,
     sweepable: true,
-    fixInstruction: 'Replace console.log/warn/error calls with the structured logger (import from src/core/logger.ts). Ensure logger is the ONLY error/log interface.',
+    fixInstruction: 'Replace console.log/warn/error calls with the structured logger ' +
+      '(import from src/core/logger.ts). Ensure logger is the ONLY error/log interface.',
   },
   {
     name: 'Empty catches',
@@ -75,7 +76,8 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 1,
     sweepable: true,
-    fixInstruction: 'Add meaningful error handling to empty catch blocks. At minimum, log the error with the structured logger.',
+    fixInstruction: 'Add meaningful error handling to empty catch blocks. ' +
+      'At minimum, log the error with the structured logger.',
   },
   {
     name: 'Coverage',
@@ -91,10 +93,11 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 3,
     sweepable: true,
-    fixInstruction: 'Add try/catch error handling to async functions that lack it. Use structured logger for caught errors.',
+    fixInstruction: 'Add try/catch error handling to async functions that lack it. ' +
+      'Use structured logger for caught errors.',
   },
 
-  // ── Performance ──
+  // ── Performance
   {
     name: 'Console cleanup',
     maxScore: 5,
@@ -137,7 +140,7 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     fixInstruction: 'Fix self-imports and barrel file wildcard re-exports.',
   },
 
-  // ── Code Quality ──
+  // ── Code Quality
   {
     name: 'Line length',
     maxScore: 4,
@@ -197,7 +200,7 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     fixInstruction: 'Split functions >50 lines into smaller, focused helper functions. Extract logical blocks into named functions.',
   },
 
-  // ── Security ──
+  // ── Security
   {
     name: 'Auth & rate limiting',
     maxScore: 6,
@@ -225,7 +228,7 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     fixInstruction: 'Add input validation (e.g., zod schemas) to route handlers that accept user input.',
   },
 
-  // ── Testing ──
+  // ── Testing
   {
     name: 'Test quality',
     maxScore: 8,
@@ -243,7 +246,7 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   },
 ];
 
-// ─── Tier Analysis ───────────────────────────────────────────────────────────
+// ─── Tier Analysis
 
 export interface TierGap {
   /** Subcategory name */

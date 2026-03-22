@@ -12,7 +12,7 @@ import { printHeader, exitWithError, validateInt, withSpinner } from '../lib/cli
 import { buildVisionGraph, nodeColor, glowColor } from '../core/vision.js';
 import type { VisionGraph, VisionNode } from '../core/vision.js';
 
-// ── HTML escaping ─────────────────────────────────────────────────────────────
+// ── HTML escaping
 
 function escHtml(str: string): string {
   return str
@@ -22,7 +22,7 @@ function escHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
-// ── HTML template ─────────────────────────────────────────────────────────────
+// ── HTML template
 
 export function generateVisionHTML(graph: VisionGraph): string {
   // Serialise graph for embedding
@@ -79,13 +79,16 @@ export function generateVisionHTML(graph: VisionGraph): string {
     .map(c => `<option value="${escHtml(c.toLowerCase())}">${escHtml(c)}</option>`)
     .join('\n        ');
 
+  const fontsUrl = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700' +
+    '&family=Inter:wght@400;500;600&display=swap';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ratchet Vision — ${escHtml(graph.projectName)}</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="${fontsUrl}">
   <script src="https://unpkg.com/cytoscape@3/dist/cytoscape.min.js"></script>
   <script src="https://unpkg.com/layout-base@2/layout-base.js"></script>
   <script src="https://unpkg.com/cose-base@2/cose-base.js"></script>
@@ -250,7 +253,10 @@ export function generateVisionHTML(graph: VisionGraph): string {
       border: 1px solid transparent;
     }
     .legend-item:hover { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.25); }
-    .legend-item.active { background: rgba(99,102,241,0.12); border-color: var(--accent-primary); box-shadow: 0 0 8px rgba(99,102,241,0.15); }
+    .legend-item.active {
+      background: rgba(99,102,241,0.12); border-color: var(--accent-primary);
+      box-shadow: 0 0 8px rgba(99,102,241,0.15);
+    }
     .legend-dot {
       width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
       box-shadow: 0 0 8px currentColor, 0 0 16px currentColor;
@@ -534,9 +540,12 @@ export function generateVisionHTML(graph: VisionGraph): string {
         <div class="section-label">Score Range</div>
         <div class="score-radios" role="radiogroup" aria-label="Filter by score range">
           <label><input type="radio" name="score-range" value="all" checked> All scores</label>
-          <label><input type="radio" name="score-range" value="good"> <span style="color:#22d3ee">●</span> Good (≥80)</label>
-          <label><input type="radio" name="score-range" value="caution"> <span style="color:#fbbf24">●</span> Caution (40–79)</label>
-          <label><input type="radio" name="score-range" value="danger"> <span style="color:#ef4444">●</span> Danger (&lt;40)</label>
+          <label><input type="radio" name="score-range" value="good">
+            <span style="color:#22d3ee">●</span> Good (≥80)</label>
+          <label><input type="radio" name="score-range" value="caution">
+            <span style="color:#fbbf24">●</span> Caution (40–79)</label>
+          <label><input type="radio" name="score-range" value="danger">
+            <span style="color:#ef4444">●</span> Danger (&lt;40)</label>
         </div>
       </div>
 
@@ -544,22 +553,28 @@ export function generateVisionHTML(graph: VisionGraph): string {
       <div>
         <div class="section-label" style="cursor:pointer;user-select:none" id="legend-toggle">Legend ▾</div>
         <div class="legend" id="legend-body" role="list" aria-label="Color and size legend">
-          <div class="legend-item" role="listitem" data-tier="excellent" tabindex="0" aria-label="Excellent tier: score above 90">
+          <div class="legend-item" role="listitem" data-tier="excellent"
+            tabindex="0" aria-label="Excellent tier: score above 90">
             <span class="legend-dot" style="background:#00ff88;color:#00ff88"></span>Score &gt; 90 — Excellent
           </div>
-          <div class="legend-item" role="listitem" data-tier="good" tabindex="0" aria-label="Good tier: score 80 to 90">
+          <div class="legend-item" role="listitem" data-tier="good"
+            tabindex="0" aria-label="Good tier: score 80 to 90">
             <span class="legend-dot" style="background:#22d3ee;color:#22d3ee"></span>Score 80–90 — Good
           </div>
-          <div class="legend-item" role="listitem" data-tier="warning" tabindex="0" aria-label="Warning tier: score 60 to 80">
+          <div class="legend-item" role="listitem" data-tier="warning"
+            tabindex="0" aria-label="Warning tier: score 60 to 80">
             <span class="legend-dot" style="background:#fbbf24;color:#fbbf24"></span>Score 60–80 — Warning
           </div>
-          <div class="legend-item" role="listitem" data-tier="caution" tabindex="0" aria-label="Caution tier: score 40 to 60">
+          <div class="legend-item" role="listitem" data-tier="caution"
+            tabindex="0" aria-label="Caution tier: score 40 to 60">
             <span class="legend-dot" style="background:#f97316;color:#f97316"></span>Score 40–60 — Caution
           </div>
-          <div class="legend-item" role="listitem" data-tier="danger" tabindex="0" aria-label="Danger tier: score 20 to 40">
+          <div class="legend-item" role="listitem" data-tier="danger"
+            tabindex="0" aria-label="Danger tier: score 20 to 40">
             <span class="legend-dot" style="background:#ef4444;color:#ef4444"></span>Score 20–40 — Danger
           </div>
-          <div class="legend-item" role="listitem" data-tier="critical" tabindex="0" aria-label="Critical tier: score below 20">
+          <div class="legend-item" role="listitem" data-tier="critical"
+            tabindex="0" aria-label="Critical tier: score below 20">
             <span class="legend-dot" style="background:#ff2d55;color:#ff2d55"></span>Score &lt; 20 — Critical
           </div>
           <p class="legend-size-note">Node size = blast radius (dependents). Click a tier to isolate.</p>
@@ -611,7 +626,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
 (function () {
   'use strict';
 
-  // ── Mobile sidebar toggle ────────────────────────────────────────────────
+  // ── Mobile sidebar toggle
   var toggleBtn = document.getElementById('sidebar-toggle');
   var sidebar = document.getElementById('sidebar');
   var backdrop = document.getElementById('sidebar-backdrop');
@@ -624,7 +639,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
   toggleBtn.addEventListener('click', toggleSidebar);
   backdrop.addEventListener('click', toggleSidebar);
 
-  // ── Collapsible legend ────────────────────────────────────────────────────
+  // ── Collapsible legend
   var legendToggle = document.getElementById('legend-toggle');
   var legendBody = document.getElementById('legend-body');
   legendToggle.addEventListener('click', function() {
@@ -641,7 +656,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
   const ELEMENTS = ${cytoscapeElements};
   const META     = ${meta};
 
-  // ── Score ring ────────────────────────────────────────────────────────────
+  // ── Score ring
   document.getElementById('project-name').textContent = META.projectName;
   const circumference = 2 * Math.PI * 22; // r=22 => ~138.23
   const score = META.totalScore;
@@ -660,7 +675,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
     document.getElementById('max-nodes-shown').textContent = META.shownNodes;
   }
 
-  // ── Ambient Particles ─────────────────────────────────────────────────────
+  // ── Ambient Particles
   const particleCanvas = document.getElementById('particles');
   const pCtx = particleCanvas.getContext('2d');
   const NUM_PARTICLES = 50;
@@ -706,7 +721,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
   animateParticles();
   window.addEventListener('resize', resizeParticles);
 
-  // ── Cytoscape init ────────────────────────────────────────────────────────
+  // ── Cytoscape init
   const cy = cytoscape({
     container: document.getElementById('cy'),
     elements: ELEMENTS,
@@ -856,7 +871,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
     wheelSensitivity: 0.3,
   });
 
-  // ── Staggered entry + pulse animations (after layout) ─────────────────────
+  // ── Staggered entry + pulse animations (after layout)
   cy.one('layoutstop', function() {
     // Sort nodes high blast-radius first
     const nodeArr = cy.nodes().toArray().sort(function(a, b) {
@@ -896,10 +911,16 @@ export function generateVisionHTML(graph: VisionGraph): string {
         setTimeout(function() {
           (function pulse() {
             node.animate(
-              { style: { 'width': expandedSize, 'height': expandedSize, 'background-opacity': 0.5, 'border-width': 5, 'border-color': '#ff2d55', 'border-opacity': 1 } },
+              { style: {
+                'width': expandedSize, 'height': expandedSize, 'background-opacity': 0.5,
+                'border-width': 5, 'border-color': '#ff2d55', 'border-opacity': 1,
+              } },
               { duration: 1000, easing: 'ease-in-out', complete: function() {
                 node.animate(
-                  { style: { 'width': baseSize, 'height': baseSize, 'background-opacity': 0.9, 'border-width': 2, 'border-color': node.data('borderColor'), 'border-opacity': 0.6 } },
+                  { style: {
+                    'width': baseSize, 'height': baseSize, 'background-opacity': 0.9,
+                    'border-width': 2, 'border-color': node.data('borderColor'), 'border-opacity': 0.6,
+                  } },
                   { duration: 1000, easing: 'ease-in-out', complete: pulse }
                 );
               }}
@@ -912,7 +933,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
 
   updateNodeCount();
 
-  // ── Tooltip ───────────────────────────────────────────────────────────────
+  // ── Tooltip
   const tooltip = document.getElementById('tooltip');
 
   cy.on('mouseover', 'node', function (e) {
@@ -949,7 +970,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
     tooltip.style.top  = (e.originalEvent.clientY + 14) + 'px';
   });
 
-  // ── Node click ─────────────────────────────────────────────────────────────
+  // ── Node click
   let activeNode = null;
   const detail      = document.getElementById('detail');
   const detailName  = document.getElementById('detail-name');
@@ -1010,14 +1031,14 @@ export function generateVisionHTML(graph: VisionGraph): string {
     }
   });
 
-  // ── Double-click: zoom to fit cluster ─────────────────────────────────────
+  // ── Double-click: zoom to fit cluster
   cy.on('dblclick', 'node', function(e) {
     const dir = e.target.data('directory');
     const cluster = cy.nodes().filter(function(n) { return n.data('directory') === dir; });
     cy.animate({ fit: { eles: cluster, padding: 40 } }, { duration: 600 });
   });
 
-  // ── Keyboard navigation ───────────────────────────────────────────────────
+  // ── Keyboard navigation
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       activeNode = null;
@@ -1030,14 +1051,14 @@ export function generateVisionHTML(graph: VisionGraph): string {
     }
   });
 
-  // ── Search ────────────────────────────────────────────────────────────────
+  // ── Search
   const searchInput = document.getElementById('search');
   searchInput.addEventListener('input', applyFilters);
 
-  // ── Category filter ───────────────────────────────────────────────────────
+  // ── Category filter
   document.getElementById('cat-filter').addEventListener('change', applyFilters);
 
-  // ── Score range ───────────────────────────────────────────────────────────
+  // ── Score range
   document.querySelectorAll('input[name="score-range"]').forEach(function (radio) {
     radio.addEventListener('change', applyFilters);
   });
@@ -1075,7 +1096,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
       visible + ' of ' + cy.nodes().length + ' files shown';
   }
 
-  // ── Clickable Legend ──────────────────────────────────────────────────────
+  // ── Clickable Legend
   const TIER_RANGES = {
     excellent: [90, 101],
     good:      [80, 90],
@@ -1122,18 +1143,22 @@ export function generateVisionHTML(graph: VisionGraph): string {
     });
   });
 
-  // ── Zoom controls ──────────────────────────────────────────────────────────
+  // ── Zoom controls
   document.getElementById('zoom-in').addEventListener('click', function() {
-    cy.animate({ zoom: { level: cy.zoom() * 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } } }, { duration: 200 });
+    cy.animate({
+      zoom: { level: cy.zoom() * 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } },
+    }, { duration: 200 });
   });
   document.getElementById('zoom-out').addEventListener('click', function() {
-    cy.animate({ zoom: { level: cy.zoom() / 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } } }, { duration: 200 });
+    cy.animate({
+      zoom: { level: cy.zoom() / 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } },
+    }, { duration: 200 });
   });
   document.getElementById('zoom-fit').addEventListener('click', function() {
     cy.animate({ fit: { eles: cy.elements(':visible'), padding: 30 } }, { duration: 400 });
   });
 
-  // ── Utility ───────────────────────────────────────────────────────────────
+  // ── Utility
   function escHtml(str) {
     return String(str)
       .replace(/&/g, '&amp;')
@@ -1147,7 +1172,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
 </html>`;
 }
 
-// ── PNG export (puppeteer) ────────────────────────────────────────────────────
+// ── PNG export (puppeteer)
 
 async function exportPng(htmlContent: string, outputPath: string): Promise<void> {
   const { default: puppeteer } = await import('puppeteer');
@@ -1178,7 +1203,7 @@ async function exportPng(htmlContent: string, outputPath: string): Promise<void>
   }
 }
 
-// ── PDF export ────────────────────────────────────────────────────────────────
+// ── PDF export
 
 async function exportPdf(htmlContent: string, outputPath: string): Promise<void> {
   const { default: puppeteer } = await import('puppeteer');
@@ -1208,7 +1233,7 @@ async function exportPdf(htmlContent: string, outputPath: string): Promise<void>
   }
 }
 
-// ── Command ───────────────────────────────────────────────────────────────────
+// ── Command
 
 export function visionCommand(): Command {
   const cmd = new Command('vision');

@@ -45,7 +45,8 @@ function plainEnglishSummary(click: Click): string {
   if (raw && !/^You are (a |an |the )/i.test(raw)) {
     let clean = raw.split('\n')[0].trim();
     clean = clean.replace(/`/g, '').replace(/\s{2,}/g, ' ');
-    if (clean.length <= 100 && !/^(import |const |let |var |function |class |export |TOP ISSUES|ARCHITECTURAL)/.test(clean)) {
+    const codeLinePattern = /^(import |const |let |var |function |class |export |TOP ISSUES|ARCHITECTURAL)/;
+    if (clean.length <= 100 && !codeLinePattern.test(clean)) {
       const firstSentence = clean.split(/[.!]/)[0]?.trim() ?? '';
       if (firstSentence.length > 0 && firstSentence.length <= 100) {
         proposalSummary = firstSentence;
@@ -161,7 +162,8 @@ export function generateReportHTML(options: ReportOptions): string {
         const aPct = after.max > 0 ? (after.score / after.max) * 100 : 0;
 
         // Subcategory rows
-        const subRows = (after.subcategories ?? []).map((subAfter: { name: string; score: number; max: number }, j: number) => {
+        type SubCategory = { name: string; score: number; max: number };
+        const subRows = (after.subcategories ?? []).map((subAfter: SubCategory, j: number) => {
           const subBefore = (before.subcategories ?? [])[j] as { name: string; score: number; max: number } | undefined;
           if (!subBefore) return '';
           const subDelta = subAfter.score - subBefore.score;
@@ -175,11 +177,15 @@ export function generateReportHTML(options: ReportOptions): string {
             <div class="cat-name sub-name">↳ ${esc(subAfter.name)}</div>
             <div class="cat-bars">
               <div class="cat-score gray">${subBefore.score}/${subBefore.max}</div>
-              <div class="mini-track"><div class="mini-fill before-mini" style="width:${Math.max(2, sbPct)}%"></div></div>
+              <div class="mini-track">
+                <div class="mini-fill before-mini" style="width:${Math.max(2, sbPct)}%"></div>
+              </div>
             </div>
             <div class="cat-bars">
               <div class="cat-score white">${saPct > 0 ? subAfter.score : 0}/${subAfter.max}</div>
-              <div class="mini-track"><div class="mini-fill after-mini" style="width:${Math.max(2, saPct)}%"></div></div>
+              <div class="mini-track">
+                <div class="mini-fill after-mini" style="width:${Math.max(2, saPct)}%"></div>
+              </div>
             </div>
             <div class="cat-delta"><span class="delta-pill ${subPillClass}">${esc(subDeltaStr)}</span></div>
           </div>`;
@@ -214,23 +220,34 @@ export function generateReportHTML(options: ReportOptions): string {
   }
 
   // --- Bullet lists ---
+  const nothingLanded = '<div class="bullet-item">' +
+    '<span class="bullet-dot" style="background:#4b5563"></span>' +
+    '<span class="bullet-text" style="color:#6b7280">Nothing landed this run.</span></div>';
   const improvedItems =
     landed.length === 0
-      ? `<div class="bullet-item"><span class="bullet-dot" style="background:#4b5563"></span><span class="bullet-text" style="color:#6b7280">Nothing landed this run.</span></div>`
+      ? nothingLanded
       : landed
-          .map(
-            (click) =>
-              `<div class="bullet-item"><span class="bullet-dot" style="background:#4ADE80"></span><span class="bullet-text"><strong>Click ${click.number}</strong> — ${esc(plainEnglishSummary(click))}</span></div>`,
+          .map((click) =>
+            '<div class="bullet-item">' +
+            '<span class="bullet-dot" style="background:#4ADE80"></span>' +
+            `<span class="bullet-text"><strong>Click ${click.number}</strong> — ` +
+            `${esc(plainEnglishSummary(click))}</span></div>`,
           )
           .join('');
 
+  const nothingRolledBack = '<div class="bullet-item">' +
+    '<span class="bullet-dot" style="background:#22c55e"></span>' +
+    '<span class="bullet-text" style="color:#4ade80">Nothing rolled back — clean run!</span></div>';
   const rolledItems =
     rolledBack.length === 0
-      ? `<div class="bullet-item"><span class="bullet-dot" style="background:#22c55e"></span><span class="bullet-text" style="color:#4ade80">Nothing rolled back — clean run!</span></div>`
+      ? nothingRolledBack
       : rolledBack
           .map((click) => {
             const reason = plainEnglishSummary(click) || 'Tests failed';
-            return `<div class="bullet-item"><span class="bullet-dot" style="background:#ef4444"></span><span class="bullet-text"><strong style="color:#f1f5f9">Click ${click.number}</strong> — ${esc(reason.slice(0, 120))}</span></div>`;
+            return '<div class="bullet-item">' +
+              '<span class="bullet-dot" style="background:#ef4444"></span>' +
+              `<span class="bullet-text"><strong style="color:#f1f5f9">Click ${click.number}</strong> — ` +
+              `${esc(reason.slice(0, 120))}</span></div>`;
           })
           .join('');
 
@@ -255,7 +272,7 @@ export function generateReportHTML(options: ReportOptions): string {
     padding: 40px 48px 36px;
   }
 
-  /* ─── Header ─────────────────────────────────────────── */
+  /* ─── Header */
   .logo-row {
     display: flex;
     align-items: center;
@@ -282,7 +299,7 @@ export function generateReportHTML(options: ReportOptions): string {
     margin: 16px 0 24px;
   }
 
-  /* ─── Summary Bar ────────────────────────────────────── */
+  /* ─── Summary Bar */
   .summary-bar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -317,7 +334,7 @@ export function generateReportHTML(options: ReportOptions): string {
     text-transform: uppercase;
   }
 
-  /* ─── Section title ──────────────────────────────────── */
+  /* ─── Section title */
   .section-title {
     font-size: 12px;
     font-weight: 700;
@@ -337,7 +354,7 @@ export function generateReportHTML(options: ReportOptions): string {
     background: #30363D;
   }
 
-  /* ─── Hero card ──────────────────────────────────────── */
+  /* ─── Hero card */
   .hero-card {
     background: #161B22;
     border: 1px solid #30363D;
@@ -417,7 +434,7 @@ export function generateReportHTML(options: ReportOptions): string {
   .hero-issues-after  { color: #C9D1D9; font-weight: 700; }
   .hero-issues-fixed  { color: #4ADE80; font-weight: 700; }
 
-  /* ─── Category table ─────────────────────────────────── */
+  /* ─── Category table */
   .cat-header {
     display: flex;
     align-items: center;
@@ -484,7 +501,7 @@ export function generateReportHTML(options: ReportOptions): string {
   .delta-pill-neg { background: rgba(239,68,68,0.15); color: #f87171; }
   .delta-pill-neu { background: #21262D; color: #8B949E; }
 
-  /* ─── Improved / Rolled Back ─────────────────────────── */
+  /* ─── Improved / Rolled Back */
   .two-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -551,7 +568,7 @@ export function generateReportHTML(options: ReportOptions): string {
     text-align: center;
   }
 
-  /* ─── Footer ─────────────────────────────────────────── */
+  /* ─── Footer */
   .footer {
     padding-top: 16px;
     border-top: 1px solid #30363D;
@@ -590,7 +607,8 @@ export function generateReportHTML(options: ReportOptions): string {
       <div class="summary-label">Landed</div>
     </div>
     <div class="summary-item">
-      <div class="summary-value" style="color:${rolledBack.length > 0 ? '#f87171' : '#4ADE80'}">${rolledBack.length}</div>
+      <div class="summary-value"
+        style="color:${rolledBack.length > 0 ? '#f87171' : '#4ADE80'}">${rolledBack.length}</div>
       <div class="summary-label">Rolled Back</div>
     </div>
     <div class="summary-item">
@@ -650,7 +668,10 @@ export async function generatePDF(options: ReportOptions): Promise<Buffer> {
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
     await page.setContent(html, { waitUntil: 'load' });
     // Fit page height to actual content to eliminate bottom whitespace
-    const contentHeight = await page.evaluate(() => (globalThis as unknown as { document: { body: { scrollHeight: number } } }).document.body.scrollHeight);
+    type PageGlobal = { document: { body: { scrollHeight: number } } };
+    const contentHeight = await page.evaluate(
+      () => (globalThis as unknown as PageGlobal).document.body.scrollHeight,
+    );
     const pdf = await page.pdf({
       width: '794px',
       height: `${contentHeight}px`,
