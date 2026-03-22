@@ -32,6 +32,7 @@ import { runScan } from '../commands/scan.js';
 import * as git from './git.js';
 import { randomUUID } from 'crypto';
 import { validateScope } from './scope.js';
+import { logger } from '../lib/logger.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -237,7 +238,7 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
     const tierTargets = planTierTargets(currentScan, clicks);
 
     if (tierTargets.length === 0) {
-      console.error('[ratchet] No tier crossings available');
+      logger.warn('[ratchet] No tier crossings available');
       run.status = 'completed';
       run.finishedAt = new Date();
       await callbacks.onRunComplete?.(run);
@@ -245,10 +246,10 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
     }
 
     // Log plan
-    console.error(`[ratchet] Tier engine plan (${tierTargets.length} targets, ${clicks} clicks):`);
+    logger.warn(`[ratchet] Tier engine plan (${tierTargets.length} targets, ${clicks} clicks):`);
     for (const t of tierTargets) {
       const mode = t.atomic ? '⚡ ATOMIC' : `batched×${t.clickBudget}`;
-      console.error(
+      logger.warn(
         `[ratchet]   ${t.gap.subcategory}: ${mode}, ${t.gap.files.length} files, ` +
         `${t.gap.currentScore}→${t.gap.currentScore + t.gap.pointsAtNextTier}/${t.gap.maxScore} ` +
         `(+${t.gap.pointsAtNextTier}pt, ROI=${t.gap.roi.toFixed(2)})`
@@ -260,7 +261,7 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
     for (const tierTarget of tierTargets) {
       const { gap, atomic, batches, clickBudget } = tierTarget;
 
-      console.error(`[ratchet] ── ${gap.subcategory} (${atomic ? 'atomic' : 'batched'}) ──`);
+      logger.warn(`[ratchet] ── ${gap.subcategory} (${atomic ? 'atomic' : 'batched'}) ──`);
 
       for (let bi = 0; bi < Math.min(batches.length, clickBudget); bi++) {
         globalClickNum++;
@@ -310,7 +311,7 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
           if (scopeFiles.length > 0 && !rolled_back) {
             const scopeCheck = validateScope(click.filesModified, scopeFiles, cwd);
             if (!scopeCheck.valid) {
-              console.error(`[ratchet] ✗ click ${globalClickNum} ROLLED BACK — scope violation: ${scopeCheck.scopeViolations.join(', ')}`);
+              logger.warn(`[ratchet] ✗ click ${globalClickNum} ROLLED BACK — scope violation: ${scopeCheck.scopeViolations.join(', ')}`);
               if (click.commitHash) await git.revertLastCommit(cwd).catch(() => {});
               click.testsPassed = false;
               click.rollbackReason = `scope-exceeded: ${scopeCheck.scopeViolations.join(', ')}`;
@@ -320,9 +321,9 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
           }
 
           if (rolled_back) {
-            console.error(`[ratchet] ✗ click ${globalClickNum} ROLLED BACK (${elapsedSec}s) — ${gap.subcategory}`);
+            logger.warn(`[ratchet] ✗ click ${globalClickNum} ROLLED BACK (${elapsedSec}s) — ${gap.subcategory}`);
           } else {
-            console.error(`[ratchet] ✓ click ${globalClickNum} landed (${elapsedSec}s) — ${gap.subcategory}${click.commitHash ? ` [${click.commitHash.slice(0, 7)}]` : ''}`);
+            logger.warn(`[ratchet] ✓ click ${globalClickNum} landed (${elapsedSec}s) — ${gap.subcategory}${click.commitHash ? ` [${click.commitHash.slice(0, 7)}]` : ''}`);
           }
 
           // Always re-scan after a landed click to measure tier impact
@@ -334,9 +335,9 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
               click.issuesFixedCount = Math.max(0, currentScan.totalIssuesFound - newScan.totalIssuesFound);
 
               if (delta > 0) {
-                console.error(`[ratchet] 🎯 Tier crossed: ${previousTotal} → ${newScan.total} (+${delta} pts)`);
+                logger.warn(`[ratchet] 🎯 Tier crossed: ${previousTotal} → ${newScan.total} (+${delta} pts)`);
               } else {
-                console.error(`[ratchet] Score: ${newScan.total} (no tier crossed yet — ${newScan.totalIssuesFound} issues remaining)`);
+                logger.warn(`[ratchet] Score: ${newScan.total} (no tier crossed yet — ${newScan.totalIssuesFound} issues remaining)`);
               }
 
               previousTotal = newScan.total;

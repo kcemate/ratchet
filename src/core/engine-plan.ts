@@ -4,6 +4,7 @@ import type { RatchetRun, Target, PlanResult } from '../types.js';
 import type { Agent } from './agents/base.js';
 import type { ScanResult } from '../commands/scan.js';
 import { buildPlanPrompt } from './agents/shell.js';
+import { logger } from '../lib/logger.js';
 
 /**
  * Run the read-only planning click 0 before execution clicks.

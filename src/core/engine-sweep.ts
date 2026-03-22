@@ -9,6 +9,7 @@ import { runScan } from '../commands/scan.js';
 import { clearCache as clearGitNexusCache } from './gitnexus.js';
 import { resolveGuards } from './engine-guards.js';
 import type { EngineRunOptions, ClickPhase } from './engine.js';
+import { logger } from '../lib/logger.js';
 
 /**
  * Split an array into chunks of a given size.
@@ -69,12 +70,12 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
       if (filtered.length > 0) {
         sweepable = filtered;
       } else {
-        console.error(`[ratchet] --category "${options.category}" matched no sweepable issues — running without category filter`);
+        logger.warn(`[ratchet] --category "${options.category}" matched no sweepable issues — running without category filter`);
       }
     }
 
     if (sweepable.length === 0) {
-      console.error('[ratchet] No sweepable issues found');
+      logger.warn('[ratchet] No sweepable issues found');
       run.status = 'completed';
       run.finishedAt = new Date();
       await callbacks.onRunComplete?.(run);
@@ -83,7 +84,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
 
     // 4. Take top priority sweepable task
     const task = sweepable[0]!;
-    console.error(`[ratchet] Sweep target: ${task.description} (${task.sweepFiles!.length} files)`);
+    logger.warn(`[ratchet] Sweep target: ${task.description} (${task.sweepFiles!.length} files)`);
 
     // 5. Group files by dependency cluster (tightly-coupled files together),
     // falling back to plain chunking if GitNexus is not available
