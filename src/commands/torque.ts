@@ -116,6 +116,8 @@ export function torqueCommand(): Command {
     .option('--budget <dollars>', 'Maximum estimated cost in USD (stops when budget would be exceeded)')
     .option('--stop-on-regression', 'Stop immediately when a score regression is detected', false)
     .option('--no-strategy', 'Disable self-evolving strategy loading and evolution for this run')
+    .option('--parallel <number>', 'Run multiple specs/targets in parallel (requires multiple --spec or --specs-file)')
+    .option('--specs-file <path>', 'Path to a markdown file where each ## heading is a separate task spec')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -160,8 +162,95 @@ export function torqueCommand(): Command {
         timeout?: string;
         budget?: string;
         stopOnRegression: boolean;
+        parallel?: string;
+        specsFile?: string;
+        model?: string;
       }) => {
         const cwd = process.cwd();
+
+        // ── Parallel mode ──────────────────────────────────────────────────
+        if (options.parallel) {
+          const maxWorkers = parseInt(options.parallel, 10);
+          if (isNaN(maxWorkers) || maxWorkers < 1) {
+            exitWithError(`  Invalid --parallel value: ${options.parallel}\n  Must be a positive integer (e.g. --parallel 3).`);
+          }
+
+          printHeader('⚡ Ratchet Parallel');
+
+          const { runParallel, loadSpecsFile, buildParallelReport } = await import('../core/parallel.js');
+          const { parseSpecsFile } = await import('../core/parallel.js');
+          const mode = options.mode === 'feature' ? 'feature' : options.mode === 'harden' ? 'harden' : 'normal';
+          const clicks = options.clicks ? parseInt(options.clicks, 10) : 7;
+
+          let tasks: import('../core/parallel.js').ParallelTask[] = [];
+
+          // Load from specs file if provided
+          if (options.specsFile) {
+            const { readFileSync: rfs } = await import('fs');
+            try {
+              const content = rfs(options.specsFile, 'utf-8');
+              const specs = parseSpecsFile(content);
+              tasks = specs.map((spec, i) => {
+                const firstLine = spec.split('\n')[0] ?? '';
+                const title = firstLine.startsWith('## ') ? firstLine.slice(3).trim() : `task-${i + 1}`;
+                return {
+                  id: `specs-${i + 1}-${title.toLowerCase().replace(/\s+/g, '-').slice(0, 40)}`,
+                  spec,
+                  mode,
+                  clicks,
+                };
+              });
+            } catch (err) {
+              exitWithError(`  Could not read specs file: ${err instanceof Error ? err.message : String(err)}`);
+            }
+          }
+
+          // Add any --spec values as additional tasks
+          if (options.spec) {
+            const specText = options.spec;
+            const title = specText.split('\n')[0]?.slice(0, 40) ?? 'task';
+            tasks.push({
+              id: `spec-${title.toLowerCase().replace(/\s+/g, '-').slice(0, 40)}`,
+              spec: specText,
+              mode,
+              clicks,
+            });
+          }
+
+          // Add --target as a task if provided (non-feature mode)
+          if (options.target && tasks.length === 0) {
+            tasks.push({
+              id: `target-${options.target}`,
+              target: options.target,
+              mode,
+              clicks,
+            });
+          }
+
+          if (tasks.length === 0) {
+            exitWithError(
+              '  --parallel requires at least one task.\n' +
+              '  Use --specs-file <path> or --spec "..." to specify tasks.',
+            );
+          }
+
+          const parallelConfig: import('../core/parallel.js').ParallelConfig = {
+            maxWorkers,
+            tasks,
+            model: options.model,
+            guards: options.guards,
+            debate: options.debate,
+            strategy: (options as Record<string, unknown>)['strategy'] !== false,
+          };
+
+          const result = await runParallel(parallelConfig, cwd);
+          process.stdout.write(buildParallelReport(result));
+
+          if (result.totalLanded === 0 && result.totalClicks > 0) process.exit(2);
+          else if (result.totalRolledBack > 0) process.exit(1);
+          return;
+        }
+        // ── End parallel mode ──────────────────────────────────────────────
 
         // Background mode: detach and run in a child process
         if (options.background && !process.env['RATCHET_BACKGROUND']) {
