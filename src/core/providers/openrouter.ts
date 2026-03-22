@@ -1,11 +1,8 @@
 import type { Provider, ProviderOptions } from './base.js';
+import type { ChatCompletionResponse } from './openai.js';
 
 const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-6';
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
-interface ChatCompletionResponse {
-  choices: Array<{ message: { content: string } }>;
-}
 
 export class OpenRouterProvider implements Provider {
   constructor(

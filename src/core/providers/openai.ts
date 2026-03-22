@@ -3,7 +3,7 @@ import type { Provider, ProviderOptions } from './base.js';
 const DEFAULT_MODEL = 'gpt-4.1';
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 
-interface ChatCompletionResponse {
+export interface ChatCompletionResponse {
   choices: Array<{ message: { content: string } }>;
 }
 
