@@ -40,6 +40,8 @@ export function swarmCommand(): Command {
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
     .option('--model <model>', 'Model to use for agents and judge')
     .option('--dry-run', 'Preview mode — show what would run without executing', false)
+    .option('--parallel <number>', 'Run multiple specs in parallel (one swarm per spec). Use with multiple --spec flags or --specs-file.')
+    .option('--specs-file <path>', 'Path to a markdown file where each ## heading is a separate spec to swarm')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -58,11 +60,70 @@ export function swarmCommand(): Command {
         focus?: string;
         model?: string;
         dryRun: boolean;
+        parallel?: string;
+        specsFile?: string;
       }) => {
         printHeader('🐝 Ratchet Swarm');
 
         const cwd = process.cwd();
         const agentCount = validateInt(options.agents, 'agents', 1, 10) ?? 3;
+
+        // ── Parallel swarm mode ────────────────────────────────────────────
+        if (options.parallel) {
+          const maxWorkers = parseInt(options.parallel, 10);
+          if (isNaN(maxWorkers) || maxWorkers < 1) {
+            exitWithError(`  Invalid --parallel value: ${options.parallel}\n  Must be a positive integer.`);
+          }
+
+          const { runParallel, loadSpecsFile, buildParallelReport, parseSpecsFile } = await import('../core/parallel.js');
+          const { readFileSync: rfs } = await import('fs');
+          const clicks = 7;
+
+          let tasks: import('../core/parallel.js').ParallelTask[] = [];
+
+          if (options.specsFile) {
+            try {
+              const content = rfs(options.specsFile, 'utf-8');
+              const specs = parseSpecsFile(content);
+              tasks = specs.map((spec, i) => {
+                const firstLine = spec.split('\n')[0] ?? '';
+                const title = firstLine.startsWith('## ') ? firstLine.slice(3).trim() : `task-${i + 1}`;
+                return {
+                  id: `swarm-specs-${i + 1}-${title.toLowerCase().replace(/\s+/g, '-').slice(0, 40)}`,
+                  spec,
+                  mode: 'feature' as const,
+                  clicks,
+                };
+              });
+            } catch (err) {
+              exitWithError(`  Could not read specs file: ${err instanceof Error ? err.message : String(err)}`);
+            }
+          }
+
+          if (options.spec) {
+            const title = options.spec.split('\n')[0]?.slice(0, 40) ?? 'swarm-task';
+            tasks.push({
+              id: `swarm-spec-${title.toLowerCase().replace(/\s+/g, '-').slice(0, 40)}`,
+              spec: options.spec,
+              mode: 'feature',
+              clicks,
+            });
+          }
+
+          if (tasks.length === 0) {
+            exitWithError('  --parallel swarm requires specs via --spec or --specs-file.');
+          }
+
+          const result = await runParallel({
+            maxWorkers,
+            tasks,
+            model: options.model,
+            debate: options.debate,
+          }, cwd);
+          process.stdout.write(buildParallelReport(result));
+          return;
+        }
+        // ── End parallel swarm mode ────────────────────────────────────────
 
         if (!options.spec && !options.target) {
           exitWithError(
