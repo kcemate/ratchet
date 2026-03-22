@@ -1,6 +1,8 @@
 import { randomUUID } from 'crypto';
 import { join, isAbsolute, resolve } from 'path';
 import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, CategoryDelta, ClickEconomics, ClickGuards } from '../types.js';
+import { loadStrategy, initStrategy, evolveStrategy, buildStrategyContext } from './strategy.js';
+import type { ShellAgent } from './agents/shell.js';
 import type { Agent } from './agents/base.js';
 import type { IssueTask } from './issue-backlog.js';
 import { buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
@@ -201,6 +203,8 @@ export interface EngineRunOptions {
   budgetUsd?: number;
   /** Stop immediately when a score regression is detected (the regressing click is still rolled back). */
   stopOnRegression?: boolean;
+  /** If true, skip loading and evolving strategy for this run */
+  noStrategy?: boolean;
 }
 
 export interface RunSummary {
@@ -724,12 +728,33 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     guardEscalation: guardEscalationEnabled = true,
     planFirst = false,
     scope: scopeFiles = [],
+    noStrategy = false,
   } = options;
 
   const { run, state, incrementalScanner, baselineFailures } = await initializeRun(options);
 
   // Expose the live run object to the caller (e.g. for signal handler checkpointing)
   callbacks.onRunInit?.(run);
+
+  // --- Strategy: load or init on first run, inject context into agent ---
+  const scanForStrategy = state.currentScan;
+  if (!noStrategy) {
+    try {
+      let strategy = await loadStrategy(cwd);
+      if (!strategy && scanForStrategy) {
+        strategy = initStrategy(cwd, scanForStrategy);
+        logger.info({ project: strategy.profile.name }, 'Strategy initialized for first run');
+      }
+      if (strategy) {
+        const ctx = buildStrategyContext(strategy);
+        if (ctx && 'strategyContext' in agent) {
+          (agent as ShellAgent).strategyContext = ctx;
+        }
+      }
+    } catch (err) {
+      logger.warn({ err }, 'Failed to load/init strategy — continuing without it');
+    }
+  }
 
   // Harden mode: track initial test file count to detect when tests are written
   let initialTestFileCount = 0;
@@ -1066,6 +1091,16 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
       await callbacks.onRunEconomics(economics).catch(() => {});
     }
     await callbacks.onRunComplete?.(run);
+
+    // --- Strategy: evolve after run completes ---
+    if (!noStrategy && run.clicks.length > 0) {
+      try {
+        const finalScan = state.currentScan;
+        await evolveStrategy(cwd, run, scanForStrategy, finalScan);
+      } catch (err) {
+        logger.warn({ err }, 'Failed to evolve strategy — non-fatal');
+      }
+    }
   }
 
   return run;

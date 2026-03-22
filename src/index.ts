@@ -19,6 +19,7 @@ import { badgeCommand } from './commands/badge.js';
 import { loginCommand, logoutCommand } from './commands/login.js';
 import { stopCommand } from './commands/stop.js';
 import { registerGraphCommand } from './commands/graph.js';
+import { strategyCommand } from './commands/strategy.js';
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -60,5 +61,6 @@ program.addCommand(loginCommand());
 program.addCommand(logoutCommand());
 program.addCommand(stopCommand());
 registerGraphCommand(program);
+program.addCommand(strategyCommand());
 
 program.parse(process.argv);

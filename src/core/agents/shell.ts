@@ -28,6 +28,8 @@ export class ShellAgent implements Agent {
   private _cwd: string = process.cwd();
   /** Override cwd for GitNexus lookups (worktrees don't have .gitnexus) */
   gitnexusCwd?: string;
+  /** Strategy context injected into prompts (set by engine before each run) */
+  strategyContext?: string;
 
   constructor(config: ShellAgentConfig = {}) {
     this.command = config.command ?? 'claude';
@@ -45,7 +47,7 @@ export class ShellAgent implements Agent {
     // Shell agent collapses analyze+propose+build into a single call for issue-driven clicks
     if (issues && issues.length > 0) {
       this._issueDrivenClick = true;
-      return buildIssuePlanPrompt(context, issues, this.gitnexusCwd ?? this._cwd);
+      return buildIssuePlanPrompt(context, issues, this.gitnexusCwd ?? this._cwd, this.strategyContext);
     }
     this._issueDrivenClick = false;
     let prompt: string;
@@ -214,7 +216,7 @@ function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
  * When GitNexus is available, injects dependency/caller intelligence so the
  * agent knows the blast radius before editing.
  */
-function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string): string {
+function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string, strategyContext?: string): string {
   // Architect mode: if the first issue carries a pre-built prompt, use it verbatim
   if (issues[0]?.architectPrompt) {
     return issues[0].architectPrompt;
@@ -241,6 +243,7 @@ function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string
   return (
     `You are a code improvement assistant. Fix the top issue in ${targetPath}.\n\n` +
     (graphIntel ? `${graphIntel}\n\n` : '') +
+    (strategyContext ? `${strategyContext}\n\n` : '') +
     `ISSUES FOUND:\n${issueList}\n\n` +
     `HARD CONSTRAINTS (violating these will cause rollback):\n` +
     `- Change AT MOST 30 lines total (insertions + deletions combined)\n` +
@@ -459,7 +462,7 @@ export function buildFeaturePlanPrompt(spec: string, cwd: string): string {
  * Injects the full plan + graph context for the files involved so the agent
  * knows what has been built and what to build next.
  */
-export function buildFeatureClickPrompt(step: FeatureStep, plan: FeaturePlan, cwd: string): string {
+export function buildFeatureClickPrompt(step: FeatureStep, plan: FeaturePlan, cwd: string, strategyContext?: string): string {
   let graphIntel = '';
   try {
     // Get graph context for the files this step will touch
@@ -504,6 +507,7 @@ export function buildFeatureClickPrompt(step: FeatureStep, plan: FeaturePlan, cw
     `Remaining steps (do NOT implement these now):\n${remainingSummary}\n\n` +
     (graphIntel ? `GRAPH CONTEXT FOR AFFECTED FILES:\n${graphIntel}\n\n` : '') +
     (graphTools ? `GRAPH QUERY TOOLS (use to explore dependencies before implementing):\n${graphTools}\n\n` : '') +
+    (strategyContext ? `${strategyContext}\n\n` : '') +
     `CONSTRAINTS:\n` +
     `- Implement ONLY Step ${step.id}: "${step.description}"\n` +
     `- Do NOT implement other steps — they will be handled in subsequent clicks\n` +
