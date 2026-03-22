@@ -133,7 +133,7 @@ const logger = pino({ level: 'info' });
     why: 'Awaiting calls inside loops causes N sequential queries instead of parallel fetches, killing performance.',
     fix: 'Use Promise.all() to run multiple async operations in parallel, or batch via a single query.',
     example: `// ❌ Bad: sequential
-for (const id of ids) { const u = await db.find(id); }
+// for (const id of ids) { const u = await db.find(id); }
 // ✅ Good: parallel
 const users = await Promise.all(ids.map(id => db.find(id)));`,
   },
