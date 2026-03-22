@@ -224,6 +224,8 @@ export interface EngineOptions {
 export interface SwarmAgentResult {
   agentName: string;
   specialization: string;
+  /** Personality name assigned to this agent (e.g. "The Surgeon") */
+  personality?: string;
   outcome: {
     click: Click;
     rolled_back: boolean;
@@ -233,7 +235,7 @@ export interface SwarmAgentResult {
 }
 
 export interface SwarmResult {
-  /** The winning outcome (highest score delta), or null if all agents failed */
+  /** The winning outcome (highest score delta or debate winner), or null if all agents failed */
   winner: {
     click: Click;
     rolled_back: boolean;
@@ -242,6 +244,58 @@ export interface SwarmResult {
   allResults: SwarmAgentResult[];
   /** Whether the swarm timed out */
   timedOut: boolean;
+}
+
+// ─── Swarm v2: MiroFish types ──────────────────────────────────────────────
+
+export interface AgentProposal {
+  agentName: string;
+  personality: string;
+  specialization: string;
+  filesChanged: string[];
+  scoreDelta: number;
+  summary: string;
+  diffStats: { additions: number; deletions: number };
+}
+
+export interface DebateArgument {
+  fromAgent: string;
+  aboutProposal: string;
+  argument: string;
+  stance: 'support' | 'oppose' | 'neutral';
+}
+
+export interface DebateVerdict {
+  winner: string;
+  reasoning: string;
+  dissent: string[];
+  confidence: number;
+}
+
+export interface DebateRound {
+  proposals: AgentProposal[];
+  arguments: DebateArgument[];
+  verdict: DebateVerdict;
+}
+
+export interface DebatePattern {
+  context: string;
+  winningPersonality: string;
+  losingPersonalities: string[];
+  insight: string;
+}
+
+export interface PersonalityCombination {
+  personalities: string[];
+  avgScoreDelta: number;
+  runs: number;
+}
+
+export interface SwarmMemory {
+  version: 1;
+  personalityWins: Record<string, { wins: number; losses: number; totalDelta: number }>;
+  debatePatterns: DebatePattern[];
+  bestCombos: PersonalityCombination[];
 }
 
 export interface FeatureStep {
