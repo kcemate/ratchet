@@ -1,0 +1,11 @@
+# Separate projects — scored independently
+worker/
+site/
+action/
+action-torque/
+
+# Generated / vendored
+dist/
+node_modules/
+.ratchet/
+docs/landing/

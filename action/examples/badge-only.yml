@@ -1,0 +1,35 @@
+name: Update Score Badge
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  badge:
+    name: Ratchet Badge Update
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ratchet Code Quality Scan
+        id: ratchet
+        uses: giovanni-labs/ratchet@v1
+        # No threshold — never fails, just scores
+
+      - name: Commit scan JSON so badge stays fresh
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ratchet-scan.json
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "chore: update ratchet score [skip ci]"
+          git push
+
+      - name: Print badge URL
+        run: |
+          echo "Add this badge to your README:"
+          echo "[![Ratchet Score](${{ steps.ratchet.outputs.badge-url }})](https://github.com/${{ github.repository }}/actions)"

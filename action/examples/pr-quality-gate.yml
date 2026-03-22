@@ -1,0 +1,27 @@
+name: PR Quality Gate
+
+on:
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  quality-gate:
+    name: Ratchet Score Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ratchet Code Quality Scan
+        id: ratchet
+        uses: giovanni-labs/ratchet@v1
+        with:
+          threshold: '70'
+          category-thresholds: 'Security=80,Testing=60'
+
+      - name: Print score
+        if: always()
+        run: echo "Score ${{ steps.ratchet.outputs.score }}/100"

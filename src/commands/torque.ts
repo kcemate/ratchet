@@ -29,22 +29,15 @@ import { printHeader, exitWithError, validateInt, printFields, validateProjectEn
 import { STATE_FILE } from './status.js';
 import { requireLicense } from '../core/license.js';
 
-function formatMs(ms: number): string {
-  if (ms < 60_000) return `${(ms / 1000).toFixed(0)}s`;
-  const m = Math.floor(ms / 60_000);
-  const s = Math.round((ms % 60_000) / 1000);
-  return `${m}m ${s.toString().padStart(2, '0')}s`;
-}
-
 function printEconomics(economics: RunEconomics): void {
   const total = economics.landed + economics.rolledBack;
   const efficiencyPct = (economics.efficiency * 100).toFixed(1);
   const landedPct = total > 0 ? ((economics.landed / total) * 100).toFixed(0) : '0';
 
   process.stdout.write('\n' + chalk.bold('  📊 Run Economics') + '\n');
-  process.stdout.write(`  Wall time:     ${formatMs(economics.totalWallTimeMs)}\n`);
-  process.stdout.write(`  Effective:     ${formatMs(economics.effectiveTimeMs)} (${efficiencyPct}% efficiency)\n`);
-  process.stdout.write(`  Wasted:        ${formatMs(economics.wastedTimeMs)}\n`);
+  process.stdout.write(`  Wall time:     ${formatDuration(economics.totalWallTimeMs)}\n`);
+  process.stdout.write(`  Effective:     ${formatDuration(economics.effectiveTimeMs)} (${efficiencyPct}% efficiency)\n`);
+  process.stdout.write(`  Wasted:        ${formatDuration(economics.wastedTimeMs)}\n`);
   process.stdout.write('\n');
   process.stdout.write(`  Landed:        ${economics.landed}/${total} clicks (${landedPct}%)\n`);
   if (economics.rolledBack > 0) {
