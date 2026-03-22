@@ -70,7 +70,9 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
       if (filtered.length > 0) {
         sweepable = filtered;
       } else {
-        logger.warn(`[ratchet] --category "${options.category}" matched no sweepable issues — running without category filter`);
+        logger.warn(
+          `[ratchet] --category "${options.category}" matched no sweepable issues — running without category filter`,
+        );
       }
     }
 

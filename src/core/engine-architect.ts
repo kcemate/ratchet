@@ -104,7 +104,10 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
             // Score regression guard: if score dropped, revert the commit
             if (newTotal < previousTotal && click.commitHash) {
               const regressionDelta = previousTotal - newTotal;
-              logger.error({ clickNumber, before: previousTotal, after: newTotal, delta: regressionDelta }, 'architect click ROLLED BACK — score regression');
+              logger.error(
+                { clickNumber, before: previousTotal, after: newTotal, delta: regressionDelta },
+                'architect click ROLLED BACK — score regression',
+              );
               await git.revertLastCommit(cwd).catch(() => {});
               click.testsPassed = false;
               click.rollbackReason = `score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`;

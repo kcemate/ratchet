@@ -8,8 +8,7 @@ import type { DebateRound } from './swarm-debate.js';
 const log = logger;
 const MEMORY_FILE = '.ratchet/swarm-memory.json';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// ─── Types
 export interface DebatePattern {
   /** What kind of issue this was (e.g. security, performance) */
   context: string;
@@ -31,8 +30,7 @@ export interface SwarmMemory {
   bestCombos: PersonalityCombination[];
 }
 
-// ─── Persistence ──────────────────────────────────────────────────────────────
-
+// ─── Persistence
 function emptyMemory(): SwarmMemory {
   return {
     version: 1,
@@ -78,8 +76,7 @@ export async function saveSwarmMemory(cwd: string, memory: SwarmMemory): Promise
   }
 }
 
-// ─── Learning ─────────────────────────────────────────────────────────────────
-
+// ─── Learning
 /**
  * Record a swarm run outcome into memory.
  * Updates personality win/loss stats, debate patterns, and combo history.

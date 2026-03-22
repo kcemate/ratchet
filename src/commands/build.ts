@@ -9,7 +9,9 @@ export function buildCommand(): Command {
   const cmd = new Command('build');
 
   cmd
-    .description('Rebuild the CLI binary and re-link it.\n\nRuns `npm run build && npm link` in the ratchet package directory.')
+    .description(
+      'Rebuild the CLI binary and re-link it.\n\nRuns `npm run build && npm link` in the ratchet package directory.',
+    )
     .action(() => {
       // Resolve the ratchet package root (one level up from dist/)
       const thisFile = fileURLToPath(import.meta.url);

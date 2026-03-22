@@ -29,7 +29,10 @@ export function loginCommand(): Command {
       }
       if (result.license!.cyclesTotal) {
         logger.info(
-          { cyclesRemaining: result.license!.cyclesRemaining ?? result.license!.cyclesTotal, cyclesTotal: result.license!.cyclesTotal },
+          {
+            cyclesRemaining: result.license!.cyclesRemaining ?? result.license!.cyclesTotal,
+            cyclesTotal: result.license!.cyclesTotal,
+          },
           'License cycles',
         );
       }

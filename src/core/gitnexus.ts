@@ -3,7 +3,7 @@ import { existsSync } from 'fs';
 import { join, basename } from 'path';
 import { logger } from '../lib/logger.js';
 
-// ── Per-run caches ──────────────────────────────────────────
+// ── Per-run caches
 // getImpact and queryFlows can be slow (spawns CLI). Cache per target+cwd.
 const impactCache = new Map<string, GitNexusImpact | null>();
 const flowsCache = new Map<string, string[]>();
@@ -313,7 +313,9 @@ export function getContext(fileOrSymbol: string, cwd: string): GitNexusContext |
  * Async — does not block the event loop.
  * Returns null if GitNexus is not available.
  */
-export async function getContextWithSource(symbol: string, cwd: string): Promise<(GitNexusContext & { source?: string }) | null> {
+export async function getContextWithSource(
+  symbol: string, cwd: string,
+): Promise<(GitNexusContext & { source?: string }) | null> {
   if (!isIndexed(cwd)) return null;
 
   try {
@@ -500,7 +502,9 @@ export async function getCypherClusters(
   try {
     // Query: find communities of files connected by calls/imports
     const fileList = files.map(f => `"${f}"`).join(', ');
-    const cypher = `MATCH (f:File)-[:IMPORTS|CALLS*1..3]-(g:File) WHERE f.path IN [${fileList}] AND g.path IN [${fileList}] RETURN f.path as source, g.path as target, count(*) as strength ORDER BY strength DESC`;
+    const cypher =
+      `MATCH (f:File)-[:IMPORTS|CALLS*1..3]-(g:File) WHERE f.path IN [${fileList}] AND g.path IN [${fileList}] ` +
+      `RETURN f.path as source, g.path as target, count(*) as strength ORDER BY strength DESC`;
 
     const result = await runCypher(cypher, cwd);
     if (!result || !Array.isArray((result as { rows?: unknown[] }).rows)) {
@@ -593,7 +597,10 @@ export function buildIntelligenceBriefing(targetPath: string, cwd: string): stri
   const impact = getImpact(normalizedPath, cwd);
   if (impact) {
     const dependentCount = impact.directCallers.length + impact.affectedFiles.length;
-    lines.push(`  Risk level: ${impact.riskLevel} (${dependentCount} dependents, confidence: ${(impact.confidence * 100).toFixed(0)}%)`);
+    lines.push(
+      `  Risk level: ${impact.riskLevel} (${dependentCount} dependents, ` +
+      `confidence: ${(impact.confidence * 100).toFixed(0)}%)`,
+    );
   }
 
   lines.push('');

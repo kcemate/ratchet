@@ -4,7 +4,9 @@ import type { Target, BuildResult, HardenPhase } from '../../types.js';
 import type { ScanResult } from '../../commands/scan.js';
 import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
-import { parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt, buildProposePrompt, buildHardenProposePrompt } from './api.js';
+import {
+  parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt, buildProposePrompt, buildHardenProposePrompt,
+} from './api.js';
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
 import { buildIntelligenceBriefing, queryFlowsTargeted } from '../gitnexus.js';
@@ -348,9 +350,11 @@ export function buildArchitectPrompt(scanResult: ScanResult, cwd: string): strin
   }).join('\n');
 
   return (
-    `You are an expert software architect. Make ONE high-leverage structural improvement that eliminates as many issues as possible at once.\n\n` +
+    `You are an expert software architect. Make ONE high-leverage structural improvement ` +
+    `that eliminates as many issues as possible at once.\n\n` +
     (intel ? `CODEBASE INTELLIGENCE:\n${intel}\n\n` : '') +
-    `TOP ISSUES BY VOLUME (score: ${scanResult.total}/100, ${scanResult.totalIssuesFound} total issues):\n${issuesList}\n\n` +
+    `TOP ISSUES BY VOLUME (score: ${scanResult.total}/100, ${scanResult.totalIssuesFound} total issues):\n` +
+    `${issuesList}\n\n` +
     `ARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n` +
     `  - If multiple files share duplicated logic → extract a shared module/utility\n` +
     `  - If a file is a god class/module → split it into focused modules\n` +
@@ -398,7 +402,8 @@ export function buildPlanPrompt(scanSummary: string, targetPath: string, targetD
     `Output ONLY valid JSON matching this schema (no markdown, no explanation):\n` +
     `{\n` +
     `  "filesToTouch": ["path/to/file1.ts", "path/to/file2.ts"],\n` +
-    `  "extractionTargets": [{ "name": "shared-utils", "files": ["src/a.ts", "src/b.ts"], "pattern": "duplicated helper" }],\n` +
+    `  "extractionTargets": [{ "name": "shared-utils", "files": ["src/a.ts", "src/b.ts"],` +
+    ` "pattern": "duplicated helper" }],\n` +
     `  "dependencyOrder": ["path/to/file1.ts", "path/to/file2.ts"],\n` +
     `  "estimatedClicks": 3\n` +
     `}`
@@ -463,13 +468,19 @@ export function buildFeaturePlanPrompt(spec: string, cwd: string): string {
  * Injects the full plan + graph context for the files involved so the agent
  * knows what has been built and what to build next.
  */
-export function buildFeatureClickPrompt(step: FeatureStep, plan: FeaturePlan, cwd: string, strategyContext?: string): string {
+export function buildFeatureClickPrompt(
+  step: FeatureStep, plan: FeaturePlan, cwd: string, strategyContext?: string,
+): string {
   let graphIntel = '';
   try {
     // Get graph context for the files this step will touch
     const filePaths = step.files.length > 0 ? step.files : ['.'];
     graphIntel = filePaths.map(f => {
-      try { return buildIntelligenceBriefing(f, cwd); } catch (err) { logger.debug({ err, f }, 'GitNexus briefing failed for file'); return ''; }
+      try {
+        return buildIntelligenceBriefing(f, cwd);
+      } catch (err) {
+        logger.debug({ err, f }, 'GitNexus briefing failed for file'); return '';
+      }
     }).filter(Boolean).join('\n\n');
   } catch (err) {
     logger.debug({ err }, 'GitNexus briefing failed for feature click prompt');

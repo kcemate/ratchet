@@ -1,4 +1,6 @@
-import type { Click, Target, RatchetConfig, BuildResult, HardenPhase, ClickGuards, ClickEconomics, RollbackReason } from '../types.js';
+import type {
+  Click, Target, RatchetConfig, BuildResult, HardenPhase, ClickGuards, ClickEconomics, RollbackReason,
+} from '../types.js';
 import { GUARD_PROFILES } from '../types.js';
 import type { Agent } from './agents/base.js';
 import { createAgentContext } from './agents/base.js';
@@ -124,7 +126,9 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   if (!config.swarm?.enabled && !ctx.sweepMode) {
     const riskGate = checkRiskGate(target.path, ctx.gitnexusCwd ?? cwd);
     if (riskGate.requiresSwarm) {
-      logger.warn(`[ratchet] ⚠ Risk gate: ${target.path} has ${riskGate.dependentCount} dependents — escalating to swarm`);
+      logger.warn(
+        `[ratchet] ⚠ Risk gate: ${target.path} has ${riskGate.dependentCount} dependents — escalating to swarm`,
+      );
       return {
         click: {
           number: clickNumber,
@@ -223,7 +227,10 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       } else if (!guardResult.passed && (ctx.atomicSweep || effectiveGuards === null)) {
-        logger.warn(`[ratchet] Click ${clickNumber} guard exceeded (${guardResult.reason}) — proceeding in atomic mode, test suite is the gate`);
+        logger.warn(
+          `[ratchet] Click ${clickNumber} guard exceeded (${guardResult.reason})` +
+          ` — proceeding in atomic mode, test suite is the gate`,
+        );
       }
 
       if (!rolledBack) {
@@ -233,7 +240,10 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         const prevalidateOpts: PrevalidateOptions = { strict: false };
         prevalidateResult = await prevalidate(cwd, config.model, prevalidateOpts);
         if (prevalidateResult.concerns.length > 0) {
-          logger.warn(`[ratchet] 🔍 Prevalidate click ${clickNumber}: confidence=${prevalidateResult.confidence.toFixed(2)}, recommendation=${prevalidateResult.recommendation}`);
+          logger.warn(
+            `[ratchet] 🔍 Prevalidate click ${clickNumber}: confidence=${prevalidateResult.confidence.toFixed(2)}, ` +
+            `recommendation=${prevalidateResult.recommendation}`,
+          );
           for (const concern of prevalidateResult.concerns.slice(0, 3)) {
             logger.warn(`[ratchet]   concern: ${concern}`);
           }
@@ -243,13 +253,19 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       }
 
       if (prevalidateResult?.recommendation === 'reject') {
-        logger.warn(`[ratchet] Click ${clickNumber} REJECTED by prevalidate (confidence=${prevalidateResult.confidence.toFixed(2)}) — rolling back without tests`);
+        logger.warn(
+          `[ratchet] Click ${clickNumber} REJECTED by prevalidate` +
+          ` (confidence=${prevalidateResult.confidence.toFixed(2)}) — rolling back without tests`,
+        );
         rollbackReason = `prevalidate rejected (confidence ${prevalidateResult.confidence.toFixed(2)})`;
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       } else if (prevalidateResult?.recommendation === 'escalate-swarm') {
         // Signal swarm escalation — tests will still run, but caller will know
-        logger.warn(`[ratchet] Prevalidate: escalating click ${clickNumber} to swarm (confidence=${prevalidateResult.confidence.toFixed(2)})`);
+        logger.warn(
+          `[ratchet] Prevalidate: escalating click ${clickNumber} to swarm ` +
+          `(confidence=${prevalidateResult.confidence.toFixed(2)})`,
+        );
       }
       } // end prevalidate block
 
@@ -263,7 +279,10 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       testsPassed = gateResult.passed;
 
       if (!testsPassed) {
-        logger.debug(`[ratchet] Tests FAILED at gate=${gateResult.gate}. Output (last 500 chars): ${gateResult.output.slice(-500)}`);
+        logger.debug(
+          `[ratchet] Tests FAILED at gate=${gateResult.gate}. ` +
+          `Output (last 500 chars): ${gateResult.output.slice(-500)}`,
+        );
         if (gateResult.failedTests.length > 0) {
           rollbackReason = `tests failed (${gateResult.gate}): ${gateResult.failedTests.join(', ')}`;
         } else {
@@ -452,7 +471,8 @@ function checkClickGuards(cwd: string, resolvedGuards: ClickGuards | null, sweep
         return {
           passed: false,
           reason: `Single file changed too many lines in sweep mode`,
-          detail: `File ${parts[2]} changed ${fileLines} lines (added=${added}, removed=${removed}). Sweep mode allows at most 120 lines per file.`,
+          detail: `File ${parts[2]} changed ${fileLines} lines (added=${added}, removed=${removed}). ` +
+            `Sweep mode allows at most 120 lines per file.`,
           linesChanged: totalLines,
           filesChanged: filesSet.size,
         };
@@ -465,7 +485,9 @@ function checkClickGuards(cwd: string, resolvedGuards: ClickGuards | null, sweep
       return {
         passed: false,
         reason: `Too many lines changed: ${totalLines} > ${maxLinesChanged} max`,
-        detail: `Agent changed ${totalLines} lines across ${filesChanged} file(s). This is too aggressive for a single click. The change was rolled back to prevent test failures from broad refactors.`,
+        detail: `Agent changed ${totalLines} lines across ${filesChanged} file(s). ` +
+          `This is too aggressive for a single click. ` +
+          `The change was rolled back to prevent test failures from broad refactors.`,
         linesChanged: totalLines,
         filesChanged,
       };
@@ -475,7 +497,8 @@ function checkClickGuards(cwd: string, resolvedGuards: ClickGuards | null, sweep
       return {
         passed: false,
         reason: `Too many files changed: ${filesChanged} > ${maxFilesChanged} max`,
-        detail: `Agent modified ${filesChanged} files (${totalLines} lines). Clicks should be surgical — ${maxFilesChanged} files max.`,
+        detail: `Agent modified ${filesChanged} files (${totalLines} lines). ` +
+          `Clicks should be surgical — ${maxFilesChanged} files max.`,
         linesChanged: totalLines,
         filesChanged,
       };
@@ -537,7 +560,8 @@ function buildCommitMessage(clickNumber: number, target: Target, proposal: strin
   // Strip leaked agent system prompts from commit messages
   if (/^You are (a |an |the )/i.test(subject)) {
     subject = filesModified?.length
-      ? `Modified ${filesModified.length} file${filesModified.length > 1 ? 's' : ''}: ${filesModified.map(f => f.split('/').pop()).slice(0, 3).join(', ')}${filesModified.length > 3 ? '…' : ''}`
+      ? `Modified ${filesModified.length} file${filesModified.length > 1 ? 's' : ''}: ` +
+        `${filesModified.map(f => f.split('/').pop()).slice(0, 3).join(', ')}${filesModified.length > 3 ? '…' : ''}`
       : 'Applied code improvements';
   }
   return `ratchet(${target.name}): click ${clickNumber} — ${subject}`;

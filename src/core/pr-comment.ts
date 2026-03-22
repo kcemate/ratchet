@@ -38,7 +38,8 @@ export function generateScoreCard(
     const delta = afterCat.score - beforeCat.score;
     const emoji = scoreEmoji(beforeCat.score, afterCat.score, afterCat.max);
     lines.push(
-      `  ${afterCat.name}: ${beforeCat.score}/${afterCat.max} → ${afterCat.score}/${afterCat.max} (${formatDelta(delta)}) ${emoji}`,
+      `  ${afterCat.name}: ${beforeCat.score}/${afterCat.max} → ` +
+      `${afterCat.score}/${afterCat.max} (${formatDelta(delta)}) ${emoji}`,
     );
   }
 
@@ -99,7 +100,8 @@ export function generatePRDescription(
   const lines: string[] = [
     '## 🔩 Ratchet Score Improvement',
     '',
-    `**Overall: ${before.total}/${before.maxTotal} → ${after.total}/${after.maxTotal} (${formatDelta(delta)}) ${overallEmoji}**`,
+    `**Overall: ${before.total}/${before.maxTotal} → ${after.total}/${after.maxTotal} ` +
+    `(${formatDelta(delta)}) ${overallEmoji}**`,
     '',
     '| | Dimension | Before | After | Δ |',
     '|---|---|---|---|---|',
@@ -112,7 +114,8 @@ export function generatePRDescription(
     const emoji = scoreEmoji(beforeCat.score, afterCat.score, afterCat.max);
     const deltaStr = catDelta === 0 ? '±0' : formatDelta(catDelta);
     lines.push(
-      `| ${emoji} | ${afterCat.emoji} ${afterCat.name} | ${beforeCat.score}/${afterCat.max} | ${afterCat.score}/${afterCat.max} | ${deltaStr} |`,
+      `| ${emoji} | ${afterCat.emoji} ${afterCat.name} | ${beforeCat.score}/${afterCat.max} | ` +
+      `${afterCat.score}/${afterCat.max} | ${deltaStr} |`,
     );
   }
 

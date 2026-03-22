@@ -99,7 +99,10 @@ export function generateReport(options: ReportOptions): string {
     const issuesAfter = scoreAfter.totalIssuesFound ?? 0;
     const issuesFixed = issuesBefore - issuesAfter;
 
-    lines.push(`**Score: ${beforePct} → ${afterPct}${issuesBefore > 0 ? `  |  Issues: ${issuesBefore} → ${issuesAfter}${issuesFixed > 0 ? ` (${issuesFixed} fixed)` : ''}` : ''}**`);
+    const issuesSuffix = issuesBefore > 0
+      ? `  |  Issues: ${issuesBefore} → ${issuesAfter}${issuesFixed > 0 ? ` (${issuesFixed} fixed)` : ''}`
+      : '';
+    lines.push(`**Score: ${beforePct} → ${afterPct}${issuesSuffix}**`);
     lines.push('');
 
     lines.push(`| | Before | After | Change |`);
@@ -115,7 +118,8 @@ export function generateReport(options: ReportOptions): string {
       const catDelta = after.score - before.score;
       const catDeltaStr = catDelta > 0 ? `+${catDelta}` : String(catDelta);
       lines.push(
-        `| ${after.emoji} ${after.name} | ${before.score}/${before.max} | ${after.score}/${after.max} | ${catDeltaStr} |`,
+        `| ${after.emoji} ${after.name} | ${before.score}/${before.max} | ` +
+        `${after.score}/${after.max} | ${catDeltaStr} |`,
       );
 
       // Show subcategories if available
@@ -127,7 +131,8 @@ export function generateReport(options: ReportOptions): string {
           const subDelta = subAfter.score - subBefore.score;
           const subDeltaStr = subDelta > 0 ? `+${subDelta}` : String(subDelta);
           lines.push(
-            `| &nbsp;&nbsp;&nbsp;&nbsp;↳ ${subAfter.name} | ${subBefore.score}/${subBefore.max} | ${subAfter.score}/${subAfter.max} | ${subDeltaStr} |`,
+            `| &nbsp;&nbsp;&nbsp;&nbsp;↳ ${subAfter.name} | ${subBefore.score}/${subBefore.max} | ` +
+            `${subAfter.score}/${subAfter.max} | ${subDeltaStr} |`,
           );
         }
       }

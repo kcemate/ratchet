@@ -24,7 +24,9 @@ export interface PrevalidateOptions {
  * On confidence 0.5–0.7 → escalate-swarm (needs more eyes)
  * On confidence > 0.7 → proceed
  */
-export async function prevalidate(cwd: string, model?: string, options?: PrevalidateOptions): Promise<PrevalidateResult> {
+export async function prevalidate(
+  cwd: string, model?: string, options?: PrevalidateOptions,
+): Promise<PrevalidateResult> {
   const strict = options?.strict ?? false;
 
   // 1. Collect the diff
