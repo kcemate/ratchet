@@ -1,0 +1,28 @@
+name = "ratchet-badge"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+[[kv_namespaces]]
+binding = "RATCHET_SCORES"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_KV_PREVIEW_ID"
+
+[vars]
+# API_KEY is set via wrangler secret (never commit the real value)
+# Run: wrangler secret put API_KEY
+
+[build]
+command = ""
+
+# Production environment
+[env.production]
+name = "ratchet-badge"
+
+# Staging environment
+[env.staging]
+name = "ratchet-badge-staging"
+
+[[env.staging.kv_namespaces]]
+binding = "RATCHET_SCORES"
+id = "REPLACE_WITH_STAGING_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_STAGING_KV_PREVIEW_ID"
