@@ -76,7 +76,8 @@ function flatSvg(
   lw: number, vw: number, tw: number,
   ltw: number, vtw: number, lmx: number, vmx: number,
 ): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${tw}" height="20" role="img" aria-label="${label}: ${value}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    width="${tw}" height="20" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
   <linearGradient id="s" x2="0" y2="100%">
     <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
@@ -90,11 +91,16 @@ function flatSvg(
     <rect x="${lw}" width="${vw}" height="20" fill="${color}"/>
     <rect width="${tw}" height="20" fill="url(#s)"/>
   </g>
-  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" text-rendering="geometricPrecision" font-size="110">
-    <text aria-hidden="true" x="${lmx * 10}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
-    <text x="${lmx * 10}" y="140" transform="scale(.1)" fill="#fff" textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
-    <text aria-hidden="true" x="${vmx * 10}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
-    <text x="${vmx * 10}" y="140" transform="scale(.1)" fill="#fff" textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
+  <g fill="#fff" text-anchor="middle"
+    font-family="DejaVu Sans,Verdana,Geneva,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text aria-hidden="true" x="${lmx * 10}" y="150" fill="#010101" fill-opacity=".3"
+      transform="scale(.1)" textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
+    <text x="${lmx * 10}" y="140" transform="scale(.1)" fill="#fff"
+      textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
+    <text aria-hidden="true" x="${vmx * 10}" y="150" fill="#010101" fill-opacity=".3"
+      transform="scale(.1)" textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
+    <text x="${vmx * 10}" y="140" transform="scale(.1)" fill="#fff"
+      textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
   </g>
 </svg>`;
 }
@@ -104,17 +110,23 @@ function flatSquareSvg(
   lw: number, vw: number, tw: number,
   ltw: number, vtw: number, lmx: number, vmx: number,
 ): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${tw}" height="20" role="img" aria-label="${label}: ${value}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    width="${tw}" height="20" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
   <g shape-rendering="crispEdges">
     <rect width="${lw}" height="20" fill="#555"/>
     <rect x="${lw}" width="${vw}" height="20" fill="${color}"/>
   </g>
-  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" text-rendering="geometricPrecision" font-size="110">
-    <text aria-hidden="true" x="${lmx * 10}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
-    <text x="${lmx * 10}" y="140" transform="scale(.1)" fill="#fff" textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
-    <text aria-hidden="true" x="${vmx * 10}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
-    <text x="${vmx * 10}" y="140" transform="scale(.1)" fill="#fff" textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
+  <g fill="#fff" text-anchor="middle"
+    font-family="DejaVu Sans,Verdana,Geneva,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text aria-hidden="true" x="${lmx * 10}" y="150" fill="#010101" fill-opacity=".3"
+      transform="scale(.1)" textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
+    <text x="${lmx * 10}" y="140" transform="scale(.1)" fill="#fff"
+      textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
+    <text aria-hidden="true" x="${vmx * 10}" y="150" fill="#010101" fill-opacity=".3"
+      transform="scale(.1)" textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
+    <text x="${vmx * 10}" y="140" transform="scale(.1)" fill="#fff"
+      textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
   </g>
 </svg>`;
 }
@@ -130,15 +142,20 @@ function forTheBadgeSvg(label: string, value: string, color: string): string {
   const lmx = Math.round(lw / 2);
   const vmx = lw + Math.round(vw / 2);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${tw}" height="28" role="img" aria-label="${label}: ${value}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    width="${tw}" height="28" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
   <g shape-rendering="crispEdges">
     <rect width="${lw}" height="28" fill="#555"/>
     <rect x="${lw}" width="${vw}" height="28" fill="${color}"/>
   </g>
-  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" text-rendering="geometricPrecision" font-size="100" font-weight="bold">
-    <text x="${lmx * 10}" y="175" transform="scale(.1)" fill="#fff" textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
-    <text x="${vmx * 10}" y="175" transform="scale(.1)" fill="#fff" textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
+  <g fill="#fff" text-anchor="middle"
+    font-family="DejaVu Sans,Verdana,Geneva,sans-serif" text-rendering="geometricPrecision"
+    font-size="100" font-weight="bold">
+    <text x="${lmx * 10}" y="175" transform="scale(.1)" fill="#fff"
+      textLength="${ltw * 10}" lengthAdjust="spacing">${label}</text>
+    <text x="${vmx * 10}" y="175" transform="scale(.1)" fill="#fff"
+      textLength="${vtw * 10}" lengthAdjust="spacing">${value}</text>
   </g>
 </svg>`;
 }

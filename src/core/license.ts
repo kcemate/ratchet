@@ -12,9 +12,9 @@ import { homedir } from 'os';
 import chalk from 'chalk';
 import { logger } from '../lib/logger.js';
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 // Types
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 
 export interface LicenseData {
   key: string;
@@ -32,25 +32,25 @@ export interface LicenseValidationResult {
   error?: string;
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 // Paths
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 
 const RATCHET_DIR = join(homedir(), '.ratchet');
 const LICENSE_FILE = join(RATCHET_DIR, 'license.json');
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 // Commands that require a license
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 
 const GATED_COMMANDS = new Set(['torque', 'improve']);
 
 /** Commands that require Pro tier or above (torque is Pro-only) */
 const PRO_COMMANDS = new Set(['torque']);
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 // Tier hierarchy for comparison
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 
 const TIER_LEVEL: Record<string, number> = {
   free: 0,
@@ -60,9 +60,9 @@ const TIER_LEVEL: Record<string, number> = {
   enterprise: 4,
 };
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 // License file operations
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 
 export function getLicensePath(): string {
   return LICENSE_FILE;
@@ -95,9 +95,9 @@ export function clearLicense(): boolean {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 // Validation API
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 
 const VALIDATE_URL = process.env.RATCHET_LICENSE_URL || 'https://api.ratchetcli.com/validate';
 
@@ -129,9 +129,9 @@ export async function validateLicenseRemote(key: string): Promise<LicenseValidat
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 // Gate check — call this at the top of gated commands
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 
 export function requireLicense(commandName: string): LicenseData {
   if (!GATED_COMMANDS.has(commandName)) return null as any; // ungated
@@ -169,9 +169,9 @@ export function requireLicense(commandName: string): LicenseData {
   return license;
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 // Check if a command is gated
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 
 export function isGatedCommand(name: string): boolean {
   return GATED_COMMANDS.has(name);

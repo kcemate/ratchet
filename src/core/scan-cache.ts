@@ -436,8 +436,15 @@ export function rebuildScanFromMetrics(
     score: Math.min(coverageScore + edgeCaseScore + testQualityScore, 25), max: 25,
     summary: [coverageSummary, edgeCaseSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: coverageIssues, issuesDescription: 'source files without tests', locations: coverageIssues > 0 ? sourceFiles : [] },
-      { name: 'Edge case depth', score: edgeCaseScore, max: 9, summary: edgeCaseSummary, issuesFound: totalEdgeCases === 0 ? 1 : 0, issuesDescription: 'no edge case tests' },
+      {
+        name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary,
+        issuesFound: coverageIssues, issuesDescription: 'source files without tests',
+        locations: coverageIssues > 0 ? sourceFiles : [],
+      },
+      {
+        name: 'Edge case depth', score: edgeCaseScore, max: 9, summary: edgeCaseSummary,
+        issuesFound: totalEdgeCases === 0 ? 1 : 0, issuesDescription: 'no edge case tests',
+      },
       { name: 'Test quality', score: testQualityScore, max: 8, summary: testQualitySummary, issuesFound: 0 },
     ],
   };
@@ -454,9 +461,18 @@ export function rebuildScanFromMetrics(
     score: Math.min(secretsScore + inputValScore + authScore, 15), max: 15,
     summary: [secretsSummary, inputValSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Secrets & env vars', score: secretsScore, max: 3, summary: secretsSummary, issuesFound: totalSecrets, issuesDescription: 'hardcoded secrets' },
-      { name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary, issuesFound: inputValIssues, issuesDescription: 'route files without validation' },
-      { name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary, issuesFound: authIssues, issuesDescription: 'missing auth/security controls' },
+      {
+        name: 'Secrets & env vars', score: secretsScore, max: 3, summary: secretsSummary,
+        issuesFound: totalSecrets, issuesDescription: 'hardcoded secrets',
+      },
+      {
+        name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary,
+        issuesFound: inputValIssues, issuesDescription: 'route files without validation',
+      },
+      {
+        name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary,
+        issuesFound: authIssues, issuesDescription: 'missing auth/security controls',
+      },
     ],
   };
 
@@ -469,7 +485,10 @@ export function rebuildScanFromMetrics(
       name: 'Type Safety', emoji: '📝', score: 0, max: 15,
       summary: 'JavaScript only — no static types',
       subcategories: [
-        { name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only', issuesFound: 1, issuesDescription: 'no TypeScript' },
+        {
+          name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only',
+          issuesFound: 1, issuesDescription: 'no TypeScript',
+        },
         { name: 'Any type count', score: 0, max: 8, summary: 'JavaScript only', issuesFound: 0 },
       ],
     };
@@ -483,8 +502,14 @@ export function rebuildScanFromMetrics(
       score: Math.min(strictScore + anyScore, 15), max: 15,
       summary: [strictSummary, anySummary].filter(Boolean).join(', '),
       subcategories: [
-        { name: 'Strict config', score: strictScore, max: 7, summary: strictSummary, issuesFound: strictScore < 7 ? 1 : 0, issuesDescription: 'missing strict TypeScript config' },
-        { name: 'Any type count', score: anyScore, max: 8, summary: anySummary, issuesFound: totalAnyType, issuesDescription: 'any types', locations: anyTypeFiles },
+        {
+          name: 'Strict config', score: strictScore, max: 7, summary: strictSummary,
+          issuesFound: strictScore < 7 ? 1 : 0, issuesDescription: 'missing strict TypeScript config',
+        },
+        {
+          name: 'Any type count', score: anyScore, max: 8, summary: anySummary,
+          issuesFound: totalAnyType, issuesDescription: 'any types', locations: anyTypeFiles,
+        },
       ],
     };
   }
@@ -500,9 +525,19 @@ export function rebuildScanFromMetrics(
     score: Math.min(ehCovScore + ecScore + loggingScore, 20), max: 20,
     summary: [ehCovSummary, ecSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Coverage', score: ehCovScore, max: 8, summary: ehCovSummary, issuesFound: Math.max(0, totalAsync - totalTryCatch), issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles },
-      { name: 'Empty catches', score: ecScore, max: 5, summary: ecSummary, issuesFound: totalEmptyCatch, issuesDescription: 'empty catch blocks', locations: emptyCatchFiles },
-      { name: 'Structured logging', score: loggingScore, max: 7, summary: loggingSummary, issuesFound: 1, issuesDescription: 'no structured logger' },
+      {
+        name: 'Coverage', score: ehCovScore, max: 8, summary: ehCovSummary,
+        issuesFound: Math.max(0, totalAsync - totalTryCatch),
+        issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles,
+      },
+      {
+        name: 'Empty catches', score: ecScore, max: 5, summary: ecSummary,
+        issuesFound: totalEmptyCatch, issuesDescription: 'empty catch blocks', locations: emptyCatchFiles,
+      },
+      {
+        name: 'Structured logging', score: loggingScore, max: 7, summary: loggingSummary,
+        issuesFound: 1, issuesDescription: 'no structured logger',
+      },
     ],
   };
 
@@ -513,12 +548,23 @@ export function rebuildScanFromMetrics(
 
   const perfCategory = {
     name: 'Performance', emoji: '⚡',
-    score: Math.min(Math.min(asyncPScore, 3) + Math.min(consoleScore, 5) + Math.min(importScore, 2), 10), max: 10,
+    score: Math.min(
+      Math.min(asyncPScore, 3) + Math.min(consoleScore, 5) + Math.min(importScore, 2), 10,
+    ), max: 10,
     summary: [asyncPSummary, consoleSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Async patterns', score: Math.min(asyncPScore, 3), max: 3, summary: asyncPSummary, issuesFound: totalAwaitInLoop, issuesDescription: 'await-in-loop patterns' },
-      { name: 'Console cleanup', score: Math.min(consoleScore, 5), max: 5, summary: consoleSummary, issuesFound: totalConsoleLog, issuesDescription: 'console.log calls in src', locations: consoleLogFiles },
-      { name: 'Import hygiene', score: Math.min(importScore, 2), max: 2, summary: importSummary, issuesFound: totalImportIssues, issuesDescription: 'import issues' },
+      {
+        name: 'Async patterns', score: Math.min(asyncPScore, 3), max: 3, summary: asyncPSummary,
+        issuesFound: totalAwaitInLoop, issuesDescription: 'await-in-loop patterns',
+      },
+      {
+        name: 'Console cleanup', score: Math.min(consoleScore, 5), max: 5, summary: consoleSummary,
+        issuesFound: totalConsoleLog, issuesDescription: 'console.log calls in src', locations: consoleLogFiles,
+      },
+      {
+        name: 'Import hygiene', score: Math.min(importScore, 2), max: 2, summary: importSummary,
+        issuesFound: totalImportIssues, issuesDescription: 'import issues',
+      },
     ],
   };
 
@@ -534,13 +580,28 @@ export function rebuildScanFromMetrics(
 
   const codeQualityCategory = {
     name: 'Code Quality', emoji: '📖',
-    score: Math.min(Math.min(fnLenScore, 4) + Math.min(lineLenScore, 4) + Math.min(deadCodeScore, 4) + Math.min(dupScore, 3), 15), max: 15,
+    score: Math.min(
+      Math.min(fnLenScore, 4) + Math.min(lineLenScore, 4) + Math.min(deadCodeScore, 4) + Math.min(dupScore, 3), 15,
+    ), max: 15,
     summary: [fnLenSummary, lineLenSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary, issuesFound: totalLongFunctions, issuesDescription: 'functions >50 lines', locations: longFuncFiles },
-      { name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary, issuesFound: totalLongLines, issuesDescription: 'lines >120 chars', locations: longLineFiles },
-      { name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary, issuesFound: totalCommentedCode + totalTodo, issuesDescription: 'dead code indicators (TODO, commented code)' },
-      { name: 'Duplication', score: Math.min(dupScore, 3), max: 3, summary: dupSummary, issuesFound: duplicatedLines, issuesDescription: 'repeated code lines' },
+      {
+        name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary,
+        issuesFound: totalLongFunctions, issuesDescription: 'functions >50 lines', locations: longFuncFiles,
+      },
+      {
+        name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary,
+        issuesFound: totalLongLines, issuesDescription: 'lines >120 chars', locations: longLineFiles,
+      },
+      {
+        name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary,
+        issuesFound: totalCommentedCode + totalTodo,
+        issuesDescription: 'dead code indicators (TODO, commented code)',
+      },
+      {
+        name: 'Duplication', score: Math.min(dupScore, 3), max: 3, summary: dupSummary,
+        issuesFound: duplicatedLines, issuesDescription: 'repeated code lines',
+      },
     ],
   };
 

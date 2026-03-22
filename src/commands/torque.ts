@@ -116,9 +116,16 @@ export function torqueCommand(): Command {
     .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (overrides --guards)')
     .option('--max-files <number>', 'Max files changed per click before auto-rollback (overrides --guards)')
     .option('--no-escalate', 'Disable adaptive escalation — stay on single-file target even when stalled')
-    .option('--no-guard-escalation', 'Disable smart guard escalation — don\'t auto-bump guard profile on consecutive guard rejections')
+    .option(
+      '--no-guard-escalation',
+      'Disable smart guard escalation — don\'t auto-bump guard profile on consecutive guard rejections',
+    )
     .option('--architect', 'Enable architect mode — structural refactoring with relaxed guards (20 files, 500 lines)')
-    .option('--plan-first', 'Run a planning click 0 before execution clicks — read-only, generates a structured plan', false)
+    .option(
+      '--plan-first',
+      'Run a planning click 0 before execution clicks — read-only, generates a structured plan',
+      false,
+    )
     .option('--json', 'Output full run economics as JSON (for CI/CD integration)', false)
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
     .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
@@ -126,7 +133,11 @@ export function torqueCommand(): Command {
     .option('--resume <id>', 'Resume an interrupted run by its run ID')
     .option('--no-auto-resume', 'Start fresh even if an interrupted run exists')
     .option('--background', 'Detach from terminal and run in background', false)
-    .option('--fast', 'Enable context pruning for faster clicks — inject focused issue context into agent prompts (experimental)', false)
+    .option(
+      '--fast',
+      'Enable context pruning for faster clicks — inject focused issue context into agent prompts (experimental)',
+      false,
+    )
     .option('--timeout <minutes>', 'Maximum wall time in minutes (stops cleanly after current click finishes)')
     .option('--budget <dollars>', 'Maximum estimated cost in USD (stops when budget would be exceeded)')
     .option('--stop-on-regression', 'Stop immediately when a score regression is detected', false)
@@ -183,11 +194,13 @@ export function torqueCommand(): Command {
       }) => {
         const cwd = process.cwd();
 
-        // ── Parallel mode ──────────────────────────────────────────────────
+        // ── Parallel mode
         if (options.parallel) {
           const maxWorkers = parseInt(options.parallel, 10);
           if (isNaN(maxWorkers) || maxWorkers < 1) {
-            exitWithError(`  Invalid --parallel value: ${options.parallel}\n  Must be a positive integer (e.g. --parallel 3).`);
+            exitWithError(
+              `  Invalid --parallel value: ${options.parallel}\n  Must be a positive integer (e.g. --parallel 3).`,
+            );
           }
 
           printHeader('⚡ Ratchet Parallel');
@@ -265,7 +278,7 @@ export function torqueCommand(): Command {
           else if (result.totalRolledBack > 0) process.exit(1);
           return;
         }
-        // ── End parallel mode ──────────────────────────────────────────────
+        // ── End parallel mode
 
         // Background mode: detach and run in a child process
         if (options.background && !process.env['RATCHET_BACKGROUND']) {
@@ -327,7 +340,10 @@ export function torqueCommand(): Command {
             focusSpecs = options.focus.split(',').map((s) => s.trim());
             const invalid = focusSpecs.filter((s) => !isValidSpecialization(s));
             if (invalid.length > 0) {
-              exitWithError(`  Invalid --focus specialization(s): ${invalid.join(', ')}\n  Valid: security, performance, quality, errors, types`);
+              exitWithError(
+                `  Invalid --focus specialization(s): ${invalid.join(', ')}\n` +
+                `  Valid: security, performance, quality, errors, types`,
+              );
             }
           }
 
@@ -371,7 +387,9 @@ export function torqueCommand(): Command {
         let target;
         if (options.sweep) {
           // Sweep mode: use a synthetic target representing the whole codebase
-          target = { name: 'sweep', path: '.', description: 'Sweep mode — fix one issue type across the entire codebase' };
+          target = {
+            name: 'sweep', path: '.', description: 'Sweep mode — fix one issue type across the entire codebase',
+          };
         } else if (featureMode && !options.target) {
           // Feature mode without explicit target: use a synthetic target
           target = { name: 'feature', path: '.', description: 'Feature mode — build from specification' };
@@ -380,8 +398,12 @@ export function torqueCommand(): Command {
           if (!target) {
             if (config.targets.length === 0) {
               exitWithError(
-                `  Target "${options.target}" not found — .ratchet.yml has no targets defined.\n\n  Add a target to .ratchet.yml:\n` +
-                chalk.dim('    targets:\n      - name: my-target\n        path: src/\n        description: "Improve code quality in src/"'),
+                `  Target "${options.target}" not found — .ratchet.yml has no targets defined.\n\n` +
+                `  Add a target to .ratchet.yml:\n` +
+                chalk.dim(
+                  '    targets:\n      - name: my-target\n        path: src/\n' +
+                  '        description: "Improve code quality in src/"',
+                ),
               );
             }
             const available = config.targets.map((t) => chalk.cyan(t.name)).join(', ');
@@ -392,7 +414,8 @@ export function torqueCommand(): Command {
           target = config.targets[0];
           if (!target) {
             exitWithError(
-              `  No target specified and none could be auto-detected.\n  Use ${chalk.cyan('--target <name>')} or run ${chalk.cyan('ratchet init')} to create a .ratchet.yml.`,
+              `  No target specified and none could be auto-detected.\n` +
+              `  Use ${chalk.cyan('--target <name>')} or run ${chalk.cyan('ratchet init')} to create a .ratchet.yml.`,
             );
           }
         }
@@ -403,14 +426,21 @@ export function torqueCommand(): Command {
           : options.sweep ? 5 : config.defaults.clicks;
 
         if (isNaN(clickCount) || clickCount < 1) {
-          exitWithError(`  Invalid --clicks value: ${chalk.bold(String(options.clicks ?? ''))}\n  Must be a positive integer (e.g. ${chalk.cyan('--clicks 5')}).`);
+          exitWithError(
+            `  Invalid --clicks value: ${chalk.bold(String(options.clicks ?? ''))}\n` +
+            `  Must be a positive integer (e.g. ${chalk.cyan('--clicks 5')}).`,
+          );
         }
 
         if (options.clicks && options.clicks.includes('.')) {
-          exitWithError(`  Invalid --clicks value: ${chalk.bold(options.clicks)}\n  Fractional clicks are not allowed — must be a whole number (e.g. ${chalk.cyan('--clicks 5')}).`);
+          exitWithError(
+            `  Invalid --clicks value: ${chalk.bold(options.clicks)}\n` +
+            `  Fractional clicks are not allowed — must be a whole number (e.g. ${chalk.cyan('--clicks 5')}).`,
+          );
         }
 
-        // Set up click guards — resolution priority: --max-lines/--max-files > --guards > target config > mode defaults
+        // Set up click guards
+        // Resolution priority: --max-lines/--max-files > --guards > target config > mode defaults
         const VALID_PROFILES: GuardProfileName[] = ['tight', 'refactor', 'broad', 'atomic'];
         if (options.maxLines || options.maxFiles) {
           // Explicit per-dimension override takes highest priority
@@ -423,7 +453,9 @@ export function torqueCommand(): Command {
           };
         } else if (options.guards) {
           if (!VALID_PROFILES.includes(options.guards as GuardProfileName)) {
-            exitWithError(`  Invalid --guards profile: "${options.guards}"\n  Valid profiles: ${VALID_PROFILES.join(', ')}`);
+            exitWithError(
+              `  Invalid --guards profile: "${options.guards}"\n  Valid profiles: ${VALID_PROFILES.join(', ')}`,
+            );
           }
           config.guards = options.guards as GuardProfileName;
         }
@@ -435,7 +467,9 @@ export function torqueCommand(): Command {
           const scopeSpec = parseScopeArg(options.scope);
           scopeFiles = await resolveScope(scopeSpec, cwd);
           if (scopeFiles.length === 0) {
-            process.stdout.write(chalk.yellow(`  ⚠  Scope "${options.scope}" matched no files — no restriction applied.\n\n`));
+            process.stdout.write(
+              chalk.yellow(`  ⚠  Scope "${options.scope}" matched no files — no restriction applied.\n\n`),
+            );
           }
         }
 
@@ -443,7 +477,10 @@ export function torqueCommand(): Command {
         const fields: Array<[string, string]> = options.sweep
           ? [['Mode', chalk.yellow('sweep') + (options.category ? chalk.dim(` (${options.category})`) : '')]]
           : featureMode
-          ? [['Mode', chalk.yellow('feature')], ['Spec', chalk.dim((options.spec ?? '').slice(0, 60) + ((options.spec ?? '').length > 60 ? '…' : ''))]]
+          ? [
+              ['Mode', chalk.yellow('feature')],
+              ['Spec', chalk.dim((options.spec ?? '').slice(0, 60) + ((options.spec ?? '').length > 60 ? '…' : ''))],
+            ]
           : [['Target', chalk.cyan(target.name)], ['Path', chalk.dim(target.path)]];
         fields.push(
           ['Agent',  chalk.dim(config.agent)],
@@ -564,9 +601,10 @@ export function torqueCommand(): Command {
               (target as Target) = resumedTarget;
             }
           }
-          process.stdout.write(
-            chalk.cyan(`\n  Resuming run ${chalk.bold(options.resume)} from click ${rs.completedClicks + 1}/${rs.totalClicks}\n\n`),
-          );
+          process.stdout.write(chalk.cyan(
+            `\n  Resuming run ${chalk.bold(options.resume)} ` +
+            `from click ${rs.completedClicks + 1}/${rs.totalClicks}\n\n`,
+          ));
           // Override click count with remaining clicks
           clickCount = remainingClicks;
         }
@@ -578,9 +616,12 @@ export function torqueCommand(): Command {
             const interrupted = allRuns.find(e => e.run.status === 'interrupted');
             if (interrupted) {
               options.resume = interrupted.run.id;
-              process.stdout.write(
-                chalk.cyan(`  ⚡ Auto-resuming interrupted run ${chalk.bold(interrupted.run.id)} (click ${(interrupted.run.resumeState?.completedClicks ?? 0) + 1}/${interrupted.run.resumeState?.totalClicks ?? '?'})...\n\n`),
-              );
+              const resumedAt = (interrupted.run.resumeState?.completedClicks ?? 0) + 1;
+              const resumeTotal = interrupted.run.resumeState?.totalClicks ?? '?';
+              process.stdout.write(chalk.cyan(
+                `  ⚡ Auto-resuming interrupted run ${chalk.bold(interrupted.run.id)} ` +
+                `(click ${resumedAt}/${resumeTotal})...\n\n`,
+              ));
             }
           } catch {
             // Non-fatal
@@ -637,7 +678,9 @@ export function torqueCommand(): Command {
                 },
                 onError: (err: Error, clickNumber: number) => {
                   if (spinner) {
-                    spinner.fail(`  Click ${chalk.bold(String(clickNumber))} — ${chalk.red('error')}: ${err.message}`);
+                    spinner.fail(
+                      `  Click ${chalk.bold(String(clickNumber))} — ${chalk.red('error')}: ${err.message}`,
+                    );
                     spinner = null;
                   }
                 },
@@ -701,6 +744,7 @@ export function torqueCommand(): Command {
             guardEscalation: options.guardEscalation !== false,
             planFirst: options.planFirst,
             contextPruning: options.fast,
+            scoreOptimized: true,
             timeoutMs: options.timeout ? parseFloat(options.timeout) * 60 * 1000 : undefined,
             budgetUsd: options.budget ? parseFloat(options.budget) : undefined,
             stopOnRegression: options.stopOnRegression,
@@ -714,7 +758,8 @@ export function torqueCommand(): Command {
                   .map((t) => `${t.subcategory} (${t.count}/${t.count + 1})`)
                   .join(', ');
                 process.stdout.write(
-                  `  📊 Initial scan: ${chalk.bold(`${scan.total}/${scan.maxTotal}`)} (${scan.totalIssuesFound} issues found)\n`,
+                  `  📊 Initial scan: ${chalk.bold(`${scan.total}/${scan.maxTotal}`)} ` +
+                  `(${scan.totalIssuesFound} issues found)\n`,
                 );
                 if (targetStr) {
                   process.stdout.write(`     Targeting: ${chalk.dim(targetStr)}\n`);
@@ -729,14 +774,16 @@ export function torqueCommand(): Command {
                 const ceilingScore = Math.min(100, scan.total + allPoints);
                 if (reachablePoints > 0) {
                   process.stdout.write(
-                    `  📈 Reachable by torque: ~${reachableScore}/100 (+${reachablePoints}pts from ${sweepableGaps.length} fixable categories)\n`,
+                    `  📈 Reachable by torque: ~${reachableScore}/100 ` +
+                    `(+${reachablePoints}pts from ${sweepableGaps.length} fixable categories)\n`,
                   );
                 }
                 if (nonSweepableGaps.length > 0) {
                   const archNames = nonSweepableGaps.slice(0, 2).map(g => g.subcategory).join(', ');
                   const etcSuffix = nonSweepableGaps.length > 2 ? ', etc.' : '';
                   process.stdout.write(
-                    `     Ceiling: ${ceilingScore}/100 — ${nonSweepableGaps.length} categories need architect mode (${archNames}${etcSuffix})\n`,
+                    `     Ceiling: ${ceilingScore}/100 — ${nonSweepableGaps.length} categories need architect mode ` +
+                    `(${archNames}${etcSuffix})\n`,
                   );
                 }
                 process.stdout.write('\n');
@@ -750,12 +797,16 @@ export function torqueCommand(): Command {
               onPlanComplete: (plan) => {
                 if (spinner) {
                   spinner.succeed(
-                    `  📋 Click 0 — Plan ready: ${plan.filesToTouch.length} files, ~${plan.estimatedClicks} clicks estimated`,
+                    `  📋 Click 0 — Plan ready: ${plan.filesToTouch.length} files, ` +
+                    `~${plan.estimatedClicks} clicks estimated`,
                   );
                   spinner = null;
                 }
                 process.stdout.write(
-                  chalk.dim(`     Files to touch: ${plan.filesToTouch.slice(0, 5).join(', ')}${plan.filesToTouch.length > 5 ? `, +${plan.filesToTouch.length - 5} more` : ''}\n`) + '\n',
+                  chalk.dim(
+                    `     Files to touch: ${plan.filesToTouch.slice(0, 5).join(', ')}` +
+                    `${plan.filesToTouch.length > 5 ? `, +${plan.filesToTouch.length - 5} more` : ''}\n`,
+                  ) + '\n',
                 );
               },
 
@@ -783,7 +834,9 @@ export function torqueCommand(): Command {
               onClickPhase: (phase: ClickPhase, clickNumber: number) => {
                 if (!spinner) return;
                 const phaseTag = currentHardenPhase ? chalk.dim(` [${currentHardenPhase}]`) : '';
-                spinner.text = `  Click ${chalk.bold(String(clickNumber))}/${clickCount}${phaseTag} — ${CLICK_PHASE_LABELS[phase]}`;
+                spinner.text =
+                  `  Click ${chalk.bold(String(clickNumber))}/${clickCount}${phaseTag} — ` +
+                  `${CLICK_PHASE_LABELS[phase]}`;
               },
 
               onClickScoreUpdate: (_clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number) => {
@@ -886,7 +939,9 @@ export function torqueCommand(): Command {
                   spinner.warn(chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep`));
                   spinner = null;
                 } else {
-                  process.stdout.write(chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep\n`));
+                  process.stdout.write(
+                    chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep\n`),
+                  );
                 }
               },
             },
@@ -927,7 +982,9 @@ export function torqueCommand(): Command {
             .filter((c) => c.testsPassed)
             .flatMap((c) => c.filesModified)
             .filter((f, i, arr) => arr.indexOf(f) === i);
-          const prDesc = generatePRDescription(scoreBefore, scoreAfter, changedFiles, { footer: options.prCommentFooter });
+          const prDesc = generatePRDescription(
+            scoreBefore, scoreAfter, changedFiles, { footer: options.prCommentFooter },
+          );
           const prDescPath = join(cwd, `docs/${target.name}-pr-description.md`);
           await writeFile(prDescPath, prDesc, 'utf-8').catch(() => {});
         }

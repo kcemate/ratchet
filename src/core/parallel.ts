@@ -17,7 +17,7 @@ import chalk from 'chalk';
 const execFileAsync = promisify(execFile);
 const log = logger;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types
 
 export interface ParallelTask {
   id: string;
@@ -56,7 +56,7 @@ export interface ParallelTaskResult {
   wallTimeMs: number;
 }
 
-// ─── Semaphore (worker pool) ──────────────────────────────────────────────────
+// ─── Semaphore (worker pool)
 
 export interface WorkerPool {
   acquire(): Promise<() => void>;
@@ -89,14 +89,14 @@ export function createWorkerPool(maxWorkers: number): WorkerPool {
   };
 }
 
-// ─── Git helpers ──────────────────────────────────────────────────────────────
+// ─── Git helpers
 
 async function git(args: string[], cwd: string): Promise<string> {
   const { stdout } = await execFileAsync('git', args, { cwd });
   return stdout.trim();
 }
 
-// ─── Specs-file parser ────────────────────────────────────────────────────────
+// ─── Specs-file parser
 
 /**
  * Parse a markdown file where each `## ` heading defines a separate task spec.
@@ -161,7 +161,7 @@ export async function loadSpecsFile(
   });
 }
 
-// ─── Task executor ────────────────────────────────────────────────────────────
+// ─── Task executor
 
 /**
  * Run a single ParallelTask in its own git worktree.
@@ -278,7 +278,7 @@ export async function executeParallelTask(
   }
 }
 
-// ─── Merge logic ──────────────────────────────────────────────────────────────
+// ─── Merge logic
 
 /**
  * Get list of files changed in a worktree relative to HEAD.
@@ -392,7 +392,7 @@ export async function mergeTaskResult(
   return { success: true, conflicts: [], merged };
 }
 
-// ─── Worktree management ──────────────────────────────────────────────────────
+// ─── Worktree management
 
 async function createWorktree(mainCwd: string, worktreeDir: string, taskId: string): Promise<string> {
   const safeName = taskId.replace(/[^a-z0-9-]/gi, '-').slice(0, 40);
@@ -435,7 +435,7 @@ async function removeWorktree(worktreePath: string, mainCwd: string): Promise<vo
   }
 }
 
-// ─── Progress display ─────────────────────────────────────────────────────────
+// ─── Progress display
 
 interface TaskDisplayState {
   task: ParallelTask;
@@ -467,7 +467,10 @@ function renderParallelTable(
       process.stdout.write(`  ${chalk.dim(idx)} ${chalk.dim(label)} ${chalk.dim('░'.repeat(10))} waiting...\n`);
     } else if (s.status === 'running') {
       const elapsed = s.startedAt ? Math.floor((Date.now() - s.startedAt) / 1000) : 0;
-      process.stdout.write(`  ${chalk.yellow(idx)} ${chalk.white(label)} ${chalk.yellow('█'.repeat(5) + '░'.repeat(5))} running ${elapsed}s...\n`);
+      process.stdout.write(
+        `  ${chalk.yellow(idx)} ${chalk.white(label)} ` +
+        `${chalk.yellow('█'.repeat(5) + '░'.repeat(5))} running ${elapsed}s...\n`,
+      );
     } else if (s.status === 'completed' && s.result) {
       const delta = s.result.scoreDelta;
       const deltaStr = delta > 0
@@ -476,10 +479,15 @@ function renderParallelTable(
         ? chalk.red(`${delta}pts`)
         : chalk.dim('±0pts');
       const bar = chalk.green('█'.repeat(10));
-      process.stdout.write(`  ${chalk.green(idx)} ${chalk.white(label)} ${bar} ${s.result.clicksLanded}/${s.result.clicksTotal} clicks  ${deltaStr}  ✓\n`);
+      process.stdout.write(
+        `  ${chalk.green(idx)} ${chalk.white(label)} ${bar} ` +
+        `${s.result.clicksLanded}/${s.result.clicksTotal} clicks  ${deltaStr}  ✓\n`,
+      );
     } else if (s.status === 'failed' && s.result) {
       const errPreview = (s.result.error ?? 'error').slice(0, 40);
-      process.stdout.write(`  ${chalk.red(idx)} ${chalk.white(label)} ${chalk.red('░'.repeat(10))} ✗ ${chalk.dim(errPreview)}\n`);
+      process.stdout.write(
+        `  ${chalk.red(idx)} ${chalk.white(label)} ${chalk.red('░'.repeat(10))} ✗ ${chalk.dim(errPreview)}\n`,
+      );
     }
   }
 
@@ -500,7 +508,7 @@ function initParallelDisplay(states: TaskDisplayState[], maxWorkers: number, tot
   process.stdout.write('\n');
 }
 
-// ─── Main entry point ─────────────────────────────────────────────────────────
+// ─── Main entry point
 
 /**
  * Run multiple tasks in parallel, up to `maxWorkers` concurrently.
@@ -538,7 +546,9 @@ export async function runParallel(config: ParallelConfig, cwd: string): Promise<
   if (isInteractive) {
     initParallelDisplay(displayStates, config.maxWorkers, config.tasks.length);
   } else {
-    process.stdout.write(chalk.bold(`⚡ Parallel execution (${config.maxWorkers} workers, ${config.tasks.length} tasks)\n`));
+    process.stdout.write(
+      chalk.bold(`⚡ Parallel execution (${config.maxWorkers} workers, ${config.tasks.length} tasks)\n`),
+    );
   }
 
   // Kick off all tasks (pool throttles concurrency)
@@ -575,12 +585,16 @@ export async function runParallel(config: ParallelConfig, cwd: string): Promise<
     try {
       const result = await executeParallelTask(task, worktreePath, cwd, config);
 
-      displayStates[idx] = { ...displayStates[idx], status: result.status === 'completed' ? 'completed' : 'failed', result };
+      displayStates[idx] = {
+        ...displayStates[idx], status: result.status === 'completed' ? 'completed' : 'failed', result,
+      };
       if (isInteractive) renderParallelTable(displayStates, config.maxWorkers, config.tasks.length);
       else {
         const statusIcon = result.status === 'completed' ? '✓' : '✗';
         const deltaStr = result.scoreDelta >= 0 ? `+${result.scoreDelta}` : String(result.scoreDelta);
-        process.stdout.write(`  ${statusIcon} ${task.id}: ${result.clicksLanded}/${result.clicksTotal} clicks ${deltaStr}pts\n`);
+        process.stdout.write(
+          `  ${statusIcon} ${task.id}: ${result.clicksLanded}/${result.clicksTotal} clicks ${deltaStr}pts\n`,
+        );
       }
 
       return result;
@@ -623,7 +637,9 @@ export async function runParallel(config: ParallelConfig, cwd: string): Promise<
         process.stdout.write(`  ⚠ ${result.taskId}: ${conflicts.length} unresolvable conflict(s) — skipped\n`);
       }
     } catch (err) {
-      process.stdout.write(`  ✗ Failed to merge ${result.taskId}: ${err instanceof Error ? err.message : String(err)}\n`);
+      process.stdout.write(
+        `  ✗ Failed to merge ${result.taskId}: ${err instanceof Error ? err.message : String(err)}\n`,
+      );
     }
   }
 
@@ -658,7 +674,7 @@ export async function runParallel(config: ParallelConfig, cwd: string): Promise<
   };
 }
 
-// ─── Report builder ────────────────────────────────────────────────────────────
+// ─── Report builder
 
 export function buildParallelReport(result: ParallelResult): string {
   const lines: string[] = [];
@@ -693,7 +709,8 @@ export function buildParallelReport(result: ParallelResult): string {
         ? chalk.green('✓ done')
         : chalk.red('✗ failed');
       lines.push(
-        `  ${task.taskId.slice(0, 40).padEnd(40)} ${status.padEnd(12)} ${`${task.clicksLanded}/${task.clicksTotal}`.padEnd(12)} ${deltaStr2}`,
+        `  ${task.taskId.slice(0, 40).padEnd(40)} ${status.padEnd(12)} ` +
+        `${`${task.clicksLanded}/${task.clicksTotal}`.padEnd(12)} ${deltaStr2}`,
       );
     }
   }

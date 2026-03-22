@@ -4,7 +4,10 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { printHeader, exitWithError, validateInt, severityColor, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta } from '../lib/cli.js';
+import {
+  printHeader, exitWithError, validateInt, severityColor, printFields,
+  validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta,
+} from '../lib/cli.js';
 import { logger } from '../lib/logger.js';
 import { requireLicense } from '../core/license.js';
 import { STATE_FILE } from './status.js';
@@ -27,9 +30,9 @@ import { LearningStore } from '../core/learning.js';
 import { allocateClicks } from '../core/allocator.js';
 import { generateScorePlan } from '../core/score-optimizer.js';
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 // Command
-// ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────
 
 export function improveCommand(): Command {
   const cmd = new Command('improve');
@@ -46,8 +49,14 @@ export function improveCommand(): Command {
     .option('--no-adversarial', 'Disable adversarial QA (adversarial is on by default)')
     .option('--no-architect', 'Disable architect phase (architect+surgical is the default)')
     .option('--scope <spec>', 'Limit changes to specific files: diff, branch, staged, <glob>, or file:a.ts,b.ts')
-    .addHelpText('after', '\nExample:\n  $ ratchet improve\n  $ ratchet improve --clicks 14\n  $ ratchet improve --no-swarm --no-adversarial\n')
-    .action(async (options: { clicks: string; out?: string; swarm: boolean; adversarial: boolean; architect: boolean; scope?: string }) => {
+    .addHelpText(
+      'after',
+      '\nExample:\n  $ ratchet improve\n  $ ratchet improve --clicks 14\n' +
+      '  $ ratchet improve --no-swarm --no-adversarial\n',
+    )
+    .action(async (options: {
+      clicks: string; out?: string; swarm: boolean; adversarial: boolean; architect: boolean; scope?: string;
+    }) => {
       const cwd = process.cwd();
 
       printHeader('⚙  Ratchet Improve');
@@ -67,7 +76,9 @@ export function improveCommand(): Command {
         const scopeSpec = parseScopeArg(options.scope);
         scopeFiles = await resolveScope(scopeSpec, cwd);
         if (scopeFiles.length === 0) {
-          process.stdout.write(chalk.yellow(`  ⚠  Scope "${options.scope}" matched no files — no restriction applied.\n\n`));
+          process.stdout.write(
+            chalk.yellow(`  ⚠  Scope "${options.scope}" matched no files — no restriction applied.\n\n`),
+          );
         }
       }
 
@@ -89,7 +100,8 @@ export function improveCommand(): Command {
       try {
         scoreBefore = await runScan(cwd);
         scanSpinner.succeed(
-          `  Scan complete: ${chalk.bold(`${scoreBefore.total}/100`)} · ${chalk.yellow(String(scoreBefore.totalIssuesFound))} issues`,
+          `  Scan complete: ${chalk.bold(`${scoreBefore.total}/100`)} · ` +
+          `${chalk.yellow(String(scoreBefore.totalIssuesFound))} issues`,
         );
       } catch (err) {
         scanSpinner.fail('  Scan failed: ' + String(err));
@@ -121,7 +133,9 @@ export function improveCommand(): Command {
       const useArchitect = options.architect !== false;
 
       if (options.swarm !== false && baseScore > 75) {
-        process.stdout.write(chalk.dim(`  Auto-skipping swarm (score ${baseScore}/100 > 75 — diminishing returns)\n`));
+        process.stdout.write(
+          chalk.dim(`  Auto-skipping swarm (score ${baseScore}/100 > 75 — diminishing returns)\n`),
+        );
       }
 
       const allocation = allocateClicks(scoreBefore, clickCount);
@@ -146,7 +160,11 @@ export function improveCommand(): Command {
         ['Adversarial', useAdversarial ? chalk.green('on') : chalk.dim('off')],
       ];
       if (useArchitect) {
-        modeFields.push(['Strategy', `${chalk.cyan(`${architectClicks} architect`)} ${chalk.dim('→')} ${chalk.green(`${surgicalClicks} surgical`)}`]);
+        modeFields.push([
+          'Strategy',
+          `${chalk.cyan(`${architectClicks} architect`)} ${chalk.dim('→')} ` +
+          `${chalk.green(`${surgicalClicks} surgical`)}`,
+        ]);
       }
       printFields(modeFields);
 
@@ -161,7 +179,9 @@ export function improveCommand(): Command {
       const architectAgent = new ShellAgent({ model: architectModel, cwd });
       const surgicalAgent = new ShellAgent({ model: surgicalModel, cwd });
       if (surgicalModel !== architectModel) {
-        process.stdout.write(chalk.dim(`  Model tiering: architect=${architectModel || 'default'}, surgical=${surgicalModel || 'default'}\n`));
+        process.stdout.write(chalk.dim(
+          `  Model tiering: architect=${architectModel || 'default'}, surgical=${surgicalModel || 'default'}\n`,
+        ));
       }
       // Legacy alias for phases that don't need tiering
       const agent = architectAgent;
@@ -182,12 +202,17 @@ export function improveCommand(): Command {
           const phase = clickOffset === 0 && useArchitect ? chalk.cyan('[architect] ') : chalk.green('[surgical] ');
           spinner = ora(`  ${phase}Click ${chalk.bold(String(globalN))}/${totalClicks} — fixing…`).start();
           if (globalN === 1) {
-            await logger.initLog({ id: 'pending', target, clicks: [], startedAt: new Date(), status: 'running' }).catch(() => {});
+            await logger.initLog({
+              id: 'pending', target, clicks: [], startedAt: new Date(), status: 'running',
+            }).catch(() => {});
           }
         },
         onClickPhase: (phase: ClickPhase, n: number) => {
           const globalN = n + clickOffset;
-          if (spinner) spinner.text = `  Click ${chalk.bold(String(globalN))}/${totalClicks} — ${CLICK_PHASE_LABELS[phase]}`;
+          if (spinner) {
+            spinner.text =
+              `  Click ${chalk.bold(String(globalN))}/${totalClicks} — ${CLICK_PHASE_LABELS[phase]}`;
+          }
         },
         onClickComplete: async (click: Click, _rolledBack: boolean) => {
           if (spinner) {
@@ -233,7 +258,11 @@ export function improveCommand(): Command {
           });
           // Use scan after architect as input to surgical
           if (architectRun.clicks.length > 0) {
-            try { scanAfterArchitect = await runScan(cwd); } catch (err) { logger.warn({ err }, 'Scan after architect failed, using previous scan result'); }
+            try {
+              scanAfterArchitect = await runScan(cwd);
+            } catch (err) {
+              logger.warn({ err }, 'Scan after architect failed, using previous scan result');
+            }
           }
         }
 
@@ -248,7 +277,10 @@ export function improveCommand(): Command {
           for (const t of tierPlan) {
             const arrow = `${t.gap.currentScore}→${t.gap.currentScore + t.gap.pointsAtNextTier}/${t.gap.maxScore}`;
             process.stdout.write(
-              chalk.dim(`    ${t.gap.subcategory}: ${t.clickBudget} clicks, +${t.gap.pointsAtNextTier}pt (${arrow}), ${t.gap.files.length} files\n`)
+              chalk.dim(
+                `    ${t.gap.subcategory}: ${t.clickBudget} clicks, +${t.gap.pointsAtNextTier}pt ` +
+                `(${arrow}), ${t.gap.files.length} files\n`,
+              )
             );
           }
           process.stdout.write('\n');
@@ -299,7 +331,9 @@ export function improveCommand(): Command {
       try {
         scoreAfter = await runScan(cwd);
         rescanSpinner.succeed(
-          `  Rescan complete: ${chalk.bold(`${scoreAfter.total}/100`)} (${formatScoreDelta(scoreBefore.total, scoreAfter.total)}) · ${scoreAfter.totalIssuesFound} issues remaining`,
+          `  Rescan complete: ${chalk.bold(`${scoreAfter.total}/100`)} ` +
+          `(${formatScoreDelta(scoreBefore.total, scoreAfter.total)}) · ` +
+          `${scoreAfter.totalIssuesFound} issues remaining`,
         );
       } catch (err) {
         rescanSpinner.fail('  Rescan failed: ' + String(err));
@@ -344,8 +378,10 @@ export function improveCommand(): Command {
 
       process.stdout.write(`\n${chalk.bold('  ' + '─'.repeat(46))}\n\n  ${chalk.bold('Done.')}\n`);
       printFields([
-        ['Score',  `${scoreBefore.total} → ${chalk.bold(String(scoreAfter.total))} (${formatScoreDelta(scoreBefore.total, scoreAfter.total)})`],
-        ['Issues', `${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}${issuesFixed > 0 ? chalk.green(` (${issuesFixed} fixed)`) : ''}`],
+        ['Score',  `${scoreBefore.total} → ${chalk.bold(String(scoreAfter.total))} ` +
+          `(${formatScoreDelta(scoreBefore.total, scoreAfter.total)})`],
+        ['Issues', `${scoreBefore.totalIssuesFound} → ${scoreAfter.totalIssuesFound}` +
+          `${issuesFixed > 0 ? chalk.green(` (${issuesFixed} fixed)`) : ''}`],
         ['Clicks', `${landed.length} landed · ${rolledBack.length} rolled back`],
         ['Time',   duration],
         ['PDF',    chalk.cyan(outPath)],
