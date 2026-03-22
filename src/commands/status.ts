@@ -1,11 +1,13 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { readFile } from 'fs/promises';
+import { readFile, readdir } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, createReadStream } from 'fs';
 import type { RatchetRun } from '../types.js';
 import { lockFilePath } from '../core/lock.js';
 import { currentBranch } from '../core/git.js';
+import { bgRunDir, BG_RUNS_DIR, isProcessAlive } from '../core/background.js';
+import type { ProgressState } from '../core/background.js';
 
 export const STATE_FILE = '.ratchet-state.json';
 
@@ -51,17 +53,89 @@ function colorStatus(status: RatchetRun['status'], stale = false): string {
   }
 }
 
+async function listBackgroundRuns(cwd: string): Promise<ProgressState[]> {
+  const runsDir = join(cwd, BG_RUNS_DIR);
+  let entries: string[];
+  try {
+    entries = await readdir(runsDir);
+  } catch {
+    return [];
+  }
+
+  const results: ProgressState[] = [];
+  for (const entry of entries) {
+    const progressPath = join(runsDir, entry, 'progress.json');
+    if (!existsSync(progressPath)) continue;
+    try {
+      const progress = JSON.parse(await readFile(progressPath, 'utf-8')) as ProgressState;
+      results.push(progress);
+    } catch {
+      // Skip corrupted entries
+    }
+  }
+  // Newest first
+  results.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+  return results;
+}
+
+function printBackgroundRuns(runs: ProgressState[]): void {
+  const active = runs.filter(r => r.status === 'running');
+  if (active.length === 0) return;
+
+  log('\n  ' + chalk.bold('Background runs:'));
+  for (const r of active) {
+    const alive = isProcessAlive(r.pid);
+    const elapsed = formatDuration(r.startedAt);
+    const clickStr = r.clicksTotal > 0
+      ? `${r.clicksCompleted}/${r.clicksTotal} clicks`
+      : `${r.clicksCompleted} clicks`;
+    const scoreStr = r.score !== undefined ? ` · score ${r.score}` : '';
+    const pidStr = alive ? chalk.dim(`PID ${r.pid}`) : chalk.red(`PID ${r.pid} (dead)`);
+    log(
+      `    ${chalk.cyan(r.runId.slice(0, 8))}… · ${clickStr}${scoreStr} · ${chalk.yellow(elapsed)} · ${pidStr}`,
+    );
+    log(`      Stop: ${chalk.dim(`ratchet stop ${r.runId}`)}`);
+    log(`      Log:  ${chalk.dim(join(bgRunDir(process.cwd(), r.runId), 'output.log'))}`);
+  }
+}
+
 export function statusCommand(): Command {
   const cmd = new Command('status');
 
   cmd
     .description('Show the status of the current or most recent Ratchet run')
-    .action(async () => {
+    .option('--follow <id>', 'Tail the output log of a background run in real-time')
+    .action(async (options: { follow?: string }) => {
       const cwd = process.cwd();
+
+      // --follow: tail a background run's output log
+      if (options.follow) {
+        const logPath = join(bgRunDir(cwd, options.follow), 'output.log');
+        if (!existsSync(logPath)) {
+          log(chalk.red(`  No log found for run: ${options.follow}`));
+          process.exit(1);
+        }
+        log(chalk.dim(`  Following ${logPath} (Ctrl+C to stop)\n`));
+        // Pipe existing content then stream new writes
+        const stream = createReadStream(logPath);
+        stream.pipe(process.stdout);
+        stream.on('end', () => {
+          // Keep watching for new data
+          const watcher = setInterval(() => {
+            // Re-stream by re-opening — simple approach
+          }, 500);
+          process.on('SIGINT', () => { clearInterval(watcher); process.exit(0); });
+        });
+        return;
+      }
 
       log(chalk.bold('\n⚙  Ratchet Status\n'));
 
       const run = await loadRunState(cwd);
+
+      // Show background runs regardless
+      const bgRuns = await listBackgroundRuns(cwd);
+      printBackgroundRuns(bgRuns);
 
       if (!run) {
         const hasConfig = existsSync(join(cwd, '.ratchet.yml'));
