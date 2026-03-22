@@ -5,7 +5,7 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
 import { configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
-import { saveRun } from '../core/history.js';
+import { saveRun, loadRun, listRuns } from '../core/history.js';
 import { readFileSync } from 'fs';
 import { runEngine, runSweepEngine, runArchitectEngine } from '../core/engine.js';
 import type { ClickPhase, HardenPhase, RunEconomics } from '../core/engine.js';
@@ -21,7 +21,7 @@ import type { ScanResult } from './scan.js';
 import { analyzeScoreGaps } from '../core/score-optimizer.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import { parseScopeArg, resolveScope, formatScopeForDisplay } from '../core/scope.js';
-import type { Click, RatchetRun } from '../types.js';
+import type { Click, RatchetRun, Target } from '../types.js';
 import { GUARD_PROFILES } from '../types.js';
 import type { GuardProfileName } from '../types.js';
 import { formatDuration } from '../core/utils.js';
@@ -102,6 +102,7 @@ export function torqueCommand(): Command {
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
     .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
     .option('--scope <spec>', 'Limit changes to specific files: diff, branch, staged, <glob>, or file:a.ts,b.ts')
+    .option('--resume <id>', 'Resume an interrupted run by its run ID')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -135,6 +136,7 @@ export function torqueCommand(): Command {
         prComment: boolean;
         prCommentFooter: boolean;
         scope?: string;
+        resume?: string;
       }) => {
         const cwd = process.cwd();
 
@@ -230,8 +232,8 @@ export function torqueCommand(): Command {
           }
         }
 
-        // Resolve click count (sweep mode defaults to 5)
-        const clickCount = options.clicks
+        // Resolve click count (sweep mode defaults to 5); may be overridden by --resume
+        let clickCount = options.clicks
           ? parseInt(options.clicks, 10)
           : options.sweep ? 5 : config.defaults.clicks;
 
@@ -322,6 +324,29 @@ export function torqueCommand(): Command {
         // Live score tracking
         let lastKnownScore: number | undefined;
         let lastKnownDelta: number | undefined;
+        // Live run reference — set by onRunInit callback, used by signal handlers
+        let liveRun: RatchetRun | undefined;
+
+        const saveInterruptedRun = async (totalClickCount: number): Promise<void> => {
+          if (!liveRun) return;
+          liveRun.status = 'interrupted';
+          liveRun.finishedAt = new Date();
+          liveRun.resumeState = {
+            completedClicks: liveRun.clicks.length,
+            totalClicks: totalClickCount,
+            target: target.name,
+            scoreAtStart: scoreBefore?.total,
+            interruptedAt: new Date().toISOString(),
+          };
+          try {
+            await saveRun(cwd, liveRun);
+            process.stdout.write(
+              chalk.dim(`\n  Run saved. Resume with: ${chalk.cyan(`ratchet torque --resume ${liveRun.id}`)}\n`) + '\n',
+            );
+          } catch {
+            // Non-fatal
+          }
+        };
 
         // Graceful Ctrl+C handler
         const sigintHandler = () => {
@@ -331,8 +356,8 @@ export function torqueCommand(): Command {
           } else {
             process.stdout.write('\n');
           }
-          process.stdout.write(chalk.dim('\n  Run interrupted. Partial progress may be saved in .ratchet-state.json\n') + '\n');
-          process.exit(130);
+          releaseLock(cwd);
+          void saveInterruptedRun(clickCount).then(() => process.exit(130));
         };
 
         // Graceful SIGTERM handler (kill, CI timeout, Docker stop, systemd)
@@ -343,8 +368,8 @@ export function torqueCommand(): Command {
           } else {
             process.stdout.write('\n');
           }
-          process.stdout.write(chalk.dim('\n  Process terminated. Partial progress may be saved in .ratchet-state.json\n') + '\n');
-          process.exit(143); // 128 + 15 (SIGTERM)
+          releaseLock(cwd);
+          void saveInterruptedRun(clickCount).then(() => process.exit(143));
         };
 
         process.once('SIGINT', sigintHandler);
@@ -364,6 +389,49 @@ export function torqueCommand(): Command {
           scoreBefore = await runScan(cwd);
         } catch {
           // Non-fatal — report will omit Before/After
+        }
+
+        // --resume: load interrupted run and adjust click count + target
+        if (options.resume) {
+          const entry = await loadRun(cwd, options.resume);
+          if (!entry) {
+            exitWithError(`  Interrupted run "${options.resume}" not found in .ratchet/runs/`);
+          }
+          const rs = entry!.run.resumeState;
+          if (!rs) {
+            exitWithError(`  Run "${options.resume}" has no resume state — it was not interrupted.`);
+          }
+          const remainingClicks = rs.totalClicks - rs.completedClicks;
+          if (remainingClicks <= 0) {
+            exitWithError(`  Run "${options.resume}" has no remaining clicks to resume.`);
+          }
+          // If no --target was given, restore the target from the interrupted run
+          if (!options.target) {
+            const resumedTarget = findTarget(config, rs.target);
+            if (resumedTarget) {
+              (target as Target) = resumedTarget;
+            }
+          }
+          process.stdout.write(
+            chalk.cyan(`\n  Resuming run ${chalk.bold(options.resume)} from click ${rs.completedClicks + 1}/${rs.totalClicks}\n\n`),
+          );
+          // Override click count with remaining clicks
+          clickCount = remainingClicks;
+        }
+
+        // Hint about any interrupted runs (on fresh start only)
+        if (!options.resume) {
+          try {
+            const allRuns = await listRuns(cwd);
+            const interrupted = allRuns.filter(e => e.run.status === 'interrupted');
+            for (const entry of interrupted.slice(0, 1)) {
+              process.stdout.write(
+                chalk.dim(`  ⚡ Found interrupted run ${chalk.bold(entry.run.id)}. Use ${chalk.cyan(`--resume ${entry.run.id}`)} to continue.\n\n`),
+              );
+            }
+          } catch {
+            // Non-fatal
+          }
         }
 
         const engineFn = options.sweep ? runSweepEngine : options.architect ? runArchitectEngine : runEngine;
@@ -535,6 +603,10 @@ export function torqueCommand(): Command {
 
               onRunEconomics: (economics: RunEconomics) => {
                 capturedEconomics = economics;
+              },
+
+              onRunInit: (run: RatchetRun) => {
+                liveRun = run;
               },
 
               onEscalate: (reason: string) => {
