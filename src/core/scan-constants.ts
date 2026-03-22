@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from 'fs';
+import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
 import { join, extname } from 'path';
 
 // ---------------------------------------------------------------------------
@@ -161,3 +161,17 @@ export const DUP_SCORE_THRESHOLDS: Threshold[] = [
   { min: 1,   score: 5, summary: (n) => `${n} repeated lines` },
   { min: 0,   score: 6, summary: 'no significant duplication' },
 ];
+
+export function scoreStrictConfig(cwd: string): { score: number; summary: string } {
+  const tsconfigPath = join(cwd, 'tsconfig.json');
+  if (!existsSync(tsconfigPath)) return { score: 1, summary: 'TypeScript, no tsconfig found' };
+  try {
+    const tsconfig = JSON.parse(readFileSync(tsconfigPath, 'utf-8')) as { compilerOptions?: { strict?: boolean; noImplicitAny?: boolean; strictNullChecks?: boolean } };
+    if (tsconfig.compilerOptions?.strict) return { score: 7, summary: 'strict mode enabled' };
+    if (tsconfig.compilerOptions?.noImplicitAny && tsconfig.compilerOptions?.strictNullChecks) return { score: 5, summary: 'noImplicitAny + strictNullChecks' };
+    if (tsconfig.compilerOptions?.noImplicitAny) return { score: 3, summary: 'noImplicitAny' };
+    return { score: 1, summary: 'TypeScript, no strict flags' };
+  } catch {
+    return { score: 1, summary: 'TypeScript (tsconfig parse error)' };
+  }
+}
