@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
-import { join, extname } from 'path';
+import { join, extname, relative, resolve } from 'path';
 
 // ---------------------------------------------------------------------------
 // Shared constants for file discovery and analysis
@@ -29,10 +29,31 @@ export function isTestFile(filePath: string): boolean {
   return TEST_PATTERNS.some(p => filePath.includes(p));
 }
 
+/** Load .ratchetignore patterns from the project root (dir). Returns normalized path prefixes. */
+function loadRatchetIgnore(dir: string): string[] {
+  const ignorePath = join(dir, '.ratchetignore');
+  if (!existsSync(ignorePath)) return [];
+  try {
+    return readFileSync(ignorePath, 'utf-8')
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l && !l.startsWith('#'))
+      .map(l => resolve(dir, l.replace(/\/$/, ''))); // normalize to absolute, strip trailing slash
+  } catch {
+    return [];
+  }
+}
+
 export function findSourceFiles(dir: string): string[] {
   const results: string[] = [];
+  const ignoredPaths = loadRatchetIgnore(dir);
+
+  function isIgnored(fullPath: string): boolean {
+    return ignoredPaths.some(p => fullPath === p || fullPath.startsWith(p + '/'));
+  }
 
   function walk(current: string): void {
+    if (isIgnored(current)) return;
     let entries: string[];
     try {
       entries = readdirSync(current);
@@ -43,6 +64,7 @@ export function findSourceFiles(dir: string): string[] {
     for (const entry of entries) {
       if (IGNORE_DIRS.has(entry)) continue;
       const fullPath = join(current, entry);
+      if (isIgnored(fullPath)) continue;
       let stat;
       try {
         stat = statSync(fullPath);

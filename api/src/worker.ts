@@ -7,6 +7,7 @@ export interface Env {
   LICENSES: KVNamespace;
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
+  ADMIN_API_KEY?: string;
 }
 
 // ── Helpers ────────────────────────────────────────────
@@ -36,6 +37,24 @@ function json(data: unknown, status = 200, headers: Record<string, string> = {})
     status,
     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", ...headers },
   });
+}
+
+// ── Rate limiting (fixed window, KV-backed) ───────────
+
+async function checkRateLimit(
+  request: Request,
+  endpoint: string,
+  limit: number,
+  windowSeconds: number,
+  store: KVNamespace
+): Promise<boolean> {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const window = Math.floor(Date.now() / (windowSeconds * 1000));
+  const key = `rl:${endpoint}:${ip}:${window}`;
+  const current = parseInt((await store.get(key)) || "0");
+  if (current >= limit) return false;
+  await store.put(key, String(current + 1), { expirationTtl: windowSeconds * 2 });
+  return true;
 }
 
 // ── Stripe signature verification (HMAC-SHA256) ───────
@@ -129,6 +148,9 @@ async function handleWebhook(request: Request, env: Env): Promise<Response> {
 }
 
 async function handleValidate(request: Request, env: Env): Promise<Response> {
+  if (!await checkRateLimit(request, "validate", 30, 60, env.LICENSES)) {
+    return json({ error: "Too many requests" }, 429);
+  }
   const url = new URL(request.url);
   const key = url.searchParams.get("key") || "";
 
@@ -158,6 +180,9 @@ async function handleValidate(request: Request, env: Env): Promise<Response> {
 
 async function handleUsage(request: Request, env: Env): Promise<Response> {
   if (request.method !== "POST") return json({ error: "POST required" }, 405);
+  if (!await checkRateLimit(request, "usage", 20, 60, env.LICENSES)) {
+    return json({ error: "Too many requests" }, 429);
+  }
 
   const body = (await request.json()) as { key?: string; cycles?: number };
   const key = body.key || "";
@@ -179,6 +204,9 @@ async function handleUsage(request: Request, env: Env): Promise<Response> {
 }
 
 async function handleLookup(request: Request, env: Env): Promise<Response> {
+  if (!await checkRateLimit(request, "lookup", 10, 60, env.LICENSES)) {
+    return json({ error: "Too many requests" }, 429);
+  }
   const url = new URL(request.url);
   const email = url.searchParams.get("email") || "";
 
@@ -397,7 +425,11 @@ async function handleTelemetry(request: Request, env: Env): Promise<Response> {
   }
 }
 
-async function handleStats(env: Env): Promise<Response> {
+async function handleStats(request: Request, env: Env): Promise<Response> {
+  const authHeader = request.headers.get("Authorization");
+  if (!env.ADMIN_API_KEY || !authHeader || authHeader !== `Bearer ${env.ADMIN_API_KEY}`) {
+    return json({ error: "Unauthorized" }, 401);
+  }
   const events = ["scan", "torque", "improve", "vision", "badge"];
   const today = new Date().toISOString().slice(0, 10);
   const stats: Record<string, { today: number; total: number }> = {};
@@ -436,7 +468,7 @@ export default {
     if (route(path, "/welcome") && request.method === "GET") return withVersion(await handleWelcome(request, env));
     if (route(path, "/telemetry") && request.method === "POST")
       return withVersion(await handleTelemetry(request, env));
-    if (route(path, "/stats") && request.method === "GET") return withVersion(await handleStats(env));
+    if (route(path, "/stats") && request.method === "GET") return withVersion(await handleStats(request, env));
 
     return withVersion(json({
       api: "ratchet",

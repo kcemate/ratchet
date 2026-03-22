@@ -77,6 +77,7 @@ app.post('/users', (req, res) => {
       'Without rate limiting, attackers can abuse your resources.',
     fix: 'Add auth middleware to all protected routes and configure rate limiting on public endpoints.',
     example: `const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+app.use(cors(corsOptions));               // configure CORS headers
 app.post('/api/login', limiter);          // scope to specific routes
 app.get('/api/users', authenticate, getUsers);`,
   },
