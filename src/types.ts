@@ -243,3 +243,20 @@ export interface SwarmResult {
   /** Whether the swarm timed out */
   timedOut: boolean;
 }
+
+export interface FeatureStep {
+  id: number;
+  description: string;
+  files: string[];
+  /** Step IDs this step depends on — must be completed before this step runs */
+  dependencies: number[];
+  status: 'pending' | 'in-progress' | 'completed' | 'failed';
+}
+
+export interface FeaturePlan {
+  spec: string;
+  steps: FeatureStep[];
+  completedSteps: number[];
+  filesCreated: string[];
+  filesModified: string[];
+}

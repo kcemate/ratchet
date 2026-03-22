@@ -8,6 +8,8 @@ import { parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt, build
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
 import { buildIntelligenceBriefing, queryFlowsTargeted } from '../gitnexus.js';
+import { buildGraphToolInstructions } from '../gitnexus-tools.js';
+import type { FeaturePlan, FeatureStep } from '../../types.js';
 
 export interface ShellAgentConfig extends AgentOptions {
   /** Command to run for analysis/proposal (defaults to: claude --print) */
@@ -396,5 +398,122 @@ export function buildPlanPrompt(scanSummary: string, targetPath: string, targetD
     `  "dependencyOrder": ["path/to/file1.ts", "path/to/file2.ts"],\n` +
     `  "estimatedClicks": 3\n` +
     `}`
+  );
+}
+
+/**
+ * Build a planning prompt for feature mode (click 0).
+ * Takes the spec + GitNexus codebase intelligence and asks the agent to produce
+ * a structured FeaturePlan JSON describing all implementation steps.
+ */
+export function buildFeaturePlanPrompt(spec: string, cwd: string): string {
+  let graphIntel = '';
+  try {
+    graphIntel = buildIntelligenceBriefing('.', cwd);
+  } catch {
+    // Non-fatal — GitNexus may not be indexed yet
+  }
+
+  const graphTools = buildGraphToolInstructions(cwd);
+
+  return (
+    `You are an expert software architect. Your task is to plan the implementation of a new feature.\n\n` +
+    `FEATURE SPECIFICATION:\n${spec}\n\n` +
+    (graphIntel ? `CODEBASE INTELLIGENCE:\n${graphIntel}\n\n` : '') +
+    (graphTools ? `GRAPH QUERY TOOLS (use these to explore the codebase before planning):\n${graphTools}\n\n` : '') +
+    `INSTRUCTIONS:\n` +
+    `- Explore the codebase to understand existing structure and patterns\n` +
+    `- Identify which files need to be created or modified\n` +
+    `- Break the feature into discrete, independent implementation steps\n` +
+    `- Order steps by dependency (prerequisites first)\n` +
+    `- Each step should be implementable in a single focused click\n\n` +
+    `DO NOT implement anything. DO NOT create or modify any files.\n\n` +
+    `Output ONLY valid JSON matching this schema (no markdown, no explanation):\n` +
+    `{\n` +
+    `  "spec": "<original spec text>",\n` +
+    `  "steps": [\n` +
+    `    {\n` +
+    `      "id": 1,\n` +
+    `      "description": "Create the database schema for user authentication",\n` +
+    `      "files": ["src/db/schema.ts", "src/db/migrations/001_users.sql"],\n` +
+    `      "dependencies": [],\n` +
+    `      "status": "pending"\n` +
+    `    },\n` +
+    `    {\n` +
+    `      "id": 2,\n` +
+    `      "description": "Implement JWT token generation and validation",\n` +
+    `      "files": ["src/auth/jwt.ts"],\n` +
+    `      "dependencies": [1],\n` +
+    `      "status": "pending"\n` +
+    `    }\n` +
+    `  ],\n` +
+    `  "completedSteps": [],\n` +
+    `  "filesCreated": [],\n` +
+    `  "filesModified": []\n` +
+    `}`
+  );
+}
+
+/**
+ * Build a click prompt for a specific feature step.
+ * Injects the full plan + graph context for the files involved so the agent
+ * knows what has been built and what to build next.
+ */
+export function buildFeatureClickPrompt(step: FeatureStep, plan: FeaturePlan, cwd: string): string {
+  let graphIntel = '';
+  try {
+    // Get graph context for the files this step will touch
+    const filePaths = step.files.length > 0 ? step.files : ['.'];
+    graphIntel = filePaths.map(f => {
+      try { return buildIntelligenceBriefing(f, cwd); } catch { return ''; }
+    }).filter(Boolean).join('\n\n');
+  } catch {
+    // Non-fatal
+  }
+
+  const graphTools = buildGraphToolInstructions(cwd);
+
+  const completedSteps = plan.steps.filter(s => plan.completedSteps.includes(s.id));
+  const remainingSteps = plan.steps.filter(s => !plan.completedSteps.includes(s.id) && s.id !== step.id);
+
+  const completedSummary = completedSteps.length > 0
+    ? completedSteps.map(s => `  ✓ Step ${s.id}: ${s.description}`).join('\n')
+    : '  (none yet)';
+
+  const remainingSummary = remainingSteps.length > 0
+    ? remainingSteps.map(s => `  • Step ${s.id}: ${s.description}`).join('\n')
+    : '  (this is the last step)';
+
+  const filesCreated = plan.filesCreated.length > 0
+    ? plan.filesCreated.join(', ')
+    : '(none yet)';
+
+  const filesModified = plan.filesModified.length > 0
+    ? plan.filesModified.join(', ')
+    : '(none yet)';
+
+  return (
+    `You are implementing a feature. Implement ONLY the current step described below.\n\n` +
+    `FEATURE SPEC:\n${plan.spec}\n\n` +
+    `CURRENT STEP (Step ${step.id}):\n${step.description}\n` +
+    `Files to touch: ${step.files.length > 0 ? step.files.join(', ') : '(determine from context)'}\n\n` +
+    `IMPLEMENTATION PROGRESS:\n` +
+    `Completed steps:\n${completedSummary}\n\n` +
+    `Files created so far: ${filesCreated}\n` +
+    `Files modified so far: ${filesModified}\n\n` +
+    `Remaining steps (do NOT implement these now):\n${remainingSummary}\n\n` +
+    (graphIntel ? `GRAPH CONTEXT FOR AFFECTED FILES:\n${graphIntel}\n\n` : '') +
+    (graphTools ? `GRAPH QUERY TOOLS (use to explore dependencies before implementing):\n${graphTools}\n\n` : '') +
+    `CONSTRAINTS:\n` +
+    `- Implement ONLY Step ${step.id}: "${step.description}"\n` +
+    `- Do NOT implement other steps — they will be handled in subsequent clicks\n` +
+    `- You may create new files or modify existing ones\n` +
+    `- You may touch up to 12 files and 280 lines total\n` +
+    `- All existing tests MUST still pass\n` +
+    `- Follow existing code patterns and conventions\n` +
+    `- Write clean, idiomatic code consistent with the rest of the codebase\n\n` +
+    `After making changes, output each file on its own line:\n` +
+    `MODIFIED: <filepath>\n` +
+    `CREATED: <filepath>`
   );
 }

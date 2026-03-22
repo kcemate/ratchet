@@ -8,6 +8,7 @@ import { configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } 
 import { saveRun, loadRun, listRuns } from '../core/history.js';
 import { readFileSync } from 'fs';
 import { runEngine, runSweepEngine, runArchitectEngine } from '../core/engine.js';
+import { runFeatureEngine, resolveSpec } from '../core/engine-feature.js';
 import type { ClickPhase, HardenPhase, RunEconomics } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
 import { buildSwarmConfig } from '../core/swarm.js';
@@ -85,7 +86,8 @@ export function torqueCommand(): Command {
     .option('--dry-run', 'Preview mode — analyze and propose without committing any changes', false)
     .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
     .option('--no-branch', 'Run on the current branch instead of creating a ratchet branch', false)
-    .option('--mode <mode>', 'Run mode: "normal" (default) or "harden" (write tests first, then improve)')
+    .option('--mode <mode>', 'Run mode: "normal" (default), "harden" (write tests first, then improve), or "feature" (build from spec)')
+    .option('--spec <text-or-file>', 'Feature specification — quoted string or path to a .md file (required with --mode feature)')
     .option('--swarm', 'Enable swarm mode — N agents compete per click, best change wins', false)
     .option('--agents <number>', 'Number of competing agents in swarm mode (default: 3)')
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
@@ -127,6 +129,7 @@ export function torqueCommand(): Command {
         verbose: boolean;
         branch: boolean;
         mode?: string;
+        spec?: string;
         swarm: boolean;
         agents?: string;
         focus?: string;
@@ -137,6 +140,7 @@ export function torqueCommand(): Command {
         maxLines?: string;
         maxFiles?: string;
         escalate: boolean;
+        guardEscalation: boolean;
         architect: boolean;
         planFirst: boolean;
         json: boolean;
@@ -196,6 +200,17 @@ export function torqueCommand(): Command {
         // Resolve harden mode: explicit --mode flag takes precedence, then config default
         const hardenMode = options.mode === 'harden' || config.defaults.hardenMode === true;
 
+        // Validate feature mode requirements
+        const featureMode = options.mode === 'feature';
+        if (featureMode && !options.spec) {
+          exitWithError(
+            `  --mode feature requires --spec <text-or-file>\n\n` +
+            `  Examples:\n` +
+            `    ${chalk.cyan('ratchet torque --mode feature --spec "Add user authentication with JWT"')}\n` +
+            `    ${chalk.cyan('ratchet torque --mode feature --spec ./specs/auth.md')}`,
+          );
+        }
+
         // Resolve swarm mode
         if (options.swarm) {
           const agentCount = options.agents ? validateInt(options.agents, 'agents', 1, 5) : 3;
@@ -233,11 +248,14 @@ export function torqueCommand(): Command {
           }
         }
 
-        // Resolve target (skip for sweep mode)
+        // Resolve target (skip for sweep/feature modes)
         let target;
         if (options.sweep) {
           // Sweep mode: use a synthetic target representing the whole codebase
           target = { name: 'sweep', path: '.', description: 'Sweep mode — fix one issue type across the entire codebase' };
+        } else if (featureMode && !options.target) {
+          // Feature mode without explicit target: use a synthetic target
+          target = { name: 'feature', path: '.', description: 'Feature mode — build from specification' };
         } else if (options.target) {
           target = findTarget(config, options.target);
           if (!target) {
@@ -305,6 +323,8 @@ export function torqueCommand(): Command {
         // Print run summary
         const fields: Array<[string, string]> = options.sweep
           ? [['Mode', chalk.yellow('sweep') + (options.category ? chalk.dim(` (${options.category})`) : '')]]
+          : featureMode
+          ? [['Mode', chalk.yellow('feature')], ['Spec', chalk.dim((options.spec ?? '').slice(0, 60) + ((options.spec ?? '').length > 60 ? '…' : ''))]]
           : [['Target', chalk.cyan(target.name)], ['Path', chalk.dim(target.path)]];
         fields.push(
           ['Agent',  chalk.dim(config.agent)],
@@ -319,7 +339,7 @@ export function torqueCommand(): Command {
             }
             return chalk.dim(`≤${config.guards.maxLinesChanged} lines, ≤${config.guards.maxFilesChanged} files`);
           })()],
-          ['Mode',   hardenMode ? chalk.yellow('harden') : chalk.dim('normal')],
+          ['Mode',   featureMode ? chalk.yellow('feature') : hardenMode ? chalk.yellow('harden') : chalk.dim('normal')],
         );
         if (options.scope) fields.push(['Scope', chalk.cyan(formatScopeForDisplay(options.scope, scopeFiles, cwd))]);
         if (options.architect) fields.push(['Architect', chalk.yellow('enabled')]);
@@ -449,6 +469,99 @@ export function torqueCommand(): Command {
         }
 
         const engineFn = options.sweep ? runSweepEngine : options.architect ? runArchitectEngine : runEngine;
+
+        // Feature mode: resolve spec and run feature engine
+        if (featureMode) {
+          let resolvedSpec = options.spec!;
+          try {
+            resolvedSpec = await resolveSpec(options.spec!);
+          } catch (err) {
+            exitWithError(`  Could not read spec file: ${err instanceof Error ? err.message : String(err)}`);
+          }
+
+          let featureRun: RatchetRun;
+          try {
+            featureRun = await runFeatureEngine({
+              target,
+              clicks: clickCount,
+              config,
+              cwd,
+              agent,
+              spec: resolvedSpec,
+              createBranch: options.branch && !options.dryRun,
+              adversarial: options.adversarial,
+              callbacks: {
+                onClickStart: async (clickNumber: number, total: number) => {
+                  clickStartTime = Date.now();
+                  const label = clickNumber === 0 ? 'planning…' : `implementing step ${clickNumber}/${total - 1}…`;
+                  spinner = ora(`  Click ${chalk.bold(String(clickNumber))} — ${label}`).start();
+                },
+                onClickPhase: (phase, clickNumber) => {
+                  if (!spinner) return;
+                  spinner.text = `  Click ${chalk.bold(String(clickNumber))} — ${CLICK_PHASE_LABELS[phase]}`;
+                },
+                onClickComplete: async (click, rolledBack) => {
+                  if (spinner) {
+                    if (click.testsPassed) {
+                      spinner.succeed(
+                        `  Click ${chalk.bold(String(click.number))} — ${chalk.green('✓ passed')}` +
+                        (click.commitHash ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`) : ''),
+                      );
+                    } else {
+                      spinner.warn(
+                        `  Click ${chalk.bold(String(click.number))} — ${chalk.yellow('✗ rolled back')}` +
+                        (click.rollbackReason ? chalk.dim(` — ${click.rollbackReason}`) : ''),
+                      );
+                    }
+                    spinner = null;
+                  }
+                },
+                onError: (err: Error, clickNumber: number) => {
+                  if (spinner) {
+                    spinner.fail(`  Click ${chalk.bold(String(clickNumber))} — ${chalk.red('error')}: ${err.message}`);
+                    spinner = null;
+                  }
+                },
+                onRunComplete: async (run: RatchetRun) => {
+                  liveRun = run;
+                },
+              },
+            });
+          } catch (err) {
+            if (spinner) (spinner as ReturnType<typeof ora>).fail();
+            console.error(chalk.red('\nFatal error: ') + String(err));
+            process.exit(1);
+          } finally {
+            process.removeListener('SIGINT', sigintHandler);
+            process.removeListener('SIGTERM', sigtermHandler);
+            releaseLock(cwd);
+          }
+
+          await logger.finalizeLog(featureRun!).catch(() => {});
+
+          const passedFeatureClicks = featureRun!.clicks.filter(c => c.testsPassed).length;
+          const rolledBackFeature = featureRun!.clicks.length - passedFeatureClicks;
+          const duration = formatDuration(Date.now() - runStart);
+
+          renderClickTable(featureRun!.clicks);
+          process.stdout.write('\n' + chalk.bold('  ' + '─'.repeat(46)) + '\n');
+          process.stdout.write(
+            `\n  ${chalk.bold('Done.')} ` +
+            `${chalk.green(String(passedFeatureClicks))} landed` +
+            (rolledBackFeature > 0 ? ` · ${chalk.yellow(String(rolledBackFeature))} rolled back` : '') +
+            ` · ${chalk.dim(duration)}\n`,
+          );
+          process.stdout.write(
+            `\n  Plan: ${chalk.dim(`docs/${target.name}-feature-plan.md`)}\n` +
+            `  Run ${chalk.green('ratchet tighten --pr')} to open a pull request.\n\n`,
+          );
+
+          await saveRun(cwd, featureRun!).catch(() => {});
+
+          if (featureRun!.clicks.length > 0 && passedFeatureClicks === 0) process.exit(2);
+          else if (featureRun!.clicks.length > 0 && rolledBackFeature > 0) process.exit(1);
+          return;
+        }
 
         let run: RatchetRun;
         try {
