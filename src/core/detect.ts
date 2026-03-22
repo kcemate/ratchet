@@ -105,19 +105,12 @@ function detectNodeTestCommand(cwd: string): string | null {
     }
 
     // No scripts matched — fall back to config file detection
-    if (
-      existsSync(join(cwd, 'vitest.config.ts')) ||
-      existsSync(join(cwd, 'vitest.config.js')) ||
-      existsSync(join(cwd, 'vitest.config.mts'))
-    ) {
-      return 'npx vitest run';
-    }
-    if (
-      existsSync(join(cwd, 'jest.config.ts')) ||
-      existsSync(join(cwd, 'jest.config.js')) ||
-      existsSync(join(cwd, 'jest.config.json'))
-    ) {
-      return 'npx jest';
+    const frameworkConfigs: [string[], string][] = [
+      [['vitest.config.ts', 'vitest.config.js', 'vitest.config.mts'], 'npx vitest run'],
+      [['jest.config.ts', 'jest.config.js', 'jest.config.json'], 'npx jest'],
+    ];
+    for (const [configs, cmd] of frameworkConfigs) {
+      if (configs.some(f => existsSync(join(cwd, f)))) return cmd;
     }
 
     return null;
