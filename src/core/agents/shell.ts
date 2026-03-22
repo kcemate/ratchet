@@ -8,6 +8,7 @@ import { parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt, build
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
 import { buildIntelligenceBriefing, queryFlowsTargeted } from '../gitnexus.js';
+import { logger } from '../../lib/logger.js';
 import { buildGraphToolInstructions } from '../gitnexus-tools.js';
 import type { FeaturePlan, FeatureStep } from '../../types.js';
 
@@ -332,8 +333,8 @@ export function buildArchitectPrompt(scanResult: ScanResult, cwd: string): strin
   let intel = '';
   try {
     intel = buildIntelligenceBriefing('.', cwd);
-  } catch {
-    // Non-fatal — GitNexus may not be available
+  } catch (err) {
+    logger.debug({ err }, 'GitNexus briefing unavailable for architect prompt');
   }
 
   const topIssues = scanResult.issuesByType
@@ -413,8 +414,8 @@ export function buildFeaturePlanPrompt(spec: string, cwd: string): string {
   let graphIntel = '';
   try {
     graphIntel = buildIntelligenceBriefing('.', cwd);
-  } catch {
-    // Non-fatal — GitNexus may not be indexed yet
+  } catch (err) {
+    logger.debug({ err }, 'GitNexus briefing unavailable for feature plan prompt');
   }
 
   const graphTools = buildGraphToolInstructions(cwd);
@@ -468,10 +469,10 @@ export function buildFeatureClickPrompt(step: FeatureStep, plan: FeaturePlan, cw
     // Get graph context for the files this step will touch
     const filePaths = step.files.length > 0 ? step.files : ['.'];
     graphIntel = filePaths.map(f => {
-      try { return buildIntelligenceBriefing(f, cwd); } catch { return ''; }
+      try { return buildIntelligenceBriefing(f, cwd); } catch (err) { logger.debug({ err, f }, 'GitNexus briefing failed for file'); return ''; }
     }).filter(Boolean).join('\n\n');
-  } catch {
-    // Non-fatal
+  } catch (err) {
+    logger.debug({ err }, 'GitNexus briefing failed for feature click prompt');
   }
 
   const graphTools = buildGraphToolInstructions(cwd);

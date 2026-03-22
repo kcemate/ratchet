@@ -11,7 +11,6 @@ export function loginCommand(): Command {
     .description('Activate your Ratchet license key.')
     .argument('<key>', 'License key from your subscription email')
     .action(async (key: string) => {
-      console.log('');
       const spinner = ora('Validating license key...').start();
 
       const result = await validateLicenseRemote(key);
@@ -24,17 +23,14 @@ export function loginCommand(): Command {
 
       saveLicense(result.license!);
       spinner.succeed(chalk.green('License activated!'));
-      console.log('');
-      console.log(`  ${chalk.dim('Plan:')}     ${chalk.bold(result.license!.tier)}`);
+      logger.info({ plan: result.license!.tier }, 'License activated');
       if (result.license!.email) {
-        console.log(`  ${chalk.dim('Email:')}    ${result.license!.email}`);
+        logger.info({ email: result.license!.email }, 'License email');
       }
       if (result.license!.cyclesTotal) {
-        console.log(`  ${chalk.dim('Cycles:')}   ${result.license!.cyclesRemaining ?? result.license!.cyclesTotal}/${result.license!.cyclesTotal} remaining`);
+        logger.info({ cyclesRemaining: result.license!.cyclesRemaining ?? result.license!.cyclesTotal, cyclesTotal: result.license!.cyclesTotal }, 'License cycles');
       }
-      console.log('');
-      console.log(`  License saved to ${chalk.dim(getLicensePath())}`);
-      console.log('');
+      logger.info({ path: getLicensePath() }, 'License saved');
     });
 
   return cmd;
@@ -48,16 +44,12 @@ export function logoutCommand(): Command {
     .action(() => {
       const license = loadLicense();
       if (!license || !license.key) {
-        console.log('');
-        console.log(chalk.dim('  No active license found.'));
-        console.log('');
+        logger.info('No active license found');
         return;
       }
 
       clearLicense();
-      console.log('');
-      console.log(chalk.green('  ✓ License removed.'));
-      console.log('');
+      logger.info('License removed');
     });
 
   return cmd;

@@ -4,6 +4,7 @@ import ora from 'ora';
 import { access, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { printHeader, warnIfNotRepo } from '../lib/cli.js';
+import { logger } from '../lib/logger.js';
 
 export type ProjectType = 'node' | 'python' | 'go' | 'rust' | 'make' | 'unknown';
 
@@ -139,7 +140,7 @@ export function initCommand(): Command {
         );
       } catch (err) {
         detectSpinner.fail('Failed to detect project type');
-        console.error(chalk.red(String(err)));
+        logger.error({ err }, 'Failed to detect project type');
         process.exit(1);
       }
 
@@ -159,7 +160,7 @@ export function initCommand(): Command {
         writeSpinner.succeed(`Created ${chalk.green('.ratchet.yml')}`);
       } catch (err) {
         writeSpinner.fail('Failed to write .ratchet.yml');
-        console.error(chalk.red(String(err)));
+        logger.error({ err }, 'Failed to write .ratchet.yml');
         process.exit(1);
       }
 

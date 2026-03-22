@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { execSync } from 'child_process';
+import { logger } from '../lib/logger.js';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -26,7 +27,7 @@ export function buildCommand(): Command {
 
         process.stdout.write(chalk.green('\n  ✓ Binary rebuilt and linked successfully.\n'));
       } catch (err) {
-        console.error(chalk.red('\n  ✗ Build failed.') + '\n');
+        logger.error('Build failed');
         process.exit(1);
       }
     });

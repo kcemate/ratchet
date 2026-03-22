@@ -52,10 +52,14 @@ export function scoreTestQuality(
   hasDescribe: boolean,
 ): { score: number; summary: string } {
   const assertsPerTest = testCaseCount > 0 ? assertCount / testCaseCount : 0;
-  if (testCaseCount >= 50 && assertsPerTest >= 2 && hasDescribe) return { score: 8, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
-  if (testCaseCount >= 10 && assertsPerTest >= 1.5 && hasDescribe) return { score: 6, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
-  if (testCaseCount >= 5 && assertsPerTest >= 1) return { score: 4, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
-  if (testCaseCount > 0) return { score: 2, summary: `${testCaseCount} test case${testCaseCount !== 1 ? 's' : ''}, low assertion density` };
+  if (testCaseCount >= 50 && assertsPerTest >= 2 && hasDescribe)
+    return { score: 8, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
+  if (testCaseCount >= 10 && assertsPerTest >= 1.5 && hasDescribe)
+    return { score: 6, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
+  if (testCaseCount >= 5 && assertsPerTest >= 1)
+    return { score: 4, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
+  if (testCaseCount > 0)
+    return { score: 2, summary: `${testCaseCount} test case${testCaseCount !== 1 ? 's' : ''}, low assertion density` };
   return { score: 0, summary: 'no test cases found' };
 }
 
@@ -73,9 +77,14 @@ export function scoreInputValidation(
 ): { score: number; summary: string; issues: number } {
   const totalCheckable = Math.max(routeFileCount, validationFileCount, 1);
   const ratio = validationFileCount / totalCheckable;
-  if (validationFileCount >= 3 && ratio >= 0.6) return { score: 6, summary: `validation on ${validationFileCount} files`, issues: 0 };
-  if (validationFileCount >= 2) return { score: 4, summary: `Zod/validation on ${validationFileCount} files`, issues: routeFileCount > validationFileCount ? routeFileCount - validationFileCount : 0 };
-  if (validationFileCount === 1) return { score: 2, summary: 'minimal input validation detected', issues: Math.max(0, routeFileCount - 1) };
+  if (validationFileCount >= 3 && ratio >= 0.6)
+    return { score: 6, summary: `validation on ${validationFileCount} files`, issues: 0 };
+  if (validationFileCount >= 2) {
+    const issues = routeFileCount > validationFileCount ? routeFileCount - validationFileCount : 0;
+    return { score: 4, summary: `Zod/validation on ${validationFileCount} files`, issues };
+  }
+  if (validationFileCount === 1)
+    return { score: 2, summary: 'minimal input validation detected', issues: Math.max(0, routeFileCount - 1) };
   return { score: 0, summary: 'no input validation detected', issues: routeFileCount };
 }
 
@@ -112,7 +121,8 @@ export function scoreAuthChecks(
   if (broadMiddlewareCount > 0) {
     score = Math.max(0, score - Math.min(broadMiddlewareCount, 3));
     issues += broadMiddlewareCount;
-    summary += ` (${broadMiddlewareCount} overly broad rate limiter${broadMiddlewareCount > 1 ? 's' : ''} — use app.post/get instead of app.use on sub-paths)`;
+    summary += ` (${broadMiddlewareCount} overly broad rate limiter${broadMiddlewareCount > 1 ? 's' : ''}` +
+      ` — use app.post/get instead of app.use on sub-paths)`;
   }
 
   return { score, summary, issues };
@@ -122,7 +132,12 @@ export function scoreAuthChecks(
 
 export function scoreAnyTypeDensity(anyCount: number, totalLines: number): { score: number; summary: string } {
   const density = totalLines > 0 ? anyCount / (totalLines / 1000) : 0;
-  if (anyCount === 0 || density < 1) return { score: 8, summary: anyCount === 0 ? 'zero any types' : `${anyCount} any type${anyCount !== 1 ? 's' : ''} (very low density)` };
+  if (anyCount === 0 || density < 1) {
+    const summary = anyCount === 0
+      ? 'zero any types'
+      : `${anyCount} any type${anyCount !== 1 ? 's' : ''} (very low density)`;
+    return { score: 8, summary };
+  }
   if (density < 2) return { score: 7, summary: `${anyCount} any type${anyCount !== 1 ? 's' : ''} (low density)` };
   if (density < 4) return { score: 6, summary: `${anyCount} any types (low density)` };
   if (density < 7) return { score: 5, summary: `${anyCount} any types (moderate)` };
@@ -135,7 +150,8 @@ export function scoreAnyTypeDensity(anyCount: number, totalLines: number): { sco
 
 export function scoreEhCoverage(tryCatchCount: number, asyncCount: number): { score: number; summary: string } {
   if (tryCatchCount === 0) return { score: 0, summary: 'no try/catch found' };
-  if (asyncCount === 0 || tryCatchCount >= asyncCount * 0.6) return { score: 8, summary: `${tryCatchCount} try/catch block${tryCatchCount !== 1 ? 's' : ''}` };
+  if (asyncCount === 0 || tryCatchCount >= asyncCount * 0.6)
+    return { score: 8, summary: `${tryCatchCount} try/catch block${tryCatchCount !== 1 ? 's' : ''}` };
   const pct = Math.round((tryCatchCount / asyncCount) * 100);
   return { score: Math.round((pct / 100) * 8), summary: `${tryCatchCount} try/catch (${pct}% async coverage)` };
 }
@@ -152,11 +168,18 @@ export function scoreEmptyCatches(count: number): { score: number; summary: stri
   ]);
 }
 
-export function scoreStructuredLogging(structuredLogCount: number, consoleErrorCount: number): { score: number; summary: string } {
-  if (structuredLogCount > 0 && consoleErrorCount === 0) return { score: 7, summary: `structured logger only (${structuredLogCount} calls)` };
-  if (structuredLogCount > 0 && consoleErrorCount <= 5) return { score: 5, summary: `structured logger + ${consoleErrorCount} console calls` };
-  if (structuredLogCount > 0) return { score: 3, summary: `logger (${structuredLogCount}) + console (${consoleErrorCount})` };
-  if (consoleErrorCount > 0) return { score: 1, summary: `${consoleErrorCount} console.error/warn calls (no structured logger)` };
+export function scoreStructuredLogging(
+  structuredLogCount: number,
+  consoleErrorCount: number,
+): { score: number; summary: string } {
+  if (structuredLogCount > 0 && consoleErrorCount === 0)
+    return { score: 7, summary: `structured logger only (${structuredLogCount} calls)` };
+  if (structuredLogCount > 0 && consoleErrorCount <= 5)
+    return { score: 5, summary: `structured logger + ${consoleErrorCount} console calls` };
+  if (structuredLogCount > 0)
+    return { score: 3, summary: `logger (${structuredLogCount}) + console (${consoleErrorCount})` };
+  if (consoleErrorCount > 0)
+    return { score: 1, summary: `${consoleErrorCount} console.error/warn calls (no structured logger)` };
   return { score: 0, summary: 'no error logging detected' };
 }
 
@@ -188,7 +211,8 @@ export function scoreImportHygiene(issues: number): { score: number; summary: st
 // ── Code Quality ──────────────────────────────────────────────────────────────
 
 export function scoreFunctionLength(avgLen: number, fnCount: number): { score: number; summary: string } {
-  if (fnCount === 0 || avgLen <= 20) return { score: 6, summary: fnCount === 0 ? 'no functions detected' : 'short functions' };
+  if (fnCount === 0 || avgLen <= 20)
+    return { score: 6, summary: fnCount === 0 ? 'no functions detected' : 'short functions' };
   if (avgLen <= 30) return { score: 6, summary: `avg ${Math.round(avgLen)}-line functions` };
   if (avgLen <= 40) return { score: 5, summary: `avg ${Math.round(avgLen)}-line functions` };
   if (avgLen <= 50) return { score: 4, summary: `avg ${Math.round(avgLen)}-line functions` };
@@ -210,8 +234,10 @@ export function scoreLineLength(longLineCount: number): { score: number; summary
 export function scoreDeadCode(commentedCount: number, todoCount: number): { score: number; summary: string } {
   const total = commentedCount + todoCount;
   if (total === 0) return { score: 6, summary: 'no dead code detected' };
-  if (commentedCount === 0 && todoCount <= 3) return { score: 5, summary: `${todoCount} TODO${todoCount !== 1 ? 's' : ''}` };
-  if (commentedCount <= 3 && todoCount <= 5) return { score: 4, summary: `${commentedCount} commented-out, ${todoCount} TODOs` };
+  if (commentedCount === 0 && todoCount <= 3)
+    return { score: 5, summary: `${todoCount} TODO${todoCount !== 1 ? 's' : ''}` };
+  if (commentedCount <= 3 && todoCount <= 5)
+    return { score: 4, summary: `${commentedCount} commented-out, ${todoCount} TODOs` };
   if (commentedCount <= 10) return { score: 2, summary: `${commentedCount} commented-out lines, ${todoCount} TODOs` };
   return { score: 0, summary: `${commentedCount} commented-out lines, ${todoCount} TODOs` };
 }

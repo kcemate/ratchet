@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { readFile, readdir } from 'fs/promises';
+import { logger } from '../lib/logger.js';
 import { join } from 'path';
 import { existsSync, createReadStream } from 'fs';
 import type { RatchetRun } from '../types.js';
@@ -11,7 +12,7 @@ import type { ProgressState } from '../core/background.js';
 
 export const STATE_FILE = '.ratchet-state.json';
 
-const log = console.log.bind(console);
+const log = (msg: string) => logger.info(msg);
 
 export async function loadRunState(cwd: string): Promise<RatchetRun | null> {
   let raw: string;
