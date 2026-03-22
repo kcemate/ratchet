@@ -1,22 +1,25 @@
-import { spawnSync } from 'child_process';
+import { spawnSync, spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { join, basename } from 'path';
+import { logger } from '../lib/logger.js';
 
 // ── Per-run caches ──────────────────────────────────────────
 // getImpact and queryFlows can be slow (spawns CLI). Cache per target+cwd.
 const impactCache = new Map<string, GitNexusImpact | null>();
 const flowsCache = new Map<string, string[]>();
 const contextCache = new Map<string, GitNexusContext | null>();
+const cypherCache = new Map<string, unknown>();
 
 /** Clear all GitNexus caches. Call between runs or in tests. */
 export function clearCache(): void {
   impactCache.clear();
   flowsCache.clear();
   contextCache.clear();
+  cypherCache.clear();
 }
 
 /**
- * Run gitnexus CLI and return the JSON output.
+ * Run gitnexus CLI and return the JSON output (synchronous, for backward compat).
  * GitNexus sometimes writes JSON to stderr instead of stdout,
  * so we capture both and return whichever contains JSON.
  */
@@ -37,11 +40,66 @@ function runGitNexus(args: string[], cwd: string): string {
   return stdout || stderr;
 }
 
+/**
+ * Run gitnexus CLI asynchronously. Returns stdout/stderr as string.
+ * Used for new functions to avoid blocking the event loop.
+ */
+function runGitNexusAsync(args: string[], cwd: string, timeoutMs = 15_000): Promise<string> {
+  return new Promise((resolve) => {
+    let child: ReturnType<typeof spawn>;
+    try {
+      child = spawn('gitnexus', args, {
+        cwd,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+    } catch {
+      // gitnexus not installed
+      resolve('');
+      return;
+    }
+
+    let stdoutBuf = '';
+    let stderrBuf = '';
+    let timedOut = false;
+
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+      resolve('');
+    }, timeoutMs);
+
+    child.stdout?.on('data', (chunk: Buffer) => { stdoutBuf += chunk.toString(); });
+    child.stderr?.on('data', (chunk: Buffer) => { stderrBuf += chunk.toString(); });
+
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      logger.debug({ err }, 'gitnexus spawn error');
+      resolve('');
+    });
+
+    child.on('close', () => {
+      if (timedOut) return;
+      clearTimeout(timer);
+      const stdout = stdoutBuf.trim();
+      const stderr = stderrBuf.trim();
+      if (stdout.startsWith('{') || stdout.startsWith('[')) {
+        resolve(stdout);
+      } else if (stderr.startsWith('{') || stderr.startsWith('[')) {
+        resolve(stderr);
+      } else {
+        resolve(stdout || stderr);
+      }
+    });
+  });
+}
+
 export interface GitNexusImpact {
   target: string;
   directCallers: string[];
   affectedFiles: string[];
   riskLevel: string;
+  /** 0–1 confidence in the impact analysis; parsed from CLI output, defaults to 0.7 */
+  confidence: number;
   raw: string;
 }
 
@@ -50,6 +108,19 @@ export interface GitNexusContext {
   incoming: Record<string, { name: string; filePath: string }[]>;
   outgoing: Record<string, { name: string; filePath: string }[]>;
   raw: string;
+}
+
+export interface GitNexusImpactOptions {
+  direction?: 'upstream' | 'downstream';
+  depth?: number;
+  includeTests?: boolean;
+}
+
+export interface GitNexusCluster {
+  files: string[];
+  issueTypes: string[];
+  /** Architectural description of why these files are clustered */
+  reason: string;
 }
 
 /**
@@ -65,6 +136,20 @@ export function isIndexed(cwd: string): boolean {
  */
 function getRepoName(cwd: string): string {
   return basename(cwd);
+}
+
+/**
+ * Parse confidence score from GitNexus JSON output.
+ * Falls back to 0.7 (medium confidence) when not present.
+ */
+function parseConfidence(parsed: Record<string, unknown>): number {
+  const raw = parsed.confidence ?? parsed.confidence_score ?? parsed.confidenceScore;
+  if (typeof raw === 'number' && raw >= 0 && raw <= 1) return raw;
+  if (typeof raw === 'string') {
+    const n = parseFloat(raw);
+    if (!isNaN(n) && n >= 0 && n <= 1) return n;
+  }
+  return 0.7; // default: medium confidence
 }
 
 /**
@@ -114,11 +199,74 @@ export function getImpact(target: string, cwd: string): GitNexusImpact | null {
       directCallers,
       affectedFiles,
       riskLevel: parsed.risk_level ?? parsed.riskLevel ?? 'unknown',
+      confidence: parseConfidence(parsed),
       raw,
     };
     impactCache.set(cacheKey, result);
     return result;
   } catch {
+    impactCache.set(cacheKey, null);
+    return null;
+  }
+}
+
+/**
+ * Run `gitnexus impact <target>` with advanced options (direction, depth, include-tests).
+ * Async — does not block the event loop.
+ * Returns null if GitNexus is not available or the target isn't found.
+ */
+export async function getImpactDetailed(
+  target: string,
+  cwd: string,
+  options: GitNexusImpactOptions = {},
+): Promise<GitNexusImpact | null> {
+  if (!isIndexed(cwd)) return null;
+
+  const cacheKey = `${cwd}::detailed::${target}::${JSON.stringify(options)}`;
+  if (impactCache.has(cacheKey)) return impactCache.get(cacheKey)!;
+
+  try {
+    const fileName = basename(target);
+    const args = ['impact', fileName, '--repo', getRepoName(cwd)];
+    if (target.includes('/')) args.push('--file', target);
+    if (options.direction) args.push('--direction', options.direction);
+    if (options.depth !== undefined) args.push('--depth', String(options.depth));
+    if (options.includeTests) args.push('--include-tests');
+
+    const raw = await runGitNexusAsync(args, cwd);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (parsed.error) return null;
+
+    const directCallers: string[] = [];
+    const affectedFiles: string[] = [];
+
+    for (const item of parsed.impact_summary ?? []) {
+      if (item.filePath) affectedFiles.push(item.filePath);
+      if (item.name) directCallers.push(item.name);
+    }
+    for (const item of parsed.upstream ?? []) {
+      if (item.filePath && !affectedFiles.includes(item.filePath)) affectedFiles.push(item.filePath);
+      if (item.name && !directCallers.includes(item.name)) directCallers.push(item.name);
+    }
+    for (const item of parsed.downstream ?? []) {
+      if (item.filePath && !affectedFiles.includes(item.filePath)) affectedFiles.push(item.filePath);
+      if (item.name && !directCallers.includes(item.name)) directCallers.push(item.name);
+    }
+
+    const result: GitNexusImpact = {
+      target,
+      directCallers,
+      affectedFiles,
+      riskLevel: parsed.risk_level ?? parsed.riskLevel ?? 'unknown',
+      confidence: parseConfidence(parsed),
+      raw,
+    };
+    impactCache.set(cacheKey, result);
+    return result;
+  } catch (err) {
+    logger.debug({ err, target }, 'getImpactDetailed failed');
     impactCache.set(cacheKey, null);
     return null;
   }
@@ -161,6 +309,38 @@ export function getContext(fileOrSymbol: string, cwd: string): GitNexusContext |
 }
 
 /**
+ * Run `gitnexus context <symbol> --content` to get full source code for a symbol.
+ * Async — does not block the event loop.
+ * Returns null if GitNexus is not available.
+ */
+export async function getContextWithSource(symbol: string, cwd: string): Promise<(GitNexusContext & { source?: string }) | null> {
+  if (!isIndexed(cwd)) return null;
+
+  try {
+    const fileName = basename(symbol);
+    const args = ['context', fileName, '--repo', getRepoName(cwd), '--content'];
+    if (symbol.includes('/')) args.push('--file', symbol);
+
+    const raw = await runGitNexusAsync(args, cwd);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (parsed.status === 'not_found' || parsed.error) return null;
+
+    return {
+      symbol: parsed.symbol?.name ?? symbol,
+      incoming: parsed.incoming ?? {},
+      outgoing: parsed.outgoing ?? {},
+      source: parsed.source ?? parsed.content ?? undefined,
+      raw,
+    };
+  } catch (err) {
+    logger.debug({ err, symbol }, 'getContextWithSource failed');
+    return null;
+  }
+}
+
+/**
  * Run `gitnexus query <concept>` to find execution flows.
  * Returns the top N process summaries.
  */
@@ -185,6 +365,187 @@ export function queryFlows(concept: string, cwd: string, limit = 5): string[] {
     return result;
   } catch {
     flowsCache.set(cacheKey, []);
+    return [];
+  }
+}
+
+/**
+ * Run `gitnexus query <concept> --context --goal <goal>` for better-targeted flow discovery.
+ * Async — does not block the event loop.
+ */
+export async function queryFlowsTargeted(
+  concept: string,
+  cwd: string,
+  options: { context?: string; goal?: string; limit?: number } = {},
+): Promise<string[]> {
+  if (!isIndexed(cwd)) return [];
+
+  try {
+    const args = ['query', concept, '--repo', getRepoName(cwd)];
+    if (options.context) args.push('--context', options.context);
+    if (options.goal) args.push('--goal', options.goal);
+
+    const raw = await runGitNexusAsync(args, cwd);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    const processes = parsed.processes ?? parsed;
+    if (!Array.isArray(processes)) return [];
+
+    return processes
+      .slice(0, options.limit ?? 5)
+      .map((p: { summary?: string; id?: string }) => p.summary ?? p.id ?? '')
+      .filter(Boolean);
+  } catch (err) {
+    logger.debug({ err, concept }, 'queryFlowsTargeted failed');
+    return [];
+  }
+}
+
+/**
+ * Run `gitnexus cypher <query>` — raw Cypher query against the knowledge graph.
+ * Async — does not block the event loop.
+ * Returns raw parsed JSON result or null on failure.
+ */
+export async function runCypher(query: string, cwd: string): Promise<unknown> {
+  if (!isIndexed(cwd)) return null;
+
+  const cacheKey = `${cwd}::cypher::${query}`;
+  if (cypherCache.has(cacheKey)) return cypherCache.get(cacheKey);
+
+  try {
+    const args = ['cypher', query, '--repo', getRepoName(cwd)];
+    const raw = await runGitNexusAsync(args, cwd, 20_000);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (parsed.error) return null;
+
+    cypherCache.set(cacheKey, parsed);
+    return parsed;
+  } catch (err) {
+    logger.debug({ err, query }, 'runCypher failed');
+    return null;
+  }
+}
+
+/**
+ * Run `gitnexus augment <pattern>` — augment search patterns with graph context.
+ * Async — does not block the event loop.
+ */
+export async function augmentPattern(pattern: string, cwd: string): Promise<string[]> {
+  if (!isIndexed(cwd)) return [];
+
+  try {
+    const args = ['augment', pattern, '--repo', getRepoName(cwd)];
+    const raw = await runGitNexusAsync(args, cwd);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    const results = parsed.results ?? parsed.augmented ?? [];
+    if (!Array.isArray(results)) return [];
+    return results.map((r: { pattern?: string; query?: string }) => r.pattern ?? r.query ?? '').filter(Boolean);
+  } catch (err) {
+    logger.debug({ err, pattern }, 'augmentPattern failed');
+    return [];
+  }
+}
+
+/**
+ * Run `gitnexus analyze` to re-index the repo.
+ * Async, non-blocking — fire and forget.
+ * Returns a Promise that resolves when indexing completes (or fails silently).
+ */
+export async function reindex(cwd: string, force = false): Promise<boolean> {
+  try {
+    const args = ['analyze', '--repo', getRepoName(cwd)];
+    if (force) args.push('--force');
+    const raw = await runGitNexusAsync(args, cwd, 120_000);
+    logger.debug({ cwd, force }, 'gitnexus reindex complete');
+    return raw.length > 0;
+  } catch (err) {
+    logger.debug({ err, cwd }, 'gitnexus reindex failed (non-fatal)');
+    return false;
+  }
+}
+
+/**
+ * Detect impact of git-changed files using `gitnexus impact`.
+ * Returns all impacted symbols/files for the given scope (file paths).
+ * Async — does not block the event loop.
+ */
+export async function detectChanges(scope: string[], cwd: string): Promise<GitNexusImpact[]> {
+  if (!isIndexed(cwd) || scope.length === 0) return [];
+
+  const results: GitNexusImpact[] = [];
+  for (const file of scope) {
+    const impact = await getImpactDetailed(file, cwd, { direction: 'upstream' });
+    if (impact) results.push(impact);
+  }
+  return results;
+}
+
+/**
+ * Query Cypher-based dependency clusters for a set of files.
+ * Groups files by architectural community using graph traversal.
+ * Falls back to import-based union-find if Cypher fails.
+ */
+export async function getCypherClusters(
+  files: string[],
+  cwd: string,
+  issueTypes: string[] = [],
+): Promise<GitNexusCluster[]> {
+  if (!isIndexed(cwd) || files.length === 0) return [];
+
+  try {
+    // Query: find communities of files connected by calls/imports
+    const fileList = files.map(f => `"${f}"`).join(', ');
+    const cypher = `MATCH (f:File)-[:IMPORTS|CALLS*1..3]-(g:File) WHERE f.path IN [${fileList}] AND g.path IN [${fileList}] RETURN f.path as source, g.path as target, count(*) as strength ORDER BY strength DESC`;
+
+    const result = await runCypher(cypher, cwd);
+    if (!result || !Array.isArray((result as { rows?: unknown[] }).rows)) {
+      return [];
+    }
+
+    const rows = (result as { rows: { source: string; target: string; strength: number }[] }).rows;
+
+    // Build adjacency map
+    const adjacency = new Map<string, Set<string>>();
+    for (const file of files) {
+      adjacency.set(file, new Set());
+    }
+    for (const row of rows) {
+      adjacency.get(row.source)?.add(row.target);
+      adjacency.get(row.target)?.add(row.source);
+    }
+
+    // BFS clustering
+    const visited = new Set<string>();
+    const clusters: GitNexusCluster[] = [];
+
+    for (const file of files) {
+      if (visited.has(file)) continue;
+      const cluster: string[] = [];
+      const queue = [file];
+      while (queue.length > 0) {
+        const current = queue.shift()!;
+        if (visited.has(current)) continue;
+        visited.add(current);
+        cluster.push(current);
+        for (const neighbor of adjacency.get(current) ?? []) {
+          if (!visited.has(neighbor)) queue.push(neighbor);
+        }
+      }
+      clusters.push({
+        files: cluster,
+        issueTypes,
+        reason: cluster.length > 1 ? 'connected via calls/imports in graph' : 'isolated file',
+      });
+    }
+
+    return clusters;
+  } catch (err) {
+    logger.debug({ err }, 'getCypherClusters failed — falling back to import clustering');
     return [];
   }
 }
@@ -227,6 +588,13 @@ export function buildIntelligenceBriefing(targetPath: string, cwd: string): stri
   }
 
   if (lines.length === 1) return ''; // no useful info found
+
+  // Impact / risk level
+  const impact = getImpact(normalizedPath, cwd);
+  if (impact) {
+    const dependentCount = impact.directCallers.length + impact.affectedFiles.length;
+    lines.push(`  Risk level: ${impact.riskLevel} (${dependentCount} dependents, confidence: ${(impact.confidence * 100).toFixed(0)}%)`);
+  }
 
   lines.push('');
   lines.push('  ⚠ Do NOT break any of the above relationships. If you change a function signature,');

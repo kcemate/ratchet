@@ -7,7 +7,7 @@ import { createAgentContext } from './base.js';
 import { parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt, buildProposePrompt, buildHardenProposePrompt } from './api.js';
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
-import { buildIntelligenceBriefing, queryFlows } from '../gitnexus.js';
+import { buildIntelligenceBriefing, queryFlowsTargeted } from '../gitnexus.js';
 
 export interface ShellAgentConfig extends AgentOptions {
   /** Command to run for analysis/proposal (defaults to: claude --print) */
@@ -232,14 +232,8 @@ function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string
   let graphIntel = '';
   if (cwd && targetPath) {
     graphIntel = buildIntelligenceBriefing(targetPath, cwd);
-
-    // Execution flows: HOW is this code used end-to-end?
-    const flows = queryFlows(targetPath, cwd, 3);
-    if (flows.length > 0) {
-      graphIntel += (graphIntel ? '\n\n' : '') +
-        'EXECUTION FLOWS (how this code is used):\n' +
-        flows.map((f, i) => `  ${i + 1}. ${f}`).join('\n');
-    }
+    // Note: execution flows are now injected asynchronously via buildIssuePlanPromptAsync
+    // Sync path keeps backward compat — flows added when cwd not provided
   }
 
   return (

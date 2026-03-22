@@ -11,7 +11,8 @@ import * as git from './git.js';
 import type { ScanResult } from '../commands/scan.js';
 import { runScan } from '../commands/scan.js';
 import type { LearningStore } from './learning.js';
-import { clearCache as clearGitNexusCache } from './gitnexus.js';
+import { clearCache as clearGitNexusCache, detectChanges, reindex } from './gitnexus.js';
+import type { HighRiskChange } from '../types.js';
 import { IncrementalScanner } from './scan-cache.js';
 import { resolveGuards, nextGuardProfile, isGuardRejection } from './engine-guards.js';
 import { validateScope } from './scope.js';
@@ -660,6 +661,48 @@ export function checkRegressionStop(
   return { stop: true, earlyStopReason: `Score regression detected (${detail})` };
 }
 
+// ── GitNexus confidence gating ──────────────────────────────
+
+/**
+ * HIGH_RISK_LEVELS — these risk levels trigger confidence gating.
+ * If confidence > CONFIDENCE_THRESHOLD, the click is flagged for warning/rollback.
+ */
+const HIGH_RISK_LEVELS = new Set(['HIGH', 'CRITICAL', 'high', 'critical']);
+const CONFIDENCE_THRESHOLD = 0.7;
+
+/**
+ * Run confidence-based risk gating on modified files after a click lands.
+ * Returns high-risk changes that exceed the confidence threshold.
+ * Non-blocking async — called before committing.
+ */
+export async function runConfidenceGating(
+  filesModified: string[],
+  cwd: string,
+): Promise<HighRiskChange[]> {
+  if (filesModified.length === 0) return [];
+
+  try {
+    const impacts = await detectChanges(filesModified, cwd);
+    const highRisk: HighRiskChange[] = [];
+
+    for (const impact of impacts) {
+      if (HIGH_RISK_LEVELS.has(impact.riskLevel) && impact.confidence > CONFIDENCE_THRESHOLD) {
+        highRisk.push({
+          file: impact.target,
+          symbol: impact.target,
+          risk: impact.riskLevel,
+          confidence: impact.confidence,
+        });
+      }
+    }
+
+    return highRisk;
+  } catch {
+    // Non-fatal — if confidence gating fails, allow the click
+    return [];
+  }
+}
+
 // ── Engine ─────────────────────────────────────────────
 
 /**
@@ -855,10 +898,28 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         await processClickOutcome(i, click, rolled_back, elapsedSec, state, guardEscalationEnabled, callbacks);
 
+        // Confidence gating: detect high-risk changes on landed clicks before they're committed
+        if (!rolled_back && click.testsPassed && click.filesModified.length > 0) {
+          const highRiskChanges = await runConfidenceGating(click.filesModified, cwd);
+          if (highRiskChanges.length > 0) {
+            click.highRiskChanges = highRiskChanges;
+            const riskSummary = highRiskChanges.map(r => `${r.file} (${r.risk}, ${(r.confidence * 100).toFixed(0)}%)`).join(', ');
+            logger.warn({ highRiskChanges }, `[ratchet] ⚠ High-risk changes detected: ${riskSummary}`);
+          }
+        }
+
         let regressionDetected: boolean;
         ({ rolled_back, regressionDetected } = await postClickRescan(i, click, rolled_back, clickEconomics, state, scoreOptimized, cwd, incrementalScanner, callbacks));
 
         await checkStallAndEscalate(i, clicks, state, hardenMode, escalateEnabled, callbacks);
+
+        // Post-click async reindex: keep GitNexus graph fresh for subsequent clicks
+        if (!rolled_back && click.testsPassed) {
+          const hasFileCreationsOrDeletions = false; // heuristic: assume modify-only for now
+          reindex(cwd, hasFileCreationsOrDeletions).catch(() => {
+            // Non-fatal — don't let reindex errors break the engine
+          });
+        }
 
         run.clicks.push(click);
         if (clickEconomics) state.allEconomics.push(clickEconomics);

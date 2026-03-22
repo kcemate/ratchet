@@ -1,5 +1,5 @@
 import type { ScanResult } from '../commands/scan.js';
-import { assessFileRisk, getDependencyClusters } from './gitnexus.js';
+import { assessFileRisk, getDependencyClusters, getCypherClusters } from './gitnexus.js';
 import { SEVERITY_WEIGHT } from './taxonomy.js';
 
 export interface IssueTask {
@@ -134,6 +134,38 @@ export function enrichBacklogWithRisk(tasks: IssueTask[], cwd: string): IssueTas
   // Re-sort after risk adjustment
   tasks.sort((a, b) => b.priority - a.priority);
   return tasks;
+}
+
+/**
+ * Group sweep files into dependency clusters using GitNexus Cypher-based community detection.
+ * Falls back to import-based union-find if Cypher fails, and to chunking if neither works.
+ */
+export async function groupByDependencyClusterSmart(
+  files: string[],
+  cwd: string,
+  issueTypes: string[] = [],
+  maxPerCluster = 6,
+): Promise<string[][]> {
+  if (files.length === 0) return [];
+
+  // Try Cypher-based clustering first
+  try {
+    const cypherClusters = await getCypherClusters(files, cwd, issueTypes);
+    if (cypherClusters.length > 0) {
+      const result: string[][] = [];
+      for (const cluster of cypherClusters) {
+        for (let i = 0; i < cluster.files.length; i += maxPerCluster) {
+          result.push(cluster.files.slice(i, i + maxPerCluster));
+        }
+      }
+      return result;
+    }
+  } catch {
+    // Fall through to import-based clustering
+  }
+
+  // Fall back to import-based union-find clustering
+  return groupByDependencyCluster(files, cwd, maxPerCluster);
 }
 
 /**
