@@ -14,6 +14,8 @@ import { execFileSync } from 'child_process';
 import { getImpact } from './gitnexus.js';
 import { prevalidate } from './prevalidate.js';
 import type { PrevalidateResult, PrevalidateOptions } from './prevalidate.js';
+import { buildClickContext } from './context-pruner.js';
+import { logger } from '../lib/logger.js';
 
 export interface ClickContext {
   clickNumber: number;
@@ -45,6 +47,10 @@ export interface ClickContext {
   planContext?: string;
   /** Pre-existing test failures captured at baseline — exempt from rollback decisions */
   baselineFailures?: string[];
+  /** When true, use context pruning to build a focused prompt instead of full codebase analysis */
+  contextPruning?: boolean;
+  /** Scan result for context pruning — required when contextPruning is true */
+  scanResult?: import('../commands/scan.js').ScanResult;
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
 }
 
@@ -118,7 +124,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   if (!config.swarm?.enabled && !ctx.sweepMode) {
     const riskGate = checkRiskGate(target.path, ctx.gitnexusCwd ?? cwd);
     if (riskGate.requiresSwarm) {
-      console.error(`[ratchet] ⚠ Risk gate: ${target.path} has ${riskGate.dependentCount} dependents — escalating to swarm`);
+      logger.warn(`[ratchet] ⚠ Risk gate: ${target.path} has ${riskGate.dependentCount} dependents — escalating to swarm`);
       return {
         click: {
           number: clickNumber,
@@ -173,6 +179,11 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     if (ctx.planContext) {
       context += '\n\n## Execution Plan\n' + ctx.planContext;
     }
+    // Context pruning: inject focused issue context so agent skips full re-scan
+    if (ctx.contextPruning && ctx.scanResult && issues && issues.length > 0) {
+      const pruned = buildClickContext(ctx.scanResult, issues, cwd);
+      context += '\n\n' + pruned.summary;
+    }
     analysis = await agent.analyze(context, hardenPhase, issues);
 
     // 2. Propose
@@ -193,7 +204,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     agentEndMs = Date.now();
 
     if (!buildResult.success) {
-      console.error(`[DEBUG] Build failed. Output: ${buildResult.output?.slice(0, 500)}`);
+      logger.debug(`[ratchet] Build failed. Output: ${buildResult.output?.slice(0, 500)}`);
       rollbackReason = 'build failed';
       await rollback(cwd, clickNumber, stashCreated);
       rolledBack = true;
@@ -206,13 +217,13 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       const guardResult = checkClickGuards(cwd, effectiveGuards, ctx.sweepMode);
       if (guardResult.linesChanged) linesChanged = guardResult.linesChanged;
       if (!guardResult.passed && !ctx.atomicSweep && effectiveGuards !== null) {
-        console.error(`[ratchet] 🛡 Click ${clickNumber} rejected by guards: ${guardResult.reason}`);
-        console.error(`[ratchet]   ${guardResult.detail}`);
+        logger.warn(`[ratchet] 🛡 Click ${clickNumber} rejected by guards: ${guardResult.reason}`);
+        logger.warn(`[ratchet]   ${guardResult.detail}`);
         rollbackReason = guardResult.reason;
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       } else if (!guardResult.passed && (ctx.atomicSweep || effectiveGuards === null)) {
-        console.error(`[ratchet] Click ${clickNumber} guard exceeded (${guardResult.reason}) — proceeding in atomic mode, test suite is the gate`);
+        logger.warn(`[ratchet] Click ${clickNumber} guard exceeded (${guardResult.reason}) — proceeding in atomic mode, test suite is the gate`);
       }
 
       if (!rolledBack) {
@@ -222,9 +233,9 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         const prevalidateOpts: PrevalidateOptions = { strict: false };
         prevalidateResult = await prevalidate(cwd, config.model, prevalidateOpts);
         if (prevalidateResult.concerns.length > 0) {
-          console.error(`[ratchet] 🔍 Prevalidate click ${clickNumber}: confidence=${prevalidateResult.confidence.toFixed(2)}, recommendation=${prevalidateResult.recommendation}`);
+          logger.warn(`[ratchet] 🔍 Prevalidate click ${clickNumber}: confidence=${prevalidateResult.confidence.toFixed(2)}, recommendation=${prevalidateResult.recommendation}`);
           for (const concern of prevalidateResult.concerns.slice(0, 3)) {
-            console.error(`[ratchet]   concern: ${concern}`);
+            logger.warn(`[ratchet]   concern: ${concern}`);
           }
         }
       } catch {
@@ -232,13 +243,13 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       }
 
       if (prevalidateResult?.recommendation === 'reject') {
-        console.error(`[ratchet] Click ${clickNumber} REJECTED by prevalidate (confidence=${prevalidateResult.confidence.toFixed(2)}) — rolling back without tests`);
+        logger.warn(`[ratchet] Click ${clickNumber} REJECTED by prevalidate (confidence=${prevalidateResult.confidence.toFixed(2)}) — rolling back without tests`);
         rollbackReason = `prevalidate rejected (confidence ${prevalidateResult.confidence.toFixed(2)})`;
         await rollback(cwd, clickNumber, stashCreated);
         rolledBack = true;
       } else if (prevalidateResult?.recommendation === 'escalate-swarm') {
         // Signal swarm escalation — tests will still run, but caller will know
-        console.error(`[ratchet] Prevalidate: escalating click ${clickNumber} to swarm (confidence=${prevalidateResult.confidence.toFixed(2)})`);
+        logger.warn(`[ratchet] Prevalidate: escalating click ${clickNumber} to swarm (confidence=${prevalidateResult.confidence.toFixed(2)})`);
       }
       } // end prevalidate block
 
@@ -252,7 +263,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       testsPassed = gateResult.passed;
 
       if (!testsPassed) {
-        console.error(`[DEBUG] Tests FAILED at gate=${gateResult.gate}. Output (last 500 chars): ${gateResult.output.slice(-500)}`);
+        logger.debug(`[ratchet] Tests FAILED at gate=${gateResult.gate}. Output (last 500 chars): ${gateResult.output.slice(-500)}`);
         if (gateResult.failedTests.length > 0) {
           rollbackReason = `tests failed (${gateResult.gate}): ${gateResult.failedTests.join(', ')}`;
         } else {
@@ -263,7 +274,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         rolledBack = true;
       } else {
         if (gateResult.landedWithWarning && gateResult.warningMessage) {
-          console.error(`[ratchet] ⚠ Click ${clickNumber}: ${gateResult.warningMessage}`);
+          logger.warn(`[ratchet] ⚠ Click ${clickNumber}: ${gateResult.warningMessage}`);
         }
         if (config.defaults.autoCommit) {
         // 5. Commit on success
@@ -284,10 +295,10 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
           );
 
           if (redTeamResult?.rollbackRecommended) {
-            console.error(
+            logger.warn(
               `[ratchet] Red team challenge FAILED — reverting commit ${commitHash.slice(0, 7)}`,
             );
-            console.error(`[ratchet] Reason: ${redTeamResult.reasoning}`);
+            logger.warn(`[ratchet] Reason: ${redTeamResult.reasoning}`);
             // Revert the commit (soft reset to undo the commit, then hard reset to undo changes)
             await git.revert(cwd).catch(() => {});
             rolledBack = true;

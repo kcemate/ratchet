@@ -28,6 +28,7 @@ import { formatDuration } from '../core/utils.js';
 import { printHeader, exitWithError, validateInt, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
 import { STATE_FILE } from './status.js';
 import { requireLicense } from '../core/license.js';
+import { startBackgroundRun, updateProgress } from '../core/background.js';
 
 function printEconomics(economics: RunEconomics): void {
   const total = economics.landed + economics.rolledBack;
@@ -104,6 +105,8 @@ export function torqueCommand(): Command {
     .option('--scope <spec>', 'Limit changes to specific files: diff, branch, staged, <glob>, or file:a.ts,b.ts')
     .option('--resume <id>', 'Resume an interrupted run by its run ID')
     .option('--no-auto-resume', 'Start fresh even if an interrupted run exists')
+    .option('--background', 'Detach from terminal and run in background', false)
+    .option('--fast', 'Enable context pruning for faster clicks — inject focused issue context into agent prompts (experimental)', false)
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -139,8 +142,25 @@ export function torqueCommand(): Command {
         scope?: string;
         resume?: string;
         autoResume: boolean;
+        background: boolean;
+        fast: boolean;
       }) => {
         const cwd = process.cwd();
+
+        // Background mode: detach and run in a child process
+        if (options.background && !process.env['RATCHET_BACKGROUND']) {
+          const filteredArgs = process.argv.slice(2).filter(a => a !== '--background');
+          const result = await startBackgroundRun(cwd, filteredArgs);
+          process.stdout.write(
+            `\n  ⚙  Ratchet running in background\n\n` +
+            `  Run ID : ${result.runId}\n` +
+            `  PID    : ${result.pid}\n` +
+            `  Log    : ${result.logPath}\n\n` +
+            `  Monitor: ratchet status\n` +
+            `  Stop   : ratchet stop ${result.runId}\n\n`,
+          );
+          process.exit(0);
+        }
 
         printHeader('⚙  Ratchet Torque');
 
@@ -298,6 +318,7 @@ export function torqueCommand(): Command {
         if (options.scope) fields.push(['Scope', chalk.cyan(formatScopeForDisplay(options.scope, scopeFiles, cwd))]);
         if (options.architect) fields.push(['Architect', chalk.yellow('enabled')]);
         if (options.planFirst) fields.push(['Plan-first', chalk.yellow('enabled')]);
+        if (options.fast) fields.push(['Fast', chalk.yellow('context pruning')]);
         if (options.adversarial) fields.push(['QA', chalk.yellow('adversarial')]);
         if (config.swarm?.enabled) {
           const specs = config.swarm.specializations.join(', ');
@@ -441,6 +462,7 @@ export function torqueCommand(): Command {
             architectEscalation: options.architect !== false,
             guardEscalation: options.guardEscalation !== false,
             planFirst: options.planFirst,
+            contextPruning: options.fast,
             scope: scopeFiles,
             scopeArg: options.scope,
             callbacks: {
@@ -601,6 +623,19 @@ export function torqueCommand(): Command {
                   await saveRun(cwd, run);
                 } catch {
                   // Non-fatal
+                }
+                // Update background progress.json if running detached
+                const bgRunId = process.env['RATCHET_BG_RUN_ID'];
+                if (bgRunId) {
+                  const passedSoFar = run.clicks.filter(c => c.testsPassed).length;
+                  const latestScore = run.clicks.at(-1)?.scoreAfterClick;
+                  await updateProgress(cwd, bgRunId, {
+                    clicksCompleted: run.clicks.length,
+                    clicksTotal: clickCount,
+                    score: latestScore,
+                    status: run.status === 'running' ? 'running' : run.status,
+                  }).catch(() => {});
+                  void passedSoFar;
                 }
               },
 

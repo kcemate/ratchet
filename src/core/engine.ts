@@ -192,6 +192,14 @@ export interface EngineRunOptions {
   scope?: string[];
   /** Raw --scope argument for display purposes. */
   scopeArg?: string;
+  /** Enable context pruning — inject focused issue context into agent prompts for faster clicks */
+  contextPruning?: boolean;
+  /** Stop the run if wall time exceeds this many milliseconds (checked between clicks). */
+  timeoutMs?: number;
+  /** Stop the run before the next click if cumulative estimated cost >= this value (USD). */
+  budgetUsd?: number;
+  /** Stop immediately when a score regression is detected (the regressing click is still rolled back). */
+  stopOnRegression?: boolean;
 }
 
 export interface RunSummary {
@@ -244,6 +252,10 @@ interface RunState {
   currentGuardProfileName: string;
   allEconomics: ClickEconomics[];
   target: Target;
+  /** Tracks consecutive clicks with zero score delta for plateau detection. */
+  consecutiveZeroDeltaClicks: number;
+  /** Running total of estimated cost across all clicks (USD). */
+  cumulativeCost: number;
 }
 
 // ── Helpers ────────────────────────────────────────────
@@ -365,6 +377,8 @@ async function initializeRun(options: EngineRunOptions): Promise<{
     currentGuardProfileName,
     allEconomics: [],
     target: options.target,
+    consecutiveZeroDeltaClicks: 0,
+    cumulativeCost: 0,
   };
 
   return { run, state, incrementalScanner, baselineFailures };
@@ -431,9 +445,9 @@ async function postClickRescan(
   cwd: string,
   incrementalScanner: IncrementalScanner,
   callbacks: EngineCallbacks,
-): Promise<{ rolled_back: boolean }> {
+): Promise<{ rolled_back: boolean; regressionDetected: boolean }> {
   if (!click.testsPassed || rolled_back || !state.currentScan) {
-    return { rolled_back };
+    return { rolled_back, regressionDetected: false };
   }
 
   try {
@@ -453,7 +467,7 @@ async function postClickRescan(
       state.consecutiveRollbacks = state.prevConsecutiveRollbacks + 1;
       state.totalLanded--;
       state.totalRolled++;
-      return { rolled_back: true };
+      return { rolled_back: true, regressionDetected: true };
     } else {
       // Count how many issues were resolved
       const prevIssueCount = state.currentScan.totalIssuesFound;
@@ -497,7 +511,7 @@ async function postClickRescan(
     // Non-fatal — skip live scoring for this click
   }
 
-  return { rolled_back };
+  return { rolled_back, regressionDetected: false };
 }
 
 /**
@@ -595,6 +609,55 @@ async function checkSmartStop(
   }
 
   return { shouldStop: false };
+}
+
+// ── Stop-condition helpers (exported for testing) ──────
+
+/** Returns stop=true when wall time has exceeded the configured timeout. */
+export function checkTimeoutStop(
+  startedAt: Date,
+  timeoutMs: number,
+  clickNumber: number,
+): { stop: boolean; earlyStopReason?: string } {
+  const elapsed = Date.now() - startedAt.getTime();
+  if (elapsed > timeoutMs) {
+    const elapsedMin = Math.round(elapsed / 60000);
+    return { stop: true, earlyStopReason: `Timeout reached (${elapsedMin}m)` };
+  }
+  return { stop: false };
+}
+
+/** Returns stop=true when cumulative cost has reached or exceeded the budget. */
+export function checkBudgetStop(
+  cumulativeCost: number,
+  budgetUsd: number,
+): { stop: boolean; earlyStopReason?: string } {
+  if (cumulativeCost >= budgetUsd) {
+    return { stop: true, earlyStopReason: `Budget limit reached ($${cumulativeCost.toFixed(2)})` };
+  }
+  return { stop: false };
+}
+
+/** Returns stop=true when N consecutive clicks all had zero score delta (plateau). */
+export function checkPlateauStop(
+  consecutiveZeroDeltaClicks: number,
+  totalClicks: number,
+): { stop: boolean; earlyStopReason?: string } {
+  if (totalClicks > 3 && consecutiveZeroDeltaClicks >= 3) {
+    return { stop: true, earlyStopReason: 'Score plateau detected (3 consecutive zero-delta clicks)' };
+  }
+  return { stop: false };
+}
+
+/** Returns stop=true when a score regression was detected and --stop-on-regression is active. */
+export function checkRegressionStop(
+  regressionDetected: boolean,
+  rollbackReason?: string,
+): { stop: boolean; earlyStopReason?: string } {
+  if (!regressionDetected) return { stop: false };
+  const match = rollbackReason?.match(/(\d+) → (\d+)/);
+  const detail = match ? `${match[1]} → ${match[2]}` : '';
+  return { stop: true, earlyStopReason: `Score regression detected (${detail})` };
 }
 
 // ── Engine ─────────────────────────────────────────────
@@ -736,6 +799,8 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             issues: clickIssues,
             baselineFailures,
             planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
+            contextPruning: options.contextPruning,
+            scanResult: state.currentScan,
             onPhase: callbacks.onClickPhase
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
               : undefined,
