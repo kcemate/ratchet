@@ -16,6 +16,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import type { ScanResult } from '../commands/scan.js';
 import { hostedBadgeUrl, hostedCategoryBadgeUrl } from './credentials.js';
+import { logger } from '../lib/logger.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -42,7 +43,8 @@ export function loadAutoPrConfig(cwd: string): AutoPrConfig {
     const style = styleMatch ? styleMatch[1]! : defaults.style;
 
     return { autoPr, categories, style };
-  } catch {
+  } catch (err) {
+    logger.warn({ err }, 'Failed to parse .ratchet.yml badge config, using defaults');
     return defaults;
   }
 }
@@ -79,7 +81,8 @@ async function gitSafe(args: string[], cwd: string): Promise<string> {
   try {
     const { stdout } = await execFileAsync('git', args, { cwd });
     return stdout.trim();
-  } catch {
+  } catch (err) {
+    logger.debug({ args, err }, 'git command failed');
     return '';
   }
 }

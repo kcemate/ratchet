@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import { validateLicenseRemote, saveLicense, loadLicense, clearLicense, getLicensePath } from '../core/license.js';
+import { logger } from '../lib/logger.js';
 
 export function loginCommand(): Command {
   const cmd = new Command('login');
@@ -17,8 +18,7 @@ export function loginCommand(): Command {
 
       if (!result.valid) {
         spinner.fail(chalk.red('Invalid license key'));
-        console.error(`  ${result.error}`);
-        console.error('');
+        logger.error({ error: result.error }, 'License validation failed');
         process.exit(1);
       }
 
