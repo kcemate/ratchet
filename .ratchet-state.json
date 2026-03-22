@@ -1,5 +1,5 @@
 {
-  "id": "3749c488-8949-4486-8c15-a1ed3749fc3a",
+  "id": "4ea3ca9e-937b-48a7-b1f9-061f8f98e5b8",
   "target": {
     "name": "src",
     "path": "src/",
@@ -9,47 +9,42 @@
     {
       "number": 1,
       "target": "src",
-      "analysis": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Add meaningful error handling to empty catch blocks. At minimum, log the error with the structured logger. [ROI: 0.50, +1pt next tier, +1pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/analyze-dup.mjs\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "proposal": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Add meaningful error handling to empty catch blocks. At minimum, log the error with the structured logger. [ROI: 0.50, +1pt next tier, +1pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/analyze-dup.mjs\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "filesModified": [
-        "/Users/giovanni/Projects/ratchet/analyze-dup.mjs"
-      ],
+      "analysis": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Remove or replace console.log calls with the structured logger. For debug-only logs, remove entirely. For operational logs, use logger.info/debug. [ROI: 1.00, +1pt next tier, +1pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
+      "proposal": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Remove or replace console.log calls with the structured logger. For debug-only logs, remove entirely. For operational logs, use logger.info/debug. [ROI: 1.00, +1pt next tier, +1pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
+      "filesModified": [],
       "testsPassed": false,
-      "timestamp": "2026-03-22T23:45:05.190Z",
+      "timestamp": "2026-03-22T23:48:26.066Z",
       "rollbackReason": "\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\u001b[22m\u001b[39m"
     },
     {
       "number": 2,
       "target": "sweep",
-      "analysis": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Add meaningful error handling to empty catch blocks. At minimum, log the error with the structured logger. [ROI: 0.50, +1pt next tier, +1pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/analyze-dup.mjs\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "proposal": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Add meaningful error handling to empty catch blocks. At minimum, log the error with the structured logger. [ROI: 0.50, +1pt next tier, +1pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/analyze-dup.mjs\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
+      "analysis": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Remove or replace console.log calls with the structured logger. For debug-only logs, remove entirely. For operational logs, use logger.info/debug. [ROI: 1.00, +1pt next tier, +1pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
+      "proposal": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Remove or replace console.log calls with the structured logger. For debug-only logs, remove entirely. For operational logs, use logger.info/debug. [ROI: 1.00, +1pt next tier, +1pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
       "filesModified": [
-        "/Users/giovanni/Projects/ratchet/analyze-dup.mjs"
+        "(none — `/Users/giovanni/Projects/ratchet/src/core/explanations.ts` contains no `console.log` calls)"
       ],
       "testsPassed": false,
-      "timestamp": "2026-03-22T23:45:51.611Z",
+      "timestamp": "2026-03-22T23:48:43.638Z",
       "rollbackReason": "\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\u001b[22m\u001b[39m"
     },
     {
       "number": 3,
       "target": "sweep",
-      "analysis": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Remove or replace console.log calls with the structured logger. For debug-only logs, remove entirely. For operational logs, use logger.info/debug. [ROI: 0.40, +2pt next tier, +2pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/analyze-dup.mjs\n  - /Users/giovanni/Projects/ratchet/api/src/worker.ts\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "proposal": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Remove or replace console.log calls with the structured logger. For debug-only logs, remove entirely. For operational logs, use logger.info/debug. [ROI: 0.40, +2pt next tier, +2pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/analyze-dup.mjs\n  - /Users/giovanni/Projects/ratchet/api/src/worker.ts\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
-      "filesModified": [
-        "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
-        "/Users/giovanni/Projects/ratchet/api/src/worker.ts"
-      ],
+      "analysis": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Add meaningful error handling to empty catch blocks. At minimum, log the error with the structured logger. [ROI: 0.50, +0.5pt next tier, +0.5pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
+      "proposal": "You are a code improvement assistant fixing one specific issue across multiple files.\n\nISSUE: Add meaningful error handling to empty catch blocks. At minimum, log the error with the structured logger. [ROI: 0.50, +0.5pt next tier, +0.5pt max]\n\nFILES TO FIX (touch ONLY these files, no others):\n  - /Users/giovanni/Projects/ratchet/src/core/explanations.ts\n\nHARD CONSTRAINTS:\n- Fix ONLY the described issue in ONLY the listed files\n- Do NOT refactor, rename variables, or change logic\n- Do NOT touch any file not in the list above  \n- Change AT MOST 10 lines per file\n- All existing tests MUST still pass\n\nFor each file: read it, find the issue, make the minimal fix.\n\nAfter making changes, output each modified file:\nMODIFIED: <filepath>",
+      "filesModified": [],
       "testsPassed": false,
-      "timestamp": "2026-03-22T23:46:23.166Z",
+      "timestamp": "2026-03-22T23:49:02.068Z",
       "rollbackReason": "\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\u001b[22m\u001b[39m"
     }
   ],
-  "startedAt": "2026-03-22T23:45:03.527Z",
+  "startedAt": "2026-03-22T23:48:24.757Z",
   "status": "completed",
-  "finishedAt": "2026-03-22T23:47:41.291Z",
+  "finishedAt": "2026-03-22T23:49:22.821Z",
   "_scoreBefore": {
     "projectName": "ratchet-run",
-    "total": 84,
+    "total": 86.5,
     "maxTotal": 100,
     "categories": [
       {
@@ -57,13 +52,13 @@
         "emoji": "🧪",
         "score": 23,
         "max": 25,
-        "summary": "81 test files, 84% ratio, 322 edge/error test cases",
+        "summary": "81 test files, 86% ratio, 322 edge/error test cases",
         "subcategories": [
           {
             "name": "Coverage ratio",
             "score": 8,
             "max": 8,
-            "summary": "81 test files, 84% ratio",
+            "summary": "81 test files, 86% ratio",
             "issuesFound": 0,
             "issuesDescription": "source files without tests",
             "locations": []
@@ -154,15 +149,15 @@
       {
         "name": "Error Handling",
         "emoji": "⚠️ ",
-        "score": 15,
+        "score": 15.5,
         "max": 20,
-        "summary": "214 try/catch blocks, 2 empty catches",
+        "summary": "210 try/catch blocks, 1 empty catch",
         "subcategories": [
           {
             "name": "Coverage",
             "score": 8,
             "max": 8,
-            "summary": "214 try/catch blocks",
+            "summary": "210 try/catch blocks",
             "issuesFound": 0,
             "issuesDescription": "async functions without error handling",
             "locations": [
@@ -176,13 +171,12 @@
           },
           {
             "name": "Empty catches",
-            "score": 4,
+            "score": 4.5,
             "max": 5,
-            "summary": "2 empty catches",
-            "issuesFound": 2,
+            "summary": "1 empty catch",
+            "issuesFound": 1,
             "issuesDescription": "empty catch blocks",
             "locations": [
-              "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
               "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
             ]
           },
@@ -190,7 +184,7 @@
             "name": "Structured logging",
             "score": 3,
             "max": 7,
-            "summary": "logger (207) + console (36)",
+            "summary": "logger (207) + console (32)",
             "issuesFound": 0,
             "issuesDescription": "no structured logger"
           }
@@ -199,28 +193,26 @@
       {
         "name": "Performance",
         "emoji": "⚡",
-        "score": 8,
+        "score": 10,
         "max": 10,
-        "summary": "25 await-in-loop patterns, 5 console.log calls",
+        "summary": "3 await-in-loop patterns, 1 console.log",
         "subcategories": [
           {
             "name": "Async patterns",
-            "score": 1,
+            "score": 3,
             "max": 3,
-            "summary": "25 await-in-loop patterns",
-            "issuesFound": 25,
+            "summary": "3 await-in-loop patterns",
+            "issuesFound": 3,
             "issuesDescription": "await-in-loop patterns"
           },
           {
             "name": "Console cleanup",
-            "score": 3,
+            "score": 4,
             "max": 5,
-            "summary": "5 console.log calls",
-            "issuesFound": 5,
+            "summary": "1 console.log",
+            "issuesFound": 1,
             "issuesDescription": "console.log calls in src",
             "locations": [
-              "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
-              "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
               "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
             ]
           },
@@ -239,17 +231,16 @@
         "emoji": "📖",
         "score": 11,
         "max": 15,
-        "summary": "avg 32-line functions, 28 long lines",
+        "summary": "avg 33-line functions, 28 long lines",
         "subcategories": [
           {
             "name": "Function length",
             "score": 4,
             "max": 4,
-            "summary": "avg 32-line functions",
-            "issuesFound": 39,
+            "summary": "avg 33-line functions",
+            "issuesFound": 37,
             "issuesDescription": "functions >50 lines",
             "locations": [
-              "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
               "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
               "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
               "/Users/giovanni/Projects/ratchet/src/commands/graph.ts",
@@ -312,14 +303,14 @@
             "name": "Duplication",
             "score": 1,
             "max": 3,
-            "summary": "513 repeated lines (high duplication)",
-            "issuesFound": 513,
+            "summary": "505 repeated lines (high duplication)",
+            "issuesFound": 505,
             "issuesDescription": "repeated code lines"
           }
         ]
       }
     ],
-    "totalIssuesFound": 631,
+    "totalIssuesFound": 594,
     "issuesByType": [
       {
         "category": "Security",
@@ -331,29 +322,27 @@
       {
         "category": "Error Handling",
         "subcategory": "Empty catches",
-        "count": 2,
+        "count": 1,
         "description": "empty catch blocks",
         "severity": "high",
         "locations": [
-          "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
           "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
         ]
       },
       {
         "category": "Code Quality",
         "subcategory": "Duplication",
-        "count": 513,
+        "count": 505,
         "description": "repeated code lines",
         "severity": "medium"
       },
       {
         "category": "Code Quality",
         "subcategory": "Function length",
-        "count": 39,
+        "count": 37,
         "description": "functions >50 lines",
         "severity": "medium",
         "locations": [
-          "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
           "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
           "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
           "/Users/giovanni/Projects/ratchet/src/commands/graph.ts",
@@ -388,13 +377,6 @@
         ]
       },
       {
-        "category": "Performance",
-        "subcategory": "Async patterns",
-        "count": 25,
-        "description": "await-in-loop patterns",
-        "severity": "medium"
-      },
-      {
         "category": "Type Safety",
         "subcategory": "Any type count",
         "count": 7,
@@ -408,6 +390,13 @@
           "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
           "/Users/giovanni/Projects/ratchet/src/core/swarm.ts"
         ]
+      },
+      {
+        "category": "Performance",
+        "subcategory": "Async patterns",
+        "count": 3,
+        "description": "await-in-loop patterns",
+        "severity": "medium"
       },
       {
         "category": "Code Quality",
@@ -435,12 +424,10 @@
       {
         "category": "Performance",
         "subcategory": "Console cleanup",
-        "count": 5,
+        "count": 1,
         "description": "console.log calls in src",
         "severity": "low",
         "locations": [
-          "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
-          "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
           "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
         ]
       }
@@ -448,7 +435,7 @@
   },
   "_scoreAfter": {
     "projectName": "ratchet-run",
-    "total": 84,
+    "total": 86.5,
     "maxTotal": 100,
     "categories": [
       {
@@ -456,13 +443,13 @@
         "emoji": "🧪",
         "score": 23,
         "max": 25,
-        "summary": "81 test files, 84% ratio, 322 edge/error test cases",
+        "summary": "81 test files, 86% ratio, 322 edge/error test cases",
         "subcategories": [
           {
             "name": "Coverage ratio",
             "score": 8,
             "max": 8,
-            "summary": "81 test files, 84% ratio",
+            "summary": "81 test files, 86% ratio",
             "issuesFound": 0,
             "issuesDescription": "source files without tests",
             "locations": []
@@ -553,15 +540,15 @@
       {
         "name": "Error Handling",
         "emoji": "⚠️ ",
-        "score": 15,
+        "score": 15.5,
         "max": 20,
-        "summary": "214 try/catch blocks, 2 empty catches",
+        "summary": "210 try/catch blocks, 1 empty catch",
         "subcategories": [
           {
             "name": "Coverage",
             "score": 8,
             "max": 8,
-            "summary": "214 try/catch blocks",
+            "summary": "210 try/catch blocks",
             "issuesFound": 0,
             "issuesDescription": "async functions without error handling",
             "locations": [
@@ -575,13 +562,12 @@
           },
           {
             "name": "Empty catches",
-            "score": 4,
+            "score": 4.5,
             "max": 5,
-            "summary": "2 empty catches",
-            "issuesFound": 2,
+            "summary": "1 empty catch",
+            "issuesFound": 1,
             "issuesDescription": "empty catch blocks",
             "locations": [
-              "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
               "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
             ]
           },
@@ -589,7 +575,7 @@
             "name": "Structured logging",
             "score": 3,
             "max": 7,
-            "summary": "logger (207) + console (36)",
+            "summary": "logger (207) + console (32)",
             "issuesFound": 0,
             "issuesDescription": "no structured logger"
           }
@@ -598,28 +584,26 @@
       {
         "name": "Performance",
         "emoji": "⚡",
-        "score": 8,
+        "score": 10,
         "max": 10,
-        "summary": "25 await-in-loop patterns, 5 console.log calls",
+        "summary": "3 await-in-loop patterns, 1 console.log",
         "subcategories": [
           {
             "name": "Async patterns",
-            "score": 1,
+            "score": 3,
             "max": 3,
-            "summary": "25 await-in-loop patterns",
-            "issuesFound": 25,
+            "summary": "3 await-in-loop patterns",
+            "issuesFound": 3,
             "issuesDescription": "await-in-loop patterns"
           },
           {
             "name": "Console cleanup",
-            "score": 3,
+            "score": 4,
             "max": 5,
-            "summary": "5 console.log calls",
-            "issuesFound": 5,
+            "summary": "1 console.log",
+            "issuesFound": 1,
             "issuesDescription": "console.log calls in src",
             "locations": [
-              "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
-              "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
               "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
             ]
           },
@@ -638,17 +622,16 @@
         "emoji": "📖",
         "score": 11,
         "max": 15,
-        "summary": "avg 32-line functions, 28 long lines",
+        "summary": "avg 33-line functions, 28 long lines",
         "subcategories": [
           {
             "name": "Function length",
             "score": 4,
             "max": 4,
-            "summary": "avg 32-line functions",
-            "issuesFound": 39,
+            "summary": "avg 33-line functions",
+            "issuesFound": 37,
             "issuesDescription": "functions >50 lines",
             "locations": [
-              "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
               "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
               "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
               "/Users/giovanni/Projects/ratchet/src/commands/graph.ts",
@@ -711,14 +694,14 @@
             "name": "Duplication",
             "score": 1,
             "max": 3,
-            "summary": "513 repeated lines (high duplication)",
-            "issuesFound": 513,
+            "summary": "505 repeated lines (high duplication)",
+            "issuesFound": 505,
             "issuesDescription": "repeated code lines"
           }
         ]
       }
     ],
-    "totalIssuesFound": 631,
+    "totalIssuesFound": 594,
     "issuesByType": [
       {
         "category": "Security",
@@ -730,29 +713,27 @@
       {
         "category": "Error Handling",
         "subcategory": "Empty catches",
-        "count": 2,
+        "count": 1,
         "description": "empty catch blocks",
         "severity": "high",
         "locations": [
-          "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
           "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
         ]
       },
       {
         "category": "Code Quality",
         "subcategory": "Duplication",
-        "count": 513,
+        "count": 505,
         "description": "repeated code lines",
         "severity": "medium"
       },
       {
         "category": "Code Quality",
         "subcategory": "Function length",
-        "count": 39,
+        "count": 37,
         "description": "functions >50 lines",
         "severity": "medium",
         "locations": [
-          "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
           "/Users/giovanni/Projects/ratchet/scripts/stripe-setup.ts",
           "/Users/giovanni/Projects/ratchet/src/commands/badge.ts",
           "/Users/giovanni/Projects/ratchet/src/commands/graph.ts",
@@ -787,13 +768,6 @@
         ]
       },
       {
-        "category": "Performance",
-        "subcategory": "Async patterns",
-        "count": 25,
-        "description": "await-in-loop patterns",
-        "severity": "medium"
-      },
-      {
         "category": "Type Safety",
         "subcategory": "Any type count",
         "count": 7,
@@ -807,6 +781,13 @@
           "/Users/giovanni/Projects/ratchet/src/core/scan-cache.ts",
           "/Users/giovanni/Projects/ratchet/src/core/swarm.ts"
         ]
+      },
+      {
+        "category": "Performance",
+        "subcategory": "Async patterns",
+        "count": 3,
+        "description": "await-in-loop patterns",
+        "severity": "medium"
       },
       {
         "category": "Code Quality",
@@ -834,12 +815,10 @@
       {
         "category": "Performance",
         "subcategory": "Console cleanup",
-        "count": 5,
+        "count": 1,
         "description": "console.log calls in src",
         "severity": "low",
         "locations": [
-          "/Users/giovanni/Projects/ratchet/analyze-dup.mjs",
-          "/Users/giovanni/Projects/ratchet/api/src/worker.ts",
           "/Users/giovanni/Projects/ratchet/src/core/explanations.ts"
         ]
       }

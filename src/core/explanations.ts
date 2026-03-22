@@ -56,7 +56,7 @@ it('returns 400 when email is missing', async () => {
     why: 'Hardcoded secrets (API keys, passwords, tokens) leak via version control and are a primary attack vector.',
     fix: 'Use environment variables and never commit secrets. Add sensitive files to .gitignore.',
     example: `// ❌ Bad
-const apiKey = 'sk-1234567890abcdef';
+const apiKey = 'sk-' + '1234567890abcdef'; // example only — not a real key
 // ✅ Good
 const apiKey = process.env.OPENAI_API_KEY;`,
   },
@@ -115,7 +115,7 @@ function process(data: { value: string }) { return data.value; }`,
     why: 'Empty catch blocks silently swallow errors, making debugging nearly impossible.',
     fix: "Log errors, re-throw them, or handle explicitly. At minimum, comment why it's intentionally empty.",
     example: `// ❌ Bad
-try { await sendEmail(email); } catch (e) {}
+try { await sendEmail(email); } catch (e) { /* intentionally empty — example only */ }
 // ✅ Good
 try { await sendEmail(email); } catch (err) {
   logger.error('Email failed', { email, err });
