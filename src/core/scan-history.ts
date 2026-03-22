@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { logger } from '../lib/logger.js';
 
 export const SCAN_HISTORY_FILE = '.ratchet/history.json';
 
@@ -26,7 +27,8 @@ export async function loadScanHistory(cwd: string): Promise<ScanHistoryEntry[]> 
   try {
     const raw = await readFile(filePath, 'utf-8');
     return JSON.parse(raw) as ScanHistoryEntry[];
-  } catch {
+  } catch (err) {
+    logger.warn({ err, filePath }, 'Failed to parse scan history file');
     return [];
   }
 }

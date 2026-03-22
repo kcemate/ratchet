@@ -8,6 +8,7 @@ import { loadCredentials, detectOwnerRepo } from '../core/credentials.js';
 import { pushScanResult } from '../core/push-api.js';
 import { runAutoPr } from '../core/auto-pr.js';
 import type { ScanResult } from './scan.js';
+import { logger } from '../lib/logger.js';
 
 export const SCAN_CACHE_FILE = '.ratchet/scan-cache.json';
 
@@ -54,17 +55,14 @@ export function pushCommand(): Command {
       // Load credentials
       const creds = loadCredentials();
       if (!creds) {
-        console.error(chalk.red('  No API key found. Run `ratchet login --api-key <key>` first.'));
+        logger.error('No API key found. Run `ratchet login --api-key <key>` first.');
         process.exit(1);
       }
 
       // Load cached scan result
       const result = loadScanCache(cwd);
       if (!result) {
-        console.error(
-          chalk.red(`  No scan cache found at ${SCAN_CACHE_FILE}.`) +
-          chalk.dim('\n  Run `ratchet scan --push` to scan and push in one step.'),
-        );
+        logger.error({ file: SCAN_CACHE_FILE }, 'No scan cache found. Run `ratchet scan --push` to scan and push in one step.');
         process.exit(1);
       }
 
@@ -74,7 +72,7 @@ export function pushCommand(): Command {
         : await detectOwnerRepo(cwd);
 
       if (!ownerRepo) {
-        console.error(chalk.red('  Could not detect owner/repo from git remote. Is this a GitHub repo?'));
+        logger.error('Could not detect owner/repo from git remote. Is this a GitHub repo?');
         process.exit(1);
       }
 

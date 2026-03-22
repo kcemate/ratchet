@@ -8,6 +8,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { logger } from '../lib/logger.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -26,7 +27,8 @@ export function loadCredentials(): Credentials | null {
   if (!existsSync(p)) return null;
   try {
     return JSON.parse(readFileSync(p, 'utf-8')) as Credentials;
-  } catch {
+  } catch (err) {
+    logger.warn({ err, path: p }, 'Failed to parse credentials file');
     return null;
   }
 }
@@ -42,7 +44,9 @@ export function clearCredentials(): void {
   if (existsSync(p)) {
     try {
       unlinkSync(p);
-    } catch { /* ignore */ }
+    } catch (err) {
+      logger.warn({ err, path: p }, 'Failed to remove credentials file');
+    }
   }
 }
 
@@ -74,7 +78,8 @@ export async function detectOwnerRepo(cwd: string): Promise<{ owner: string; rep
   try {
     const { stdout } = await execFileAsync('git', ['remote', 'get-url', 'origin'], { cwd });
     return parseOwnerRepo(stdout.trim());
-  } catch {
+  } catch (err) {
+    logger.debug({ err, cwd }, 'Could not detect git remote origin');
     return null;
   }
 }

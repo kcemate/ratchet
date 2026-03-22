@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { parse } from 'yaml';
 import type { ScanHistoryEntry } from './scan-history.js';
+import { logger } from '../lib/logger.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -39,7 +40,8 @@ export function loadNotificationConfig(cwd: string): NotificationConfig {
     const raw = readFileSync(configPath, 'utf-8');
     const data = parse(raw) as { notifications?: NotificationConfig } | null;
     return data?.notifications ?? {};
-  } catch {
+  } catch (err) {
+    logger.warn({ err, configPath }, 'Failed to parse .ratchet.yml notifications config');
     return {};
   }
 }
