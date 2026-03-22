@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import type { RatchetConfig, Target } from '../types.js';
+import { IGNORE_DIRS } from './scan-constants.js';
 
 export type ProjectType = 'node' | 'python' | 'go' | 'rust' | 'unknown';
 
@@ -21,7 +22,6 @@ const TEST_FILE_PATTERNS = [
   /.*_test\.[a-z]+$/i,
 ];
 
-const IGNORE_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.cache']);
 
 export function countTestFiles(dir: string): number {
   let count = 0;
