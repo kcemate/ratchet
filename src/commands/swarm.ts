@@ -40,7 +40,10 @@ export function swarmCommand(): Command {
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
     .option('--model <model>', 'Model to use for agents and judge')
     .option('--dry-run', 'Preview mode — show what would run without executing', false)
-    .option('--parallel <number>', 'Run multiple specs in parallel (one swarm per spec). Use with multiple --spec flags or --specs-file.')
+    .option(
+      '--parallel <number>',
+      'Run multiple specs in parallel (one swarm per spec). Use with multiple --spec flags or --specs-file.',
+    )
     .option('--specs-file <path>', 'Path to a markdown file where each ## heading is a separate spec to swarm')
     .addHelpText(
       'after',
@@ -68,14 +71,16 @@ export function swarmCommand(): Command {
         const cwd = process.cwd();
         const agentCount = validateInt(options.agents, 'agents', 1, 10) ?? 3;
 
-        // ── Parallel swarm mode ────────────────────────────────────────────
+        // ── Parallel swarm mode
         if (options.parallel) {
           const maxWorkers = parseInt(options.parallel, 10);
           if (isNaN(maxWorkers) || maxWorkers < 1) {
             exitWithError(`  Invalid --parallel value: ${options.parallel}\n  Must be a positive integer.`);
           }
 
-          const { runParallel, loadSpecsFile, buildParallelReport, parseSpecsFile } = await import('../core/parallel.js');
+          const {
+            runParallel, loadSpecsFile, buildParallelReport, parseSpecsFile,
+          } = await import('../core/parallel.js');
           const { readFileSync: rfs } = await import('fs');
           const clicks = 7;
 
@@ -123,8 +128,7 @@ export function swarmCommand(): Command {
           process.stdout.write(buildParallelReport(result));
           return;
         }
-        // ── End parallel swarm mode ────────────────────────────────────────
-
+        // ── End parallel swarm mode
         if (!options.spec && !options.target) {
           exitWithError(
             'Specify --spec "goal" or --target <name>.\n' +
@@ -179,7 +183,8 @@ export function swarmCommand(): Command {
           for (const s of sorted) {
             const bar = '█'.repeat(Math.round(s.winRate * 10));
             process.stdout.write(
-              `  ${chalk.cyan(s.name.padEnd(20))} ${bar.padEnd(10)} ${(s.winRate * 100).toFixed(0)}% (${s.wins}W/${s.losses}L)\n`,
+              `  ${chalk.cyan(s.name.padEnd(20))} ${bar.padEnd(10)} ` +
+              `${(s.winRate * 100).toFixed(0)}% (${s.wins}W/${s.losses}L)\n`,
             );
           }
           process.stdout.write('\n');
@@ -245,7 +250,8 @@ function swarmStatsCommand(): Command {
         const winRatePct = (s.winRate * 100).toFixed(1) + '%';
         const avgDelta = s.avgDelta > 0 ? chalk.green(`+${s.avgDelta.toFixed(1)}`) : chalk.red(s.avgDelta.toFixed(1));
         process.stdout.write(
-          `  ${chalk.cyan(s.name.padEnd(22))} ${winRatePct.padEnd(12)} ${String(s.wins).padEnd(6)} ${String(s.losses).padEnd(6)} ${avgDelta}\n`,
+          `  ${chalk.cyan(s.name.padEnd(22))} ${winRatePct.padEnd(12)} ` +
+          `${String(s.wins).padEnd(6)} ${String(s.losses).padEnd(6)} ${avgDelta}\n`,
         );
       }
 

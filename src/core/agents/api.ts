@@ -47,7 +47,8 @@ export class APIAgent implements Agent {
 
 export function buildAnalyzePrompt(context: string): string {
   return (
-    `You are a code improvement assistant. Analyze the following target and provide a concise analysis of what can be improved.\n\n` +
+    `You are a code improvement assistant. Analyze the following target and ` +
+    `provide a concise analysis of what can be improved.\n\n` +
     `${context}\n\n` +
     `Focus on: code quality, error handling, performance, maintainability. ` +
     `Be specific and actionable. List the top 3 improvement opportunities.`
@@ -56,7 +57,8 @@ export function buildAnalyzePrompt(context: string): string {
 
 export function buildProposePrompt(analysis: string, target: Target): string {
   return (
-    `You are a code improvement assistant. Based on the following analysis, propose ONE specific, focused improvement.\n\n` +
+    `You are a code improvement assistant. Based on the following analysis, ` +
+    `propose ONE specific, focused improvement.\n\n` +
     `Target path: ${target.path}\n` +
     `Analysis:\n${analysis}\n\n` +
     `Respond with:\n` +
@@ -78,7 +80,8 @@ export function buildHardenAnalyzePrompt(context: string): string {
 
 export function buildHardenProposePrompt(analysis: string, target: Target): string {
   return (
-    `You are a test-writing assistant. Based on the following analysis, propose ONE specific set of tests to write.\n\n` +
+    `You are a test-writing assistant. Based on the following analysis, ` +
+    `propose ONE specific set of tests to write.\n\n` +
     `Target path: ${target.path}\n` +
     `Analysis:\n${analysis}\n\n` +
     `Respond with:\n` +

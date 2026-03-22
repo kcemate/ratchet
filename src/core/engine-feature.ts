@@ -186,7 +186,7 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
     // Clear GitNexus cache for fresh data
     clearGitNexusCache();
 
-    // ── Click 0: Plan ───────────────────────────────────────────────────────
+    // ── Click 0: Plan
     logger.info('[feature] Starting plan click (click 0)');
     await callbacks.onClickStart?.(0, clicks + 1);
 
@@ -229,7 +229,7 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
       // Non-fatal
     }
 
-    // ── Clicks 1-N: Build ───────────────────────────────────────────────────
+    // ── Clicks 1-N: Build
     let clickNumber = 1;
     const maxBuildClicks = Math.max(1, clicks - 1); // Reserve last click for verify if clicks > 1
 
@@ -286,10 +286,15 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
 
         if (rolled_back) {
-          process.stderr.write(`[ratchet] feature click ${clickNumber} (step ${step.id}) ROLLED BACK (${elapsedSec}s)\n`);
+          process.stderr.write(
+            `[ratchet] feature click ${clickNumber} (step ${step.id}) ROLLED BACK (${elapsedSec}s)\n`,
+          );
           step.status = 'failed';
         } else {
-          process.stderr.write(`[ratchet] feature click ${clickNumber} (step ${step.id}) LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}\n`);
+          process.stderr.write(
+            `[ratchet] feature click ${clickNumber} (step ${step.id}) LANDED (${elapsedSec}s)` +
+            `${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}\n`,
+          );
           step.status = 'completed';
           plan.completedSteps.push(step.id);
 

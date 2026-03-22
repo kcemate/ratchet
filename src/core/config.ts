@@ -179,14 +179,16 @@ export function getConfigWarnings(raw: string): string[] {
 
   if (data.agent !== undefined && !VALID_AGENTS.includes(data.agent as RatchetConfig['agent'])) {
     warnings.push(
-      `Invalid agent "${data.agent}" — expected one of: ${VALID_AGENTS.join(', ')}. Falling back to "${DEFAULT_CONFIG.agent}".`,
+      `Invalid agent "${data.agent}" — expected one of: ${VALID_AGENTS.join(', ')}. ` +
+      `Falling back to "${DEFAULT_CONFIG.agent}".`,
     );
   }
 
   const rawClicks = data.defaults?.clicks;
   if (rawClicks !== undefined && !(Number.isInteger(rawClicks) && rawClicks >= 1)) {
     warnings.push(
-      `Invalid defaults.clicks "${rawClicks}" — must be a positive integer. Falling back to ${DEFAULT_CONFIG.defaults.clicks}.`,
+      `Invalid defaults.clicks "${rawClicks}" — must be a positive integer. ` +
+      `Falling back to ${DEFAULT_CONFIG.defaults.clicks}.`,
     );
   }
 
@@ -195,7 +197,8 @@ export function getConfigWarnings(raw: string): string[] {
       if (b.rule !== undefined && !VALID_RULES.includes(b.rule as Boundary['rule'])) {
         const where = b.path ? ` for boundary "${b.path}"` : '';
         warnings.push(
-          `Invalid boundary rule "${b.rule}"${where} — expected one of: ${VALID_RULES.join(', ')}. Falling back to "no-modify".`,
+          `Invalid boundary rule "${b.rule}"${where} — expected one of: ${VALID_RULES.join(', ')}. ` +
+          `Falling back to "no-modify".`,
         );
       }
     }

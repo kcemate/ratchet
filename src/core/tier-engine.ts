@@ -34,8 +34,7 @@ import { randomUUID } from 'crypto';
 import { validateScope } from './scope.js';
 import { logger } from '../lib/logger.js';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
+// ─── Constants
 /** Use atomic mode for effort-1 sweepable fixes */
 const ATOMIC_EFFORT_THRESHOLD = 1;
 
@@ -45,8 +44,7 @@ const MAX_ATOMIC_FILES = 40;
 /** For non-atomic batches, how many files per click */
 const STANDARD_BATCH_SIZE = 6;
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
+// ─── Types
 export interface TierTarget {
   gap: TierGap;
   /** Whether to use atomic mode (one click = all files) */
@@ -74,8 +72,7 @@ export interface TierEngineOptions {
   scopeArg?: string;
 }
 
-// ─── Prompt builders ─────────────────────────────────────────────────────────
-
+// ─── Prompt builders
 /**
  * Atomic sweep prompt: all files, exact tier target, maximize completeness.
  * The agent must fix EVERY instance across ALL files to cross the tier boundary.
@@ -144,8 +141,7 @@ After making changes, output each modified file:
 MODIFIED: <filepath>`;
 }
 
-// ─── Tier planning ────────────────────────────────────────────────────────────
-
+// ─── Tier planning
 /**
  * Plan which tier crossings to attempt with the available click budget.
  * Effort-1 sweepable gaps become ATOMIC (1 click, all files).
@@ -208,10 +204,11 @@ export function planTierTargets(scan: ScanResult, totalClicks: number): TierTarg
   return targets;
 }
 
-// ─── Engine ──────────────────────────────────────────────────────────────────
-
+// ─── Engine
 export async function runTierEngine(options: TierEngineOptions): Promise<RatchetRun> {
-  const { clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore, scope: scopeFiles = [] } = options;
+  const {
+    clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore, scope: scopeFiles = [],
+  } = options;
 
   const run: RatchetRun = {
     id: randomUUID(),
@@ -311,7 +308,10 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
           if (scopeFiles.length > 0 && !rolled_back) {
             const scopeCheck = validateScope(click.filesModified, scopeFiles, cwd);
             if (!scopeCheck.valid) {
-              logger.warn(`[ratchet] ✗ click ${globalClickNum} ROLLED BACK — scope violation: ${scopeCheck.scopeViolations.join(', ')}`);
+              logger.warn(
+                `[ratchet] ✗ click ${globalClickNum} ROLLED BACK — scope: ` +
+                scopeCheck.scopeViolations.join(', '),
+              );
               if (click.commitHash) await git.revertLastCommit(cwd).catch(() => {});
               click.testsPassed = false;
               click.rollbackReason = `scope-exceeded: ${scopeCheck.scopeViolations.join(', ')}`;
@@ -323,7 +323,10 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
           if (rolled_back) {
             logger.warn(`[ratchet] ✗ click ${globalClickNum} ROLLED BACK (${elapsedSec}s) — ${gap.subcategory}`);
           } else {
-            logger.warn(`[ratchet] ✓ click ${globalClickNum} landed (${elapsedSec}s) — ${gap.subcategory}${click.commitHash ? ` [${click.commitHash.slice(0, 7)}]` : ''}`);
+            logger.warn(
+              `[ratchet] ✓ click ${globalClickNum} landed (${elapsedSec}s) — ${gap.subcategory}` +
+              `${click.commitHash ? ` [${click.commitHash.slice(0, 7)}]` : ''}`,
+            );
           }
 
           // Always re-scan after a landed click to measure tier impact
@@ -337,7 +340,10 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
               if (delta > 0) {
                 logger.warn(`[ratchet] 🎯 Tier crossed: ${previousTotal} → ${newScan.total} (+${delta} pts)`);
               } else {
-                logger.warn(`[ratchet] Score: ${newScan.total} (no tier crossed yet — ${newScan.totalIssuesFound} issues remaining)`);
+                logger.warn(
+                  `[ratchet] Score: ${newScan.total} ` +
+                  `(no tier crossed yet — ${newScan.totalIssuesFound} issues remaining)`,
+                );
               }
 
               previousTotal = newScan.total;

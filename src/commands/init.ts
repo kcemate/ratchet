@@ -168,8 +168,10 @@ export function initCommand(): Command {
       }
 
       process.stdout.write(
-        `\n${chalk.bold('Next steps:')}\n  ${chalk.dim('1.')} Edit ${chalk.cyan('.ratchet.yml')} — set your targets and boundaries\n` +
-        `  ${chalk.dim('2.')} Run ${chalk.green(`ratchet torque --target ${detectedTargetName}`)} to start the loop\n\n`,
+        `\n${chalk.bold('Next steps:')}\n` +
+        `  ${chalk.dim('1.')} Edit ${chalk.cyan('.ratchet.yml')} — set your targets and boundaries\n` +
+        `  ${chalk.dim('2.')} Run ` +
+        `${chalk.green(`ratchet torque --target ${detectedTargetName}`)} to start the loop\n\n`,
       );
     });
 

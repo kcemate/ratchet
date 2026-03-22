@@ -111,7 +111,8 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 1,
     sweepable: true,
-    fixInstruction: 'Remove or replace console.log calls with the structured logger. For debug-only logs, remove entirely. For operational logs, use logger.info/debug.',
+    fixInstruction: 'Remove or replace console.log calls with the structured logger. ' +
+      'For debug-only logs, remove entirely. For operational logs, use logger.info/debug.',
   },
   {
     name: 'Async patterns',
@@ -125,7 +126,8 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 3,
     sweepable: false,
-    fixInstruction: 'Refactor await-in-loop patterns to use Promise.all or batch operations instead of sequential awaits inside for/while loops.',
+    fixInstruction: 'Refactor await-in-loop patterns to use Promise.all or batch operations instead of sequential ' +
+      'awaits inside for/while loops.',
   },
   {
     name: 'Import hygiene',
@@ -155,7 +157,8 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 1,
     sweepable: true,
-    fixInstruction: 'Break lines >120 characters. Use intermediate variables, multi-line function calls, or destructuring. Do NOT change logic, only formatting.',
+    fixInstruction: 'Break lines >120 characters. Use intermediate variables, multi-line function calls, ' +
+      'or destructuring. Do NOT change logic, only formatting.',
   },
   {
     name: 'Dead code',
@@ -169,7 +172,8 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 1,
     sweepable: true,
-    fixInstruction: 'Resolve or remove TODO comments and commented-out code blocks. Either implement the TODO or delete it with a brief explanation.',
+    fixInstruction: 'Resolve or remove TODO comments and commented-out code blocks. ' +
+      'Either implement the TODO or delete it with a brief explanation.',
   },
   {
     name: 'Duplication',
@@ -185,7 +189,8 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 5,
     sweepable: false,
-    fixInstruction: 'Extract duplicated code into shared utility functions. Look for repeated patterns across files and consolidate into a common module.',
+    fixInstruction: 'Extract duplicated code into shared utility functions. ' +
+      'Look for repeated patterns across files and consolidate into a common module.',
   },
   {
     name: 'Function length',
@@ -197,7 +202,8 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 4,
     sweepable: false,
-    fixInstruction: 'Split functions >50 lines into smaller, focused helper functions. Extract logical blocks into named functions.',
+    fixInstruction: 'Split functions >50 lines into smaller, focused helper functions. ' +
+      'Extract logical blocks into named functions.',
   },
 
   // ── Security
@@ -242,7 +248,8 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 2,
     sweepable: true,
-    fixInstruction: 'Add more assertions to test cases. Each test should have at least 2-3 meaningful assertions checking different aspects of the behavior.',
+    fixInstruction: 'Add more assertions to test cases. Each test should have at least 2-3 meaningful assertions ' +
+      'checking different aspects of the behavior.',
   },
 ];
 
@@ -393,7 +400,8 @@ export function buildScoreOptimizedBacklog(scan: ScanResult): IssueTask[] {
     tasks.push({
       category: findCategoryForSubcategory(scan, gap.subcategory),
       subcategory: gap.subcategory,
-      description: `${gap.fixInstruction} [ROI: ${gap.roi.toFixed(2)}, +${gap.pointsAtNextTier}pt next tier, +${gap.pointsAvailable}pt max]`,
+      description: `${gap.fixInstruction} ` +
+        `[ROI: ${gap.roi.toFixed(2)}, +${gap.pointsAtNextTier}pt next tier, +${gap.pointsAvailable}pt max]`,
       count: gap.currentCount,
       severity,
       priority: gap.roi * 100, // Scale up for comparison with old priority values
@@ -453,7 +461,8 @@ export function generateScorePlan(scan: ScanResult): string {
       ? `fix ${g.issuesToNextTier} issues → +${g.pointsAtNextTier}pt`
       : `fix ${g.issuesToMax} issues → +${g.pointsAvailable}pt`;
     lines.push(
-      `   ${i + 1}. ${g.subcategory} (${g.currentScore}/${g.maxScore}) — ${tierInfo} [ROI: ${g.roi.toFixed(2)}, effort: ${g.effortPerFix}/5${g.sweepable ? ', sweepable' : ''}]`
+      `   ${i + 1}. ${g.subcategory} (${g.currentScore}/${g.maxScore}) — ${tierInfo} ` +
+      `[ROI: ${g.roi.toFixed(2)}, effort: ${g.effortPerFix}/5${g.sweepable ? ', sweepable' : ''}]`
     );
   }
 

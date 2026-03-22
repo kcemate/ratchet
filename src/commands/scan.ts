@@ -269,7 +269,11 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
   // --- Auth & rate limiting /6 ---
   const hasAuthMiddleware = anyFileHasMatch(
     srcFiles, contents,
-    /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i,
+    new RegExp(
+      /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken)/.source +
+      /|passport\.authenticate|jwt\.verify|bearer|middleware.*auth\b/.source,
+      'i',
+    ),
   );
   const hasRateLimit = anyFileHasMatch(
     srcFiles, contents,

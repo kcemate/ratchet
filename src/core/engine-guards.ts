@@ -2,13 +2,17 @@ import type { Target, RatchetConfig, ClickGuards } from '../types.js';
 import { GUARD_PROFILES } from '../types.js';
 
 /** Guard profile escalation chain: tight → refactor → broad → atomic */
-export const GUARD_ESCALATION_ORDER: Array<import('../types.js').GuardProfileName> = ['tight', 'refactor', 'broad', 'atomic'];
+export const GUARD_ESCALATION_ORDER: Array<import('../types.js').GuardProfileName> = [
+  'tight', 'refactor', 'broad', 'atomic',
+];
 
 /**
  * Given the current resolved guards, return the next level up in the escalation chain.
  * Returns null if already at atomic or if guards can't be matched to a known profile.
  */
-export function nextGuardProfile(current: ClickGuards | null): { name: import('../types.js').GuardProfileName; guards: ClickGuards | null } | null {
+export function nextGuardProfile(
+  current: ClickGuards | null,
+): { name: import('../types.js').GuardProfileName; guards: ClickGuards | null } | null {
   if (current === null) return null; // already atomic
   // Match current guards to a known profile
   const currentIdx = GUARD_ESCALATION_ORDER.findIndex(name => {
@@ -25,7 +29,9 @@ export function nextGuardProfile(current: ClickGuards | null): { name: import('.
 /** Detect guard-rejection rollbacks from click rollbackReason */
 export function isGuardRejection(reason?: string): boolean {
   if (!reason) return false;
-  return reason.startsWith('Too many lines changed:') || reason.startsWith('Too many files changed:') || reason.startsWith('Single file changed too many lines');
+  return reason.startsWith('Too many lines changed:') ||
+    reason.startsWith('Too many files changed:') ||
+    reason.startsWith('Single file changed too many lines');
 }
 
 /**

@@ -8,8 +8,7 @@ import { runScan } from '../commands/scan.js';
 import { findSourceFiles } from './scan-constants.js';
 import type { ScanResult } from '../commands/scan.js';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
+// ── Types
 export interface VisionNode {
   id: string;
   label: string;
@@ -43,8 +42,7 @@ export interface VisionOptions {
   focusHops?: number;      // neighbourhood depth for focus mode (default 2)
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
+// ── Constants
 const MAX_NODES_DEFAULT = 500;
 const FOCUS_HOPS_DEFAULT = 2;
 
@@ -55,8 +53,7 @@ const SEVERITY_WEIGHT: Record<string, number> = {
   low: 3,
 };
 
-// ── Pure helpers (exported for tests) ────────────────────────────────────────
-
+// ── Pure helpers (exported for tests)
 /**
  * Map a 0–100 score to a hex colour (6-tier cyberpunk scale).
  */
@@ -89,8 +86,7 @@ export function computeFileScore(severityScore: number): number {
   return Math.max(0, Math.min(100, 100 - severityScore));
 }
 
-// ── Import parsing ────────────────────────────────────────────────────────────
-
+// ── Import parsing
 /**
  * Extract relative-import target paths from a file's content.
  * Only considers local imports (starts with '.'), skipping node_modules.
@@ -142,8 +138,7 @@ export function parseLocalImports(
   return results;
 }
 
-// ── Focus mode ────────────────────────────────────────────────────────────────
-
+// ── Focus mode
 /**
  * Given a focus file and a set of edges, return the set of file IDs that are
  * within `hops` steps of the focus file (bidirectional BFS).
@@ -171,8 +166,7 @@ export function getNeighborhood(
   return visited;
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
-
+// ── Main
 export async function buildVisionGraph(options: VisionOptions): Promise<VisionGraph> {
   const {
     cwd,

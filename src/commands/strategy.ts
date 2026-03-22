@@ -37,7 +37,9 @@ export function strategyCommand(): Command {
 
     process.stdout.write('\n');
     process.stdout.write(chalk.bold('  🧠 Ratchet Strategy') + chalk.dim(` v${strategy.version}`) + '\n');
-    process.stdout.write(chalk.dim(`  ${strategy.profile.name} · Updated ${strategy.updatedAt.split('T')[0]}`) + '\n\n');
+    process.stdout.write(
+      chalk.dim(`  ${strategy.profile.name} · Updated ${strategy.updatedAt.split('T')[0]}`) + '\n\n',
+    );
 
     // Profile
     process.stdout.write(chalk.bold('  📦 Codebase') + '\n');
@@ -78,7 +80,10 @@ export function strategyCommand(): Command {
       process.stdout.write(chalk.bold('  🔥 Hot spots\n'));
       for (const hs of hotFiles) {
         const pct = Math.round(hs.rollbackRate * 100);
-        process.stdout.write(`     ${chalk.yellow('→')} ${chalk.cyan(hs.filePath)} ${chalk.dim(`${pct}% rollback · ${hs.attempts} attempts`)}\n`);
+        process.stdout.write(
+          `     ${chalk.yellow('→')} ${chalk.cyan(hs.filePath)} ` +
+          `${chalk.dim(`${pct}% rollback · ${hs.attempts} attempts`)}\n`,
+        );
       }
       process.stdout.write('\n');
     }
@@ -115,7 +120,7 @@ export function strategyCommand(): Command {
     const context = buildStrategyContext(strategy);
     if (context) {
       process.stdout.write(chalk.bold('  💬 Agent context preview\n'));
-      process.stdout.write(chalk.dim('  ─────────────────────────────────\n'));
+      process.stdout.write(chalk.dim('  ' + '─'.repeat(33) + '\n'));
       for (const line of context.split('\n').slice(0, 10)) {
         process.stdout.write(`  ${chalk.dim(line)}\n`);
       }

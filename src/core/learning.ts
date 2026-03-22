@@ -2,8 +2,7 @@ import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import type { Specialization } from './agents/specialized.js';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// ── Types
 export interface IssueTypeRecord {
   issueType: string;
   attempts: number;
@@ -66,13 +65,11 @@ export interface SpecializationRanking {
   avgScoreDelta: number;
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
+// ── Constants
 const LEARNING_FILE = '.ratchet/learning.json';
 const SKIP_FAILURE_THRESHOLD = 3;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
+// ── Helpers
 function emptyLearningData(): LearningData {
   return {
     version: 1,
@@ -88,8 +85,7 @@ function issueFileKey(issueType: string, filePath: string): string {
   return `${issueType}::${filePath}`;
 }
 
-// ── Learning Store ────────────────────────────────────────────────────────────
-
+// ── Learning Store
 export class LearningStore {
   private data: LearningData;
   private readonly filePath: string;
@@ -130,8 +126,7 @@ export class LearningStore {
     }
   }
 
-  // ── Record Outcomes ───────────────────────────────────────────────────────
-
+  // ── Record Outcomes
   /**
    * Record the outcome of a click attempt.
    */
@@ -245,8 +240,7 @@ export class LearningStore {
     await this.save();
   }
 
-  // ── Query Functions ─────────────────────────────────────────────────────
-
+  // ── Query Functions
   /**
    * Get a recommendation for which specialization to use for a given issue type.
    */
@@ -272,7 +266,8 @@ export class LearningStore {
       return {
         preferredSpecialization: issue.bestSpecialization,
         confidence,
-        reason: `"${issue.bestSpecialization}" has the best track record for "${issueType}" issues (${issue.successes}/${issue.attempts} success rate).`,
+        reason: `"${issue.bestSpecialization}" has the best track record for "${issueType}" issues ` +
+          `(${issue.successes}/${issue.attempts} success rate)`,
       };
     }
 

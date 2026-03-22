@@ -10,7 +10,10 @@ export const IGNORE_DIRS = new Set(['node_modules', 'dist', '.git', '.next', 'bu
 export const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.go', '.rs']);
 export const TEST_PATTERNS = ['.test.', '.spec.', '_test.', '_spec.', '/test/', '/tests/', '/spec/'];
 
-export const LOOP_DB_API_PATTERN = /\.(find|findOne|findAll|findBy|query|save|update|insert|select|exec|execute|search)\s*[(<]|\.(get|post|put|delete|patch|request)\s*\(|\bfetch\s*\(|\baxios\s*[.(]/;
+export const LOOP_DB_API_PATTERN = new RegExp(
+  /\.(find|findOne|findAll|findBy|query|save|update|insert|select|exec|execute|search)\s*[(<]/.source +
+  /|\.(get|post|put|delete|patch|request)\s*\(|\bfetch\s*\(|\baxios\s*[.(]/.source,
+);
 
 export const SECRET_PATTERNS = [
   /(?:api[_-]?key|apikey|secret|password|passwd|token)\s*=\s*['"][^'"]{8,}['"]/gi,
@@ -166,9 +169,11 @@ export function scoreStrictConfig(cwd: string): { score: number; summary: string
   const tsconfigPath = join(cwd, 'tsconfig.json');
   if (!existsSync(tsconfigPath)) return { score: 1, summary: 'TypeScript, no tsconfig found' };
   try {
-    const tsconfig = JSON.parse(readFileSync(tsconfigPath, 'utf-8')) as { compilerOptions?: { strict?: boolean; noImplicitAny?: boolean; strictNullChecks?: boolean } };
+    type TsConfig = { compilerOptions?: { strict?: boolean; noImplicitAny?: boolean; strictNullChecks?: boolean } };
+    const tsconfig = JSON.parse(readFileSync(tsconfigPath, 'utf-8')) as TsConfig;
     if (tsconfig.compilerOptions?.strict) return { score: 7, summary: 'strict mode enabled' };
-    if (tsconfig.compilerOptions?.noImplicitAny && tsconfig.compilerOptions?.strictNullChecks) return { score: 5, summary: 'noImplicitAny + strictNullChecks' };
+    if (tsconfig.compilerOptions?.noImplicitAny && tsconfig.compilerOptions?.strictNullChecks)
+      return { score: 5, summary: 'noImplicitAny + strictNullChecks' };
     if (tsconfig.compilerOptions?.noImplicitAny) return { score: 3, summary: 'noImplicitAny' };
     return { score: 1, summary: 'TypeScript, no strict flags' };
   } catch {

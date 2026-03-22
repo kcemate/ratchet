@@ -73,7 +73,8 @@ app.post('/users', (req, res) => {
   },
 
   'Auth & rate limiting': {
-    why: 'Without authentication, anyone can access your API. Without rate limiting, attackers can abuse your resources.',
+    why: 'Without authentication, anyone can access your API. ' +
+      'Without rate limiting, attackers can abuse your resources.',
     fix: 'Add auth middleware to all protected routes and configure rate limiting on public endpoints.',
     example: `const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 app.post('/api/login', limiter);          // scope to specific routes

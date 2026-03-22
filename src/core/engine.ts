@@ -1107,7 +1107,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     if (state.allEconomics.length > 0 && callbacks.onRunEconomics) {
       const totalWallTimeMs = run.finishedAt.getTime() - run.startedAt.getTime();
       const economics = computeRunEconomics(state.allEconomics, totalWallTimeMs);
-      await callbacks.onRunEconomics(economics).catch(() => {});
+      await Promise.resolve(callbacks.onRunEconomics(economics)).catch(() => {});
     }
     await callbacks.onRunComplete?.(run);
 

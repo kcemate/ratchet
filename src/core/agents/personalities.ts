@@ -15,8 +15,7 @@ export interface AgentPersonality {
   preferredGuard: string;
 }
 
-// ─── Built-in Personalities ───────────────────────────────────────────────────
-
+// ─── Built-in Personalities
 const THE_SURGEON: AgentPersonality = {
   name: 'The Surgeon',
   style: 'minimalist',
@@ -129,8 +128,7 @@ const THE_ARCHITECT: AgentPersonality = {
   preferredGuard: 'refactor',
 };
 
-// ─── Registry ─────────────────────────────────────────────────────────────────
-
+// ─── Registry
 const PERSONALITIES: Record<string, AgentPersonality> = {
   'the-surgeon': THE_SURGEON,
   'the-bulldozer': THE_BULLDOZER,

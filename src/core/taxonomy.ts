@@ -6,8 +6,7 @@
  * instead of hardcoding their own lists.
  */
 
-// ─── Subcategory type ────────────────────────────────────────────────────────
-
+// ─── Subcategory type
 /**
  * All known issue subcategory names.
  * Keep this in sync with the scanner scorers in scan.ts.
@@ -41,8 +40,7 @@ export const ALL_SUBCATEGORIES = [
 
 export type IssueSubcategory = (typeof ALL_SUBCATEGORIES)[number];
 
-// ─── Structural vs Local classification ──────────────────────────────────────
-
+// ─── Structural vs Local classification
 /**
  * Structural issue subcategories — problems that require cross-cutting
  * refactoring (architect mode) rather than local fixes.
@@ -77,8 +75,7 @@ const _LOCAL: IssueSubcategory[] = [
 ];
 export const LOCAL_SUBCATEGORIES: ReadonlySet<string> = new Set(_LOCAL);
 
-// ─── Compile-time exhaustiveness check ───────────────────────────────────────
-
+// ─── Compile-time exhaustiveness check
 // The _STRUCTURAL and _LOCAL arrays are typed as IssueSubcategory[], so only
 // valid subcategory names can appear. The runtime check below ensures that
 // together they cover ALL_SUBCATEGORIES with no gaps.
@@ -96,16 +93,14 @@ for (const sub of ALL_SUBCATEGORIES) {
   }
 }
 
-// ─── Severity weights ────────────────────────────────────────────────────────
-
+// ─── Severity weights
 export const SEVERITY_WEIGHT: Record<string, number> = {
   high: 3,
   medium: 2,
   low: 1,
 };
 
-// ─── Category names ──────────────────────────────────────────────────────────
-
+// ─── Category names
 export const CATEGORY_NAMES = [
   'Testing',
   'Security',
