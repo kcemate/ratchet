@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
+import { logger } from '../lib/logger.js';
 import type { ScanResult } from '../commands/scan.js';
 import { runScan } from '../commands/scan.js';
 import {
@@ -98,7 +99,8 @@ function gitBlobHash(filePath: string, cwd: string): string | null {
       stdio: ['pipe', 'pipe', 'pipe'],
     }).trim();
     return result || null;
-  } catch {
+  } catch (err) {
+    logger.debug({ err, filePath }, 'git hash-object failed, file may not be tracked');
     return null;
   }
 }
@@ -128,7 +130,8 @@ function getChangedFiles(cwd: string): string[] {
     return Array.from(all)
       .filter(f => f.length > 0)
       .map(f => join(cwd, f));
-  } catch {
+  } catch (err) {
+    logger.debug({ err, cwd }, 'git diff failed, assuming no changed files');
     return [];
   }
 }
@@ -263,7 +266,8 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
   }
 
   if (isTest) {
-    const edgePatterns = /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
+    const edgePatterns =
+      /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
     edgeCaseTestCount = (content.match(edgePatterns) ?? []).length;
     testCaseCount = (content.match(/\b(?:it|test)\s*[.(]/g) ?? []).length;
     assertCount = (content.match(/\b(?:expect|assert)\s*[.(]/g) ?? []).length;
@@ -277,11 +281,13 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
   let hasCors = false;
 
   if (!isTest) {
-    hasValidation = /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content)
+    hasValidation =
+      /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content)
       || /\buuid\b.*\bvalidate\b|\bvalidate.*uuid\b|isUUID|uuidv[1-5]/i.test(content)
       || /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(content);
     isRouteFile = /(?:router\.|app\.(?:get|post|put|patch|delete)|@(?:Get|Post|Put|Patch|Delete))/i.test(content);
-    hasAuthMiddleware = /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i.test(content);
+    hasAuthMiddleware =
+      /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i.test(content);
     hasRateLimit = /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i.test(content);
     hasCors = /\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i.test(content);
 
@@ -351,7 +357,9 @@ export function rebuildScanFromMetrics(
       if (pkg.name) projectName = pkg.name;
       const ts = pkg.scripts?.test ?? '';
       if (ts && !ts.includes('no test') && !ts.includes('echo "Error')) hasTestScript = true;
-    } catch { /* ignore */ }
+    } catch (err) {
+      logger.debug({ err }, 'Failed to read package.json for project metadata');
+    }
   }
 
   const files = Object.keys(allFileMetrics);
@@ -571,7 +579,8 @@ export class IncrementalScanner {
       if (!parsed.fileMetrics) parsed.fileMetrics = {};
       this.cachedTimestamp = parsed.lastScanAt;
       return parsed;
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'Failed to parse scan cache, will perform full scan');
       return null;
     }
   }
@@ -607,7 +616,9 @@ export class IncrementalScanner {
         this._needsFullScan = age > CACHE_MAX_AGE_MS;
         return this._needsFullScan;
       }
-    } catch { /* fall through */ }
+    } catch (err) {
+      logger.warn({ err }, 'Failed to read scan cache timestamp, forcing full scan');
+    }
     this._needsFullScan = true;
     return true;
   }
@@ -672,7 +683,8 @@ export class IncrementalScanner {
       let content: string;
       try {
         content = readFileSync(filePath, 'utf-8');
-      } catch {
+      } catch (err) {
+        logger.debug({ err, filePath }, 'Failed to read file for incremental rescan');
         content = '';
       }
 
@@ -707,7 +719,8 @@ export class IncrementalScanner {
       let content: string;
       try {
         content = readFileSync(filePath, 'utf-8');
-      } catch {
+      } catch (err) {
+        logger.debug({ err, filePath }, 'Failed to read file for full scan');
         content = '';
       }
       fileMetrics[filePath] = analyzeFile(filePath, content);

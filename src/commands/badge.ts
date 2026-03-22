@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { mkdir, writeFile } from 'fs/promises';
+import { logger } from '../lib/logger.js';
 import { join } from 'path';
 import { printHeader, printFields } from '../lib/cli.js';
 import { runScan } from './scan.js';
@@ -40,14 +41,14 @@ export function badgeCommand(): Command {
       // Validate options
       const validStyles = new Set(['flat', 'flat-square', 'for-the-badge']);
       if (!validStyles.has(options.style)) {
-        console.error(chalk.red(`  Invalid --style: ${chalk.bold(options.style)}`));
-        console.error(chalk.dim('  Valid styles: flat, flat-square, for-the-badge'));
+        logger.error({ style: options.style }, 'Invalid --style');
+        logger.info('Valid styles: flat, flat-square, for-the-badge');
         process.exit(1);
       }
       const validFormats = new Set(['markdown', 'html']);
       if (!validFormats.has(options.format)) {
-        console.error(chalk.red(`  Invalid --format: ${chalk.bold(options.format)}`));
-        console.error(chalk.dim('  Valid formats: markdown, html'));
+        logger.error({ format: options.format }, 'Invalid --format');
+        logger.info('Valid formats: markdown, html');
         process.exit(1);
       }
 

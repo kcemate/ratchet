@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { IssueSubcategory, IssueCategoryName } from '../core/taxonomy.js';
 import { printHeader, severityColor, scoreColor } from '../lib/cli.js';
+import { logger } from '../lib/logger.js';
 import { classifyIssues, summarizeClassifications } from '../core/cross-cutting.js';
 import { getExplanation } from '../core/explanations.js';
 import type { ClickGuards } from '../types.js';
@@ -68,7 +69,12 @@ function evaluateGates(
 
   const totalPassed = totalThreshold === null || result.total >= totalThreshold;
 
-  return { passed: totalPassed && failedCategories.length === 0, failedCategories, totalScore: result.total, totalThreshold };
+  return {
+    passed: totalPassed && failedCategories.length === 0,
+    failedCategories,
+    totalScore: result.total,
+    totalThreshold,
+  };
 }
 
 function exitWithGateFailure(gate: GateResult): never {
@@ -77,7 +83,8 @@ function exitWithGateFailure(gate: GateResult): never {
 
   if (gate.totalThreshold !== null && gate.totalScore < gate.totalThreshold) {
     process.stdout.write(
-      `  ${chalk.red('✗')} Overall score ${chalk.red(`${gate.totalScore}`)} below required threshold of ${gate.totalThreshold}\n`,
+      `  ${chalk.red('✗')} Overall score ${chalk.red(`${gate.totalScore}`)} ` +
+        `below required threshold of ${gate.totalThreshold}\n`,
     );
   }
 
@@ -186,13 +193,16 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
       if (testScript && !testScript.includes('no test') && !testScript.includes('echo "Error')) {
         hasTestScript = true;
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      logger.debug({ err }, 'Failed to read package.json for test script detection');
+    }
   }
 
   const { score: coverageScore, summary: coverageSummary, issues: coverageIssues } =
     scoreCoverageRatio(testFiles.length, sourceFiles.length, hasTestScript);
 
-  const edgePatterns = /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
+  const edgePatterns =
+    /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
   const edgeCaseCount = countMatches(testFiles, contents, edgePatterns);
   const { score: edgeCaseScore, summary: edgeCaseSummary } = scoreEdgeCases(edgeCaseCount);
 
@@ -211,8 +221,14 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
     max: 25,
     summary: [coverageSummary, edgeCaseSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: coverageIssues, issuesDescription: 'source files without tests', locations: coverageLocations },
-      { name: 'Edge case depth', score: edgeCaseScore, max: 9, summary: edgeCaseSummary, issuesFound: edgeCaseCount === 0 ? 1 : 0, issuesDescription: 'no edge case tests' },
+      {
+        name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary,
+        issuesFound: coverageIssues, issuesDescription: 'source files without tests', locations: coverageLocations,
+      },
+      {
+        name: 'Edge case depth', score: edgeCaseScore, max: 9, summary: edgeCaseSummary,
+        issuesFound: edgeCaseCount === 0 ? 1 : 0, issuesDescription: 'no edge case tests',
+      },
       { name: 'Test quality', score: testQualityScore, max: 8, summary: testQualitySummary, issuesFound: 0 },
     ],
   };
@@ -238,9 +254,11 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
   let routeFileCount = 0;
   for (const file of srcFiles) {
     const content = contents.get(file) ?? '';
-    const hasZodJoi = /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content);
+    const hasZodJoi =
+      /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content);
     const hasUuidValidation = /\buuid\b.*\bvalidate\b|\bvalidate.*uuid\b|isUUID|uuidv[1-5]/i.test(content);
-    const hasParamValidation = /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(content);
+    const hasParamValidation =
+      /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(content);
     const isRouteFile = /(?:router\.|app\.(?:get|post|put|patch|delete)|@(?:Get|Post|Put|Patch|Delete))/i.test(content);
     if (isRouteFile) routeFileCount++;
     if (hasZodJoi || hasUuidValidation || hasParamValidation) validationFileCount++;
@@ -249,8 +267,14 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
     scoreInputValidation(validationFileCount, routeFileCount);
 
   // --- Auth & rate limiting /6 ---
-  const hasAuthMiddleware = anyFileHasMatch(srcFiles, contents, /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i);
-  const hasRateLimit = anyFileHasMatch(srcFiles, contents, /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i);
+  const hasAuthMiddleware = anyFileHasMatch(
+    srcFiles, contents,
+    /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i,
+  );
+  const hasRateLimit = anyFileHasMatch(
+    srcFiles, contents,
+    /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i,
+  );
   const hasCors = anyFileHasMatch(srcFiles, contents, /\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i);
 
   // Detect overly broad middleware scope (app.use on specific sub-paths instead of app.post/get)
@@ -262,7 +286,9 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
     if (!content) continue;
     const lines = content.split('\n');
     for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-      const match = lines[lineIdx]!.match(/app\.use\s*\(\s*(['"`]\/api\/[a-zA-Z0-9/_-][^'"`]*['"`])\s*,\s*\w*[Ll]imit\w*/);
+      const match = lines[lineIdx]!.match(
+        /app\.use\s*\(\s*(['"`]\/api\/[a-zA-Z0-9/_-][^'"`]*['"`])\s*,\s*\w*[Ll]imit\w*/,
+      );
       if (match && !GLOBAL_API_PATH.test(match[1]!)) {
         broadMiddlewareCount++;
         broadMiddlewareLocations.push(`${filePath}:${lineIdx + 1}`);
@@ -280,9 +306,22 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
     max: 15,
     summary: [secretsSummary, inputValSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Secrets & env vars', score: secretsScore, max: 3, summary: secretsSummary, issuesFound: secretCount, issuesDescription: 'hardcoded secrets' },
-      { name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary, issuesFound: inputValIssues, issuesDescription: 'route files without validation' },
-      { name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary, issuesFound: authIssues, issuesDescription: broadMiddlewareCount > 0 ? `missing auth/security controls + ${broadMiddlewareCount} overly broad rate limiter scope(s)` : 'missing auth/security controls', locations: broadMiddlewareLocations.length > 0 ? broadMiddlewareLocations : undefined },
+      {
+        name: 'Secrets & env vars', score: secretsScore, max: 3, summary: secretsSummary,
+        issuesFound: secretCount, issuesDescription: 'hardcoded secrets',
+      },
+      {
+        name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary,
+        issuesFound: inputValIssues, issuesDescription: 'route files without validation',
+      },
+      {
+        name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary,
+        issuesFound: authIssues,
+        issuesDescription: broadMiddlewareCount > 0
+          ? `missing auth/security controls + ${broadMiddlewareCount} overly broad rate limiter scope(s)`
+          : 'missing auth/security controls',
+        locations: broadMiddlewareLocations.length > 0 ? broadMiddlewareLocations : undefined,
+      },
     ],
   };
 }
@@ -301,7 +340,10 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
       max: 15,
       summary: 'JavaScript only — no static types',
       subcategories: [
-        { name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only', issuesFound: 1, issuesDescription: 'no TypeScript' },
+        {
+          name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only',
+          issuesFound: 1, issuesDescription: 'no TypeScript',
+        },
         { name: 'Any type count', score: 0, max: 8, summary: 'JavaScript only', issuesFound: 0 },
       ],
     };
@@ -312,7 +354,9 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
 
   // --- Any type count /8 ---
   const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
-  const { count: anyCount, matchedFiles: anyTypeFiles } = countMatchesWithFiles(srcTsFiles, contents, /:\s*any\b|<any>|\bas\s+any\b/g);
+  const { count: anyCount, matchedFiles: anyTypeFiles } = countMatchesWithFiles(
+    srcTsFiles, contents, /:\s*any\b|<any>|\bas\s+any\b/g,
+  );
   let totalLines = 0;
   for (const file of srcTsFiles) totalLines += (contents.get(file) ?? '').split('\n').length;
 
@@ -325,8 +369,14 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
     max: 15,
     summary: [strictSummary, anySummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Strict config', score: strictScore, max: 7, summary: strictSummary, issuesFound: strictScore < 7 ? 1 : 0, issuesDescription: 'missing strict TypeScript config' },
-      { name: 'Any type count', score: anyScore, max: 8, summary: anySummary, issuesFound: anyCount, issuesDescription: 'any types', locations: anyTypeFiles },
+      {
+        name: 'Strict config', score: strictScore, max: 7, summary: strictSummary,
+        issuesFound: strictScore < 7 ? 1 : 0, issuesDescription: 'missing strict TypeScript config',
+      },
+      {
+        name: 'Any type count', score: anyScore, max: 8, summary: anySummary,
+        issuesFound: anyCount, issuesDescription: 'any types', locations: anyTypeFiles,
+      },
     ],
   };
 }
@@ -339,7 +389,9 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
   const srcFiles = files.filter(f => !isTestFile(f));
 
   const tryCatchTotal = countMatches(srcFiles, contents, /\btry\s*\{/g);
-  const { count: emptyCatchTotal, matchedFiles: emptyCatchFiles } = countMatchesWithFiles(srcFiles, contents, /\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g);
+  const { count: emptyCatchTotal, matchedFiles: emptyCatchFiles } = countMatchesWithFiles(
+    srcFiles, contents, /\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g,
+  );
   const consoleErrorCount = countMatches(srcFiles, contents, /\bconsole\.(?:error|warn|log)\s*\(/g);
   const structuredLogCount = countMatches(srcFiles, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g);
 
@@ -354,7 +406,9 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
 
   const { score: coverageScore, summary: coverageSummary } = scoreEhCoverage(tryCatchTotal, asyncTotal);
   const { score: emptyCatchScore, summary: emptyCatchSummary } = scoreEmptyCatches(emptyCatchTotal);
-  const { score: loggingScore, summary: loggingSummary } = scoreStructuredLogging(structuredLogCount, consoleErrorCount);
+  const { score: loggingScore, summary: loggingSummary } = scoreStructuredLogging(
+    structuredLogCount, consoleErrorCount,
+  );
 
   return {
     name: 'Error Handling',
@@ -363,9 +417,19 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
     max: 20,
     summary: [coverageSummary, emptyCatchSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Coverage', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: Math.max(0, asyncTotal - tryCatchTotal), issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles },
-      { name: 'Empty catches', score: emptyCatchScore, max: 5, summary: emptyCatchSummary, issuesFound: emptyCatchTotal, issuesDescription: 'empty catch blocks', locations: emptyCatchFiles },
-      { name: 'Structured logging', score: loggingScore, max: 7, summary: loggingSummary, issuesFound: structuredLogCount === 0 ? 1 : 0, issuesDescription: 'no structured logger' },
+      {
+        name: 'Coverage', score: coverageScore, max: 8, summary: coverageSummary,
+        issuesFound: Math.max(0, asyncTotal - tryCatchTotal),
+        issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles,
+      },
+      {
+        name: 'Empty catches', score: emptyCatchScore, max: 5, summary: emptyCatchSummary,
+        issuesFound: emptyCatchTotal, issuesDescription: 'empty catch blocks', locations: emptyCatchFiles,
+      },
+      {
+        name: 'Structured logging', score: loggingScore, max: 7, summary: loggingSummary,
+        issuesFound: structuredLogCount === 0 ? 1 : 0, issuesDescription: 'no structured logger',
+      },
     ],
   };
 }
@@ -378,7 +442,9 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
   const srcFiles = files.filter(f => !isTestFile(f));
   const appFiles = srcFiles.filter(f => !f.replace(/\\/g, '/').includes('/scripts/'));
 
-  const { count: consoleLogCount, matchedFiles: consoleLogFiles } = countMatchesWithFiles(appFiles, contents, /\bconsole\.log\s*\(/g);
+  const { count: consoleLogCount, matchedFiles: consoleLogFiles } = countMatchesWithFiles(
+    appFiles, contents, /\bconsole\.log\s*\(/g,
+  );
 
   let awaitInLoopCount = 0;
   for (const file of appFiles) {
@@ -426,9 +492,18 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
     max: 10,
     summary: [asyncSummary, consoleSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Async patterns', score: Math.min(asyncScore, 3), max: 3, summary: asyncSummary, issuesFound: awaitInLoopCount, issuesDescription: 'await-in-loop patterns' },
-      { name: 'Console cleanup', score: Math.min(consoleScore, 5), max: 5, summary: consoleSummary, issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src', locations: consoleLogFiles },
-      { name: 'Import hygiene', score: Math.min(importScore, 2), max: 2, summary: importHygieneSummary, issuesFound: importIssues, issuesDescription: 'import issues' },
+      {
+        name: 'Async patterns', score: Math.min(asyncScore, 3), max: 3, summary: asyncSummary,
+        issuesFound: awaitInLoopCount, issuesDescription: 'await-in-loop patterns',
+      },
+      {
+        name: 'Console cleanup', score: Math.min(consoleScore, 5), max: 5, summary: consoleSummary,
+        issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src', locations: consoleLogFiles,
+      },
+      {
+        name: 'Import hygiene', score: Math.min(importScore, 2), max: 2, summary: importHygieneSummary,
+        issuesFound: importIssues, issuesDescription: 'import issues',
+      },
     ],
   };
 }
@@ -510,10 +585,23 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
     max: 15,
     summary: [fnLenSummary, lineLenSummary].filter(Boolean).join(', '),
     subcategories: [
-      { name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary, issuesFound: longFnCount, issuesDescription: 'functions >50 lines', locations: longFuncFiles },
-      { name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary, issuesFound: longLineCount, issuesDescription: 'lines >120 chars', locations: longLineFiles },
-      { name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary, issuesFound: commentedCodeCount + todoCount, issuesDescription: 'dead code indicators (TODO, commented code)' },
-      { name: 'Duplication', score: Math.min(dupScore, 3), max: 3, summary: dupSummary, issuesFound: duplicatedLines, issuesDescription: 'repeated code lines' },
+      {
+        name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary,
+        issuesFound: longFnCount, issuesDescription: 'functions >50 lines', locations: longFuncFiles,
+      },
+      {
+        name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary,
+        issuesFound: longLineCount, issuesDescription: 'lines >120 chars', locations: longLineFiles,
+      },
+      {
+        name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary,
+        issuesFound: commentedCodeCount + todoCount,
+        issuesDescription: 'dead code indicators (TODO, commented code)',
+      },
+      {
+        name: 'Duplication', score: Math.min(dupScore, 3), max: 3, summary: dupSummary,
+        issuesFound: duplicatedLines, issuesDescription: 'repeated code lines',
+      },
     ],
   };
 }
@@ -527,7 +615,9 @@ export async function runScan(cwd: string): Promise<ScanResult> {
     try {
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { name?: string };
       if (pkg.name) projectName = pkg.name;
-    } catch { /* ignore */ }
+    } catch (err) {
+      logger.debug({ err }, 'Failed to read package.json for project name');
+    }
   }
 
   const files = findSourceFiles(cwd);
@@ -596,7 +686,8 @@ function renderScan(result: ScanResult, opts?: { explain?: boolean }): void {
       process.stdout.write(`     ${issue.count} ${issue.description} ${sevColor(`(${issue.severity})`)}\n`);
     }
     if (result.issuesByType.length > 8) {
-      process.stdout.write(chalk.dim(`     ... and ${result.issuesByType.length - 8} more issue type${result.issuesByType.length - 8 !== 1 ? 's' : ''}`) + '\n');
+      const remaining = result.issuesByType.length - 8;
+      process.stdout.write(chalk.dim(`     ... and ${remaining} more issue type${remaining !== 1 ? 's' : ''}`) + '\n');
     }
   }
 

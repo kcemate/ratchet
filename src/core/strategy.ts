@@ -362,7 +362,8 @@ function parseJsonField<T>(val: unknown, fallback: T): T {
   if (typeof val === 'string') {
     try {
       return JSON.parse(val) as T;
-    } catch {
+    } catch (err) {
+      logger.debug({ err, val }, 'Failed to parse JSON field, using fallback');
       return fallback;
     }
   }
@@ -1034,7 +1035,9 @@ function detectTestFramework(cwd: string): string {
       if (pkg.devDependencies?.vitest) return 'vitest';
       if (pkg.devDependencies?.jest || pkg.devDependencies?.['@jest/core']) return 'jest';
       if (pkg.devDependencies?.mocha) return 'mocha';
-    } catch { /* ignore */ }
+    } catch (err) {
+      logger.debug({ err }, 'Failed to read package.json for test framework detection');
+    }
   }
   return 'unknown';
 }

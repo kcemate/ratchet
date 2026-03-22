@@ -5,6 +5,7 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
 import { printHeader, exitWithError, validateInt, severityColor, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta } from '../lib/cli.js';
+import { logger } from '../lib/logger.js';
 import { requireLicense } from '../core/license.js';
 import { STATE_FILE } from './status.js';
 import { saveRun } from '../core/history.js';
@@ -231,7 +232,7 @@ export function improveCommand(): Command {
           });
           // Use scan after architect as input to surgical
           if (architectRun.clicks.length > 0) {
-            try { scanAfterArchitect = await runScan(cwd); } catch { /* fallback */ }
+            try { scanAfterArchitect = await runScan(cwd); } catch (err) { logger.warn({ err }, 'Scan after architect failed, using previous scan result'); }
           }
         }
 
