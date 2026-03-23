@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import type { IssueSubcategory, IssueCategoryName } from '../core/taxonomy.js';
 import { printHeader, severityColor, scoreColor } from '../lib/cli.js';
@@ -183,6 +183,45 @@ export interface ScanResult {
   // Aggregate issues metric
   totalIssuesFound: number;
   issuesByType: IssueType[];
+}
+
+// --- Baseline ---
+
+export interface Baseline {
+  score: number;
+  categories: Record<string, number>;
+  issues: number;
+  savedAt: string;
+  version: string;
+}
+
+function loadBaseline(cwd: string): Baseline | null {
+  const baselinePath = join(cwd, '.ratchet', 'baseline.json');
+  if (!existsSync(baselinePath)) return null;
+  try {
+    return JSON.parse(readFileSync(baselinePath, 'utf-8')) as Baseline;
+  } catch {
+    return null;
+  }
+}
+
+function saveBaseline(cwd: string, result: ScanResult): void {
+  const ratchetDir = join(cwd, '.ratchet');
+  mkdirSync(ratchetDir, { recursive: true });
+  const baseline: Baseline = {
+    score: result.total,
+    categories: Object.fromEntries(result.categories.map(c => [c.name, c.score])),
+    issues: result.totalIssuesFound,
+    savedAt: new Date().toISOString(),
+    version: '1.0.8',
+  };
+  writeFileSync(join(ratchetDir, 'baseline.json'), JSON.stringify(baseline, null, 2) + '\n');
+}
+
+function deltaStr(diff: number): string {
+  if (diff > 0) return chalk.green(`+${diff}`);
+  if (diff < 0) return chalk.red(String(diff));
+  return chalk.dim('—');
 }
 
 // --- Scorers ---
@@ -676,8 +715,9 @@ export async function runScan(cwd: string, options: RunScanOptions = {}): Promis
   return { projectName, total, maxTotal, categories, totalIssuesFound, issuesByType };
 }
 
-function renderScan(result: ScanResult, opts?: { explain?: boolean }): void {
+function renderScan(result: ScanResult, opts?: { explain?: boolean; baseline?: Baseline | null }): void {
   const showExplain = opts?.explain ?? false;
+  const baseline = opts?.baseline ?? null;
   printHeader('🔧 Ratchet Scan — Production Readiness');
   process.stdout.write(`Your app: ${chalk.cyan(result.projectName)}\n`);
 
@@ -686,12 +726,25 @@ function renderScan(result: ScanResult, opts?: { explain?: boolean }): void {
     ? chalk.dim(`  |  Issues: ${result.totalIssuesFound} found`)
     : '';
   process.stdout.write(`Score:    ${totalColor.bold(`${result.total}/${result.maxTotal}`)}${issuesStr}\n`);
+
+  if (baseline !== null) {
+    const scoreDiff = result.total - baseline.score;
+    const issuesDiff = result.totalIssuesFound - baseline.issues;
+    const issuesDiffStr = issuesDiff === 0 ? chalk.dim('—') : issuesDiff > 0 ? chalk.red(`+${issuesDiff} issues`) : chalk.green(`-${Math.abs(issuesDiff)} issues`);
+    process.stdout.write(
+      `Baseline: ${chalk.dim(`${baseline.score}/${result.maxTotal}`)}  |  Δ ${deltaStr(scoreDiff)} pts  |  ${issuesDiffStr}\n`,
+    );
+  }
+
   process.stdout.write('\n');
 
   for (const cat of result.categories) {
     const color = scoreColor(cat.score, cat.max);
     const label = `${cat.emoji} ${cat.name}`.padEnd(22);
-    process.stdout.write(`  ${label} ${color.bold(`${cat.score}/${cat.max}`)}\n`);
+    const catDelta = baseline !== null && baseline.categories[cat.name] !== undefined
+      ? `  (${deltaStr(cat.score - baseline.categories[cat.name]!)})`
+      : '';
+    process.stdout.write(`  ${label} ${color.bold(`${cat.score}/${cat.max}`)}${catDelta}\n`);
 
     for (const sub of cat.subcategories) {
       const subColor = scoreColor(sub.score, sub.max);
@@ -813,6 +866,8 @@ export function scanCommand(): Command {
       'Language to scan: ts, js, python, go, rust, auto (default: auto — detected from project files).',
       'auto',
     )
+    .option('--baseline', 'Save current scan result as baseline to .ratchet/baseline.json.')
+    .option('--no-baseline', 'Skip baseline comparison for this run.')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -823,7 +878,9 @@ export function scanCommand(): Command {
       '  $ ratchet scan --output-json > scan-result.json\n' +
       '  $ ratchet scan --explain\n' +
       '  $ ratchet scan --include-tests\n' +
-      '  $ ratchet scan --language python\n',
+      '  $ ratchet scan --language python\n' +
+      '  $ ratchet scan --baseline\n' +
+      '  $ ratchet scan --no-baseline\n',
     )
     .action(async (dir: string, options: Record<string, unknown>) => {
       const { resolve } = await import('path');
@@ -864,7 +921,20 @@ export function scanCommand(): Command {
         return;
       }
 
-      renderScan(result, { explain: options['explain'] as boolean | undefined });
+      const saveAsBaseline = options['baseline'] === true;
+      const skipBaseline = options['baseline'] === false;
+
+      let baseline: Baseline | null = null;
+      if (!saveAsBaseline && !skipBaseline) {
+        baseline = loadBaseline(cwd);
+      }
+
+      renderScan(result, { explain: options['explain'] as boolean | undefined, baseline });
+
+      if (saveAsBaseline) {
+        saveBaseline(cwd, result);
+        process.stdout.write(chalk.green(`  ✔ Baseline saved: ${result.total}/${result.maxTotal} (${result.totalIssuesFound} issues)\n\n`));
+      }
 
       const failOn = options['failOn'] as number | undefined;
       const failOnCategory = (options['failOnCategory'] as string[] | undefined) ?? [];
