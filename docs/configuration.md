@@ -310,6 +310,50 @@ Run ratchet init to create one.
 
 ---
 
+## .ratchetignore
+
+Place a `.ratchetignore` file in your project root to exclude paths from `ratchet scan` and `ratchet torque`.
+
+### Format
+
+- One path per line
+- Lines starting with `#` are comments
+- Trailing `/` on directory names is optional (both `vendor` and `vendor/` work)
+- Paths are resolved relative to the project root
+
+### Example
+
+```
+# Ignore generated code
+generated/
+proto-gen/
+
+# Ignore a vendored directory
+vendor/
+
+# Ignore a specific file
+src/legacy/shim.ts
+```
+
+### Default exclusions
+
+The following directories are always excluded and do not need to be listed in `.ratchetignore`:
+
+| Directory | Reason |
+|-----------|--------|
+| `node_modules/` | Third-party dependencies |
+| `dist/` | Build output |
+| `.git/` | Version control internals |
+| `.next/` | Next.js build cache |
+| `build/` | Generic build output |
+| `coverage/` | Test coverage reports |
+| `__pycache__/` | Python bytecode cache |
+| `.cache/` | Generic tool caches |
+| `vendor/` | Vendored dependencies |
+| `out/` | Generic output directory |
+
+---
+
 ## .gitignore
 
 Add the state file to `.gitignore`:

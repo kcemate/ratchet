@@ -208,6 +208,31 @@ boundaries:
 
 ---
 
+## .ratchetignore
+
+Create a `.ratchetignore` file in your project root to exclude paths from `ratchet scan` and `ratchet torque`.
+
+**Format:** one path per line; `#` starts a comment; trailing `/` on directories is optional.
+
+```
+# Ignore generated and vendor code
+generated/
+vendor/
+
+# Ignore a specific file
+src/legacy/old-api.ts
+
+# Ignore a subdirectory
+packages/internal-tools/
+```
+
+**Default exclusions** (always ignored, no `.ratchetignore` needed):
+- `node_modules/`
+- `dist/`
+- `.git/`
+
+---
+
 ## Pricing
 
 | Plan | Price | Cycles | Includes |
