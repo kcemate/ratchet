@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import type { RatchetConfig, Target } from '../types.js';
 import { IGNORE_DIRS } from './scan-constants.js';
+import { logger } from '../lib/logger.js';
 
 export type ProjectType = 'node' | 'python' | 'go' | 'rust' | 'unknown';
 
@@ -35,8 +36,8 @@ export function countTestFiles(dir: string): number {
         count++;
       }
     }
-  } catch {
-    // ignore permission errors
+  } catch (err) {
+    logger.debug({ err }, 'read directory');
   }
   return count;
 }
@@ -114,7 +115,8 @@ function detectNodeTestCommand(cwd: string): string | null {
     }
 
     return null;
-  } catch {
+  } catch (err) {
+    logger.debug({ err }, 'read package.json');
     return null;
   }
 }

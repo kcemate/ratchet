@@ -265,8 +265,8 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
             logger.warn(`[ratchet]   concern: ${concern}`);
           }
         }
-      } catch {
-        // Non-fatal — if prevalidation errors, proceed
+      } catch (err) {
+        logger.debug({ err }, 'prevalidation');
       }
 
       if (prevalidateResult?.recommendation === 'reject') {
@@ -522,8 +522,8 @@ function checkClickGuards(cwd: string, resolvedGuards: ClickGuards | null, sweep
     }
 
     return { passed: true, linesChanged: totalLines, filesChanged };
-  } catch {
-    // If git diff fails, allow the click to proceed (don't block on guard errors)
+  } catch (err) {
+    logger.debug({ err }, 'git diff guard');
     return { passed: true };
   }
 }
@@ -553,7 +553,8 @@ export function checkRiskGate(targetPath: string, cwd: string): RiskGateResult {
       riskScore,
       dependentCount,
     };
-  } catch {
+  } catch (err) {
+    logger.debug({ err }, 'risk gate check');
     return { requiresSwarm: false, riskScore: 0, dependentCount: 0 };
   }
 }
@@ -562,8 +563,8 @@ async function rollback(cwd: string, clickNumber: number, stashCreated: boolean)
   if (stashCreated) {
     try {
       await git.stashPop(cwd);
-    } catch {
-      // stash pop failed — fall back to hard reset
+    } catch (err) {
+      logger.debug({ err }, 'stash pop failed');
       await git.revert(cwd).catch(() => {});
     }
   } else {
@@ -602,7 +603,8 @@ async function runAdversarialChallenge(
     let newCode: string;
     try {
       newCode = await readFile(join(cwd, file), 'utf-8');
-    } catch {
+    } catch (err) {
+      logger.debug({ err }, 'read modified file');
       continue;
     }
 

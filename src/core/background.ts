@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import { mkdir, writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 import { openSync, closeSync } from 'fs';
+import { logger } from '../lib/logger.js';
 
 export const BG_RUNS_DIR = '.ratchet/runs';
 
@@ -80,14 +81,15 @@ export async function updateProgress(cwd: string, runId: string, updates: Partia
   let current: ProgressState;
   try {
     current = JSON.parse(await readFile(progressPath, 'utf-8')) as ProgressState;
-  } catch {
+  } catch (err) {
+    logger.debug({ err }, 'read progress file');
     return;
   }
   const updated: ProgressState = { ...current, ...updates, lastUpdatedAt: new Date().toISOString() };
   try {
     await writeFile(progressPath, JSON.stringify(updated, null, 2), 'utf-8');
-  } catch {
-    // Non-fatal
+  } catch (err) {
+    logger.debug({ err }, 'write progress file');
   }
 }
 
@@ -95,7 +97,8 @@ export async function readProgress(cwd: string, runId: string): Promise<Progress
   const progressPath = join(bgRunDir(cwd, runId), 'progress.json');
   try {
     return JSON.parse(await readFile(progressPath, 'utf-8')) as ProgressState;
-  } catch {
+  } catch (err) {
+    logger.debug({ err }, 'read progress state');
     return null;
   }
 }
@@ -104,7 +107,8 @@ export function isProcessAlive(pid: number): boolean {
   try {
     process.kill(pid, 0);
     return true;
-  } catch {
+  } catch (err) {
+    logger.debug({ err }, 'check process alive');
     return false;
   }
 }
