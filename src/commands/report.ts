@@ -11,7 +11,7 @@ import { generatePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { RatchetRun } from '../types.js';
 import type { ScanResult } from './scan.js';
-import { printHeader, exitWithError, printFields } from '../lib/cli.js';
+import { printHeader, exitWithError, printFields, tryOrAsync } from '../lib/cli.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -77,13 +77,9 @@ function renderList(entries: Awaited<ReturnType<typeof listRuns>>): void {
 }
 
 async function openFile(filePath: string): Promise<void> {
-  const platform = process.platform;
-  const opener = platform === 'darwin' ? 'open' : 'xdg-open';
-  try {
-    await execFileAsync(opener, [filePath]);
-  } catch {
-    // Non-fatal — file may still have been generated successfully
-  }
+  const opener = process.platform === 'darwin' ? 'open' : 'xdg-open';
+  // Non-fatal — file may still have been generated successfully
+  await tryOrAsync(() => execFileAsync(opener, [filePath]), undefined);
 }
 
 export function reportCommand(): Command {
@@ -141,13 +137,9 @@ export function reportCommand(): Command {
       let scoreBefore: ScanResult | undefined = entry.scoreBefore;
       let scoreAfter: ScanResult | undefined = entry.scoreAfter;
 
-      // If no scoreAfter in history, run a fresh scan
+      // If no scoreAfter in history, attempt a fresh scan (non-fatal)
       if (!scoreAfter) {
-        try {
-          scoreAfter = await runScan(cwd);
-        } catch {
-          // Non-fatal
-        }
+        scoreAfter = await tryOrAsync(() => runScan(cwd), undefined);
       }
 
       const outputDir = opts.output ? opts.output : join(cwd, 'docs');
