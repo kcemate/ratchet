@@ -761,6 +761,24 @@ function renderScan(result: ScanResult, opts?: { explain?: boolean }): void {
   process.stdout.write('\n');
 }
 
+// --- Language detection ---
+
+type Language = 'ts' | 'js' | 'python' | 'go' | 'rust' | 'auto';
+
+const NON_TSJS_WARNING = (lang: string) =>
+  `Note: Ratchet scoring is optimized for TypeScript/JavaScript projects. ` +
+  `Some rules (console.log, any types, tsconfig) may not apply to ${lang} projects. ` +
+  `Language-specific scoring is coming soon.`;
+
+function detectLanguage(cwd: string): { language: 'ts' | 'js' | 'python' | 'go' | 'rust'; detected: boolean } {
+  if (existsSync(join(cwd, 'tsconfig.json'))) return { language: 'ts', detected: true };
+  if (existsSync(join(cwd, 'package.json'))) return { language: 'js', detected: true };
+  if (existsSync(join(cwd, 'pyproject.toml')) || existsSync(join(cwd, 'setup.py'))) return { language: 'python', detected: true };
+  if (existsSync(join(cwd, 'go.mod'))) return { language: 'go', detected: true };
+  if (existsSync(join(cwd, 'Cargo.toml'))) return { language: 'rust', detected: true };
+  return { language: 'ts', detected: false };
+}
+
 // --- Command ---
 
 export function scanCommand(): Command {
@@ -790,6 +808,11 @@ export function scanCommand(): Command {
     .option('--output-json', 'Output the full scan result as JSON for CI/CD integration.')
     .option('--explain', "Show human-readable explanations for each subcategory's issues.")
     .option('--include-tests', 'Include test files in the scan (by default, test files are excluded).')
+    .option(
+      '--language <lang>',
+      'Language to scan: ts, js, python, go, rust, auto (default: auto — detected from project files).',
+      'auto',
+    )
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -799,7 +822,8 @@ export function scanCommand(): Command {
       '  $ ratchet scan --fail-on 80 --fail-on-category Security=12\n' +
       '  $ ratchet scan --output-json > scan-result.json\n' +
       '  $ ratchet scan --explain\n' +
-      '  $ ratchet scan --include-tests\n',
+      '  $ ratchet scan --include-tests\n' +
+      '  $ ratchet scan --language python\n',
     )
     .action(async (dir: string, options: Record<string, unknown>) => {
       const { resolve } = await import('path');
@@ -807,6 +831,31 @@ export function scanCommand(): Command {
 
       const { trackEvent } = await import('../core/telemetry.js');
       trackEvent('scan');
+
+      // Language detection / warning
+      const langOpt = (options['language'] as Language | undefined) ?? 'auto';
+      const validLanguages: Language[] = ['ts', 'js', 'python', 'go', 'rust', 'auto'];
+      if (!validLanguages.includes(langOpt)) {
+        process.stderr.write(chalk.red(`Invalid --language value: "${langOpt}". Valid values: ts, js, python, go, rust, auto.\n`));
+        process.exit(1);
+      }
+
+      let resolvedLang: 'ts' | 'js' | 'python' | 'go' | 'rust';
+      if (langOpt === 'auto') {
+        const { language, detected } = detectLanguage(cwd);
+        resolvedLang = language;
+        if (!detected) {
+          process.stdout.write(chalk.yellow(NON_TSJS_WARNING('this')) + '\n\n');
+        } else if (language !== 'ts' && language !== 'js') {
+          process.stdout.write(chalk.yellow(NON_TSJS_WARNING(language)) + '\n\n');
+        }
+      } else {
+        resolvedLang = langOpt as 'ts' | 'js' | 'python' | 'go' | 'rust';
+        if (resolvedLang !== 'ts' && resolvedLang !== 'js') {
+          process.stdout.write(chalk.yellow(NON_TSJS_WARNING(resolvedLang)) + '\n\n');
+        }
+      }
+      void resolvedLang; // available for future language-aware scoring
 
       const result = await runScan(cwd, { includeTests: options['includeTests'] as boolean | undefined });
 
