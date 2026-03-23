@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { readFile, readdir } from 'fs/promises';
 import { logger } from '../lib/logger.js';
+import { tryOrAsync } from '../lib/cli.js';
 import { join } from 'path';
 import { existsSync, createReadStream } from 'fs';
 import type { RatchetRun } from '../types.js';
@@ -15,12 +16,8 @@ export const STATE_FILE = '.ratchet-state.json';
 const log = (msg: string) => logger.info(msg);
 
 export async function loadRunState(cwd: string): Promise<RatchetRun | null> {
-  let raw: string;
-  try {
-    raw = await readFile(join(cwd, STATE_FILE), 'utf-8');
-  } catch {
-    return null; // File doesn't exist — normal for a fresh repo
-  }
+  const raw = await tryOrAsync(() => readFile(join(cwd, STATE_FILE), 'utf-8'), null);
+  if (!raw) return null; // File doesn't exist — normal for a fresh repo
 
   try {
     return JSON.parse(raw) as RatchetRun;
@@ -56,23 +53,17 @@ function colorStatus(status: RatchetRun['status'], stale = false): string {
 
 async function listBackgroundRuns(cwd: string): Promise<ProgressState[]> {
   const runsDir = join(cwd, BG_RUNS_DIR);
-  let entries: string[];
-  try {
-    entries = await readdir(runsDir);
-  } catch {
-    return [];
-  }
+  const entries = await tryOrAsync(() => readdir(runsDir), [] as string[]);
 
   const results: ProgressState[] = [];
   for (const entry of entries) {
     const progressPath = join(runsDir, entry, 'progress.json');
     if (!existsSync(progressPath)) continue;
-    try {
-      const progress = JSON.parse(await readFile(progressPath, 'utf-8')) as ProgressState;
-      results.push(progress);
-    } catch {
-      // Skip corrupted entries
-    }
+    const progress = await tryOrAsync(
+      async () => JSON.parse(await readFile(progressPath, 'utf-8')) as ProgressState,
+      null,
+    );
+    if (progress) results.push(progress);
   }
   // Newest first
   results.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());

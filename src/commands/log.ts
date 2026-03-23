@@ -4,7 +4,7 @@ import { readFile, readdir } from 'fs/promises';
 import { join } from 'path';
 import { loadConfig, configFilePath } from '../core/config.js';
 import { existsSync } from 'fs';
-import { printHeader, exitWithError } from '../lib/cli.js';
+import { printHeader, exitWithError, tryOr, tryOrAsync } from '../lib/cli.js';
 
 export function logCommand(): Command {
   const cmd = new Command('log');
@@ -82,8 +82,8 @@ export function logCommand(): Command {
 async function inferTarget(cwd: string): Promise<string | null> {
   // Try config first
   if (existsSync(configFilePath(cwd))) {
-    try {
-      const config = loadConfig(cwd);
+    const config = tryOr(() => loadConfig(cwd), null);
+    if (config) {
       if (config.targets.length === 1) {
         return config.targets[0].name;
       }
@@ -93,29 +93,23 @@ async function inferTarget(cwd: string): Promise<string | null> {
           `  Multiple targets in .ratchet.yml. Specify one with --target.\n  Available: ${names}`,
         );
       }
-    } catch {
-      // ignore
     }
   }
 
   // Fall back to docs directory
   const docsDir = join(cwd, 'docs');
-  try {
-    const files = await readdir(docsDir);
-    const logFiles = files.filter((f) => f.endsWith('-ratchet.md'));
-    if (logFiles.length === 1) {
-      return logFiles[0].replace(/-ratchet\.md$/, '');
-    }
-    if (logFiles.length > 1) {
-      const names = logFiles
-        .map((f) => chalk.cyan(f.replace(/-ratchet\.md$/, '')))
-        .join(', ');
-      exitWithError(
-        `  Multiple log files found. Specify one with --target.\n  Available: ${names}`,
-      );
-    }
-  } catch {
-    // docs dir doesn't exist
+  const files = await tryOrAsync(() => readdir(docsDir), [] as string[]);
+  const logFiles = files.filter((f) => f.endsWith('-ratchet.md'));
+  if (logFiles.length === 1) {
+    return logFiles[0].replace(/-ratchet\.md$/, '');
+  }
+  if (logFiles.length > 1) {
+    const names = logFiles
+      .map((f) => chalk.cyan(f.replace(/-ratchet\.md$/, '')))
+      .join(', ');
+    exitWithError(
+      `  Multiple log files found. Specify one with --target.\n  Available: ${names}`,
+    );
   }
 
   return null;

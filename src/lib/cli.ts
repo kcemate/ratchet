@@ -245,6 +245,58 @@ export async function warnIfNotRepo(cwd: string): Promise<void> {
 }
 
 /**
+ * Run a synchronous function, returning `fallback` on any thrown error.
+ * Use instead of empty try/catch blocks for expected, non-fatal failures.
+ *
+ * @example
+ * const stat = tryOr(() => statSync(path), null);
+ */
+export function tryOr<T>(fn: () => T, fallback: T): T {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Run an async function, returning `fallback` on rejection.
+ * Use instead of empty try/catch blocks for expected, non-fatal async failures.
+ *
+ * @example
+ * const files = await tryOrAsync(() => readdir(dir), []);
+ */
+export async function tryOrAsync<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Wrap a Commander action callback in a standard try/catch that logs and exits.
+ * Eliminates the repeated try/catch/logger.error/process.exit boilerplate
+ * across command action handlers.
+ *
+ * @example
+ * .action(wrapAction(() => graphStatus(), 'graph status failed'))
+ */
+export function wrapAction<Args extends unknown[]>(
+  fn: (...args: Args) => Promise<void>,
+  errorLabel: string,
+): (...args: Args) => Promise<void> {
+  return async (...args: Args) => {
+    try {
+      await fn(...args);
+    } catch (err) {
+      logger.error({ err }, errorLabel);
+      process.exit(1);
+    }
+  };
+}
+
+/**
  * Print a per-click result table to stdout.
  * Each row shows pass/fail icon, click number, status, commit hash, and modified files.
  */
