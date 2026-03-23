@@ -1,0 +1,676 @@
+diff --git a/src/commands/improve.ts b/src/commands/improve.ts
+index f2e2bfa..79ad85c 100644
+--- a/src/commands/improve.ts
++++ b/src/commands/improve.ts
+@@ -14,6 +14,7 @@ import { runTierEngine, planTierTargets } from '../core/tier-engine.js';
+ import type { ClickPhase } from '../core/engine.js';
+ import { ShellAgent } from '../core/agents/shell.js';
+ import { RatchetLogger } from '../core/logger.js';
++import { logger as pinoLogger } from '../lib/logger.js';
+ import { writePDF } from '../core/pdf-report.js';
+ import { runScan } from './scan.js';
+ import type { ScanResult } from './scan.js';
+@@ -284,7 +285,7 @@ export function improveCommand(): Command {
+         }
+       } catch (err) {
+         if (spinner) (spinner as ReturnType<typeof ora>).fail();
+-        console.error(chalk.red('\nFatal error: ') + String(err));
++        pinoLogger.error({ err }, 'Fatal error');
+         releaseLock(cwd);
+         process.exit(1);
+       }
+diff --git a/src/commands/push.ts b/src/commands/push.ts
+index f6a90e2..0cfcf5e 100644
+--- a/src/commands/push.ts
++++ b/src/commands/push.ts
+@@ -76,9 +76,8 @@ export function pushCommand(): Command {
+         process.exit(1);
+       }
+ 
+-      console.log(`  ${chalk.dim('Repo:')}   ${chalk.cyan(`${ownerRepo.owner}/${ownerRepo.repo}`)}`);
+-      console.log(`  ${chalk.dim('Score:')}  ${chalk.bold(`${result.total}/${result.maxTotal}`)}`);
+-      console.log('');
++      logger.info({ repo: `${ownerRepo.owner}/${ownerRepo.repo}` }, 'Pushing to repo');
++      logger.info({ score: `${result.total}/${result.maxTotal}` }, 'Score');
+ 
+       // Push
+       const spinner = ora('Pushing scan results…').start();
+@@ -95,12 +94,7 @@ export function pushCommand(): Command {
+       }
+ 
+       spinner.succeed(chalk.green('Scan results pushed!'));
+-      console.log('');
+-      console.log(
+-        `  ${chalk.dim('Badge URL:')} ` +
+-        chalk.cyan(`https://ratchetcli.com/badge/${ownerRepo.owner}/${ownerRepo.repo}`),
+-      );
+-      console.log('');
++      logger.info({ badgeUrl: `https://ratchetcli.com/badge/${ownerRepo.owner}/${ownerRepo.repo}` }, 'Badge URL');
+ 
+       // Auto-PR on first push
+       if (options.autoPr && pushResult.isFirstPush) {
+@@ -114,7 +108,6 @@ export function pushCommand(): Command {
+         } else {
+           prSpinner.warn(chalk.yellow(`Auto-PR: ${prResult.reason ?? 'unknown error'}`));
+         }
+-        console.log('');
+       }
+     });
+ 
+diff --git a/src/commands/tighten.ts b/src/commands/tighten.ts
+index 7ac5c28..daa009a 100644
+--- a/src/commands/tighten.ts
++++ b/src/commands/tighten.ts
+@@ -9,6 +9,7 @@ import { promisify } from 'util';
+ import { loadRunState } from './status.js';
+ import { currentBranch, hasRemote } from '../core/git.js';
+ import { printHeader, exitWithError, printFields } from '../lib/cli.js';
++import { logger } from '../lib/logger.js';
+ 
+ const execFileAsync = promisify(execFile);
+ 
+@@ -39,12 +40,7 @@ export function tightenCommand(): Command {
+       const run = await loadRunState(cwd);
+ 
+       if (!run) {
+-        console.error(
+-          chalk.red('  No run state found.') +
+-            '\n  Run ' +
+-            chalk.cyan('ratchet torque') +
+-            ' first.\n',
+-        );
++        logger.error('No run state found');
+         process.exit(1);
+       }
+ 
+@@ -96,13 +92,7 @@ export function tightenCommand(): Command {
+ 
+       // Guard: gh pr create requires a remote to push to
+       if (!(await hasRemote(cwd))) {
+-        console.error(
+-          chalk.red('  No git remote configured.') +
+-            '\n  A remote is required to create a pull request.\n' +
+-            '\n  ' + chalk.dim('Add one with:') +
+-            '\n    ' + chalk.cyan('git remote add origin <url>') +
+-            '\n    ' + chalk.cyan('git push -u origin HEAD') + '\n',
+-        );
++        logger.error('No git remote configured');
+         process.exit(1);
+       }
+ 
+@@ -141,14 +131,9 @@ export function tightenCommand(): Command {
+         spinner.fail('Failed to create pull request');
+         const msg = String(err);
+         if (msg.includes('gh: command not found') || msg.includes('ENOENT')) {
+-          console.error(
+-            chalk.red('\n  gh CLI not found.') +
+-              ' Install it from ' +
+-              chalk.cyan('https://cli.github.com') +
+-              '\n',
+-          );
++          logger.error('gh CLI not found');
+         } else {
+-          console.error(chalk.red('\n  ' + msg) + '\n');
++          logger.error({ err: msg }, 'Failed to create pull request');
+         }
+         process.exit(1);
+       }
+diff --git a/src/commands/torque.ts b/src/commands/torque.ts
+index 1cb50a4..b52f1a6 100644
+--- a/src/commands/torque.ts
++++ b/src/commands/torque.ts
+@@ -14,6 +14,7 @@ import { ShellAgent } from '../core/agents/shell.js';
+ import { buildSwarmConfig } from '../core/swarm.js';
+ import { isValidSpecialization } from '../core/agents/specialized.js';
+ import { RatchetLogger } from '../core/logger.js';
++import { logger as pinoLogger } from '../lib/logger.js';
+ import { generateReport, writeReport } from '../core/report.js';
+ import { writePDF } from '../core/pdf-report.js';
+ import { generateScoreCard, generatePRDescription } from '../core/pr-comment.js';
+@@ -26,7 +27,10 @@ import type { Click, RatchetRun, Target } from '../types.js';
+ import { GUARD_PROFILES } from '../types.js';
+ import type { GuardProfileName } from '../types.js';
+ import { formatDuration } from '../core/utils.js';
+-import { printHeader, exitWithError, validateInt, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable } from '../lib/cli.js';
++import {
++  printHeader, exitWithError, validateInt, printFields,
++  validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable,
++} from '../lib/cli.js';
+ import { STATE_FILE } from './status.js';
+ import { requireLicense } from '../core/license.js';
+ import { startBackgroundRun, updateProgress } from '../core/background.js';
+@@ -38,7 +42,9 @@ function printEconomics(economics: RunEconomics): void {
+ 
+   process.stdout.write('\n' + chalk.bold('  📊 Run Economics') + '\n');
+   process.stdout.write(`  Wall time:     ${formatDuration(economics.totalWallTimeMs)}\n`);
+-  process.stdout.write(`  Effective:     ${formatDuration(economics.effectiveTimeMs)} (${efficiencyPct}% efficiency)\n`);
++  process.stdout.write(
++    `  Effective:     ${formatDuration(economics.effectiveTimeMs)} (${efficiencyPct}% efficiency)\n`,
++  );
+   process.stdout.write(`  Wasted:        ${formatDuration(economics.wastedTimeMs)}\n`);
+   process.stdout.write('\n');
+   process.stdout.write(`  Landed:        ${economics.landed}/${total} clicks (${landedPct}%)\n`);
+@@ -86,8 +92,14 @@ export function torqueCommand(): Command {
+     .option('--dry-run', 'Preview mode — analyze and propose without committing any changes', false)
+     .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
+     .option('--no-branch', 'Run on the current branch instead of creating a ratchet branch', false)
+-    .option('--mode <mode>', 'Run mode: "normal" (default), "harden" (write tests first, then improve), or "feature" (build from spec)')
+-    .option('--spec <text-or-file>', 'Feature specification — quoted string or path to a .md file (required with --mode feature)')
++    .option(
++      '--mode <mode>',
++      'Run mode: "normal" (default), "harden" (write tests first, then improve), or "feature" (build from spec)',
++    )
++    .option(
++      '--spec <text-or-file>',
++      'Feature specification — quoted string or path to a .md file (required with --mode feature)',
++    )
+     .option('--swarm', 'Enable swarm mode — N agents compete per click, best change wins', false)
+     .option('--agents <number>', 'Number of competing agents in swarm mode (default: 3)')
+     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
+@@ -96,7 +108,10 @@ export function torqueCommand(): Command {
+     .option('--personalities <names>', 'Comma-separated personality names for swarm agents (e.g. the-surgeon,the-hawk)')
+     .option('--adversarial', 'Enable adversarial QA — red team tests each landed change for regressions', false)
+     .option('--sweep', 'Sweep mode — fix one issue type across the entire codebase', false)
+-    .option('--category <type>', 'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)')
++    .option(
++      '--category <type>',
++      'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)',
++    )
+     .option('--guards <profile>', 'Guard profile: tight (3/40), refactor (12/280), broad (20/500), atomic (no limits)')
+     .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (overrides --guards)')
+     .option('--max-files <number>', 'Max files changed per click before auto-rollback (overrides --guards)')
+@@ -285,10 +300,7 @@ export function torqueCommand(): Command {
+               chalk.dim(' Run ' + chalk.cyan('ratchet init') + ' to create a config.\n') + '\n',
+           );
+           if (config._noTestCommand) {
+-            console.warn(
+-              chalk.yellow('  ⚠  No test command detected — harden mode auto-enabled.') +
+-                chalk.dim(' Changes will be validated more conservatively.\n'),
+-            );
++            pinoLogger.warn('No test command detected — harden mode auto-enabled');
+           }
+         }
+ 
+@@ -347,7 +359,7 @@ export function torqueCommand(): Command {
+               ...findIncompleteTargets(rawYml),
+             ];
+             for (const w of warnings) {
+-              console.warn(chalk.yellow(`  ⚠  ${w}`));
++              pinoLogger.warn(w);
+             }
+             if (warnings.length > 0) process.stdout.write('\n');
+           } catch {
+@@ -636,7 +648,7 @@ export function torqueCommand(): Command {
+             });
+           } catch (err) {
+             if (spinner) (spinner as ReturnType<typeof ora>).fail();
+-            console.error(chalk.red('\nFatal error: ') + String(err));
++            pinoLogger.error({ err }, 'Fatal error');
+             process.exit(1);
+           } finally {
+             process.removeListener('SIGINT', sigintHandler);
+@@ -881,7 +893,7 @@ export function torqueCommand(): Command {
+           });
+         } catch (err) {
+           if (spinner) (spinner as ReturnType<typeof ora>).fail();
+-          console.error(chalk.red('\nFatal error: ') + String(err));
++          pinoLogger.error({ err }, 'Fatal error');
+           process.exit(1);
+         } finally {
+           process.removeListener('SIGINT', sigintHandler);
+diff --git a/src/core/engine-architect.ts b/src/core/engine-architect.ts
+index 186853f..8970cf5 100644
+--- a/src/core/engine-architect.ts
++++ b/src/core/engine-architect.ts
+@@ -90,9 +90,9 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
+         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
+ 
+         if (rolled_back) {
+-          console.error(`[ratchet] architect click ${clickNumber} ROLLED BACK (${elapsedSec}s)`);
++          logger.error({ clickNumber, elapsedSec }, 'architect click ROLLED BACK');
+         } else {
+-          console.error(`[ratchet] architect click ${clickNumber} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
++          logger.info({ clickNumber, elapsedSec, commitHash: click.commitHash?.slice(0, 7) }, 'architect click LANDED');
+         }
+ 
+         // Re-scan after successful click to measure impact and refresh the prompt
+@@ -104,7 +104,7 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
+             // Score regression guard: if score dropped, revert the commit
+             if (newTotal < previousTotal && click.commitHash) {
+               const regressionDelta = previousTotal - newTotal;
+-              console.error(`[ratchet] architect click ${clickNumber} ROLLED BACK — score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`);
++              logger.error({ clickNumber, before: previousTotal, after: newTotal, delta: regressionDelta }, 'architect click ROLLED BACK — score regression');
+               await git.revertLastCommit(cwd).catch(() => {});
+               click.testsPassed = false;
+               click.rollbackReason = `score regression: ${previousTotal} → ${newTotal} (-${regressionDelta}pts)`;
+diff --git a/src/core/engine-plan.ts b/src/core/engine-plan.ts
+index 2eea504..d061df2 100644
+--- a/src/core/engine-plan.ts
++++ b/src/core/engine-plan.ts
+@@ -52,6 +52,6 @@ export async function runPlanFirst(
+     }
+   } catch {
+     // Non-fatal — if plan generation fails, continue without plan
+-    console.error('[ratchet] Plan generation failed — continuing without plan');
++    logger.error('Plan generation failed — continuing without plan');
+   }
+ }
+diff --git a/src/core/engine-sweep.ts b/src/core/engine-sweep.ts
+index cea90df..8602386 100644
+--- a/src/core/engine-sweep.ts
++++ b/src/core/engine-sweep.ts
+@@ -168,9 +168,9 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
+ 
+         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
+         if (rolled_back) {
+-          console.error(`[ratchet] sweep click ${clickNumber} ROLLED BACK (${elapsedSec}s)`);
++          logger.error({ clickNumber, elapsedSec }, 'sweep click ROLLED BACK');
+         } else {
+-          console.error(`[ratchet] sweep click ${clickNumber} LANDED (${elapsedSec}s)`);
++          logger.info({ clickNumber, elapsedSec }, 'sweep click LANDED');
+         }
+ 
+         run.clicks.push(click);
+diff --git a/src/core/engine.ts b/src/core/engine.ts
+index 75e93d7..6bce2f0 100644
+--- a/src/core/engine.ts
++++ b/src/core/engine.ts
+@@ -266,7 +266,7 @@ interface RunState {
+ // ── Helpers ────────────────────────────────────────────
+ 
+ /**
+- * Format a consistent rollback message for console.error output.
++ * Format a consistent rollback message for logger.error output.
+  */
+ function formatRollbackMessage(
+   clickNumber: number,
+@@ -405,7 +405,7 @@ async function processClickOutcome(
+   state.prevConsecutiveRollbacks = state.consecutiveRollbacks;
+ 
+   if (rolled_back) {
+-    console.error(formatRollbackMessage(clickNumber, click.rollbackReason, elapsedSec));
++    logger.error({ clickNumber, elapsedSec, reason: click.rollbackReason }, formatRollbackMessage(clickNumber, click.rollbackReason, elapsedSec));
+     state.consecutiveRollbacks++;
+     state.totalRolled++;
+ 
+@@ -424,12 +424,12 @@ async function processClickOutcome(
+         state.currentGuards = next.guards;
+         state.currentGuardProfileName = next.name;
+         state.consecutiveGuardRejections = 0;
+-        console.error(`[ratchet] 🛡 Guard escalation: ${prevName} → ${next.name} (${state.consecutiveGuardRejections + 2} consecutive guard rejections)`);
++        logger.info({ from: prevName, to: next.name }, 'Guard escalation');
+         await callbacks.onEscalate?.(`guard escalation: ${prevName} → ${next.name}`);
+       }
+     }
+   } else {
+-    console.error(`[ratchet] click ${clickNumber} LANDED (${elapsedSec}s)${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}`);
++    logger.info({ clickNumber, elapsedSec, commitHash: click.commitHash?.slice(0, 7) }, 'click LANDED');
+     state.consecutiveRollbacks = 0;
+     state.consecutiveGuardRejections = 0;
+     state.totalLanded++;
+@@ -463,7 +463,7 @@ async function postClickRescan(
+     // Score regression guard: if score dropped, revert the commit
+     if (newTotal < state.previousTotal && click.commitHash) {
+       const regressionDelta = state.previousTotal - newTotal;
+-      console.error(formatRollbackMessage(clickNumber, `score regression: ${state.previousTotal} → ${newTotal} (-${regressionDelta}pts)`));
++      logger.error({ clickNumber, before: state.previousTotal, after: newTotal }, 'Score regression rollback');
+       await git.revertLastCommit(cwd).catch(() => {});
+       click.testsPassed = false;
+       click.rollbackReason = `score regression: ${state.previousTotal} → ${newTotal} (-${regressionDelta}pts)`;
+@@ -495,10 +495,9 @@ async function postClickRescan(
+       // Print per-category breakdown for non-zero or wasted-effort categories
+       for (const cd of categoryDeltas) {
+         if (cd.delta !== 0) {
+-          const sign = cd.delta > 0 ? '+' : '';
+-          console.error(`   ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} (${sign}${cd.delta})${cd.issuesFixed > 0 ? ` — ${cd.issuesFixed} issues fixed` : ''}`);
++          logger.info({ category: cd.category, before: cd.before, after: cd.after, delta: cd.delta }, 'Category delta');
+         } else if (cd.wastedEffort) {
+-          console.error(`   ⚠ ${cd.category}: ${cd.before}/${cd.max} → ${cd.after}/${cd.max} — ${cd.issuesFixed} issues fixed but category already maxed`);
++          logger.warn({ category: cd.category, before: cd.before, after: cd.after, issuesFixed: cd.issuesFixed }, 'Category already maxed');
+         }
+       }
+ 
+@@ -552,7 +551,7 @@ async function checkStallAndEscalate(
+   }
+ 
+   if (escalateReason) {
+-    console.error('[ratchet] 🔄 Stall detected — escalating to cross-file sweep mode');
++    logger.warn('Stall detected — escalating to cross-file sweep mode');
+     await callbacks.onEscalate?.(escalateReason);
+ 
+     const fullBacklog = buildScoreOptimizedBacklog(state.currentScan);
+@@ -583,7 +582,7 @@ async function checkSmartStop(
+     if (allArchitect) {
+       const remainingClicks = clicks - clickNumber;
+       if (architectEscalationEnabled && remainingClicks > 0) {
+-        console.error(`[ratchet] 🏗️ Escalating to architect mode — ${remainingClicks} clicks remaining`);
++        logger.info({ remainingClicks }, 'Escalating to architect mode');
+         const architectRun = await runArchitectEngine({
+           ...options,
+           clicks: remainingClicks,
+@@ -595,7 +594,7 @@ async function checkSmartStop(
+         run.architectEscalated = true;
+       } else {
+         run.earlyStopReason = 'remaining issues need architect mode';
+-        console.error(`[ratchet] ⏹ Smart stop — remaining issues need architect mode. ${state.totalLanded} cycles used, ${clicks - clickNumber} returned.`);
++        logger.info({ landed: state.totalLanded, returned: clicks - clickNumber }, 'Smart stop: remaining issues need architect mode');
+       }
+       return { shouldStop: true };
+     }
+@@ -608,7 +607,7 @@ async function checkSmartStop(
+     if (rollbackRate > 0.6) {
+       const ratePct = Math.round(rollbackRate * 100);
+       run.earlyStopReason = `high rollback rate (${ratePct}%) — remaining issues may need manual intervention`;
+-      console.error(`[ratchet] ⏹ Smart stop — ${run.earlyStopReason}. ${state.totalLanded} cycles used, ${clicks - clickNumber} returned.`);
++      logger.info({ reason: run.earlyStopReason, landed: state.totalLanded, returned: clicks - clickNumber }, 'Smart stop');
+       return { shouldStop: true };
+     }
+   }
+@@ -876,7 +875,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun>
+ 
+           // Risk gate escalation: if single-agent was blocked, retry with swarm
+           if (result.requiresSwarm) {
+-            console.error(`[ratchet] Escalating click ${i} to swarm mode (risk gate triggered)`);
++            logger.info({ click: i }, 'Escalating to swarm mode');
+             const swarm = new SwarmExecutor({ agentCount: 3, parallel: true }, learningStore);
+             const swarmResult = await swarm.execute({
+               clickNumber: i, target: state.target, config, agent, cwd, hardenPhase,
+@@ -906,8 +905,8 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun>
+         if (scopeFiles.length > 0 && !rolled_back) {
+           const scopeValidation = validateScope(click.filesModified, scopeFiles, cwd);
+           if (!scopeValidation.valid) {
+-            console.error(
+-              `[ratchet] click ${i} ROLLED BACK — scope violation: ${scopeValidation.scopeViolations.join(', ')}`,
++            logger.error(
++              `click ${i} ROLLED BACK — scope violation: ${scopeValidation.scopeViolations.join(', ')}`,
+             );
+             if (click.commitHash) {
+               await git.revertLastCommit(cwd).catch(() => {});
+@@ -983,7 +982,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun>
+           const regressionStop = checkRegressionStop(regressionDetected, click.rollbackReason);
+           if (regressionStop.stop) {
+             run.earlyStopReason = regressionStop.earlyStopReason;
+-            console.error(`[ratchet] ⏹ Stop-on-regression — ${regressionStop.earlyStopReason}`);
++            logger.info({ reason: regressionStop.earlyStopReason }, 'Stop-on-regression');
+             break;
+           }
+         }
+@@ -993,7 +992,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun>
+           const plateauStop = checkPlateauStop(state.consecutiveZeroDeltaClicks, clicks);
+           if (plateauStop.stop) {
+             run.earlyStopReason = plateauStop.earlyStopReason;
+-            console.error(`[ratchet] ⏹ Plateau detected — ${plateauStop.earlyStopReason}`);
++            logger.info({ reason: plateauStop.earlyStopReason }, 'Plateau detected');
+             break;
+           }
+         }
+@@ -1005,7 +1004,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun>
+             run.earlyStopReason = timeoutStop.earlyStopReason;
+             run.timeoutReached = true;
+             process.stdout.write(`  ⏱ ${timeoutStop.earlyStopReason} — stopping after click ${i}\n`);
+-            console.error(`[ratchet] ⏱ ${timeoutStop.earlyStopReason} — stopping after click ${i}`);
++            logger.info({ reason: timeoutStop.earlyStopReason }, 'Timeout stop');
+             break;
+           }
+         }
+@@ -1016,7 +1015,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun>
+           if (budgetStop.stop) {
+             run.earlyStopReason = budgetStop.earlyStopReason;
+             run.budgetReached = true;
+-            console.error(`[ratchet] 💰 ${budgetStop.earlyStopReason} — stopping after click ${i}`);
++            logger.info({ reason: budgetStop.earlyStopReason }, 'Budget stop');
+             break;
+           }
+         }
+@@ -1071,13 +1070,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun>
+ 
+     // Diagnostic: if every click rolled back, surface a hint
+     if (run.clicks.length > 0 && run.clicks.every((c) => !c.testsPassed)) {
+-      console.error(
+-        '[ratchet] All clicks rolled back. Possible causes:\n' +
+-        '  • Tests are failing before ratchet starts — run the test command manually to check\n' +
+-        '  • The agent is not making changes (check build output above)\n' +
+-        '  • Test suite is flaky or has a long timeout — check test output for details\n' +
+-        '  Tip: run ratchet scan --explain to understand what issues ratchet is trying to fix',
+-      );
++      logger.error('All clicks rolled back. Possible causes: tests failing before ratchet starts, agent not making changes, or flaky test suite');
+     }
+   } catch (err: unknown) {
+     run.status = 'failed';
+diff --git a/src/core/license.ts b/src/core/license.ts
+index 1a6df0c..6627e97 100644
+--- a/src/core/license.ts
++++ b/src/core/license.ts
+@@ -10,6 +10,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+ import { join } from 'path';
+ import { homedir } from 'os';
+ import chalk from 'chalk';
++import { logger } from '../lib/logger.js';
+ 
+ // ──────────────────────────────────────────────────────────────────────────────
+ // Types
+@@ -143,14 +144,7 @@ export function requireLicense(commandName: string): LicenseData {
+   const license = loadLicense();
+ 
+   if (!license || !license.key) {
+-    console.error('');
+-    console.error(chalk.red('  ⛔ License required'));
+-    console.error('');
+-    console.error(`  ${chalk.dim('ratchet ' + commandName)} requires a paid subscription.`);
+-    console.error('');
+-    console.error(`  ${chalk.cyan('→')} Subscribe at ${chalk.bold('https://ratchetcli.com/#pricing')}`);
+-    console.error(`  ${chalk.cyan('→')} Then run: ${chalk.bold('ratchet login <your-key>')}`);
+-    console.error('');
++    logger.error({ command: commandName }, 'License required');
+     process.exit(1);
+   }
+ 
+@@ -158,14 +152,7 @@ export function requireLicense(commandName: string): LicenseData {
+   if (PRO_COMMANDS.has(commandName)) {
+     const level = TIER_LEVEL[license.tier] ?? 0;
+     if (level < TIER_LEVEL.pro) {
+-      console.error('');
+-      console.error(chalk.red('  ⛔ Pro plan required'));
+-      console.error('');
+-      console.error(`  ${chalk.dim('ratchet ' + commandName)} requires the Pro plan or higher.`);
+-      console.error(`  Your current plan: ${chalk.yellow(license.tier)}`);
+-      console.error('');
+-      console.error(`  ${chalk.cyan('→')} Upgrade at ${chalk.bold('https://ratchetcli.com/#pricing')}`);
+-      console.error('');
++      logger.error({ command: commandName, currentPlan: license.tier }, 'Pro plan required');
+       process.exit(1);
+     }
+   }
+@@ -174,12 +161,7 @@ export function requireLicense(commandName: string): LicenseData {
+   if (license.expiresAt) {
+     const exp = new Date(license.expiresAt);
+     if (exp < new Date()) {
+-      console.error('');
+-      console.error(chalk.red('  ⛔ License expired'));
+-      console.error('');
+-      console.error(`  Your license expired on ${chalk.yellow(exp.toLocaleDateString())}.`);
+-      console.error(`  ${chalk.cyan('→')} Renew at ${chalk.bold('https://ratchetcli.com/#pricing')}`);
+-      console.error('');
++      logger.error({ expiredOn: exp.toLocaleDateString() }, 'License expired');
+       process.exit(1);
+     }
+   }
+diff --git a/src/core/test-isolation.ts b/src/core/test-isolation.ts
+index 423c4f7..55de1ed 100644
+--- a/src/core/test-isolation.ts
++++ b/src/core/test-isolation.ts
+@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
+ import { join, resolve } from 'path';
+ import { runTests } from './runner.js';
+ import type { RatchetConfig } from '../types.js';
++import { logger } from '../lib/logger.js';
+ 
+ export interface TestGateResult {
+   passed: boolean;
+@@ -61,10 +62,10 @@ export async function progressiveGates(
+   if (useProgressiveGates) {
+     // Gate 1: lint / typecheck
+     const lintStart = Date.now();
+-    console.error('[ratchet] Gate 1/3: lint/typecheck...');
++    logger.info('Gate 1/3: lint/typecheck');
+     const lintResult = runCommandSync(lintCmd, cwd);
+     const lintDuration = Date.now() - lintStart;
+-    console.error(`[ratchet] Gate 1/3: lint ${lintResult.success ? '✓' : '✗'} (${lintDuration}ms)`);
++    logger.info({ success: lintResult.success, durationMs: lintDuration }, 'Gate 1/3: lint');
+ 
+     if (!lintResult.success) {
+       return {
+@@ -80,10 +81,10 @@ export async function progressiveGates(
+     if (changedFiles.length > 0) {
+       const relatedStart = Date.now();
+       const relatedCmd = `${testRelatedCmd} ${changedFiles.join(' ')}`;
+-      console.error(`[ratchet] Gate 2/3: related tests (${changedFiles.length} changed file${changedFiles.length > 1 ? 's' : ''})...`);
++      logger.info({ changedFiles: changedFiles.length }, 'Gate 2/3: related tests');
+       const relatedResult = await runTests({ command: relatedCmd, cwd });
+       const relatedDuration = Date.now() - relatedStart;
+-      console.error(`[ratchet] Gate 2/3: related tests ${relatedResult.passed ? '✓' : '✗'} (${relatedDuration}ms)`);
++      logger.info({ passed: relatedResult.passed, durationMs: relatedDuration }, 'Gate 2/3: related tests');
+ 
+       if (!relatedResult.passed) {
+         return {
+@@ -100,10 +101,10 @@ export async function progressiveGates(
+   // Final gate: full suite with failure classification
+   const gateLabel = useProgressiveGates ? 'Gate 3/3' : 'Gate 1/1';
+   const fullStart = Date.now();
+-  console.error(`[ratchet] ${gateLabel}: full test suite...`);
++  logger.info({ gate: gateLabel }, 'Full test suite');
+   const fullResult = await runTests({ command: testCmd, cwd });
+   const fullDuration = Date.now() - fullStart;
+-  console.error(`[ratchet] ${gateLabel}: full suite ${fullResult.passed ? '✓' : '✗'} (${fullDuration}ms)`);
++  logger.info({ gate: gateLabel, passed: fullResult.passed, durationMs: fullDuration }, 'Full suite result');
+ 
+   if (fullResult.passed) {
+     return {
+@@ -124,7 +125,7 @@ export async function progressiveGates(
+   );
+ 
+   if (newFailures.length === 0) {
+-    console.error(`[ratchet] All ${allFailed.length} failure(s) are pre-existing (baseline) — treating as passed`);
++    logger.info({ count: allFailed.length }, 'All failures are pre-existing baseline');
+     return {
+       passed: true,
+       gate: 'full',
+@@ -150,7 +151,7 @@ export async function progressiveGates(
+   // All new failures are unrelated to our changes
+   if (allowUnrelated && unrelatedFailures.length > 0) {
+     const warningMessage = `Landed with unrelated test failures (${unrelatedFailures.join(', ')})`;
+-    console.error(`[ratchet] ⚠ ${warningMessage}`);
++    logger.warn(warningMessage);
+     return {
+       passed: true,
+       gate: 'full',
+@@ -198,7 +199,7 @@ export function classifyFailures(
+  * Records pre-existing failures so they can be exempted from rollback decisions.
+  */
+ export async function captureBaseline(testCmd: string, cwd: string): Promise<BaselineResult> {
+-  console.error('[ratchet] Capturing baseline test suite state...');
++  logger.info('Capturing baseline test suite state');
+   const result = await runTests({ command: testCmd, cwd });
+   const failedTests = extractFailingTestFiles(result.output ?? '');
+ 
+@@ -208,14 +209,12 @@ export async function captureBaseline(testCmd: string, cwd: string): Promise<Bas
+   const passingTests = Math.max(0, totalTests - failedTests.length);
+ 
+   if (failedTests.length > 0) {
+-    console.error(
+-      `[ratchet] Baseline: ${passingTests}/${totalTests} passing (${failedTests.length} pre-existing failure${failedTests.length > 1 ? 's' : ''})`,
+-    );
++    logger.info({ failureCount: failedTests.length, passingTests, totalTests }, 'Baseline pre-existing failures');
+     for (const f of failedTests) {
+-      console.error(`[ratchet]   pre-existing: ${f}`);
++      logger.info({ file: f }, 'Pre-existing failure');
+     }
+   } else {
+-    console.error('[ratchet] Baseline: all tests passing');
++    logger.info('Baseline: all tests passing');
+   }
+ 
+   return { failedTests, totalTests, passingTests };
+diff --git a/src/lib/cli.ts b/src/lib/cli.ts
+index e5b8bc9..7edbba2 100644
+--- a/src/lib/cli.ts
++++ b/src/lib/cli.ts
+@@ -9,6 +9,7 @@ import chalk, { type ChalkInstance } from 'chalk';
+ import ora, { type Ora } from 'ora';
+ import { writeFile } from 'fs/promises';
+ import { loadConfig } from '../core/config.js';
++import { logger } from './logger.js';
+ import { toErrorMessage } from '../core/utils.js';
+ import { checkStaleBinary } from '../core/stale-check.js';
+ import { status as gitStatus, isRepo } from '../core/git.js';
+@@ -22,7 +23,7 @@ export function printHeader(text: string): void {
+ 
+ /** Write a red error message to stderr and exit. Never returns. */
+ export function exitWithError(message: string): never {
+-  console.error(chalk.red(message));
++  logger.error(message);
+   process.exit(1);
+ }
+ 
+@@ -142,7 +143,7 @@ export async function withSpinner<T>(
+     const label = failLabel ? `  ${failLabel}` : `  ${toErrorMessage(err)}`;
+     spinner.fail(chalk.red(label));
+     if (failLabel) {
+-      console.error(chalk.red(`\n  ${toErrorMessage(err)}`) + '\n');
++      logger.error({ err }, toErrorMessage(err));
+     }
+     process.exit(1);
+   }
+@@ -151,7 +152,7 @@ export async function withSpinner<T>(
+ /** Warn once if the compiled binary is older than source files. */
+ export function warnIfStaleBinary(): void {
+   const warning = checkStaleBinary();
+-  if (warning) console.warn(chalk.yellow(`  ${warning}\n`));
++  if (warning) logger.warn(warning);
+ }
+ 
+ /**
+@@ -163,14 +164,8 @@ export async function warnIfDirtyWorktree(cwd: string): Promise<void> {
+   const allDirty = [...ws.staged, ...ws.unstaged, ...ws.untracked];
+   const dirtyFiles = allDirty.length;
+   if (dirtyFiles > 0) {
+-    const fileWord = dirtyFiles === 1 ? 'file' : 'files';
+     const shown = allDirty.slice(0, 3).join(', ');
+-    const extra = dirtyFiles > 3 ? ` +${dirtyFiles - 3} more` : '';
+-    console.warn(
+-      chalk.yellow(`  ⚠  Dirty worktree: ${dirtyFiles} uncommitted ${fileWord}`) +
+-        chalk.dim(` (${shown}${extra}).`) +
+-        chalk.dim(' Ratchet will stash these before each click and restore them on rollback.\n'),
+-    );
++    logger.warn({ dirtyFiles, files: shown }, 'Dirty worktree');
+   }
+ }
+ 
+@@ -234,12 +229,7 @@ export async function validateProjectEnv(cwd: string): Promise<ReturnType<typeof
+  */
+ export async function assertIsRepo(cwd: string): Promise<void> {
+   if (!(await isRepo(cwd))) {
+-    console.error(
+-      chalk.red('  Not a git repository.') +
+-        '\n  Ratchet requires git to track changes and roll back on failure.' +
+-        '\n\n  ' + chalk.dim('To initialize a git repo:') +
+-        '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
+-    );
++    logger.error('Not a git repository');
+     process.exit(1);
+   }
+ }
+@@ -250,12 +240,7 @@ export async function assertIsRepo(cwd: string): Promise<void> {
+  */
+ export async function warnIfNotRepo(cwd: string): Promise<void> {
+   if (!(await isRepo(cwd))) {
+-    console.warn(
+-      chalk.yellow('  ⚠  Not a git repository.') +
+-        ' Ratchet requires git to track changes and roll back on failure.\n' +
+-        '\n  ' + chalk.dim('Initialize git before running ratchet torque:') +
+-        '\n    ' + chalk.cyan('git init && git add -A && git commit -m "init"') + '\n',
+-    );
++    logger.warn('Not a git repository');
+   }
+ }
+ 

@@ -1,0 +1,858 @@
+diff --git a/src/commands/badge.ts b/src/commands/badge.ts
+index 48f53d3..4904cbb 100644
+--- a/src/commands/badge.ts
++++ b/src/commands/badge.ts
+@@ -1,6 +1,7 @@
+ import { Command } from 'commander';
+ import chalk from 'chalk';
+ import { mkdir, writeFile } from 'fs/promises';
++import { logger } from '../lib/logger.js';
+ import { join } from 'path';
+ import { printHeader, printFields } from '../lib/cli.js';
+ import { runScan } from './scan.js';
+@@ -40,14 +41,14 @@ export function badgeCommand(): Command {
+       // Validate options
+       const validStyles = new Set(['flat', 'flat-square', 'for-the-badge']);
+       if (!validStyles.has(options.style)) {
+-        console.error(chalk.red(`  Invalid --style: ${chalk.bold(options.style)}`));
+-        console.error(chalk.dim('  Valid styles: flat, flat-square, for-the-badge'));
++        logger.error({ style: options.style }, 'Invalid --style');
++        logger.info('Valid styles: flat, flat-square, for-the-badge');
+         process.exit(1);
+       }
+       const validFormats = new Set(['markdown', 'html']);
+       if (!validFormats.has(options.format)) {
+-        console.error(chalk.red(`  Invalid --format: ${chalk.bold(options.format)}`));
+-        console.error(chalk.dim('  Valid formats: markdown, html'));
++        logger.error({ format: options.format }, 'Invalid --format');
++        logger.info('Valid formats: markdown, html');
+         process.exit(1);
+       }
+ 
+diff --git a/src/commands/build.ts b/src/commands/build.ts
+index 774fea0..c442bc6 100644
+--- a/src/commands/build.ts
++++ b/src/commands/build.ts
+@@ -1,6 +1,7 @@
+ import { Command } from 'commander';
+ import chalk from 'chalk';
+ import { execSync } from 'child_process';
++import { logger } from '../lib/logger.js';
+ import { dirname, join } from 'path';
+ import { fileURLToPath } from 'url';
+ 
+@@ -26,7 +27,7 @@ export function buildCommand(): Command {
+ 
+         process.stdout.write(chalk.green('\n  ✓ Binary rebuilt and linked successfully.\n'));
+       } catch (err) {
+-        console.error(chalk.red('\n  ✗ Build failed.') + '\n');
++        logger.error('Build failed');
+         process.exit(1);
+       }
+     });
+diff --git a/src/commands/improve.ts b/src/commands/improve.ts
+index de647c3..f2e2bfa 100644
+--- a/src/commands/improve.ts
++++ b/src/commands/improve.ts
+@@ -5,6 +5,7 @@ import { writeFile } from 'fs/promises';
+ import { join } from 'path';
+ 
+ import { printHeader, exitWithError, validateInt, severityColor, printFields, validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta } from '../lib/cli.js';
++import { logger } from '../lib/logger.js';
+ import { requireLicense } from '../core/license.js';
+ import { STATE_FILE } from './status.js';
+ import { saveRun } from '../core/history.js';
+@@ -231,7 +232,7 @@ export function improveCommand(): Command {
+           });
+           // Use scan after architect as input to surgical
+           if (architectRun.clicks.length > 0) {
+-            try { scanAfterArchitect = await runScan(cwd); } catch { /* fallback */ }
++            try { scanAfterArchitect = await runScan(cwd); } catch (err) { logger.warn({ err }, 'Scan after architect failed, using previous scan result'); }
+           }
+         }
+ 
+diff --git a/src/commands/init.ts b/src/commands/init.ts
+index 1c6b8dd..0b497bf 100644
+--- a/src/commands/init.ts
++++ b/src/commands/init.ts
+@@ -4,6 +4,7 @@ import ora from 'ora';
+ import { access, writeFile } from 'fs/promises';
+ import { join, resolve } from 'path';
+ import { printHeader, warnIfNotRepo } from '../lib/cli.js';
++import { logger } from '../lib/logger.js';
+ 
+ export type ProjectType = 'node' | 'python' | 'go' | 'rust' | 'make' | 'unknown';
+ 
+@@ -139,7 +140,7 @@ export function initCommand(): Command {
+         );
+       } catch (err) {
+         detectSpinner.fail('Failed to detect project type');
+-        console.error(chalk.red(String(err)));
++        logger.error({ err }, 'Failed to detect project type');
+         process.exit(1);
+       }
+ 
+@@ -159,7 +160,7 @@ export function initCommand(): Command {
+         writeSpinner.succeed(`Created ${chalk.green('.ratchet.yml')}`);
+       } catch (err) {
+         writeSpinner.fail('Failed to write .ratchet.yml');
+-        console.error(chalk.red(String(err)));
++        logger.error({ err }, 'Failed to write .ratchet.yml');
+         process.exit(1);
+       }
+ 
+diff --git a/src/commands/login.ts b/src/commands/login.ts
+index 3d62e86..466d8b4 100644
+--- a/src/commands/login.ts
++++ b/src/commands/login.ts
+@@ -11,7 +11,6 @@ export function loginCommand(): Command {
+     .description('Activate your Ratchet license key.')
+     .argument('<key>', 'License key from your subscription email')
+     .action(async (key: string) => {
+-      console.log('');
+       const spinner = ora('Validating license key...').start();
+ 
+       const result = await validateLicenseRemote(key);
+@@ -24,17 +23,14 @@ export function loginCommand(): Command {
+ 
+       saveLicense(result.license!);
+       spinner.succeed(chalk.green('License activated!'));
+-      console.log('');
+-      console.log(`  ${chalk.dim('Plan:')}     ${chalk.bold(result.license!.tier)}`);
++      logger.info({ plan: result.license!.tier }, 'License activated');
+       if (result.license!.email) {
+-        console.log(`  ${chalk.dim('Email:')}    ${result.license!.email}`);
++        logger.info({ email: result.license!.email }, 'License email');
+       }
+       if (result.license!.cyclesTotal) {
+-        console.log(`  ${chalk.dim('Cycles:')}   ${result.license!.cyclesRemaining ?? result.license!.cyclesTotal}/${result.license!.cyclesTotal} remaining`);
++        logger.info({ cyclesRemaining: result.license!.cyclesRemaining ?? result.license!.cyclesTotal, cyclesTotal: result.license!.cyclesTotal }, 'License cycles');
+       }
+-      console.log('');
+-      console.log(`  License saved to ${chalk.dim(getLicensePath())}`);
+-      console.log('');
++      logger.info({ path: getLicensePath() }, 'License saved');
+     });
+ 
+   return cmd;
+@@ -48,16 +44,12 @@ export function logoutCommand(): Command {
+     .action(() => {
+       const license = loadLicense();
+       if (!license || !license.key) {
+-        console.log('');
+-        console.log(chalk.dim('  No active license found.'));
+-        console.log('');
++        logger.info('No active license found');
+         return;
+       }
+ 
+       clearLicense();
+-      console.log('');
+-      console.log(chalk.green('  ✓ License removed.'));
+-      console.log('');
++      logger.info('License removed');
+     });
+ 
+   return cmd;
+diff --git a/src/commands/scan.ts b/src/commands/scan.ts
+index 53f704e..671e3b5 100644
+--- a/src/commands/scan.ts
++++ b/src/commands/scan.ts
+@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from 'fs';
+ import { join } from 'path';
+ import type { IssueSubcategory, IssueCategoryName } from '../core/taxonomy.js';
+ import { printHeader, severityColor, scoreColor } from '../lib/cli.js';
++import { logger } from '../lib/logger.js';
+ import { classifyIssues, summarizeClassifications } from '../core/cross-cutting.js';
+ import { getExplanation } from '../core/explanations.js';
+ import type { ClickGuards } from '../types.js';
+@@ -68,7 +69,12 @@ function evaluateGates(
+ 
+   const totalPassed = totalThreshold === null || result.total >= totalThreshold;
+ 
+-  return { passed: totalPassed && failedCategories.length === 0, failedCategories, totalScore: result.total, totalThreshold };
++  return {
++    passed: totalPassed && failedCategories.length === 0,
++    failedCategories,
++    totalScore: result.total,
++    totalThreshold,
++  };
+ }
+ 
+ function exitWithGateFailure(gate: GateResult): never {
+@@ -77,7 +83,8 @@ function exitWithGateFailure(gate: GateResult): never {
+ 
+   if (gate.totalThreshold !== null && gate.totalScore < gate.totalThreshold) {
+     process.stdout.write(
+-      `  ${chalk.red('✗')} Overall score ${chalk.red(`${gate.totalScore}`)} below required threshold of ${gate.totalThreshold}\n`,
++      `  ${chalk.red('✗')} Overall score ${chalk.red(`${gate.totalScore}`)} ` +
++        `below required threshold of ${gate.totalThreshold}\n`,
+     );
+   }
+ 
+@@ -186,13 +193,16 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
+       if (testScript && !testScript.includes('no test') && !testScript.includes('echo "Error')) {
+         hasTestScript = true;
+       }
+-    } catch { /* ignore */ }
++    } catch (err) {
++      logger.debug({ err }, 'Failed to read package.json for test script detection');
++    }
+   }
+ 
+   const { score: coverageScore, summary: coverageSummary, issues: coverageIssues } =
+     scoreCoverageRatio(testFiles.length, sourceFiles.length, hasTestScript);
+ 
+-  const edgePatterns = /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
++  const edgePatterns =
++    /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
+   const edgeCaseCount = countMatches(testFiles, contents, edgePatterns);
+   const { score: edgeCaseScore, summary: edgeCaseSummary } = scoreEdgeCases(edgeCaseCount);
+ 
+@@ -211,8 +221,14 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
+     max: 25,
+     summary: [coverageSummary, edgeCaseSummary].filter(Boolean).join(', '),
+     subcategories: [
+-      { name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: coverageIssues, issuesDescription: 'source files without tests', locations: coverageLocations },
+-      { name: 'Edge case depth', score: edgeCaseScore, max: 9, summary: edgeCaseSummary, issuesFound: edgeCaseCount === 0 ? 1 : 0, issuesDescription: 'no edge case tests' },
++      {
++        name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary,
++        issuesFound: coverageIssues, issuesDescription: 'source files without tests', locations: coverageLocations,
++      },
++      {
++        name: 'Edge case depth', score: edgeCaseScore, max: 9, summary: edgeCaseSummary,
++        issuesFound: edgeCaseCount === 0 ? 1 : 0, issuesDescription: 'no edge case tests',
++      },
+       { name: 'Test quality', score: testQualityScore, max: 8, summary: testQualitySummary, issuesFound: 0 },
+     ],
+   };
+@@ -238,9 +254,11 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
+   let routeFileCount = 0;
+   for (const file of srcFiles) {
+     const content = contents.get(file) ?? '';
+-    const hasZodJoi = /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content);
++    const hasZodJoi =
++      /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content);
+     const hasUuidValidation = /\buuid\b.*\bvalidate\b|\bvalidate.*uuid\b|isUUID|uuidv[1-5]/i.test(content);
+-    const hasParamValidation = /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(content);
++    const hasParamValidation =
++      /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(content);
+     const isRouteFile = /(?:router\.|app\.(?:get|post|put|patch|delete)|@(?:Get|Post|Put|Patch|Delete))/i.test(content);
+     if (isRouteFile) routeFileCount++;
+     if (hasZodJoi || hasUuidValidation || hasParamValidation) validationFileCount++;
+@@ -249,8 +267,14 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
+     scoreInputValidation(validationFileCount, routeFileCount);
+ 
+   // --- Auth & rate limiting /6 ---
+-  const hasAuthMiddleware = anyFileHasMatch(srcFiles, contents, /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i);
+-  const hasRateLimit = anyFileHasMatch(srcFiles, contents, /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i);
++  const hasAuthMiddleware = anyFileHasMatch(
++    srcFiles, contents,
++    /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i,
++  );
++  const hasRateLimit = anyFileHasMatch(
++    srcFiles, contents,
++    /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i,
++  );
+   const hasCors = anyFileHasMatch(srcFiles, contents, /\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i);
+ 
+   // Detect overly broad middleware scope (app.use on specific sub-paths instead of app.post/get)
+@@ -262,7 +286,9 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
+     if (!content) continue;
+     const lines = content.split('\n');
+     for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+-      const match = lines[lineIdx]!.match(/app\.use\s*\(\s*(['"`]\/api\/[a-zA-Z0-9/_-][^'"`]*['"`])\s*,\s*\w*[Ll]imit\w*/);
++      const match = lines[lineIdx]!.match(
++        /app\.use\s*\(\s*(['"`]\/api\/[a-zA-Z0-9/_-][^'"`]*['"`])\s*,\s*\w*[Ll]imit\w*/,
++      );
+       if (match && !GLOBAL_API_PATH.test(match[1]!)) {
+         broadMiddlewareCount++;
+         broadMiddlewareLocations.push(`${filePath}:${lineIdx + 1}`);
+@@ -280,9 +306,22 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
+     max: 15,
+     summary: [secretsSummary, inputValSummary].filter(Boolean).join(', '),
+     subcategories: [
+-      { name: 'Secrets & env vars', score: secretsScore, max: 3, summary: secretsSummary, issuesFound: secretCount, issuesDescription: 'hardcoded secrets' },
+-      { name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary, issuesFound: inputValIssues, issuesDescription: 'route files without validation' },
+-      { name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary, issuesFound: authIssues, issuesDescription: broadMiddlewareCount > 0 ? `missing auth/security controls + ${broadMiddlewareCount} overly broad rate limiter scope(s)` : 'missing auth/security controls', locations: broadMiddlewareLocations.length > 0 ? broadMiddlewareLocations : undefined },
++      {
++        name: 'Secrets & env vars', score: secretsScore, max: 3, summary: secretsSummary,
++        issuesFound: secretCount, issuesDescription: 'hardcoded secrets',
++      },
++      {
++        name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary,
++        issuesFound: inputValIssues, issuesDescription: 'route files without validation',
++      },
++      {
++        name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary,
++        issuesFound: authIssues,
++        issuesDescription: broadMiddlewareCount > 0
++          ? `missing auth/security controls + ${broadMiddlewareCount} overly broad rate limiter scope(s)`
++          : 'missing auth/security controls',
++        locations: broadMiddlewareLocations.length > 0 ? broadMiddlewareLocations : undefined,
++      },
+     ],
+   };
+ }
+@@ -301,7 +340,10 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
+       max: 15,
+       summary: 'JavaScript only — no static types',
+       subcategories: [
+-        { name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only', issuesFound: 1, issuesDescription: 'no TypeScript' },
++        {
++          name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only',
++          issuesFound: 1, issuesDescription: 'no TypeScript',
++        },
+         { name: 'Any type count', score: 0, max: 8, summary: 'JavaScript only', issuesFound: 0 },
+       ],
+     };
+@@ -312,7 +354,9 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
+ 
+   // --- Any type count /8 ---
+   const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
+-  const { count: anyCount, matchedFiles: anyTypeFiles } = countMatchesWithFiles(srcTsFiles, contents, /:\s*any\b|<any>|\bas\s+any\b/g);
++  const { count: anyCount, matchedFiles: anyTypeFiles } = countMatchesWithFiles(
++    srcTsFiles, contents, /:\s*any\b|<any>|\bas\s+any\b/g,
++  );
+   let totalLines = 0;
+   for (const file of srcTsFiles) totalLines += (contents.get(file) ?? '').split('\n').length;
+ 
+@@ -325,8 +369,14 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
+     max: 15,
+     summary: [strictSummary, anySummary].filter(Boolean).join(', '),
+     subcategories: [
+-      { name: 'Strict config', score: strictScore, max: 7, summary: strictSummary, issuesFound: strictScore < 7 ? 1 : 0, issuesDescription: 'missing strict TypeScript config' },
+-      { name: 'Any type count', score: anyScore, max: 8, summary: anySummary, issuesFound: anyCount, issuesDescription: 'any types', locations: anyTypeFiles },
++      {
++        name: 'Strict config', score: strictScore, max: 7, summary: strictSummary,
++        issuesFound: strictScore < 7 ? 1 : 0, issuesDescription: 'missing strict TypeScript config',
++      },
++      {
++        name: 'Any type count', score: anyScore, max: 8, summary: anySummary,
++        issuesFound: anyCount, issuesDescription: 'any types', locations: anyTypeFiles,
++      },
+     ],
+   };
+ }
+@@ -339,7 +389,9 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
+   const srcFiles = files.filter(f => !isTestFile(f));
+ 
+   const tryCatchTotal = countMatches(srcFiles, contents, /\btry\s*\{/g);
+-  const { count: emptyCatchTotal, matchedFiles: emptyCatchFiles } = countMatchesWithFiles(srcFiles, contents, /\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g);
++  const { count: emptyCatchTotal, matchedFiles: emptyCatchFiles } = countMatchesWithFiles(
++    srcFiles, contents, /\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g,
++  );
+   const consoleErrorCount = countMatches(srcFiles, contents, /\bconsole\.(?:error|warn|log)\s*\(/g);
+   const structuredLogCount = countMatches(srcFiles, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g);
+ 
+@@ -354,7 +406,9 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
+ 
+   const { score: coverageScore, summary: coverageSummary } = scoreEhCoverage(tryCatchTotal, asyncTotal);
+   const { score: emptyCatchScore, summary: emptyCatchSummary } = scoreEmptyCatches(emptyCatchTotal);
+-  const { score: loggingScore, summary: loggingSummary } = scoreStructuredLogging(structuredLogCount, consoleErrorCount);
++  const { score: loggingScore, summary: loggingSummary } = scoreStructuredLogging(
++    structuredLogCount, consoleErrorCount,
++  );
+ 
+   return {
+     name: 'Error Handling',
+@@ -363,9 +417,19 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
+     max: 20,
+     summary: [coverageSummary, emptyCatchSummary].filter(Boolean).join(', '),
+     subcategories: [
+-      { name: 'Coverage', score: coverageScore, max: 8, summary: coverageSummary, issuesFound: Math.max(0, asyncTotal - tryCatchTotal), issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles },
+-      { name: 'Empty catches', score: emptyCatchScore, max: 5, summary: emptyCatchSummary, issuesFound: emptyCatchTotal, issuesDescription: 'empty catch blocks', locations: emptyCatchFiles },
+-      { name: 'Structured logging', score: loggingScore, max: 7, summary: loggingSummary, issuesFound: structuredLogCount === 0 ? 1 : 0, issuesDescription: 'no structured logger' },
++      {
++        name: 'Coverage', score: coverageScore, max: 8, summary: coverageSummary,
++        issuesFound: Math.max(0, asyncTotal - tryCatchTotal),
++        issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles,
++      },
++      {
++        name: 'Empty catches', score: emptyCatchScore, max: 5, summary: emptyCatchSummary,
++        issuesFound: emptyCatchTotal, issuesDescription: 'empty catch blocks', locations: emptyCatchFiles,
++      },
++      {
++        name: 'Structured logging', score: loggingScore, max: 7, summary: loggingSummary,
++        issuesFound: structuredLogCount === 0 ? 1 : 0, issuesDescription: 'no structured logger',
++      },
+     ],
+   };
+ }
+@@ -378,7 +442,9 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
+   const srcFiles = files.filter(f => !isTestFile(f));
+   const appFiles = srcFiles.filter(f => !f.replace(/\\/g, '/').includes('/scripts/'));
+ 
+-  const { count: consoleLogCount, matchedFiles: consoleLogFiles } = countMatchesWithFiles(appFiles, contents, /\bconsole\.log\s*\(/g);
++  const { count: consoleLogCount, matchedFiles: consoleLogFiles } = countMatchesWithFiles(
++    appFiles, contents, /\bconsole\.log\s*\(/g,
++  );
+ 
+   let awaitInLoopCount = 0;
+   for (const file of appFiles) {
+@@ -426,9 +492,18 @@ function scorePerformance(files: string[], contents: Map<string, string>): Categ
+     max: 10,
+     summary: [asyncSummary, consoleSummary].filter(Boolean).join(', '),
+     subcategories: [
+-      { name: 'Async patterns', score: Math.min(asyncScore, 3), max: 3, summary: asyncSummary, issuesFound: awaitInLoopCount, issuesDescription: 'await-in-loop patterns' },
+-      { name: 'Console cleanup', score: Math.min(consoleScore, 5), max: 5, summary: consoleSummary, issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src', locations: consoleLogFiles },
+-      { name: 'Import hygiene', score: Math.min(importScore, 2), max: 2, summary: importHygieneSummary, issuesFound: importIssues, issuesDescription: 'import issues' },
++      {
++        name: 'Async patterns', score: Math.min(asyncScore, 3), max: 3, summary: asyncSummary,
++        issuesFound: awaitInLoopCount, issuesDescription: 'await-in-loop patterns',
++      },
++      {
++        name: 'Console cleanup', score: Math.min(consoleScore, 5), max: 5, summary: consoleSummary,
++        issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src', locations: consoleLogFiles,
++      },
++      {
++        name: 'Import hygiene', score: Math.min(importScore, 2), max: 2, summary: importHygieneSummary,
++        issuesFound: importIssues, issuesDescription: 'import issues',
++      },
+     ],
+   };
+ }
+@@ -510,10 +585,23 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
+     max: 15,
+     summary: [fnLenSummary, lineLenSummary].filter(Boolean).join(', '),
+     subcategories: [
+-      { name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary, issuesFound: longFnCount, issuesDescription: 'functions >50 lines', locations: longFuncFiles },
+-      { name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary, issuesFound: longLineCount, issuesDescription: 'lines >120 chars', locations: longLineFiles },
+-      { name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary, issuesFound: commentedCodeCount + todoCount, issuesDescription: 'dead code indicators (TODO, commented code)' },
+-      { name: 'Duplication', score: Math.min(dupScore, 3), max: 3, summary: dupSummary, issuesFound: duplicatedLines, issuesDescription: 'repeated code lines' },
++      {
++        name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary,
++        issuesFound: longFnCount, issuesDescription: 'functions >50 lines', locations: longFuncFiles,
++      },
++      {
++        name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary,
++        issuesFound: longLineCount, issuesDescription: 'lines >120 chars', locations: longLineFiles,
++      },
++      {
++        name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary,
++        issuesFound: commentedCodeCount + todoCount,
++        issuesDescription: 'dead code indicators (TODO, commented code)',
++      },
++      {
++        name: 'Duplication', score: Math.min(dupScore, 3), max: 3, summary: dupSummary,
++        issuesFound: duplicatedLines, issuesDescription: 'repeated code lines',
++      },
+     ],
+   };
+ }
+@@ -527,7 +615,9 @@ export async function runScan(cwd: string): Promise<ScanResult> {
+     try {
+       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { name?: string };
+       if (pkg.name) projectName = pkg.name;
+-    } catch { /* ignore */ }
++    } catch (err) {
++      logger.debug({ err }, 'Failed to read package.json for project name');
++    }
+   }
+ 
+   const files = findSourceFiles(cwd);
+@@ -596,7 +686,8 @@ function renderScan(result: ScanResult, opts?: { explain?: boolean }): void {
+       process.stdout.write(`     ${issue.count} ${issue.description} ${sevColor(`(${issue.severity})`)}\n`);
+     }
+     if (result.issuesByType.length > 8) {
+-      process.stdout.write(chalk.dim(`     ... and ${result.issuesByType.length - 8} more issue type${result.issuesByType.length - 8 !== 1 ? 's' : ''}`) + '\n');
++      const remaining = result.issuesByType.length - 8;
++      process.stdout.write(chalk.dim(`     ... and ${remaining} more issue type${remaining !== 1 ? 's' : ''}`) + '\n');
+     }
+   }
+ 
+diff --git a/src/commands/status.ts b/src/commands/status.ts
+index 879becc..e1fac42 100644
+--- a/src/commands/status.ts
++++ b/src/commands/status.ts
+@@ -1,6 +1,7 @@
+ import { Command } from 'commander';
+ import chalk from 'chalk';
+ import { readFile, readdir } from 'fs/promises';
++import { logger } from '../lib/logger.js';
+ import { join } from 'path';
+ import { existsSync, createReadStream } from 'fs';
+ import type { RatchetRun } from '../types.js';
+@@ -11,7 +12,7 @@ import type { ProgressState } from '../core/background.js';
+ 
+ export const STATE_FILE = '.ratchet-state.json';
+ 
+-const log = console.log.bind(console);
++const log = (msg: string) => logger.info(msg);
+ 
+ export async function loadRunState(cwd: string): Promise<RatchetRun | null> {
+   let raw: string;
+diff --git a/src/commands/stop.ts b/src/commands/stop.ts
+index c9ecdd7..4f7652a 100644
+--- a/src/commands/stop.ts
++++ b/src/commands/stop.ts
+@@ -1,6 +1,7 @@
+ import { Command } from 'commander';
+ import chalk from 'chalk';
+ import { readFile } from 'fs/promises';
++import { logger } from '../lib/logger.js';
+ import { join } from 'path';
+ import { bgRunDir, isProcessAlive } from '../core/background.js';
+ 
+@@ -19,30 +20,26 @@ export function stopCommand(): Command {
+       try {
+         pidRaw = await readFile(pidPath, 'utf-8');
+       } catch {
+-        console.error(chalk.red(`  No background run found with ID: ${id}`));
++        logger.error({ id }, 'No background run found');
+         process.exit(1);
+       }
+ 
+       const pid = parseInt(pidRaw.trim(), 10);
+       if (isNaN(pid)) {
+-        console.error(chalk.red(`  Invalid PID in run directory for: ${id}`));
++        logger.error({ id }, 'Invalid PID in run directory');
+         process.exit(1);
+       }
+ 
+       if (!isProcessAlive(pid)) {
+-        console.log(chalk.yellow(`  Process (PID ${pid}) is no longer running.`));
++        logger.warn({ pid }, 'Process is no longer running');
+         process.exit(0);
+       }
+ 
+       try {
+         process.kill(pid, 'SIGTERM');
+-        console.log(
+-          `  Sent SIGTERM to PID ${chalk.bold(String(pid))} (run ${chalk.dim(id)})\n` +
+-          `  The run will save its state and exit gracefully.\n` +
+-          `  Resume later with: ${chalk.cyan(`ratchet torque --resume ${id}`)}`,
+-        );
++        logger.info({ pid, id }, 'Sent SIGTERM');
+       } catch (err) {
+-        console.error(chalk.red(`  Failed to send SIGTERM: ${String(err)}`));
++        logger.error({ err: String(err) }, 'Failed to send SIGTERM');
+         process.exit(1);
+       }
+     });
+diff --git a/src/core/agents/shell.ts b/src/core/agents/shell.ts
+index 9ad9b90..d93d223 100644
+--- a/src/core/agents/shell.ts
++++ b/src/core/agents/shell.ts
+@@ -8,6 +8,7 @@ import { parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt, build
+ import type { IssueTask } from '../issue-backlog.js';
+ import { formatIssuesForPrompt } from '../issue-backlog.js';
+ import { buildIntelligenceBriefing, queryFlowsTargeted } from '../gitnexus.js';
++import { logger } from '../../lib/logger.js';
+ import { buildGraphToolInstructions } from '../gitnexus-tools.js';
+ import type { FeaturePlan, FeatureStep } from '../../types.js';
+ 
+@@ -332,8 +333,8 @@ export function buildArchitectPrompt(scanResult: ScanResult, cwd: string): strin
+   let intel = '';
+   try {
+     intel = buildIntelligenceBriefing('.', cwd);
+-  } catch {
+-    // Non-fatal — GitNexus may not be available
++  } catch (err) {
++    logger.debug({ err }, 'GitNexus briefing unavailable for architect prompt');
+   }
+ 
+   const topIssues = scanResult.issuesByType
+@@ -413,8 +414,8 @@ export function buildFeaturePlanPrompt(spec: string, cwd: string): string {
+   let graphIntel = '';
+   try {
+     graphIntel = buildIntelligenceBriefing('.', cwd);
+-  } catch {
+-    // Non-fatal — GitNexus may not be indexed yet
++  } catch (err) {
++    logger.debug({ err }, 'GitNexus briefing unavailable for feature plan prompt');
+   }
+ 
+   const graphTools = buildGraphToolInstructions(cwd);
+@@ -468,10 +469,10 @@ export function buildFeatureClickPrompt(step: FeatureStep, plan: FeaturePlan, cw
+     // Get graph context for the files this step will touch
+     const filePaths = step.files.length > 0 ? step.files : ['.'];
+     graphIntel = filePaths.map(f => {
+-      try { return buildIntelligenceBriefing(f, cwd); } catch { return ''; }
++      try { return buildIntelligenceBriefing(f, cwd); } catch (err) { logger.debug({ err, f }, 'GitNexus briefing failed for file'); return ''; }
+     }).filter(Boolean).join('\n\n');
+-  } catch {
+-    // Non-fatal
++  } catch (err) {
++    logger.debug({ err }, 'GitNexus briefing failed for feature click prompt');
+   }
+ 
+   const graphTools = buildGraphToolInstructions(cwd);
+diff --git a/src/core/scan-cache.ts b/src/core/scan-cache.ts
+index 53477a8..9ff991f 100644
+--- a/src/core/scan-cache.ts
++++ b/src/core/scan-cache.ts
+@@ -1,6 +1,7 @@
+ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+ import { join } from 'path';
+ import { execSync } from 'child_process';
++import { logger } from '../lib/logger.js';
+ import type { ScanResult } from '../commands/scan.js';
+ import { runScan } from '../commands/scan.js';
+ import {
+@@ -98,7 +99,8 @@ function gitBlobHash(filePath: string, cwd: string): string | null {
+       stdio: ['pipe', 'pipe', 'pipe'],
+     }).trim();
+     return result || null;
+-  } catch {
++  } catch (err) {
++    logger.debug({ err, filePath }, 'git hash-object failed, file may not be tracked');
+     return null;
+   }
+ }
+@@ -128,7 +130,8 @@ function getChangedFiles(cwd: string): string[] {
+     return Array.from(all)
+       .filter(f => f.length > 0)
+       .map(f => join(cwd, f));
+-  } catch {
++  } catch (err) {
++    logger.debug({ err, cwd }, 'git diff failed, assuming no changed files');
+     return [];
+   }
+ }
+@@ -263,7 +266,8 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
+   }
+ 
+   if (isTest) {
+-    const edgePatterns = /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
++    const edgePatterns =
++      /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
+     edgeCaseTestCount = (content.match(edgePatterns) ?? []).length;
+     testCaseCount = (content.match(/\b(?:it|test)\s*[.(]/g) ?? []).length;
+     assertCount = (content.match(/\b(?:expect|assert)\s*[.(]/g) ?? []).length;
+@@ -277,11 +281,13 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
+   let hasCors = false;
+ 
+   if (!isTest) {
+-    hasValidation = /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content)
++    hasValidation =
++      /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content)
+       || /\buuid\b.*\bvalidate\b|\bvalidate.*uuid\b|isUUID|uuidv[1-5]/i.test(content)
+       || /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(content);
+     isRouteFile = /(?:router\.|app\.(?:get|post|put|patch|delete)|@(?:Get|Post|Put|Patch|Delete))/i.test(content);
+-    hasAuthMiddleware = /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i.test(content);
++    hasAuthMiddleware =
++      /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i.test(content);
+     hasRateLimit = /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i.test(content);
+     hasCors = /\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i.test(content);
+ 
+@@ -351,7 +357,9 @@ export function rebuildScanFromMetrics(
+       if (pkg.name) projectName = pkg.name;
+       const ts = pkg.scripts?.test ?? '';
+       if (ts && !ts.includes('no test') && !ts.includes('echo "Error')) hasTestScript = true;
+-    } catch { /* ignore */ }
++    } catch (err) {
++      logger.debug({ err }, 'Failed to read package.json for project metadata');
++    }
+   }
+ 
+   const files = Object.keys(allFileMetrics);
+@@ -571,7 +579,8 @@ export class IncrementalScanner {
+       if (!parsed.fileMetrics) parsed.fileMetrics = {};
+       this.cachedTimestamp = parsed.lastScanAt;
+       return parsed;
+-    } catch {
++    } catch (err) {
++      logger.warn({ err }, 'Failed to parse scan cache, will perform full scan');
+       return null;
+     }
+   }
+@@ -607,7 +616,9 @@ export class IncrementalScanner {
+         this._needsFullScan = age > CACHE_MAX_AGE_MS;
+         return this._needsFullScan;
+       }
+-    } catch { /* fall through */ }
++    } catch (err) {
++      logger.warn({ err }, 'Failed to read scan cache timestamp, forcing full scan');
++    }
+     this._needsFullScan = true;
+     return true;
+   }
+@@ -672,7 +683,8 @@ export class IncrementalScanner {
+       let content: string;
+       try {
+         content = readFileSync(filePath, 'utf-8');
+-      } catch {
++      } catch (err) {
++        logger.debug({ err, filePath }, 'Failed to read file for incremental rescan');
+         content = '';
+       }
+ 
+@@ -707,7 +719,8 @@ export class IncrementalScanner {
+       let content: string;
+       try {
+         content = readFileSync(filePath, 'utf-8');
+-      } catch {
++      } catch (err) {
++        logger.debug({ err, filePath }, 'Failed to read file for full scan');
+         content = '';
+       }
+       fileMetrics[filePath] = analyzeFile(filePath, content);
+diff --git a/src/core/scan-scorers.ts b/src/core/scan-scorers.ts
+index 4a20af0..05e1ba2 100644
+--- a/src/core/scan-scorers.ts
++++ b/src/core/scan-scorers.ts
+@@ -52,10 +52,14 @@ export function scoreTestQuality(
+   hasDescribe: boolean,
+ ): { score: number; summary: string } {
+   const assertsPerTest = testCaseCount > 0 ? assertCount / testCaseCount : 0;
+-  if (testCaseCount >= 50 && assertsPerTest >= 2 && hasDescribe) return { score: 8, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
+-  if (testCaseCount >= 10 && assertsPerTest >= 1.5 && hasDescribe) return { score: 6, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
+-  if (testCaseCount >= 5 && assertsPerTest >= 1) return { score: 4, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
+-  if (testCaseCount > 0) return { score: 2, summary: `${testCaseCount} test case${testCaseCount !== 1 ? 's' : ''}, low assertion density` };
++  if (testCaseCount >= 50 && assertsPerTest >= 2 && hasDescribe)
++    return { score: 8, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
++  if (testCaseCount >= 10 && assertsPerTest >= 1.5 && hasDescribe)
++    return { score: 6, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
++  if (testCaseCount >= 5 && assertsPerTest >= 1)
++    return { score: 4, summary: `${assertsPerTest.toFixed(1)} assertions per test` };
++  if (testCaseCount > 0)
++    return { score: 2, summary: `${testCaseCount} test case${testCaseCount !== 1 ? 's' : ''}, low assertion density` };
+   return { score: 0, summary: 'no test cases found' };
+ }
+ 
+@@ -73,9 +77,14 @@ export function scoreInputValidation(
+ ): { score: number; summary: string; issues: number } {
+   const totalCheckable = Math.max(routeFileCount, validationFileCount, 1);
+   const ratio = validationFileCount / totalCheckable;
+-  if (validationFileCount >= 3 && ratio >= 0.6) return { score: 6, summary: `validation on ${validationFileCount} files`, issues: 0 };
+-  if (validationFileCount >= 2) return { score: 4, summary: `Zod/validation on ${validationFileCount} files`, issues: routeFileCount > validationFileCount ? routeFileCount - validationFileCount : 0 };
+-  if (validationFileCount === 1) return { score: 2, summary: 'minimal input validation detected', issues: Math.max(0, routeFileCount - 1) };
++  if (validationFileCount >= 3 && ratio >= 0.6)
++    return { score: 6, summary: `validation on ${validationFileCount} files`, issues: 0 };
++  if (validationFileCount >= 2) {
++    const issues = routeFileCount > validationFileCount ? routeFileCount - validationFileCount : 0;
++    return { score: 4, summary: `Zod/validation on ${validationFileCount} files`, issues };
++  }
++  if (validationFileCount === 1)
++    return { score: 2, summary: 'minimal input validation detected', issues: Math.max(0, routeFileCount - 1) };
+   return { score: 0, summary: 'no input validation detected', issues: routeFileCount };
+ }
+ 
+@@ -112,7 +121,8 @@ export function scoreAuthChecks(
+   if (broadMiddlewareCount > 0) {
+     score = Math.max(0, score - Math.min(broadMiddlewareCount, 3));
+     issues += broadMiddlewareCount;
+-    summary += ` (${broadMiddlewareCount} overly broad rate limiter${broadMiddlewareCount > 1 ? 's' : ''} — use app.post/get instead of app.use on sub-paths)`;
++    summary += ` (${broadMiddlewareCount} overly broad rate limiter${broadMiddlewareCount > 1 ? 's' : ''}` +
++      ` — use app.post/get instead of app.use on sub-paths)`;
+   }
+ 
+   return { score, summary, issues };
+@@ -122,7 +132,12 @@ export function scoreAuthChecks(
+ 
+ export function scoreAnyTypeDensity(anyCount: number, totalLines: number): { score: number; summary: string } {
+   const density = totalLines > 0 ? anyCount / (totalLines / 1000) : 0;
+-  if (anyCount === 0 || density < 1) return { score: 8, summary: anyCount === 0 ? 'zero any types' : `${anyCount} any type${anyCount !== 1 ? 's' : ''} (very low density)` };
++  if (anyCount === 0 || density < 1) {
++    const summary = anyCount === 0
++      ? 'zero any types'
++      : `${anyCount} any type${anyCount !== 1 ? 's' : ''} (very low density)`;
++    return { score: 8, summary };
++  }
+   if (density < 2) return { score: 7, summary: `${anyCount} any type${anyCount !== 1 ? 's' : ''} (low density)` };
+   if (density < 4) return { score: 6, summary: `${anyCount} any types (low density)` };
+   if (density < 7) return { score: 5, summary: `${anyCount} any types (moderate)` };
+@@ -135,7 +150,8 @@ export function scoreAnyTypeDensity(anyCount: number, totalLines: number): { sco
+ 
+ export function scoreEhCoverage(tryCatchCount: number, asyncCount: number): { score: number; summary: string } {
+   if (tryCatchCount === 0) return { score: 0, summary: 'no try/catch found' };
+-  if (asyncCount === 0 || tryCatchCount >= asyncCount * 0.6) return { score: 8, summary: `${tryCatchCount} try/catch block${tryCatchCount !== 1 ? 's' : ''}` };
++  if (asyncCount === 0 || tryCatchCount >= asyncCount * 0.6)
++    return { score: 8, summary: `${tryCatchCount} try/catch block${tryCatchCount !== 1 ? 's' : ''}` };
+   const pct = Math.round((tryCatchCount / asyncCount) * 100);
+   return { score: Math.round((pct / 100) * 8), summary: `${tryCatchCount} try/catch (${pct}% async coverage)` };
+ }
+@@ -152,11 +168,18 @@ export function scoreEmptyCatches(count: number): { score: number; summary: stri
+   ]);
+ }
+ 
+-export function scoreStructuredLogging(structuredLogCount: number, consoleErrorCount: number): { score: number; summary: string } {
+-  if (structuredLogCount > 0 && consoleErrorCount === 0) return { score: 7, summary: `structured logger only (${structuredLogCount} calls)` };
+-  if (structuredLogCount > 0 && consoleErrorCount <= 5) return { score: 5, summary: `structured logger + ${consoleErrorCount} console calls` };
+-  if (structuredLogCount > 0) return { score: 3, summary: `logger (${structuredLogCount}) + console (${consoleErrorCount})` };
+-  if (consoleErrorCount > 0) return { score: 1, summary: `${consoleErrorCount} console.error/warn calls (no structured logger)` };
++export function scoreStructuredLogging(
++  structuredLogCount: number,
++  consoleErrorCount: number,
++): { score: number; summary: string } {
++  if (structuredLogCount > 0 && consoleErrorCount === 0)
++    return { score: 7, summary: `structured logger only (${structuredLogCount} calls)` };
++  if (structuredLogCount > 0 && consoleErrorCount <= 5)
++    return { score: 5, summary: `structured logger + ${consoleErrorCount} console calls` };
++  if (structuredLogCount > 0)
++    return { score: 3, summary: `logger (${structuredLogCount}) + console (${consoleErrorCount})` };
++  if (consoleErrorCount > 0)
++    return { score: 1, summary: `${consoleErrorCount} console.error/warn calls (no structured logger)` };
+   return { score: 0, summary: 'no error logging detected' };
+ }
+ 
+@@ -188,7 +211,8 @@ export function scoreImportHygiene(issues: number): { score: number; summary: st
+ // ── Code Quality ──────────────────────────────────────────────────────────────
+ 
+ export function scoreFunctionLength(avgLen: number, fnCount: number): { score: number; summary: string } {
+-  if (fnCount === 0 || avgLen <= 20) return { score: 6, summary: fnCount === 0 ? 'no functions detected' : 'short functions' };
++  if (fnCount === 0 || avgLen <= 20)
++    return { score: 6, summary: fnCount === 0 ? 'no functions detected' : 'short functions' };
+   if (avgLen <= 30) return { score: 6, summary: `avg ${Math.round(avgLen)}-line functions` };
+   if (avgLen <= 40) return { score: 5, summary: `avg ${Math.round(avgLen)}-line functions` };
+   if (avgLen <= 50) return { score: 4, summary: `avg ${Math.round(avgLen)}-line functions` };
+@@ -210,8 +234,10 @@ export function scoreLineLength(longLineCount: number): { score: number; summary
+ export function scoreDeadCode(commentedCount: number, todoCount: number): { score: number; summary: string } {
+   const total = commentedCount + todoCount;
+   if (total === 0) return { score: 6, summary: 'no dead code detected' };
+-  if (commentedCount === 0 && todoCount <= 3) return { score: 5, summary: `${todoCount} TODO${todoCount !== 1 ? 's' : ''}` };
+-  if (commentedCount <= 3 && todoCount <= 5) return { score: 4, summary: `${commentedCount} commented-out, ${todoCount} TODOs` };
++  if (commentedCount === 0 && todoCount <= 3)
++    return { score: 5, summary: `${todoCount} TODO${todoCount !== 1 ? 's' : ''}` };
++  if (commentedCount <= 3 && todoCount <= 5)
++    return { score: 4, summary: `${commentedCount} commented-out, ${todoCount} TODOs` };
+   if (commentedCount <= 10) return { score: 2, summary: `${commentedCount} commented-out lines, ${todoCount} TODOs` };
+   return { score: 0, summary: `${commentedCount} commented-out lines, ${todoCount} TODOs` };
+ }
+diff --git a/src/core/strategy.ts b/src/core/strategy.ts
+index cde91da..69d58e0 100644
+--- a/src/core/strategy.ts
++++ b/src/core/strategy.ts
+@@ -362,7 +362,8 @@ function parseJsonField<T>(val: unknown, fallback: T): T {
+   if (typeof val === 'string') {
+     try {
+       return JSON.parse(val) as T;
+-    } catch {
++    } catch (err) {
++      logger.debug({ err, val }, 'Failed to parse JSON field, using fallback');
+       return fallback;
+     }
+   }
+@@ -1034,7 +1035,9 @@ function detectTestFramework(cwd: string): string {
+       if (pkg.devDependencies?.vitest) return 'vitest';
+       if (pkg.devDependencies?.jest || pkg.devDependencies?.['@jest/core']) return 'jest';
+       if (pkg.devDependencies?.mocha) return 'mocha';
+-    } catch { /* ignore */ }
++    } catch (err) {
++      logger.debug({ err }, 'Failed to read package.json for test framework detection');
++    }
+   }
+   return 'unknown';
+ }
+diff --git a/src/core/telemetry.ts b/src/core/telemetry.ts
+index 7f3da51..8f7f2f3 100644
+--- a/src/core/telemetry.ts
++++ b/src/core/telemetry.ts
+@@ -7,12 +7,15 @@
+ import { readFileSync } from "fs";
+ import { join, dirname } from "path";
+ import { fileURLToPath } from "url";
++import { logger } from "../lib/logger.js";
+ 
+ let version = "unknown";
+ try {
+   const pkgPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "package.json");
+   version = JSON.parse(readFileSync(pkgPath, "utf-8")).version;
+-} catch {}
++} catch (err) {
++  logger.debug({ err }, 'Failed to read package.json for version');
++}
+ 
+ const API = "https://api.ratchetcli.com/telemetry";
+ 

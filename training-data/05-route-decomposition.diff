@@ -1,0 +1,3470 @@
+diff --git a/server/routes.ts b/server/routes.ts
+index 868b8834..9c24ec0f 100644
+--- a/server/routes.ts
++++ b/server/routes.ts
+@@ -1,2307 +1,61 @@
+-import express, { type Express, type Request } from "express";
++import express, { type Express } from "express";
+ import logger from "./lib/logger";
+ import { createServer, type Server } from "http";
+ import { WebSocketServer, WebSocket } from "ws";
+-import { z, ZodError } from "zod";
+-import { timingSafeEqual } from "crypto";
+ import { storage } from "./storage";
+-import { db, pool } from "./db";
+-import {
+-  groups, groupMembers, deuceEntries, users,
+-  insertGroupSchema, insertDeuceEntrySchema,
+-  insertInviteSchema, updateUserSchema,
+-  type DeuceEntry,
+-} from "@shared/schema";
+-import { eq, and, sql, isNull } from "drizzle-orm";
+-import { setupAuth, isAuthenticated, clerkEnabled, clerk, getSession } from "./replitAuth";
+-import { requiresPremiumFor } from "./premiumAuth";
+-import { requireGroupMember } from "./groupAuth";
++import { setupAuth, clerkEnabled, clerk, getSession } from "./replitAuth";
+ import { registerClerkWebhook } from "./routes/webhooks";
+ import { registerRevenueCatWebhook } from "./routes/webhooks/revenuecat";
++import { createAdminRouter } from "./routes/admin";
+ import { createAuthRouter } from "./routes/auth";
+-import { createBingoRouter } from "./routes/bingo";
+-import { createPassportRouter } from "./routes/passport";
+-import { createPremiumRouter } from "./routes/premium";
+-import { createKingRouter } from "./routes/king";
+-import { createBattleRouter } from "./routes/battle";
+-import { getRandomTemplate } from "./challengeTemplates";
+-import { v4 as uuidv4 } from "uuid";
+-import multer from "multer";
+-import sharp from "sharp";
+-import { promises as fs } from "fs";
+-import path from "path";
+-import { Expo } from "expo-server-sdk";
+-import { checkAllGroupStreaksAndNotify } from "./streakNotifications";
+-import { getTodayChallenge, todayChallengeDate } from "./challenges";
+-import { track } from "./lib/analytics";
+-import { getRecentErrors } from "./lib/errorTracker";
+-import { buildDetailedHealth, buildDegradedHealth } from "./lib/perfBaseline";
+-import { apiError, Errors } from "./lib/apiError";
+-import { registerWss, incWsCounter, getWsMetrics } from "./lib/wsMetrics";
+-import { triggerPassportStamp } from "./lib/geocode";
+-import {
+-  isPremiumUser,
+-  getTodayUTC,
+-  getYesterdayUTC,
+-  getTitle,
+-  escapeHtml,
+-  MAX_LOGS_PER_DAY,
+-  sanitizeUserForResponse,
+-  createDeuceSchema,
+-} from "./routes/helpers";
+-
+-type AuthReq = Request & { user: { id: string } };
+-
+-// --- Zod Validation Schemas ---
+-const loginSchema = z.object({
+-  username: z.string().min(3).max(50),
+-  inviteCode: z.string().optional(),
+-});
+-
+-const createGroupSchema = z.object({
+-  name: z.string().min(1).max(100),
+-  description: z.string().max(500).optional(),
+-});
+-
+-const createLocationSchema = z.object({
+-  name: z.string().min(1).max(100),
+-});
+-
+-
+-const reactionSchema = z.object({
+-  emoji: z.string().min(1).max(10),
+-});
+-
+-const referralApplySchema = z.object({
+-  code: z.string().min(1).max(20),
+-});
+-
+-const subscriptionUpgradeSchema = z.object({
+-  plan: z.enum(["monthly", "annual"]),
+-});
+-
+-const pushTokenSchema = z.object({
+-  token: z.string().min(1).max(500),
+-  platform: z.enum(["ios", "android"]),
+-});
+-
+-const reminderSchema = z.object({
+-  hour: z.number().int().min(0).max(23),
+-  minute: z.number().int().min(0).max(59),
+-});
+-
+-const themeSchema = z.object({
+-  theme: z.enum(["default", "dark", "cream", "midnight"]),
+-});
+-
+-const broadcastSchema = z.object({
+-  milestone: z.string().min(1).max(200),
+-});
+-
+-const deleteReactionSchema = z.object({
+-  emoji: z.string().min(1).max(10),
+-});
+-
+-const unregisterPushSchema = z.object({
+-  token: z.string().min(1).max(500),
+-});
+-
+-
+-/** Constant-time string comparison to prevent timing attacks on API keys */
+-function safeKeyCompare(provided: string | undefined, expected: string | undefined): boolean {
+-  if (!provided || !expected) return false;
+-  try {
+-    const a = Buffer.from(provided);
+-    const b = Buffer.from(expected);
+-    if (a.length !== b.length) {
+-      // Still do a comparison to avoid length-based timing leak
+-      timingSafeEqual(Buffer.alloc(b.length), b);
+-      return false;
+-    }
+-    return timingSafeEqual(a, b);
+-  } catch {
+-    return false;
+-  }
+-}
+-
+-/** Get today's date as YYYY-MM-DD in the given IANA timezone (falls back to UTC) */
+-function getTodayInZone(tz: string): string {
+-  try {
+-    return new Intl.DateTimeFormat('en-CA', {
+-      timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+-    }).format(new Date());
+-  } catch (err) {
+-    logger.debug({ err }, "[timezone] Invalid timezone for getTodayInZone — falling back to UTC");
+-    return new Date().toISOString().slice(0, 10);
+-  }
+-}
+-
+-/** Get yesterday's date as YYYY-MM-DD in the given IANA timezone (falls back to UTC) */
+-function getYesterdayInZone(tz: string): string {
+-  const d = new Date();
+-  d.setDate(d.getDate() - 1);
+-  try {
+-    return new Intl.DateTimeFormat('en-CA', {
+-      timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+-    }).format(d);
+-  } catch (err) {
+-    logger.debug({ err }, "[timezone] Invalid timezone for getYesterdayInZone — falling back to UTC");
+-    d.setUTCDate(d.getUTCDate());
+-    return d.toISOString().slice(0, 10);
+-  }
+-}
+-
+-/** Simple string hash for advisory lock keys */
+-function hashCode(s: string): number {
+-  let hash = 0;
+-  for (let i = 0; i < s.length; i++) {
+-    hash = ((hash << 5) - hash + s.charCodeAt(i)) | 0;
+-  }
+-  return hash;
+-}
+-
+-/**
+- * After a deuce is logged, check if all group members have logged today.
+- * If yes, advance the streak. If a day was missed, reset first.
+- * Uses db.transaction + advisory lock in production for race safety.
+- * Falls back to storage layer when db.transaction is unavailable (tests).
+- */
+-async function recalculateStreak(groupId: string): Promise<void> {
+-  // Production path: serialized transaction with advisory lock and group timezone
+-  if ('transaction' in db) {
+-    await db.transaction(async (tx) => {
+-      const lockKey = Math.abs(hashCode(groupId));
+-      await tx.execute(sql`SELECT pg_advisory_xact_lock(${lockKey})`);
+-
+-      const [streak] = await tx
+-        .select({
+-          currentStreak: groups.currentStreak,
+-          longestStreak: groups.longestStreak,
+-          lastStreakDate: groups.lastStreakDate,
+-          timezone: groups.timezone,
+-        })
+-        .from(groups)
+-        .where(eq(groups.id, groupId));
+-
+-      if (!streak) return;
+-
+-      const tz = streak.timezone || 'UTC';
+-      const today = getTodayInZone(tz);
+-      const yesterday = getYesterdayInZone(tz);
+-
+-      // Idempotency: already counted today — skip
+-      if (streak.lastStreakDate === today) return;
+-
+-      const members = await tx
+-        .select({ userId: groupMembers.userId })
+-        .from(groupMembers)
+-        .where(eq(groupMembers.groupId, groupId));
+-
+-      const loggedToday = await tx
+-        .select({ userId: deuceEntries.userId })
+-        .from(deuceEntries)
+-        .where(
+-          and(
+-            eq(deuceEntries.groupId, groupId),
+-            sql`DATE(${deuceEntries.loggedAt} AT TIME ZONE ${tz}) = ${today}`
+-          )
+-        )
+-        .groupBy(deuceEntries.userId);
+-
+-      const loggedUserIds = new Set(loggedToday.map(r => r.userId));
+-      const allLoggedToday = members.every(m => loggedUserIds.has(m.userId));
+-
+-      if (!allLoggedToday) {
+-        if (streak.lastStreakDate && streak.lastStreakDate !== today && streak.lastStreakDate !== yesterday) {
+-          await tx.update(groups).set({ currentStreak: 0, updatedAt: new Date() }).where(eq(groups.id, groupId));
+-        }
+-        return;
+-      }
+-
+-      const streakExpired = !streak.lastStreakDate ||
+-        (streak.lastStreakDate !== yesterday &&
+-         streak.lastStreakDate !== today);
+-      const newStreak = streakExpired ? 1 : streak.currentStreak + 1;
+-      const newLongest = Math.max(newStreak, streak.longestStreak);
+-      await tx.update(groups)
+-        .set({
+-          currentStreak: newStreak,
+-          longestStreak: newLongest,
+-          lastStreakDate: today,
+-          updatedAt: new Date(),
+-        })
+-        .where(eq(groups.id, groupId));
+-    });
+-    return;
+-  }
+-
+-  // Fallback path (test environments): use storage layer with UTC dates
+-  const today = getTodayUTC();
+-  const yesterday = getYesterdayUTC();
+-
+-  const streak = await storage.getGroupStreak(groupId);
+-  if (!streak) return;
+-
+-  // Idempotency: already counted today — skip
+-  if (streak.lastStreakDate === today) return;
+-
+-  const memberStatuses = await storage.getMembersLogStatusToday(groupId, today);
+-  if (memberStatuses.length === 0) return;
+-
+-  const allLoggedToday = memberStatuses.every(m => m.hasLogged);
+-
+-  if (!allLoggedToday) {
+-    if (streak.lastStreakDate && streak.lastStreakDate !== today && streak.lastStreakDate !== yesterday) {
+-      await storage.updateGroupStreak(groupId, 0, streak.longestStreak, streak.lastStreakDate);
+-    }
+-    return;
+-  }
+-
+-  const newStreak = (!streak.lastStreakDate || (streak.lastStreakDate !== yesterday && streak.lastStreakDate !== today))
+-    ? 1
+-    : streak.currentStreak + 1;
+-  const newLongest = Math.max(newStreak, streak.longestStreak);
+-  await storage.updateGroupStreak(groupId, newStreak, newLongest, today);
+-}
+-
+-/**
+- * Check if a group's streak is at risk (any member hasn't logged today).
+- */
+-async function checkAndNotifyStreakRisk(groupId: string): Promise<{ atRisk: boolean; missingMembers: string[] }> {
+-  const today = getTodayUTC();
+-  const memberStatuses = await storage.getMembersLogStatusToday(groupId, today);
+-  const missing = memberStatuses.filter(m => !m.hasLogged);
+-
+-  if (missing.length > 0) {
+-    const missingNames = missing.map(m => m.username || m.firstName || m.userId);
+-    logger.info(`[STREAK RISK] Group ${groupId}: ${missingNames.join(', ')} haven't logged today`);
+-    return { atRisk: true, missingMembers: missingNames };
+-  }
+-
+-  return { atRisk: false, missingMembers: [] };
+-}
+-
+-
+-export async function registerRoutes(app: Express): Promise<Server> {
+-  // Public config endpoint — returns runtime config values for the frontend
+-  // This lets us inject build-time values (like Clerk key) without baking them into the JS bundle
+-  app.get('/api/config', (_req, res) => {
+-    res.json({
+-      clerkPublishableKey: process.env.VITE_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY || null,
+-    });
+-  });
+-
+-  // Health check (no auth required) — checks DB connectivity + returns uptime
+-  // Returns 200 when healthy, 503 when DB is unreachable (load balancers use this)
+-  app.get('/api/health', async (_req, res) => {
+-    const base = { timestamp: new Date().toISOString(), uptime: process.uptime() };
+-    const ws = getWsMetrics();
+-    try {
+-      const start = Date.now();
+-      await pool.query('SELECT 1');
+-      const dbLatencyMs = Date.now() - start;
+-      res.json({ status: 'ok', db: 'connected', dbLatencyMs, ws, ...base });
+-    } catch (err) {
+-      res.status(503).json({ status: 'degraded', db: 'unreachable', ws, ...base });
+-    }
+-  });
+-
+-  // --- Admin stats endpoint (no session auth, X-Admin-Key header) ---
+-  const ADMIN_KEY = process.env.ADMIN_KEY;
+-  if (!ADMIN_KEY) {
+-    if (process.env.NODE_ENV === 'production') {
+-      logger.error('[ERROR] ADMIN_KEY not set in production — admin endpoints disabled');
+-    }
+-    logger.warn('[WARN] ADMIN_KEY not set — admin endpoints will reject all requests in dev');
+-  }
+-  app.get('/api/admin/stats', async (req, res) => {
+-    const key = req.headers['x-admin-key'] as string | undefined;
+-    if (!ADMIN_KEY || !safeKeyCompare(key, ADMIN_KEY)) {
+-      return Errors.unauthorized(res);
+-    }
+-    try {
+-      const stats = await storage.getAdminStats();
+-      res.json(stats);
+-    } catch (error) {
+-      logger.error('[ADMIN STATS ERROR]', error);
+-      Errors.internal(res, 'Failed to fetch admin stats');
+-    }
+-  });
+-
+-  // Internal streak check endpoint (cron / manual trigger, no session auth)
+-  const INTERNAL_KEY = process.env.INTERNAL_API_KEY;
+-  if (!INTERNAL_KEY) {
+-    if (process.env.NODE_ENV === 'production') {
+-      logger.error('[ERROR] INTERNAL_API_KEY not set — internal endpoints disabled');
+-    }
+-    logger.warn('[WARN] INTERNAL_API_KEY not set — internal endpoints will reject all requests in dev');
+-  }
+-  app.post('/api/internal/streak-check', async (req, res) => {
+-    const key = req.headers['x-internal-key'] as string | undefined;
+-    if (!INTERNAL_KEY || !safeKeyCompare(key, INTERNAL_KEY)) {
+-      return Errors.unauthorized(res);
+-    }
+-    try {
+-      const summary = await checkAllGroupStreaksAndNotify();
+-      res.json(summary);
+-    } catch (error) {
+-      logger.error('[STREAK CHECK ERROR]', error);
+-      Errors.internal(res, 'Streak check failed');
+-    }
+-  });
+-
+-  // --- Crown transfer: calculate weekly kings and transfer crowns ---
+-  app.post('/api/internal/crown-transfer', async (req, res) => {
+-    const key = req.headers['x-internal-key'] as string | undefined;
+-    const internalKey = process.env.INTERNAL_API_KEY;
+-    if (!internalKey || !safeKeyCompare(key, internalKey)) {
+-      return Errors.unauthorized(res);
+-    }
+-
+-    const results: { groupId: string; winner: string | null; error?: string }[] = [];
+-
+-    try {
+-      const now = new Date();
+-      const dayOfWeek = now.getUTCDay();
+-      const daysSinceMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+-      const periodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysSinceMon));
+-      const periodStart = new Date(periodEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+-
+-      const groupIds = await storage.getAllGroupIds();
+-
+-      for (const groupId of groupIds) {
+-        try {
+-          const logCounts = await storage.getGroupLogCountsForPeriod(groupId, periodStart, periodEnd);
+-
+-          if (logCounts.length === 0) {
+-            results.push({ groupId, winner: null });
+-            continue;
+-          }
+-
+-          const maxLogs = Math.max(...logCounts.map((l) => l.logCount));
+-          const topTiers = logCounts.filter((l) => l.logCount === maxLogs);
+-
+-          let winner = topTiers[0];
+-          if (topTiers.length > 1) {
+-            const withStreaks = await Promise.all(
+-              topTiers.map(async (t) => ({
+-                ...t,
+-                streak: await storage.getUserStreakInGroup(t.userId, groupId),
+-              })),
+-            );
+-            const maxStreak = Math.max(...withStreaks.map((w) => w.streak));
+-            const topStreaks = withStreaks.filter((w) => w.streak === maxStreak);
+-            if (topStreaks.length > 1) {
+-              topStreaks.sort((a, b) => {
+-                const aTime = a.firstLogAt?.getTime() ?? Infinity;
+-                const bTime = b.firstLogAt?.getTime() ?? Infinity;
+-                return aTime - bTime;
+-              });
+-            }
+-            winner = topStreaks[0];
+-          }
+-
+-          const prevKing = await storage.getLatestKingForGroup(groupId);
+-          const consecutiveWins =
+-            prevKing && prevKing.userId === winner.userId ? prevKing.consecutiveWins + 1 : 1;
+-
+-          const kingRecord = await storage.createDeuceKing({
+-            groupId,
+-            userId: winner.userId,
+-            periodStart,
+-            periodEnd,
+-            logCount: winner.logCount,
+-            consecutiveWins,
+-          });
+-
+-          const winnerUser = await storage.getUser(winner.userId);
+-          const fullName = `${winnerUser?.firstName ?? ''} ${winnerUser?.lastName ?? ''}`.trim();
+-          const displayName = winnerUser?.username ?? (fullName || 'Someone');
+-          const dynastyNote = consecutiveWins >= 3 ? ' 👑👑👑 Dynasty!' : '';
+-          await storage.createBroadcast({
+-            groupId,
+-            userId: winner.userId,
+-            milestone: `👑 ${displayName} is the new Deuce King with ${winner.logCount} logs!${dynastyNote}`,
+-          });
+-
+-          const existing = await storage.getExistingChallengeForKing(kingRecord.id);
+-          if (!existing) {
+-            const template = getRandomTemplate();
+-            await storage.createChallenge({
+-              groupId,
+-              kingId: winner.userId,
+-              deuceKingId: kingRecord.id,
+-              title: template.title,
+-              templateKey: template.key,
+-              periodStart,
+-              periodEnd,
+-              isAutoSelected: true,
+-            });
+-          }
+-
+-          results.push({ groupId, winner: winner.userId });
+-        } catch (groupErr: unknown) {
+-          const msg = groupErr instanceof Error ? groupErr.message : String(groupErr);
+-          logger.error(`[crown-transfer] group ${groupId} error:`, msg);
+-          results.push({ groupId, winner: null, error: msg });
+-        }
+-      }
+-
+-      res.json({ processed: groupIds.length, results });
+-    } catch (error: unknown) {
+-      logger.error('[CROWN TRANSFER ERROR]', error);
+-      Errors.internal(res, 'Crown transfer failed');
+-    }
+-  });
+-
+-  // --- Error log endpoint (internal) ---
+-  app.get('/api/internal/errors', (req, res) => {
+-    const key = req.headers['x-internal-key'] as string | undefined;
+-    if (!INTERNAL_KEY || !safeKeyCompare(key, INTERNAL_KEY)) {
+-      return Errors.unauthorized(res);
+-    }
+-    const limit = Math.min(Number(req.query.limit) || 50, 200);
+-    const errors = getRecentErrors(limit);
+-    res.json({ errors, count: errors.length });
+-  });
+-
+-  // --- Detailed health endpoint (internal) ---
+-  app.get('/api/internal/health/detailed', async (req, res) => {
+-    const key = req.headers['x-internal-key'] as string | undefined;
+-    if (!INTERNAL_KEY || !safeKeyCompare(key, INTERNAL_KEY)) {
+-      return Errors.unauthorized(res);
+-    }
+-    try {
+-      await pool.query('SELECT 1');
+-      res.json(buildDetailedHealth(pool));
+-    } catch (err) {
+-      res.status(503).json(buildDegradedHealth());
+-    }
+-  });
+-
+-  // Configure multer for file uploads
+-  const upload = multer({
+-    storage: multer.memoryStorage(),
+-    limits: {
+-      fileSize: 5 * 1024 * 1024, // 5MB limit
+-    },
+-    fileFilter: (req, file, cb) => {
+-      if (file.mimetype.startsWith('image/')) {
+-        cb(null, true);
+-      } else {
+-        cb(new Error('Only image files are allowed'));
+-      }
+-    },
+-  });
+-
+-  // Ensure uploads directory exists
+-  const uploadsDir = path.join(process.cwd(), 'dist', 'public', 'uploads');
+-  try {
+-    await fs.mkdir(uploadsDir, { recursive: true });
+-  } catch (error) {
+-    logger.info('Uploads directory already exists or created successfully');
+-  }
+-
+-  // --- Clerk webhook (must be before session middleware) ---
+-  // Always register — the handler validates CLERK_WEBHOOK_SECRET itself
+-  registerClerkWebhook(app);
+-
+-  // --- RevenueCat webhook (must be before session middleware) ---
+-  // Handles subscription lifecycle events: purchases, renewals, cancellations
+-  registerRevenueCatWebhook(app);
+-
+-  // --- Public endpoints (no auth required) ---
+-
+-  // Group preview for invite landing page
+-  app.get('/api/groups/preview/:inviteCode', async (req, res) => {
+-    try {
+-      const { inviteCode } = req.params;
+-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(inviteCode)) {
+-        return Errors.notFound(res, "Invite");
+-      }
+-      const invite = await storage.getInviteById(inviteCode);
+-      if (!invite || invite.expiresAt < new Date()) {
+-        return Errors.notFound(res, "Invite");
+-      }
+-      const group = await storage.getGroupById(invite.groupId);
+-      if (!group) {
+-        return Errors.notFound(res, "Group");
+-      }
+-      const [memberCount, deuceCount, streakData, members, entries] = await Promise.all([
+-        storage.getGroupMemberCount(invite.groupId),
+-        storage.getGroupDeuceCount(invite.groupId),
+-        storage.getGroupStreak(invite.groupId),
+-        storage.getGroupMembers(invite.groupId),
+-        storage.getGroupEntries(invite.groupId, 3), // Only need 3 for recent activity preview
+-      ]);
+-      // Return slim public preview — no auth required
+-      res.json({
+-        name: group.name,
+-        memberCount,
+-        deuceCount,
+-        currentStreak: streakData.currentStreak,
+-        longestStreak: streakData.longestStreak,
+-        members: members.slice(0, 5).map(m => ({
+-          username: m.user.username || m.user.firstName || "Anon",
+-          deuceCount: m.user.deuceCount,
+-        })),
+-        recentActivity: entries.slice(0, 3).map(e => ({
+-          username: e.user.username || e.user.firstName || "Anon",
+-          location: e.location,
+-          loggedAt: e.loggedAt,
+-          // thoughts omitted — sensitive data on a public endpoint
+-        })),
+-      });
+-    } catch (error) {
+-      logger.error("Error fetching group preview:", error);
+-      return Errors.internal(res, "Failed to fetch group preview");
+-    }
+-  });
+-
+-  // Auth middleware
+-  await setupAuth(app);
+-
+-  // Serve uploaded files
+-  app.use('/uploads', express.static(path.join(process.cwd(), 'dist', 'public', 'uploads')));
+-
+-  // Auth routes (user, sync, profile picture, theme)
+-  app.use(createAuthRouter(uploadsDir));
+-
+-  // Data export (GDPR right to data portability)
+-  app.get('/api/user/export', isAuthenticated, async (req: AuthReq, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const user = await storage.getUser(userId);
+-      const groups = await storage.getUserGroups(userId);
+-      const badges = await storage.getUserBadges(userId);
+-
+-      const exportData = {
+-        exportedAt: new Date().toISOString(),
+-        account: {
+-          username: user?.username,
+-          email: user?.email,
+-          firstName: user?.firstName,
+-          lastName: user?.lastName,
+-          subscription: user?.subscription,
+-          deuceCount: user?.deuceCount,
+-          theme: user?.theme,
+-          timezone: user?.timezone,
+-          createdAt: user?.createdAt,
+-        },
+-        groups: groups.map((g) => ({
+-          name: g.name,
+-          memberCount: g.memberCount,
+-          joinedAt: g.joinedAt,
+-        })),
+-        badges: badges.map((b) => ({
+-          name: b.name,
+-          unlocked: b.unlocked,
+-        })),
+-      };
+-
+-      res.setHeader('Content-Type', 'application/json');
+-      res.setHeader('Content-Disposition', 'attachment; filename="deuce-diary-export.json"');
+-      res.json(exportData);
+-    } catch (error) {
+-      logger.error("Error exporting data:", error);
+-      Errors.internal(res, "Failed to export data");
+-    }
+-  });
+-
+-  // Timezone preference
+-  app.put('/api/user/timezone', isAuthenticated, async (req: AuthReq, res) => {
+-    try {
+-      const { timezone } = req.body;
+-      if (!timezone || typeof timezone !== 'string') {
+-        return Errors.badRequest(res, "Timezone is required");
+-      }
+-      // Guard against oversized input before IANA lookup (max IANA tz name is ~40 chars)
+-      if (timezone.length > 100) {
+-        return Errors.badRequest(res, "Timezone identifier too long (max 100 characters)");
+-      }
+-      // Validate it's a real IANA timezone
+-      try {
+-        Intl.DateTimeFormat(undefined, { timeZone: timezone });
+-      } catch {
+-        return Errors.badRequest(
+-          res,
+-          `Unknown timezone: "${timezone}". Use an IANA timezone name (e.g. "America/New_York")`,
+-        );
+-      }
+-      const [user] = await db
+-        .update(users)
+-        .set({ timezone, updatedAt: new Date() })
+-        .where(and(eq(users.id, req.user.id), isNull(users.deletedAt)))
+-        .returning();
+-      res.json({ timezone: user.timezone });
+-    } catch (error) {
+-      logger.error("Error updating timezone:", error);
+-      Errors.internal(res, "Failed to update timezone");
+-    }
+-  });
+-
+-  // Account deletion (soft-delete with GDPR-compliant data removal)
+-  app.delete('/api/user/account', isAuthenticated, async (req: AuthReq, res) => {
+-    try {
+-      await storage.softDeleteUser(req.user.id);
+-      res.json({ success: true });
+-    } catch (error) {
+-      logger.error("Error deleting account:", error);
+-      Errors.internal(res, "Failed to delete account");
+-    }
+-  });
+-
+-  // Group routes (free — squad limit for free users)
+-  app.post('/api/groups', isAuthenticated, async (req: AuthReq, res) => {
+-    try {
+-      const userId = req.user.id;
+-
+-      // Squads are free — no creation limit
+-
+-      const parsed = createGroupSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, "Invalid group data: name is required (max 100 chars)");
+-      }
+-      const groupData = insertGroupSchema.parse({
+-        ...parsed.data,
+-        createdBy: userId,
+-      });
+-
+-      const group = await storage.createGroup({
+-        ...groupData,
+-        id: uuidv4(),
+-      });
+-
+-      track("group_created", userId);
+-
+-      res.json(group);
+-    } catch (error) {
+-      logger.error("Error creating group:", error);
+-      Errors.internal(res, "Failed to create group");
+-    }
+-  });
+-
+-  app.get('/api/groups', isAuthenticated, async (req: AuthReq, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const groups = await storage.getUserGroups(userId);
+-      res.status(200).json(groups);
+-    } catch (error) {
+-      logger.error("Error fetching groups:", error);
+-      Errors.internal(res, "Failed to fetch groups");
+-    }
+-  });
+-
+-  app.get('/api/groups/:groupId', isAuthenticated, requireGroupMember(), async (req: AuthReq, res) => {
+-    try {
+-      const groupId = req.groupId;
+-      
+-      const group = await storage.getGroupById(groupId);
+-      if (!group) {
+-        return Errors.notFound(res, "Group");
+-      }
+-      
+-      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+-      const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+-      const members = await storage.getGroupMembers(groupId);
+-      const rawEntries = await storage.getGroupEntries(groupId, limit, offset);
+-      // Strip sensitive user fields (email, referralCode, etc.) from entry author data
+-      const entries = rawEntries.map(e => ({ ...e, user: sanitizeUserForResponse(e.user) }));
+-      res.json({ group, members, entries });
+-    } catch (error) {
+-      logger.error("Error fetching group details:", error);
+-      Errors.internal(res, "Failed to fetch group details");
+-    }
+-  });
+-
+-  // Remove a member from a group (admin only, or self-leave)
+-  app.delete('/api/groups/:groupId/members/:userId', isAuthenticated, requireGroupMember(), async (req, res) => {
+-    try {
+-      const requestingUserId = req.user.id;
+-      const groupId = req.groupId;
+-      const targetUserId = req.params.userId;
+-
+-      if (!targetUserId) {
+-        return Errors.badRequest(res, "Missing user ID");
+-      }
+-
+-      // Users can remove themselves, or admins can remove others
+-      if (requestingUserId !== targetUserId) {
+-        const members = await storage.getGroupMembers(groupId);
+-        const requestingMember = members.find(m => m.userId === requestingUserId);
+-        if (!requestingMember || requestingMember.role !== "admin") {
+-          return Errors.forbidden(res, "Only admins can remove other members");
+-        }
+-      }
+-
+-      await storage.removeGroupMember(targetUserId, groupId);
+-      res.json({ ok: true });
+-    } catch (error) {
+-      logger.error("Error removing group member:", error);
+-      Errors.internal(res, "Failed to remove member");
+-    }
+-  });
+-
+-  // Squad avatar upload — king only
+-  app.post('/api/groups/:groupId/avatar',
+-    isAuthenticated, requireGroupMember(), upload.single('avatar'),
+-    async (req: AuthReq, res) => {
+-      try {
+-        const userId = req.user.id;
+-        const groupId = req.groupId;
+-
+-        if (!req.file) {
+-          return Errors.badRequest(res, "No file uploaded");
+-        }
+-
+-        // Only the current Deuce King may upload
+-        const currentKing = await storage.getCurrentKing(groupId);
+-        if (!currentKing || currentKing.userId !== userId) {
+-          return Errors.forbidden(res, "Only the current Deuce King can upload a squad photo");
+-        }
+-
+-        const filename = `group-${groupId}-${Date.now()}.jpg`;
+-        const filepath = path.join(uploadsDir, filename);
+-
+-        await sharp(req.file.buffer)
+-          .resize(200, 200, { fit: "cover" })
+-          .jpeg({ quality: 85 })
+-          .toFile(filepath);
+-
+-        const avatarUrl = `/uploads/${filename}`;
+-        const updatedGroup = await storage.updateGroupAvatar(groupId, avatarUrl);
+-
+-        res.json(updatedGroup);
+-      } catch (error) {
+-        logger.error("Error uploading squad avatar:", error);
+-        Errors.internal(res, "Failed to upload squad avatar");
+-      }
+-    },
+-  );
+-
+-  // Invite routes (free — squads are free, enhancements are premium)
+-  app.post('/api/groups/:groupId/invite',
+-    isAuthenticated, requireGroupMember(),
+-    async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const groupId = req.groupId;
+-      
+-      const inviteId = uuidv4();
+-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+-      
+-      await storage.createInvite({
+-        id: inviteId,
+-        groupId,
+-        createdBy: userId,
+-        expiresAt,
+-      });
+-      
+-      track("invite_sent", userId);
+-
+-      const inviteLink = `${req.protocol}://${req.get('host')}/join/${inviteId}`;
+-      res.json({ inviteLink, id: inviteId });
+-    } catch (error) {
+-      logger.error("Error creating invite:", error);
+-      Errors.internal(res, "Failed to create invite");
+-    }
+-  });
+-
+-  app.post('/api/join/:inviteId', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const { inviteId } = req.params;
+-
+-      // Reject non-UUID invite codes immediately — avoids DB query on garbage input
+-      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+-      if (!UUID_RE.test(inviteId)) {
+-        return Errors.badRequest(res, "Invalid invite code format");
+-      }
+-
+-      const invite = await storage.getInviteById(inviteId);
+-      if (!invite || invite.expiresAt < new Date()) {
+-        return Errors.badRequest(res, "Invalid or expired invite");
+-      }
+-
+-      const isAlreadyMember = await storage.isUserInGroup(userId, invite.groupId);
+-      if (isAlreadyMember) {
+-        const group = await storage.getGroupById(invite.groupId);
+-        return res.json({ group, message: "Already a member of this group" });
+-      }
+-      
+-      // Squads are free — no premium gate on joining
+-      await storage.addGroupMember({
+-        groupId: invite.groupId,
+-        userId,
+-        role: "member",
+-      });
+-      
+-      // Don't delete the invite — it should be reusable by multiple people
+-
+-      track("group_joined", userId);
+-
+-      const group = await storage.getGroupById(invite.groupId);
+-      res.json({ group });
+-    } catch (error) {
+-      logger.error("Error joining group:", error);
+-      Errors.internal(res, "Failed to join group");
+-    }
+-  });
+-
+-  // Referral landing: /join?ref=CODE → store code in session, redirect to /
+-  app.get('/join', (req, res) => {
+-    const ref = req.query.ref;
+-    // Only store alphanumeric codes of reasonable length
+-    if (ref && typeof ref === 'string' && /^[A-Z0-9]{4,20}$/i.test(ref) && req.session) {
+-      req.session.referralCode = ref.toUpperCase();
+-    }
+-    res.redirect('/');
+-  });
+-
+-  // Legacy /join/:inviteId redirect → new client-side /invite/:code page
+-  app.get('/join/:inviteId', async (req, res) => {
+-    res.redirect(`/invite/${req.params.inviteId}`);
+-  });
+-
+-  // Location routes
+-  app.get('/api/locations', isAuthenticated, async (req, res) => {
+-    try {
+-      const locations = await storage.getLocationsForUser(req.user.id);
+-      res.json(locations);
+-    } catch (error) {
+-      logger.error("Error fetching locations:", error);
+-      Errors.internal(res, "Failed to fetch locations");
+-    }
+-  });
+-
+-  app.post('/api/locations', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const parsed = createLocationSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, "Location name is required");
+-      }
+-      const name = parsed.data.name;
+-
+-      if (!name.trim()) {
+-        return Errors.badRequest(res, "Location name is required");
+-      }
+-      
+-      // Check if location already exists
+-      const existing = await storage.getLocationByName(name.trim());
+-      if (existing) {
+-        return Errors.badRequest(res, "Location already exists");
+-      }
+-      
+-      const location = await storage.createLocation({
+-        name: name.trim(),
+-        isDefault: false,
+-        createdBy: userId,
+-      });
+-      
+-      res.json(location);
+-    } catch (error) {
+-      logger.error("Error creating location:", error);
+-      Errors.internal(res, "Failed to create location");
+-    }
+-  });
+-
+-  // Shared UUID validator for entry path params
+-  const ENTRY_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+-
+-  // Reaction routes (free)
+-  app.post('/api/entries/:entryId/reactions', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const { entryId } = req.params;
+-      if (!ENTRY_UUID_RE.test(entryId)) {
+-        return Errors.badRequest(res, "Invalid entry ID format");
+-      }
+-      const parsed = reactionSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, "Emoji is required");
+-      }
+-      const { emoji } = parsed.data;
+-
+-      // Check if entry exists and user can access it
+-      const entry = await storage.getEntryById(entryId);
+-      if (!entry) {
+-        return Errors.notFound(res, "Entry");
+-      }
+-      
+-      const isInGroup = await storage.isUserInGroup(userId, entry.groupId);
+-      if (!isInGroup) {
+-        return Errors.forbidden(res, "Not authorized to react to this entry");
+-      }
+-      
+-      const reaction = await storage.addReaction({
+-        entryId,
+-        userId,
+-        emoji,
+-      });
+-      
+-      res.json(reaction);
+-    } catch (error) {
+-      logger.error("Error adding reaction:", error);
+-      if (error instanceof Error && error.message.includes('duplicate key')) {
+-        return Errors.badRequest(res, "You've already reacted with this emoji");
+-      }
+-      Errors.internal(res, "Failed to add reaction");
+-    }
+-  });
+-
+-  app.delete('/api/entries/:entryId/reactions', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const { entryId } = req.params;
+-      if (!ENTRY_UUID_RE.test(entryId)) {
+-        return Errors.badRequest(res, "Invalid entry ID format");
+-      }
+-      const parsed = deleteReactionSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, "Emoji is required");
+-      }
+-      const { emoji } = parsed.data;
+-
+-      // Verify entry exists and user is in the group
+-      const entry = await storage.getEntryById(entryId);
+-      if (!entry) {
+-        return Errors.notFound(res, "Entry");
+-      }
+-      const isInGroup = await storage.isUserInGroup(userId, entry.groupId);
+-      if (!isInGroup) {
+-        return Errors.forbidden(res, "Not authorized to remove reactions from this entry");
+-      }
+-
+-      await storage.removeReaction(userId, entryId, emoji);
+-      res.json({ message: "Reaction removed" });
+-    } catch (error) {
+-      logger.error("Error removing reaction:", error);
+-      Errors.internal(res, "Failed to remove reaction");
+-    }
+-  });
+-
+-  app.get('/api/entries/:entryId/reactions', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const { entryId } = req.params;
+-      if (!ENTRY_UUID_RE.test(entryId)) {
+-        return Errors.badRequest(res, "Invalid entry ID format");
+-      }
+-      const entry = await storage.getEntryById(entryId);
+-      if (!entry) {
+-        return Errors.notFound(res, "Entry");
+-      }
+-      const isInGroup = await storage.isUserInGroup(userId, entry.groupId);
+-      if (!isInGroup) {
+-        return Errors.forbidden(res, "Not authorized to view reactions on this entry");
+-      }
+-      const reactions = await storage.getEntryReactions(entryId);
+-      res.json(reactions);
+-    } catch (error) {
+-      logger.error("Error fetching reactions:", error);
+-      Errors.internal(res, "Failed to fetch reactions");
+-    }
+-  });
+-
+-  // Streak routes (free — part of groups)
+-  app.get('/api/groups/:groupId/streak', isAuthenticated, requireGroupMember(), async (req, res) => {
+-    try {
+-      const groupId = req.groupId;
+-
+-      const today = getTodayUTC();
+-      const yesterday = getYesterdayUTC();
+-      const streak = await storage.getGroupStreak(groupId);
+-      const logsToday = await storage.getMembersLogStatusToday(groupId, today);
+-
+-      // If streak is stale (lastStreakDate is not today and not yesterday), reset it for the response
+-      let currentStreak = streak.currentStreak;
+-      if (streak.lastStreakDate && streak.lastStreakDate !== today && streak.lastStreakDate !== yesterday) {
+-        currentStreak = 0;
+-      }
+-
+-      res.json({
+-        currentStreak,
+-        longestStreak: streak.longestStreak,
+-        lastStreakDate: streak.lastStreakDate ?? null,
+-        memberCount: logsToday.length,
+-        logsToday: logsToday.map(m => ({
+-          userId: m.userId,
+-          username: m.username || m.firstName || 'Unknown',
+-          hasLogged: m.hasLogged,
+-          profileImageUrl: m.profileImageUrl,
+-        })),
+-      });
+-    } catch (error) {
+-      logger.error("Error fetching streak:", error);
+-      Errors.internal(res, "Failed to fetch streak");
+-    }
+-  });
+-
+-  app.post('/api/groups/:groupId/streak/check', isAuthenticated, requireGroupMember(), async (req, res) => {
+-    try {
+-      const groupId = req.groupId;
+-
+-      const result = await checkAndNotifyStreakRisk(groupId);
+-      res.json(result);
+-    } catch (error) {
+-      logger.error("Error checking streak risk:", error);
+-      Errors.internal(res, "Failed to check streak risk");
+-    }
+-  });
+-
+-  // Group Leaderboard — weekly/monthly/all-time stats per member with MVP designation (free)
+-  app.get('/api/groups/:groupId/leaderboard', isAuthenticated, requireGroupMember(), async (req, res) => {
+-    try {
+-      const groupId = req.groupId;
+-      const leaderboard = await storage.getGroupLeaderboard(groupId);
+-      res.json(leaderboard);
+-    } catch (error) {
+-      logger.error("Error fetching leaderboard:", error);
+-      Errors.internal(res, "Failed to fetch leaderboard");
+-    }
+-  });
+-
+-  // Squad Spy Mode — typical log hour per member (premium)
+-  app.get('/api/groups/:groupId/spy',
+-    isAuthenticated, requiresPremiumFor('squad_spy'), requireGroupMember(),
+-    async (req, res) => {
+-    try {
+-      const groupId = req.groupId;
+-
+-      const typicalHours = await storage.getGroupMemberTypicalHours(groupId);
+-      res.json(typicalHours);
+-    } catch (error) {
+-      logger.error("Error fetching spy data:", error);
+-      Errors.internal(res, "Failed to fetch spy data");
+-    }
+-  });
+-
+-  // Weekly Throne Report — group-level weekly summary (premium)
+-  app.get('/api/groups/:groupId/weekly-report',
+-    isAuthenticated, requireGroupMember(), requiresPremiumFor('weekly_report'),
+-    async (req, res) => {
+-    try {
+-      const groupId = req.groupId;
+-      const report = await storage.getGroupWeeklyReport(groupId);
+-      res.json(report);
+-    } catch (error) {
+-      logger.error("Error fetching group weekly report:", error);
+-      if (error instanceof Error && error.message === 'Group not found') return Errors.notFound(res, "Group");
+-      Errors.internal(res, "Failed to fetch weekly report");
+-    }
+-  });
+-
+-  // Export Weekly Throne Report as PDF (premium)
+-  app.get('/api/groups/:groupId/weekly-report/pdf',
+-    isAuthenticated, requireGroupMember(), requiresPremiumFor('report_export'),
+-    async (req, res) => {
+-    try {
+-      const groupId = req.groupId;
+-      const report = await storage.getGroupWeeklyReport(groupId);
+-
+-      // Lazy import pdfkit to avoid startup cost
+-      const PDFDocument = (await import('pdfkit')).default;
+-      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+-
+-      res.setHeader('Content-Type', 'application/pdf');
+-      res.setHeader('Content-Disposition', `attachment; filename="throne-report-${report.weekOf}.pdf"`);
+-      doc.pipe(res);
+-
+-      // Header
+-      doc.fontSize(24).font('Helvetica-Bold').text('Weekly Throne Report', { align: 'center' });
+-      doc.fontSize(12).font('Helvetica').fillColor('#666')
+-        .text(`${report.groupName}  |  Week of ${report.weekOf} to ${report.weekEnding}`, { align: 'center' });
+-      doc.moveDown(1.5);
+-
+-      // Group stats
+-      doc.fontSize(14).font('Helvetica-Bold').fillColor('#000').text('Squad Stats');
+-      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+-      doc.moveDown(0.5);
+-      doc.fontSize(12).font('Helvetica')
+-        .text(`Total Deuces This Week: ${report.groupStats.totalDeucesThisWeek}`)
+-        .text(`Current Streak: ${report.groupStats.currentStreak} days`)
+-        .text(`Longest Streak: ${report.groupStats.longestStreak} days`);
+-      doc.moveDown(1);
+-
+-      // MVP
+-      if (report.mvp) {
+-        doc.fontSize(14).font('Helvetica-Bold').text('MVP of the Week');
+-        doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+-        doc.moveDown(0.5);
+-        doc.fontSize(12).font('Helvetica')
+-          .text(`${report.mvp.username ?? 'Anonymous'} — ${report.mvp.deuceCount} deuces`);
+-        doc.moveDown(1);
+-      }
+-
+-      // Member breakdown
+-      doc.fontSize(14).font('Helvetica-Bold').text('Member Breakdown');
+-      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+-      doc.moveDown(0.5);
+-      for (const m of report.members) {
+-        const statusLabel = m.streakStatus === 'active'
+-          ? '[Active]'
+-          : m.streakStatus === 'at_risk' ? '[At Risk]' : '[Inactive]';
+-        doc.fontSize(12).font('Helvetica')
+-          .text(`${statusLabel} ${m.username ?? 'Unknown'}: ${m.deucesThisWeek} deuces`);
+-      }
+-      doc.moveDown(1);
+-
+-      // Funny stats
+-      doc.fontSize(14).font('Helvetica-Bold').text('Fun Facts');
+-      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+-      doc.moveDown(0.5);
+-
+-      if (report.funnyStats.longestGap) {
+-        doc.fontSize(12).font('Helvetica')
+-          .text(`Longest gap: ${report.funnyStats.longestGap.username ?? 'Unknown'}` +
+-            ` — ${report.funnyStats.longestGap.gapDays} days since last log`);
+-      }
+-      if (report.funnyStats.mostReactionsReceived) {
+-        doc.fontSize(12).font('Helvetica')
+-          .text(`Most reactions: ${report.funnyStats.mostReactionsReceived.username ?? 'Unknown'}` +
+-            ` — ${report.funnyStats.mostReactionsReceived.reactionCount} reactions`);
+-      }
+-      if (report.funnyStats.funniestEntry) {
+-        doc.fontSize(12).font('Helvetica')
+-          .text(`Funniest entry: "${report.funnyStats.funniestEntry.thought}"` +
+-            ` by ${report.funnyStats.funniestEntry.username ?? 'Unknown'}` +
+-            ` (${report.funnyStats.funniestEntry.reactions} reactions)`);
+-      }
+-
+-      // Footer
+-      doc.moveDown(2);
+-      doc.fontSize(10).fillColor('#999').text(
+-        'Generated by Deuce Diary — track your throne time with your squad',
+-        { align: 'center' },
+-      );
+-
+-      doc.end();
+-    } catch (error) {
+-      logger.error("Error generating PDF report:", error);
+-      if (error instanceof Error && error.message === 'Group not found') return Errors.notFound(res, "Group");
+-      Errors.internal(res, "Failed to generate PDF report");
+-    }
+-  });
+-
+-  // Rich invite preview (public — no auth, enhanced for OG)
+-  app.get('/api/groups/invite-preview/:inviteCode', async (req, res) => {
+-    try {
+-      const { inviteCode } = req.params;
+-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(inviteCode)) {
+-        return Errors.notFound(res, "Invite");
+-      }
+-      const preview = await storage.getGroupInvitePreview(inviteCode);
+-      if (!preview) {
+-        return Errors.notFound(res, "Invite");
+-      }
+-      res.json(preview);
+-    } catch (error) {
+-      logger.error("Error fetching invite preview:", error);
+-      Errors.internal(res, "Failed to fetch invite preview");
+-    }
+-  });
+-
+-  // OG HTML page for invite links — crawlers get rich meta tags (public)
+-  const INVITE_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+-  app.get('/api/og/invite/:inviteCode', async (req, res) => {
+-    try {
+-      const { inviteCode } = req.params;
+-      // Validate UUID format before using in HTML href to prevent injection
+-      if (!INVITE_UUID_RE.test(inviteCode)) {
+-        return res.status(404).send('<html><body><h1>Invite not found or expired</h1></body></html>');
+-      }
+-      const preview = await storage.getGroupInvitePreview(inviteCode);
+-
+-      if (!preview) {
+-        return res.status(404).send('<html><body><h1>Invite not found or expired</h1></body></html>');
+-      }
+-
+-      const title = `Join ${preview.name} on Deuce Diary`;
+-      const topMembers = preview.memberNames.slice(0, 5);
+-      const overflow = preview.memberNames.length > 5
+-        ? ` and ${preview.memberNames.length - 5} more`
+-        : '';
+-      const memberList = topMembers.join(', ') + overflow;
+-      const descParts: string[] = [
+-        `${preview.memberCount} member${preview.memberCount !== 1 ? 's' : ''}`,
+-      ];
+-      if (preview.currentStreak > 0) descParts.push(`${preview.currentStreak}-day streak`);
+-      descParts.push(`${preview.deuceCount} total deuces`);
+-      if (memberList) descParts.push(`Members: ${memberList}`);
+-      const description = descParts.join(' · ');
+-
+-      const appUrl = 'https://deuce-diary-web-production.up.railway.app';
+-      const ogImageUrl = `${appUrl}/og-banner.png`;
+-
+-      const html = `<!DOCTYPE html>
+-<html lang="en">
+-<head>
+-  <meta charset="UTF-8">
+-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+-  <title>${escapeHtml(title)}</title>
+-  <meta property="og:type" content="website" />
+-  <meta property="og:title" content="${escapeHtml(title)}" />
+-  <meta property="og:description" content="${escapeHtml(description)}" />
+-  <meta property="og:image" content="${ogImageUrl}" />
+-  <meta property="og:url" content="${appUrl}/invite/${inviteCode}" />
+-  <meta property="og:site_name" content="Deuce Diary" />
+-  <meta name="twitter:card" content="summary_large_image" />
+-  <meta name="twitter:title" content="${escapeHtml(title)}" />
+-  <meta name="twitter:description" content="${escapeHtml(description)}" />
+-  <meta name="twitter:image" content="${ogImageUrl}" />
+-  <style>
+-    * { margin: 0; padding: 0; box-sizing: border-box; }
+-    body {
+-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+-      background: hsl(38, 40%, 96%);
+-      color: hsl(25, 30%, 8%);
+-      display: flex; align-items: center; justify-content: center; min-height: 100vh;
+-    }
+-    .card {
+-      background: hsl(38, 30%, 94%);
+-      border: 1px solid hsl(38, 18%, 83%);
+-      border-radius: 24px;
+-      padding: 48px 40px;
+-      max-width: 420px; width: 100%; text-align: center;
+-    }
+-    .icon { font-size: 48px; line-height: 1; margin-bottom: 12px; }
+-    .group-name { font-size: 26px; font-weight: 900; margin-bottom: 8px; }
+-    .description { font-size: 14px; color: hsl(25, 12%, 42%); margin-bottom: 24px; }
+-    .stats { display: flex; justify-content: center; gap: 32px; margin-bottom: 24px; }
+-    .stat-value { font-size: 24px; font-weight: 900; }
+-    .stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
+-      letter-spacing: 0.08em; color: hsl(25, 12%, 42%); }
+-    .members { font-size: 13px; color: hsl(25, 12%, 42%); margin-bottom: 24px; }
+-    .cta {
+-      display: inline-block; background: hsl(45, 88%, 48%); color: #000;
+-      font-size: 16px; font-weight: 700; padding: 14px 32px; border-radius: 14px; text-decoration: none;
+-    }
+-  </style>
+-</head>
+-<body>
+-  <div class="card">
+-    <div class="icon">🚽</div>
+-    <div class="group-name">${escapeHtml(preview.name)}</div>
+-    ${preview.description ? `<div class="description">${escapeHtml(preview.description)}</div>` : ''}
+-    <div class="stats">
+-      <div>
+-        <div class="stat-value">${preview.memberCount}</div>
+-        <div class="stat-label">Members</div>
+-      </div>
+-      ${preview.currentStreak > 0 ? `
+-      <div>
+-        <div class="stat-value">${preview.currentStreak}</div>
+-        <div class="stat-label">Streak</div>
+-      </div>` : ''}
+-      <div>
+-        <div class="stat-value">${preview.deuceCount}</div>
+-        <div class="stat-label">Deuces</div>
+-      </div>
+-    </div>
+-    ${memberList ? `<div class="members">Squad: ${escapeHtml(memberList)}</div>` : ''}
+-    <a class="cta" href="/invite/${inviteCode}">Join the Squad</a>
+-  </div>
+-</body>
+-</html>`;
+-
+-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+-      res.send(html);
+-    } catch (error) {
+-      logger.error("Error rendering invite OG page:", error);
+-      res.status(500).send('<html><body><h1>Something went wrong</h1></body></html>');
+-    }
+-  });
+-
+-  // Deuce feed route (free)
+-  app.get('/api/deuces', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const { groupId } = req.query;
+-
+-      if (groupId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(groupId as string)) {
+-        return Errors.badRequest(res, "Invalid groupId format");
+-      }
+-
+-      let groupIds: string[];
+-
+-      if (groupId) {
+-        // Single group — verify membership
+-        const isInGroup = await storage.isUserInGroup(userId, groupId as string);
+-        if (!isInGroup) {
+-          return Errors.forbidden(res, "Not a member of this group");
+-        }
+-        groupIds = [groupId as string];
+-      } else {
+-        // All groups the user belongs to
+-        const userGroups = await storage.getUserGroups(userId);
+-        groupIds = userGroups.map(g => g.id);
+-      }
+-
+-      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+-      const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+-      const entries = await storage.getFeedEntries(groupIds, limit, offset);
+-      res.json(entries);
+-    } catch (error) {
+-      logger.error("Error fetching deuces feed:", error);
+-      Errors.internal(res, "Failed to fetch deuces feed");
+-    }
+-  });
+-
+-  // Deuce entry routes
+-  app.post('/api/deuces', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-
+-      // Per-user daily rate limit (10 logs per UTC day)
+-      const today = getTodayUTC();
+-      const currentCount = await storage.getUserDailyLogCount(userId, today);
+-      if (currentCount >= MAX_LOGS_PER_DAY) {
+-        return Errors.tooManyRequests(res, 'Throne limit reached for today. Come back tomorrow.');
+-      }
+-
+-      const parsed = createDeuceSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        const firstIssue = parsed.error.issues[0]?.message || "Invalid deuce entry data";
+-        return Errors.badRequest(res, firstIssue);
+-      }
+-
+-      const { groupIds, groupId, bristolScore, photoUrl, latitude, longitude, ...entryData } = parsed.data;
+-
+-      // Handle both single group (backward compatibility) and multiple groups
+-      const targetGroupIds = groupIds || (groupId ? [groupId] : []);
+-
+-      if (targetGroupIds.length === 0) {
+-        return Errors.badRequest(res, "At least one group must be selected");
+-      }
+-
+-      // bristolScore validated by zod (1-7 int), but double-check for safety
+-      if (bristolScore !== undefined && (bristolScore < 1 || bristolScore > 7)) {
+-        return Errors.badRequest(res, "bristolScore must be an integer between 1 and 7");
+-      }
+-
+-      // Check if user is in all selected groups
+-      for (const gid of targetGroupIds) {
+-        const isInGroup = await storage.isUserInGroup(userId, gid);
+-        if (!isInGroup) {
+-          return Errors.forbidden(res, `Not authorized for group ${gid}`);
+-        }
+-      }
+-
+-      const entries: DeuceEntry[] = [];
+-      // Validate loggedAt if provided; reject clearly invalid date strings
+-      let loggedAt: Date;
+-      if (entryData.loggedAt) {
+-        const parsedDate = new Date(entryData.loggedAt);
+-        if (isNaN(parsedDate.getTime())) {
+-          return Errors.badRequest(res, "Invalid loggedAt date");
+-        }
+-        // Reject future dates (allow up to 1 minute of clock skew)
+-        if (parsedDate.getTime() > Date.now() + 60_000) {
+-          return Errors.badRequest(res, "Cannot log a deuce in the future");
+-        }
+-        loggedAt = parsedDate;
+-      } else {
+-        loggedAt = new Date();
+-      }
+-      const isGhost = !!entryData.ghost;
+-
+-      // Create entry for each selected group
+-      for (const groupId of targetGroupIds) {
+-        const entry = await storage.createDeuceEntry({
+-          ...entryData,
+-          thoughts: entryData.thoughts ?? "",
+-          ghost: isGhost,
+-          bristolScore: bristolScore ?? null,
+-          photoUrl: photoUrl ?? null,
+-          latitude: latitude != null ? String(latitude) : null,
+-          longitude: longitude != null ? String(longitude) : null,
+-          groupId,
+-          userId,
+-          loggedAt,
+-          id: uuidv4(),
+-        });
+-        entries.push(entry);
+-      }
+-
+-      // Update user's deuce count (only increment once, not per group)
+-      await storage.updateUserDeuceCount(userId, 1);
+-
+-      track("log_created", userId, { has_notes: !!entryData.thoughts });
+-
+-      // Get user info for WebSocket notification
+-      const user = await storage.getUser(userId);
+-
+-      // Create display name for notifications
+-      const displayName = user?.username ||
+-        (user?.firstName && user?.lastName
+-          ? `${user.firstName} ${user.lastName}` : user?.firstName) ||
+-        'Someone';
+-
+-      // Send WebSocket notification to all groups (skip for ghost logs)
+-      if (!isGhost) {
+-        const safeUser = user ? sanitizeUserForResponse(user) : null;
+-        for (const groupId of targetGroupIds) {
+-          const groupEntry = entries.find(e => e.groupId === groupId);
+-          broadcastToGroup(groupId, {
+-            type: 'deuce_logged',
+-            message: `${displayName} logged a new deuce`,
+-            entry: { ...groupEntry, user: safeUser },
+-            userId: userId, // Don't notify the user who logged the deuce
+-          });
+-        }
+-      }
+-
+-      // Recalculate streaks for all affected groups
+-      for (const groupId of targetGroupIds) {
+-        try {
+-          await recalculateStreak(groupId);
+-        } catch (err) {
+-          logger.error(`Error recalculating streak for group ${groupId}:`, err);
+-        }
+-      }
+-
+-      // Async: reverse geocode and create passport stamp (fire-and-forget)
+-      triggerPassportStamp(latitude, longitude, (geo, lat, lon) =>
+-        storage.upsertPassportStamp(userId, geo.city, geo.country, geo.region, geo.countryCode, lat, lon));
+-
+-      // Battle Shits: generate tokens for active matches (fire-and-forget)
+-      const primaryEntry = entries[0];
+-      if (primaryEntry) {
+-        (async () => {
+-          try {
+-            const activeMatches = await storage.getUserActiveMatches(userId);
+-            if (activeMatches.length === 0) return;
+-            // Check double flush: 2+ entries today
+-            const todayStr = new Date().toISOString().slice(0, 10);
+-            const todayCount = await storage.getUserDailyLogCount(userId, todayStr);
+-            for (const match of activeMatches) {
+-              if (match.status !== "active") continue;
+-              // Standard token for this entry
+-              await storage.createBattleToken(match.id, userId, primaryEntry.id, "standard");
+-              // Double flush bonus (unique on match+entry+type, so safe to insert)
+-              if (todayCount >= 2) {
+-                await storage.createBattleToken(match.id, userId, primaryEntry.id, "double_flush");
+-              }
+-            }
+-          } catch (err) {
+-            logger.error({ err }, "[battle] token generation error");
+-          }
+-        })();
+-      }
+-
+-      res.json({ entries, count: entries.length });
+-    } catch (error) {
+-      logger.error("Error creating deuce entry:", error);
+-      return Errors.internal(res, "Failed to create deuce entry");
+-    }
+-  });
+-
+-  // Bulk deuce logging - log to multiple groups in one transaction (atomic)
+-  app.post('/api/deuces/bulk', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-
+-      // Per-user daily rate limit (10 logs per UTC day)
+-      const today = getTodayUTC();
+-      const currentCount = await storage.getUserDailyLogCount(userId, today);
+-      if (currentCount >= MAX_LOGS_PER_DAY) {
+-        return Errors.tooManyRequests(res, 'Throne limit reached for today. Come back tomorrow.');
+-      }
+-
+-      const parsed = createDeuceSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        const firstIssue = parsed.error.issues[0]?.message || "Invalid deuce entry data";
+-        return Errors.badRequest(res, firstIssue);
+-      }
+-
+-      const { groupIds, groupId, bristolScore, photoUrl, latitude, longitude, ...entryData } = parsed.data;
+-
+-      // Must provide multiple groupIds for bulk endpoint
+-      const targetGroupIds = groupIds || (groupId ? [groupId] : []);
+-      if (targetGroupIds.length === 0) {
+-        return Errors.badRequest(res, "At least one group must be selected");
+-      }
+-      if (targetGroupIds.length === 1) {
+-        return Errors.badRequest(res, "Use /api/deuces for single group logging. Bulk requires multiple groups.");
+-      }
+-
+-      // bristolScore validated by zod (1-7 int), but double-check for safety
+-      if (bristolScore !== undefined && (bristolScore < 1 || bristolScore > 7)) {
+-        return Errors.badRequest(res, "bristolScore must be an integer between 1 and 7");
+-      }
+-
+-      // Check if user is in all selected groups
+-      for (const gid of targetGroupIds) {
+-        const isInGroup = await storage.isUserInGroup(userId, gid);
+-        if (!isInGroup) {
+-          return Errors.forbidden(res, `Not authorized for group ${gid}`);
+-        }
+-      }
+-
+-      const entries: DeuceEntry[] = [];
+-      // Validate loggedAt if provided; reject clearly invalid date strings
+-      let loggedAt: Date;
+-      if (entryData.loggedAt) {
+-        const parsedDate = new Date(entryData.loggedAt);
+-        if (isNaN(parsedDate.getTime())) {
+-          return Errors.badRequest(res, "Invalid loggedAt date");
+-        }
+-        // Reject future dates (allow up to 1 minute of clock skew)
+-        if (parsedDate.getTime() > Date.now() + 60_000) {
+-          return Errors.badRequest(res, "Cannot log a deuce in the future");
+-        }
+-        loggedAt = parsedDate;
+-      } else {
+-        loggedAt = new Date();
+-      }
+-      const isGhost = !!entryData.ghost;
+-
+-      // Use transaction for atomicity
+-      await db.transaction(async (tx) => {
+-        for (const groupId of targetGroupIds) {
+-          const [entry] = await tx
+-            .insert(deuceEntries)
+-            .values({
+-              ...entryData,
+-              thoughts: entryData.thoughts ?? "",
+-              ghost: isGhost,
+-              bristolScore: bristolScore ?? null,
+-              photoUrl: photoUrl ?? null,
+-              latitude: latitude != null ? String(latitude) : null,
+-              longitude: longitude != null ? String(longitude) : null,
+-              groupId,
+-              userId,
+-              loggedAt,
+-              id: uuidv4(),
+-            })
+-            .returning();
+-          entries.push(entry);
+-        }
+-
+-        // Update user's deuce count only once
+-        await tx
+-          .update(users)
+-          .set({
+-            deuceCount: sql`${users.deuceCount} + 1`,
+-            updatedAt: new Date(),
+-          })
+-          .where(eq(users.id, userId));
+-      });
+-
+-      track("bulk_log_created", userId, {
+-        group_count: targetGroupIds.length,
+-        has_notes: !!entryData.thoughts,
+-        has_photo: !!photoUrl,
+-      });
+-
+-      // Get user info for WebSocket notification
+-      const user = await storage.getUser(userId);
+-      const displayName = user?.username ||
+-                        (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.firstName) ||
+-                        'Someone';
+-
+-      // Send WebSocket notification to all groups (skip for ghost logs)
+-      if (!isGhost) {
+-        const safeUser = user ? sanitizeUserForResponse(user) : null;
+-        for (const groupId of targetGroupIds) {
+-          const groupEntry = entries.find(e => e.groupId === groupId);
+-          broadcastToGroup(groupId, {
+-            type: 'deuce_logged',
+-            message: `${displayName} logged a new deuce`,
+-            entry: { ...groupEntry, user: safeUser },
+-            userId: userId,
+-          });
+-        }
+-      }
+-
+-      // Recalculate streaks for all affected groups
+-      for (const groupId of targetGroupIds) {
+-        try {
+-          await recalculateStreak(groupId);
+-        } catch (err) {
+-          logger.error(`Error recalculating streak for group ${groupId}:`, err);
+-        }
+-      }
+-
+-      res.json({ entries, count: entries.length });
+-    } catch (error) {
+-      logger.error("Error creating bulk deuce entry:", error);
+-      return Errors.internal(res, "Failed to create bulk deuce entry");
+-    }
+-  });
+-
+-  // Offline sync — accepts an array of queued deuce logs and processes them in order
+-  const syncDeuceSchema = z.object({
+-    entries: z.array(z.object({
+-      id: z.string(),           // client-local ID (for result mapping)
+-      location: z.string().min(1).max(100),
+-      thoughts: z.string().max(500, "Thought must be 500 characters or less").optional(),
+-      groupIds: z.array(z.string()).min(1),
+-      loggedAt: z.union([z.string(), z.null()]).optional(),
+-    })).min(1).max(50),
+-  });
+-
+-  app.post('/api/deuces/sync', isAuthenticated, async (req, res) => {
+-    try {
+-      const parsed = syncDeuceSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, 'Invalid sync payload');
+-      }
+-
+-      const userId = req.user.id;
+-      const today = getTodayUTC();
+-      const results: Array<{ id: string; status: 'ok' | 'error'; reason?: string }> = [];
+-
+-      for (const entry of parsed.data.entries) {
+-        try {
+-          const currentCount = await storage.getUserDailyLogCount(userId, today);
+-          if (currentCount >= MAX_LOGS_PER_DAY) {
+-            results.push({ id: entry.id, status: 'error', reason: 'Daily limit reached' });
+-            continue;
+-          }
+-
+-          const validGroups: string[] = [];
+-          for (const gid of entry.groupIds) {
+-            const isInGroup = await storage.isUserInGroup(userId, gid);
+-            if (!isInGroup) {
+-              results.push({ id: entry.id, status: 'error', reason: `Not a member of group ${gid}` });
+-              break;
+-            }
+-            validGroups.push(gid);
+-          }
+-          if (validGroups.length !== entry.groupIds.length) continue;
+-
+-          // Validate loggedAt if provided; skip entry with invalid date
+-          let loggedAt: Date;
+-          if (entry.loggedAt) {
+-            const parsedDate = new Date(entry.loggedAt);
+-            if (isNaN(parsedDate.getTime())) {
+-              results.push({ id: entry.id, status: 'error', reason: 'Invalid loggedAt date' });
+-              continue;
+-            }
+-            // Reject future dates (allow up to 1 minute of clock skew)
+-            if (parsedDate.getTime() > Date.now() + 60_000) {
+-              results.push({ id: entry.id, status: 'error', reason: 'Cannot log a deuce in the future' });
+-              continue;
+-            }
+-            loggedAt = parsedDate;
+-          } else {
+-            loggedAt = new Date();
+-          }
+-          for (const groupId of validGroups) {
+-            await storage.createDeuceEntry({
+-              location: entry.location,
+-              thoughts: entry.thoughts ?? '',
+-              ghost: false,
+-              bristolScore: null,
+-              photoUrl: null,
+-              groupId,
+-              userId,
+-              loggedAt,
+-              id: uuidv4(),
+-            });
+-          }
+-
+-          await storage.updateUserDeuceCount(userId, 1);
+-          track('log_created', userId, { has_notes: !!entry.thoughts, source: 'offline_sync' });
+-
+-          for (const groupId of validGroups) {
+-            try {
+-              await recalculateStreak(groupId);
+-            } catch (err) {
+-              logger.error('[sync] recalculateStreak failed for group', groupId, err);
+-            }
+-          }
+-
+-          results.push({ id: entry.id, status: 'ok' });
+-        } catch (err) {
+-          logger.error('Error syncing offline entry', entry.id, err);
+-          results.push({ id: entry.id, status: 'error', reason: 'Internal error' });
+-        }
+-      }
+-
+-      res.json({ results, synced: results.filter(r => r.status === 'ok').length });
+-    } catch (error) {
+-      logger.error('Error in deuce sync endpoint:', error);
+-      Errors.internal(res, 'Failed to sync offline entries');
+-    }
+-  });
+-
+-  // --- Referral routes ---
+-
+-  app.get('/api/referral', isAuthenticated, async (req, res) => {
+-    try {
+-      const user = await storage.getUser(req.user.id);
+-      if (!user) return Errors.notFound(res, 'User not found');
+-
+-      res.json({
+-        code: user.referralCode,
+-        referralCount: user.referralCount ?? 0,
+-        referralLink: `https://deuce-diary-web-production.up.railway.app/join?ref=${user.referralCode}`,
+-      });
+-    } catch (error) {
+-      logger.error('Error fetching referral info:', error);
+-      Errors.internal(res, 'Failed to fetch referral info');
+-    }
+-  });
+-
+-  app.post('/api/referral/apply', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const parsed = referralApplySchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, 'Referral code is required');
+-      }
+-      const { code } = parsed.data;
+-
+-      // Fetch referrer and current user in parallel
+-      const [referrer, currentUser] = await Promise.all([
+-        storage.getUserByReferralCode(code.toUpperCase()),
+-        storage.getUser(userId),
+-      ]);
+-
+-      if (!referrer) {
+-        return Errors.badRequest(res, 'Invalid referral code');
+-      }
+-      if (referrer.id === userId) {
+-        return Errors.badRequest(res, 'Cannot use your own referral code');
+-      }
+-      if (currentUser?.referredBy) {
+-        return Errors.badRequest(res, 'You have already used a referral code');
+-      }
+-
+-      await storage.applyReferral(userId, referrer.id);
+-
+-      // Auto-grant 30 days premium when referrer reaches 3 referrals
+-      const newReferralCount = (referrer.referralCount ?? 0) + 1;
+-      if (newReferralCount >= 3) {
+-        const isPremiumActive =
+-          referrer.subscription === 'premium' &&
+-          referrer.subscriptionExpiresAt &&
+-          new Date(referrer.subscriptionExpiresAt) > new Date();
+-        if (!isPremiumActive) {
+-          const expiresAt = new Date();
+-          expiresAt.setDate(expiresAt.getDate() + 30);
+-          await storage.updateUserSubscription(referrer.id, 'premium', expiresAt);
+-          track('premium_upgrade', referrer.id, { source: 'referral_reward', referralCount: newReferralCount });
+-          logger.info(`[referral] Auto-granted premium to ${referrer.id} for ${newReferralCount} referrals`);
+-        }
+-      }
+-
+-      res.json({ ok: true, referrerUsername: referrer.username });
+-    } catch (error) {
+-      logger.error('Error applying referral:', error);
+-      Errors.internal(res, 'Failed to apply referral');
+-    }
+-  });
+-
+-  app.get('/api/referral/stats', isAuthenticated, requiresPremiumFor('referral_stats'), async (req, res) => {
+-    try {
+-      const stats = await storage.getReferralStats(req.user.id);
+-      res.json(stats);
+-    } catch (error) {
+-      logger.error('Error fetching referral stats:', error);
+-      Errors.internal(res, 'Failed to fetch referral stats');
+-    }
+-  });
+-
+-  // --- Referral dashboard routes ---
+-
+-  app.get('/api/referrals/stats', isAuthenticated, async (req, res) => {
+-    try {
+-      const stats = await storage.getReferralDashboardStats(req.user.id);
+-      res.json(stats);
+-    } catch (error) {
+-      logger.error('Error fetching referral dashboard stats:', error);
+-      Errors.internal(res, 'Failed to fetch referral stats');
+-    }
+-  });
+-
+-  app.get('/api/referrals/leaderboard', isAuthenticated, async (req, res) => {
+-    try {
+-      const leaderboard = await storage.getReferralLeaderboard();
+-      res.json(leaderboard);
+-    } catch (error) {
+-      logger.error('Error fetching referral leaderboard:', error);
+-      Errors.internal(res, 'Failed to fetch referral leaderboard');
+-    }
+-  });
+-
+-  // --- Subscription routes ---
+-
+-  app.get('/api/subscription', isAuthenticated, async (req, res) => {
+-    try {
+-      const sub = await storage.getUserSubscription(req.user.id);
+-      const isPremium = sub.subscription === 'premium' &&
+-        sub.subscriptionExpiresAt &&
+-        new Date(sub.subscriptionExpiresAt) > new Date();
+-      res.json({
+-        tier: isPremium ? 'premium' : 'free',
+-        expiresAt: sub.subscriptionExpiresAt,
+-        features: isPremium
+-          ? ['custom_themes', 'streak_insurance', 'gold_badge', 'priority_support', 'detailed_analytics']
+-          : [],
+-      });
+-    } catch (error) {
+-      logger.error("Error fetching subscription:", error);
+-      Errors.internal(res, "Failed to fetch subscription");
+-    }
+-  });
+-
+-  app.post('/api/subscription/streak-insurance',
+-    isAuthenticated, requiresPremiumFor('streak_insurance'),
+-    async (req, res) => {
+-    try {
+-      const sub = await storage.getUserSubscription(req.user.id);
+-      if (sub.streakInsuranceUsed) {
+-        return Errors.badRequest(res, "Streak insurance already used this month");
+-      }
+-
+-      // Find the user's groups and extend any at-risk streaks
+-      const userGroups = await storage.getUserGroups(req.user.id);
+-      const today = getTodayUTC();
+-      const yesterday = getYesterdayUTC();
+-      let extended = false;
+-
+-      for (const group of userGroups) {
+-        const streak = await storage.getGroupStreak(group.id);
+-        // If last streak date was yesterday and streak > 0, extend it through today
+-        if (streak.lastStreakDate === yesterday && streak.currentStreak > 0) {
+-          await storage.updateGroupStreak(group.id, streak.currentStreak, streak.longestStreak, today);
+-          extended = true;
+-        }
+-      }
+-
+-      await storage.useStreakInsurance(req.user.id);
+-      res.json({
+-        used: true,
+-        extended,
+-        message: extended
+-          ? "Streak preserved!"
+-          : "Insurance activated (no at-risk streaks found)",
+-      });
+-    } catch (error) {
+-      logger.error("Error using streak insurance:", error);
+-      Errors.internal(res, "Failed to use streak insurance");
+-    }
+-  });
+-
+-  // --- Premium analytics ---
+-
+-  app.get('/api/analytics/me', isAuthenticated, requiresPremiumFor('analytics'), async (req, res) => {
+-    try {
+-      const analytics = await storage.getPremiumAnalytics(req.user.id);
+-      res.json(analytics);
+-    } catch (error) {
+-      logger.error("Error fetching premium analytics:", error);
+-      Errors.internal(res, "Failed to fetch analytics");
+-    }
+-  });
+-
+-  app.get('/api/analytics/most-deuces', isAuthenticated, requiresPremiumFor('analytics'), async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const deucesByDate = await storage.getUserDeucesByDate(userId);
+-      
+-      const topDay = deucesByDate.reduce((max, current) => 
+-        current.count > max.count ? current : max, 
+-        { date: '', count: 0 }
+-      );
+-      
+-      res.json(topDay);
+-    } catch (error) {
+-      logger.error("Error fetching analytics:", error);
+-      Errors.internal(res, "Failed to fetch analytics");
+-    }
+-  });
+-
+-  // Weekly Throne Report (premium) — own data only
+-  app.get('/api/users/:userId/weekly-report',
+-    isAuthenticated, requiresPremiumFor('analytics'),
+-    async (req, res) => {
+-    try {
+-      // Only allow access to own report — prevents IDOR
+-      const targetUserId = req.params.userId === 'me' ? req.user.id : req.params.userId;
+-      if (targetUserId !== req.user.id) {
+-        return Errors.forbidden(res, "Cannot access another user's report");
+-      }
+-      const report = await storage.getWeeklyReport(targetUserId);
+-      res.json(report);
+-    } catch (error) {
+-      logger.error("Error fetching weekly report:", error);
+-      Errors.internal(res, "Failed to fetch weekly report");
+-    }
+-  });
+-
+-  // Subscription upgrade (beta: instant upgrade for testing — real payments go through RevenueCat later)
+-  app.post('/api/subscription/upgrade', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const parsed = subscriptionUpgradeSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, "Invalid plan. Must be 'monthly' or 'annual'");
+-      }
+-      const { plan } = parsed.data;
+-
+-      const expiresAt = new Date();
+-      if (plan === 'annual') {
+-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+-      } else {
+-        expiresAt.setMonth(expiresAt.getMonth() + 1);
+-      }
+-
+-      const updatedUser = await storage.updateUserSubscription(userId, 'premium', expiresAt);
+-      res.json(updatedUser);
+-    } catch (error) {
+-      logger.error("Error upgrading subscription:", error);
+-      Errors.internal(res, "Failed to upgrade subscription");
+-    }
+-  });
+-
+-  // --- Push notification token registration ---
+-  const MAX_PUSH_TOKENS_PER_USER = 10;
+-
+-  app.post('/api/notifications/register', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const parsed = pushTokenSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, "token and platform ('ios' or 'android') are required");
+-      }
+-      const { token, platform } = parsed.data;
+-
+-      // Validate Expo push token format
+-      if (!Expo.isExpoPushToken(token)) {
+-        return Errors.badRequest(res, "Invalid push token format");
+-      }
+-
+-      // Enforce per-user token limit (prevents token flooding)
+-      const tokenCount = await storage.countUserPushTokens(userId);
+-      if (tokenCount >= MAX_PUSH_TOKENS_PER_USER) {
+-        // Check if this exact token already exists (upsert is fine)
+-        const existing = await storage.getUserPushTokens(userId);
+-        if (!existing.some(t => t.token === token)) {
+-          return Errors.badRequest(res, `Maximum of ${MAX_PUSH_TOKENS_PER_USER} devices reached`);
+-        }
+-      }
+-
+-      await storage.upsertPushToken({ userId, token, platform });
+-      res.json({ ok: true });
+-    } catch (error) {
+-      logger.error('Error registering push token:', error);
+-      Errors.internal(res, 'Failed to register push token');
+-    }
+-  });
+-
+-  // --- Push notification token unregister ---
+-  app.delete('/api/push/unregister', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const parsed = unregisterPushSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, 'token is required');
+-      }
+-      const { token } = parsed.data;
+-
+-      await storage.deletePushToken(userId, token);
+-      res.json({ ok: true });
+-    } catch (error) {
+-      logger.error('Error unregistering push token:', error);
+-      Errors.internal(res, 'Failed to unregister push token');
+-    }
+-  });
+-
+-  // --- Throne Broadcast (premium) ---
+-  app.post('/api/squads/:id/broadcast',
+-    isAuthenticated, requiresPremiumFor('throne_broadcast'),
+-    requireGroupMember('id'), async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const groupId = req.groupId;
+-      const parsed = broadcastSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, 'milestone is required');
+-      }
+-      const { milestone } = parsed.data;
+-
+-      // Look up all push tokens for group members
+-      const tokens = await storage.getGroupPushTokens(groupId);
+-
+-      // Store the broadcast (don't actually send push yet)
+-      const broadcast = await storage.createBroadcast({ groupId, userId, milestone });
+-
+-      res.json({ broadcast, tokenCount: tokens.length });
+-    } catch (error) {
+-      logger.error('Error creating broadcast:', error);
+-      Errors.internal(res, 'Failed to create broadcast');
+-    }
+-  });
+-
+-  // --- Daily Challenges (premium) ---
+-  app.get('/api/challenges/today', isAuthenticated, requiresPremiumFor('daily_challenges'), async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const challenge = getTodayChallenge();
+-      const challengeDate = todayChallengeDate();
+-      const completion = await storage.getDailyChallengeCompletion(userId, challengeDate);
+-
+-      res.json({ challenge, date: challengeDate, completed: !!completion });
+-    } catch (error) {
+-      logger.error('Error fetching daily challenge:', error);
+-      Errors.internal(res, 'Failed to fetch daily challenge');
+-    }
+-  });
+-
+-  app.post('/api/challenges/complete',
+-    isAuthenticated, requiresPremiumFor('daily_challenges'),
+-    async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const challengeDate = todayChallengeDate();
+-
+-      const existing = await storage.getDailyChallengeCompletion(userId, challengeDate);
+-      if (existing) {
+-        return Errors.badRequest(res, 'Challenge already completed today');
+-      }
+-
+-      const completion = await storage.completeDailyChallenge({ userId, challengeDate });
+-
+-      // Award +1 streak bonus (increment deuce count as bonus)
+-      await storage.updateUserDeuceCount(userId, 1);
+-
+-      res.json({ completion, bonusAwarded: true });
+-    } catch (error) {
+-      logger.error('Error completing challenge:', error);
+-      Errors.internal(res, 'Failed to complete challenge');
+-    }
+-  });
+-
+-  // --- Custom Reminder (premium) ---
+-  app.put('/api/notifications/reminder',
+-    isAuthenticated, requiresPremiumFor('custom_reminder'),
+-    async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const parsed = reminderSchema.safeParse(req.body);
+-      if (!parsed.success) {
+-        return Errors.badRequest(res, 'hour (0-23) and minute (0-59) are required');
+-      }
+-      const { hour, minute } = parsed.data;
+-
+-      const user = await storage.updateUserReminder(userId, hour, minute);
+-      res.json({ reminderHour: user.reminderHour, reminderMinute: user.reminderMinute });
+-    } catch (error) {
+-      logger.error('Error setting reminder:', error);
+-      Errors.internal(res, 'Failed to set reminder');
+-    }
+-  });
+-
+-  const USER_ID_RE = /^[\w.\-]{1,128}$/;
+-
+-  // --- Share Card Data (public) ---
+-  app.get('/api/share/streak/:userId', async (req, res) => {
+-    try {
+-      const { userId } = req.params;
+-      if (!USER_ID_RE.test(userId)) {
+-        return Errors.notFound(res, "User");
+-      }
+-      const data = await storage.getShareCardData(userId);
+-      res.json(data);
+-    } catch (error) {
+-      if (error instanceof Error && error.message === "User not found") {
+-        return Errors.notFound(res, "User");
+-      }
+-      logger.error('Error fetching share card data:', error);
+-      Errors.internal(res, 'Failed to fetch share card data');
+-    }
+-  });
+-
+-  // Badge system (free)
+-  app.get('/api/user/badges', isAuthenticated, async (req, res) => {
+-    try {
+-      const userId = req.user.id;
+-      const badges = await storage.getUserBadges(userId);
+-      res.json(badges);
+-    } catch (error) {
+-      logger.error('Error fetching user badges:', error);
+-      Errors.internal(res, 'Failed to fetch badges');
+-    }
+-  });
+-
+-  // --- OG Image / Share Card Preview (public) ---
+-  app.get('/api/og/streak/:userId', async (req, res) => {
+-    try {
+-      const { userId } = req.params;
+-      if (!USER_ID_RE.test(userId)) {
+-        return res.status(404).send('<html><body><h1>User not found</h1></body></html>');
+-      }
+-      const data = await storage.getShareCardData(userId);
+-
+-      const displayName = escapeHtml(data.username || 'Anonymous');
+-      const memberSince = data.memberSince
+-        ? new Date(data.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+-        : '';
+-
+-      const ogTitle = `${displayName} is on a ${data.currentStreak}-day streak \uD83D\uDD25`;
+-      const squadPlural = data.squadCount !== 1 ? 's' : '';
+-      const ogDesc = `${data.totalLogs} logs \u00B7 ${data.squadCount} squad${squadPlural}` +
+-        ` \u00B7 Longest streak: ${data.longestStreak} days`;
+-      const twDesc = `${data.totalLogs} logs \u00B7 ` +
+-        `${data.squadCount} squad${squadPlural} on Deuce Diary`;
++import { createGroupsRouter } from "./routes/groups";
++import { createDeucesRouter } from "./routes/deuces";
++import { createNotificationsRouter } from "./routes/notifications";
++import { createPublicRouter } from "./routes/public";
++import { createPremiumRouter } from "./routes/premium";
++import { createBingoRouter } from "./routes/bingo";
++import { createPassportRouter } from "./routes/passport";
++import { createKingRouter } from "./routes/king";
++import { createBattleRouter } from "./routes/battle";
++import { v4 as uuidv4 } from "uuid";
++import { promises as fs } from "fs";
++import path from "path";
++import { registerWss, incWsCounter, getWsMetrics } from "./lib/wsMetrics";
+ 
+-      const html = `<!DOCTYPE html>
+-<html lang="en">
+-<head>
+-  <meta charset="UTF-8">
+-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+-  <title>${displayName} on Deuce Diary</title>
+-  <meta property="og:title" content="${ogTitle}" />
+-  <meta property="og:description" content="${ogDesc}" />
+-  <meta property="og:type" content="website" />
+-  <meta name="twitter:card" content="summary" />
+-  <meta name="twitter:title" content="${ogTitle}" />
+-  <meta name="twitter:description" content="${twDesc}" />
+-  <style>
+-    * { margin: 0; padding: 0; box-sizing: border-box; }
+-    body {
+-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+-      background: hsl(38, 40%, 96%);
+-      color: hsl(25, 30%, 8%);
+-      display: flex;
+-      align-items: center;
+-      justify-content: center;
+-      min-height: 100vh;
+-    }
+-    .card {
+-      background: hsl(38, 30%, 94%);
+-      border: 1px solid hsl(38, 18%, 83%);
+-      border-radius: 24px;
+-      padding: 48px 40px;
+-      max-width: 400px;
+-      width: 100%;
+-      text-align: center;
+-    }
+-    .flame { font-size: 48px; line-height: 1; }
+-    .streak {
+-      font-size: 72px;
+-      font-weight: 900;
+-      color: hsl(45, 88%, 48%);
+-      line-height: 1;
+-      margin: 8px 0 4px;
+-      font-variant-numeric: tabular-nums;
+-    }
+-    .streak-label {
+-      font-size: 14px;
+-      font-weight: 700;
+-      text-transform: uppercase;
+-      letter-spacing: 0.1em;
+-      color: hsl(25, 12%, 42%);
+-      margin-bottom: 24px;
+-    }
+-    .username {
+-      font-size: 22px;
+-      font-weight: 800;
+-      margin-bottom: 4px;
+-    }
+-    .subtitle {
+-      font-size: 14px;
+-      color: hsl(25, 12%, 42%);
+-      margin-bottom: 24px;
+-    }
+-    .stats {
+-      display: flex;
+-      justify-content: center;
+-      gap: 32px;
+-      margin-bottom: 20px;
+-    }
+-    .stat-value {
+-      font-size: 20px;
+-      font-weight: 900;
+-      font-variant-numeric: tabular-nums;
+-    }
+-    .stat-label {
+-      font-size: 11px;
+-      font-weight: 700;
+-      text-transform: uppercase;
+-      letter-spacing: 0.08em;
+-      color: hsl(25, 12%, 42%);
+-    }
+-    .brand {
+-      font-size: 12px;
+-      color: hsl(25, 12%, 42%);
+-      margin-top: 16px;
+-    }
+-  </style>
+-</head>
+-<body>
+-  <div class="card">
+-    <div class="flame">\uD83D\uDD25</div>
+-    <div class="streak">${data.currentStreak}</div>
+-    <div class="streak-label">Day Streak</div>
+-    <div class="username">${displayName}</div>
+-    <div class="subtitle">on Deuce Diary</div>
+-    <div class="stats">
+-      <div>
+-        <div class="stat-value">${data.totalLogs}</div>
+-        <div class="stat-label">Logs</div>
+-      </div>
+-      <div>
+-        <div class="stat-value">${data.longestStreak}</div>
+-        <div class="stat-label">Best Streak</div>
+-      </div>
+-      <div>
+-        <div class="stat-value">${data.squadCount}</div>
+-        <div class="stat-label">Squads</div>
+-      </div>
+-    </div>
+-    ${memberSince ? `<div class="brand">Member since ${memberSince}</div>` : ''}
+-  </div>
+-</body>
+-</html>`;
++export async function registerRoutes(app: Express): Promise<Server> {
++  // Ensure uploads directory exists
++  const uploadsDir = path.join(process.cwd(), 'dist', 'public', 'uploads');
++  try {
++    await fs.mkdir(uploadsDir, { recursive: true });
++  } catch {
++    logger.info('Uploads directory already exists or created successfully');
++  }
+ 
+-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+-      res.send(html);
+-    } catch (error) {
+-      if (error instanceof Error && error.message === "User not found") {
+-        return Errors.notFound(res, "User");
+-      }
+-      logger.error('Error rendering OG share card:', error);
+-      Errors.internal(res, 'Failed to render share card');
+-    }
+-  });
++  // --- Webhooks (must be before session middleware — need raw body) ---
++  registerClerkWebhook(app);
++  registerRevenueCatWebhook(app);
+ 
+-  // --- Legacy Wall (public) ---
+-  app.get('/api/users/:username/legacy', async (req, res) => {
+-    try {
+-      const { username } = req.params;
+-      const user = await storage.getUserByUsername(username);
+-      if (!user) {
+-        return Errors.notFound(res, 'User not found');
+-      }
++  // --- Session / auth middleware ---
++  await setupAuth(app);
+ 
+-      const totalLogs = user.deuceCount ?? 0;
+-      const [longestStreak, bestDay] = await Promise.all([
+-        storage.getUserLongestStreak(user.id),
+-        storage.getUserBestDay(user.id),
+-      ]);
++  // --- Static file serving ---
++  app.use('/uploads', express.static(path.join(process.cwd(), 'dist', 'public', 'uploads')));
+ 
+-      res.json({
+-        totalLogs,
+-        longestStreak,
+-        bestDay: bestDay ?? null,
+-        memberSince: user.createdAt,
+-        title: getTitle(totalLogs),
+-      });
+-    } catch (error) {
+-      logger.error('Error fetching legacy wall:', error);
+-      Errors.internal(res, 'Failed to fetch legacy wall');
+-    }
+-  });
++  // --- Mount sub-routers ---
++  app.use(createAdminRouter());
++  app.use(createAuthRouter(uploadsDir));
++  app.use(createGroupsRouter(uploadsDir));
++  app.use(createNotificationsRouter());
++  app.use(createPublicRouter());
++  app.use(createPremiumRouter());
++  app.use(createBingoRouter());
++  app.use(createPassportRouter());
++  app.use(createKingRouter());
++  app.use(createBattleRouter());
+ 
++  // --- HTTP + WebSocket server ---
+   const httpServer = createServer(app);
+ 
+-  // WebSocket server — authenticated connections only
+   const wss = new WebSocketServer({ noServer: true });
+   registerWss(wss);
+   const groupConnections = new Map<string, Set<WebSocket>>();
+@@ -2319,7 +73,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
+       let userId: string | null = null;
+ 
+       if (clerkEnabled) {
+-        // Clerk mode: token passed as query param (browsers can't set WS headers)
+         const token = url.searchParams.get('token');
+         if (!token) {
+           incWsCounter('failedAuthentications');
+@@ -2345,7 +98,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
+           return;
+         }
+       } else {
+-        // Dev mode: validate session cookie
+         const res = { end() {}, setHeader() {}, getHeader() {} } as any;
+         await new Promise<void>((resolve) => {
+           sessionMiddleware(req as any, res, () => resolve());
+@@ -2366,7 +118,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
+         }
+       }
+ 
+-      // Upgrade and attach userId
+       wss.handleUpgrade(req, socket, head, (ws) => {
+         (ws as any).userId = userId;
+         wss.emit('connection', ws, req);
+@@ -2393,9 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
+         return;
+       }
+       client.missedPongs = (client.missedPongs ?? 0) + 1;
+-      if (ws.readyState === WebSocket.OPEN) {
+-        ws.ping();
+-      }
++      if (ws.readyState === WebSocket.OPEN) ws.ping();
+     });
+   }, PING_INTERVAL_MS);
+ 
+@@ -2403,13 +152,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
+   const sweepInterval = setInterval(() => {
+     for (const [groupId, conns] of Array.from(groupConnections)) {
+       for (const ws of Array.from(conns)) {
+-        if (ws.readyState !== WebSocket.OPEN) {
+-          conns.delete(ws);
+-        }
+-      }
+-      if (conns.size === 0) {
+-        groupConnections.delete(groupId);
++        if (ws.readyState !== WebSocket.OPEN) conns.delete(ws);
+       }
++      if (conns.size === 0) groupConnections.delete(groupId);
+     }
+   }, 60_000);
+ 
+@@ -2418,18 +163,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
+     clearInterval(sweepInterval);
+   });
+ 
+-  wss.on('connection', (ws: WebSocket, req) => {
++  wss.on('connection', (ws: WebSocket) => {
+     const userId = (ws as any).userId as string;
+     incWsCounter('totalConnections');
+     logger.info(`WebSocket connection authenticated for user ${userId}`);
+ 
+-    // Heartbeat tracking
+     (ws as any).missedPongs = 0;
+-    ws.on('pong', () => {
+-      (ws as any).missedPongs = 0;
+-    });
++    ws.on('pong', () => { (ws as any).missedPongs = 0; });
+ 
+-    // Track ALL group subscriptions for this socket so every group is cleaned up on close
+     (ws as any).subscribedGroups = new Set<string>();
+ 
+     ws.on('message', async (message) => {
+@@ -2438,30 +179,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
+ 
+         if (data.type === 'join_group') {
+           const groupId = data.groupId;
+-
+-          // Validate groupId before using it
+           if (!groupId || typeof groupId !== 'string') {
+             ws.send(JSON.stringify({ type: 'error', message: 'Invalid groupId' }));
+             return;
+           }
+-
+-          // Verify user is a member of this group
+           const isMember = await storage.isUserInGroup(userId, groupId);
+           if (!isMember) {
+             ws.send(JSON.stringify({ type: 'error', message: 'Not a member of this group' }));
+             return;
+           }
+-
+-          if (!groupConnections.has(groupId)) {
+-            groupConnections.set(groupId, new Set());
+-          }
++          if (!groupConnections.has(groupId)) groupConnections.set(groupId, new Set());
+           groupConnections.get(groupId)?.add(ws);
+-
+-          // Track all subscribed groups so close handler can clean all of them up
+           (ws as any).subscribedGroups.add(groupId);
+-
+-          // Acknowledge the join so clients know they are subscribed and can
+-          // trigger broadcasts (e.g. by logging a deuce) without a fixed timeout.
+           ws.send(JSON.stringify({ type: 'join_group_ok', groupId }));
+         } else if (data.type === 'leave_group') {
+           const groupId = data.groupId;
+@@ -2469,8 +198,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
+             ws.send(JSON.stringify({ type: 'error', message: 'Invalid groupId' }));
+             return;
+           }
+-
+-          // Remove from group broadcast set and subscription tracking
+           const conns = groupConnections.get(groupId);
+           if (conns) {
+             conns.delete(ws);
+@@ -2485,7 +212,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
+ 
+     ws.on('close', () => {
+       incWsCounter('gracefulDisconnects');
+-      // Clean up this socket from every group it subscribed to
+       const subscribed: Set<string> = (ws as any).subscribedGroups;
+       for (const groupId of subscribed) {
+         const conns = groupConnections.get(groupId);
+@@ -2500,32 +226,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
+   function broadcastToGroup(groupId: string, message: Record<string, unknown>) {
+     const connections = groupConnections.get(groupId);
+     if (connections) {
+-      // Stamp every broadcast with a unique msgId so clients can deduplicate.
+-      // The same msgId is sent to all subscribers of a group for a given event.
+       const stamped = { msgId: uuidv4(), ...message };
+       const payload = JSON.stringify(stamped);
+       connections.forEach((ws) => {
+-        if (ws.readyState === WebSocket.OPEN) {
+-          ws.send(payload);
+-        }
++        if (ws.readyState === WebSocket.OPEN) ws.send(payload);
+       });
+     }
+   }
+ 
+-  // --- Premium routes (streak insurance, referral, analytics, etc.) ---
+-  app.use(createPremiumRouter());
+-
+-  // --- Bingo routes (premium) ---
+-  app.use(createBingoRouter());
+-
+-  // --- Passport routes (premium) ---
+-  app.use(createPassportRouter());
+-
+-  // --- Deuce King Challenge routes ---
+-  app.use(createKingRouter());
+-
+-  // --- Battle Shits routes ---
+-  app.use(createBattleRouter());
++  // Mount deuces router after broadcastToGroup is defined
++  app.use(createDeucesRouter(broadcastToGroup));
+ 
+   // Cleanup expired invites periodically
+   setInterval(async () => {
+@@ -2534,7 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
+     } catch (error) {
+       logger.error('Error cleaning up expired invites:', error);
+     }
+-  }, 60 * 60 * 1000); // Every hour
++  }, 60 * 60 * 1000);
+ 
+   return httpServer;
+ }
+diff --git a/server/routes/admin.ts b/server/routes/admin.ts
+new file mode 100644
+index 00000000..bda0d6d0
+--- /dev/null
++++ b/server/routes/admin.ts
+@@ -0,0 +1,212 @@
++import { Router } from "express";
++import { timingSafeEqual } from "crypto";
++import logger from "../lib/logger";
++import { pool } from "../db";
++import { storage } from "../storage";
++import { getRandomTemplate } from "../challengeTemplates";
++import { checkAllGroupStreaksAndNotify } from "../streakNotifications";
++import { getRecentErrors } from "../lib/errorTracker";
++import { buildDetailedHealth, buildDegradedHealth } from "../lib/perfBaseline";
++import { getWsMetrics } from "../lib/wsMetrics";
++import { Errors } from "../lib/apiError";
++
++/** Constant-time string comparison to prevent timing attacks on API keys */
++function safeKeyCompare(provided: string | undefined, expected: string | undefined): boolean {
++  if (!provided || !expected) return false;
++  try {
++    const a = Buffer.from(provided);
++    const b = Buffer.from(expected);
++    if (a.length !== b.length) {
++      timingSafeEqual(Buffer.alloc(b.length), b);
++      return false;
++    }
++    return timingSafeEqual(a, b);
++  } catch {
++    return false;
++  }
++}
++
++export function createAdminRouter(): Router {
++  const router = Router();
++
++  // Public config endpoint — returns runtime config values for the frontend
++  router.get('/api/config', (_req, res) => {
++    res.json({
++      clerkPublishableKey: process.env.VITE_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY || null,
++    });
++  });
++
++  // Health check (no auth required)
++  router.get('/api/health', async (_req, res) => {
++    const base = { timestamp: new Date().toISOString(), uptime: process.uptime() };
++    const ws = getWsMetrics();
++    try {
++      const start = Date.now();
++      await pool.query('SELECT 1');
++      const dbLatencyMs = Date.now() - start;
++      res.json({ status: 'ok', db: 'connected', dbLatencyMs, ws, ...base });
++    } catch {
++      res.status(503).json({ status: 'degraded', db: 'unreachable', ws, ...base });
++    }
++  });
++
++  // Admin stats endpoint
++  router.get('/api/admin/stats', async (req, res) => {
++    const key = req.headers['x-admin-key'] as string | undefined;
++    if (!process.env.ADMIN_KEY || !safeKeyCompare(key, process.env.ADMIN_KEY)) {
++      return Errors.unauthorized(res);
++    }
++    try {
++      const stats = await storage.getAdminStats();
++      res.json(stats);
++    } catch (error) {
++      logger.error({ err: error }, '[ADMIN STATS ERROR]');
++      Errors.internal(res, 'Failed to fetch admin stats');
++    }
++  });
++
++  // Internal streak check endpoint (cron / manual trigger)
++  router.post('/api/internal/streak-check', async (req, res) => {
++    const key = req.headers['x-internal-key'] as string | undefined;
++    if (!process.env.INTERNAL_API_KEY || !safeKeyCompare(key, process.env.INTERNAL_API_KEY)) {
++      return Errors.unauthorized(res);
++    }
++    try {
++      const summary = await checkAllGroupStreaksAndNotify();
++      res.json(summary);
++    } catch (error) {
++      logger.error({ err: error }, '[STREAK CHECK ERROR]');
++      Errors.internal(res, 'Streak check failed');
++    }
++  });
++
++  // Crown transfer: calculate weekly kings and transfer crowns
++  router.post('/api/internal/crown-transfer', async (req, res) => {
++    const key = req.headers['x-internal-key'] as string | undefined;
++    if (!process.env.INTERNAL_API_KEY || !safeKeyCompare(key, process.env.INTERNAL_API_KEY)) {
++      return Errors.unauthorized(res);
++    }
++
++    const results: { groupId: string; winner: string | null; error?: string }[] = [];
++
++    try {
++      const now = new Date();
++      const dayOfWeek = now.getUTCDay();
++      const daysSinceMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
++      const periodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysSinceMon));
++      const periodStart = new Date(periodEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
++
++      const groupIds = await storage.getAllGroupIds();
++
++      for (const groupId of groupIds) {
++        try {
++          const logCounts = await storage.getGroupLogCountsForPeriod(groupId, periodStart, periodEnd);
++
++          if (logCounts.length === 0) {
++            results.push({ groupId, winner: null });
++            continue;
++          }
++
++          const maxLogs = Math.max(...logCounts.map((l) => l.logCount));
++          const topTiers = logCounts.filter((l) => l.logCount === maxLogs);
++
++          let winner = topTiers[0];
++          if (topTiers.length > 1) {
++            const withStreaks = await Promise.all(
++              topTiers.map(async (t) => ({
++                ...t,
++                streak: await storage.getUserStreakInGroup(t.userId, groupId),
++              })),
++            );
++            const maxStreak = Math.max(...withStreaks.map((w) => w.streak));
++            const topStreaks = withStreaks.filter((w) => w.streak === maxStreak);
++            if (topStreaks.length > 1) {
++              topStreaks.sort((a, b) => {
++                const aTime = a.firstLogAt?.getTime() ?? Infinity;
++                const bTime = b.firstLogAt?.getTime() ?? Infinity;
++                return aTime - bTime;
++              });
++            }
++            winner = topStreaks[0];
++          }
++
++          const prevKing = await storage.getLatestKingForGroup(groupId);
++          const consecutiveWins =
++            prevKing && prevKing.userId === winner.userId ? prevKing.consecutiveWins + 1 : 1;
++
++          const kingRecord = await storage.createDeuceKing({
++            groupId,
++            userId: winner.userId,
++            periodStart,
++            periodEnd,
++            logCount: winner.logCount,
++            consecutiveWins,
++          });
++
++          const winnerUser = await storage.getUser(winner.userId);
++          const fullName = `${winnerUser?.firstName ?? ''} ${winnerUser?.lastName ?? ''}`.trim();
++          const displayName = winnerUser?.username ?? (fullName || 'Someone');
++          const dynastyNote = consecutiveWins >= 3 ? ' 👑👑👑 Dynasty!' : '';
++          await storage.createBroadcast({
++            groupId,
++            userId: winner.userId,
++            milestone: `👑 ${displayName} is the new Deuce King with ${winner.logCount} logs!${dynastyNote}`,
++          });
++
++          const existing = await storage.getExistingChallengeForKing(kingRecord.id);
++          if (!existing) {
++            const template = getRandomTemplate();
++            await storage.createChallenge({
++              groupId,
++              kingId: winner.userId,
++              deuceKingId: kingRecord.id,
++              title: template.title,
++              templateKey: template.key,
++              periodStart,
++              periodEnd,
++              isAutoSelected: true,
++            });
++          }
++
++          results.push({ groupId, winner: winner.userId });
++        } catch (groupErr: unknown) {
++          const msg = groupErr instanceof Error ? groupErr.message : String(groupErr);
++          logger.error({ groupId, msg }, `[crown-transfer] group error`);
++          results.push({ groupId, winner: null, error: msg });
++        }
++      }
++
++      res.json({ processed: groupIds.length, results });
++    } catch (error: unknown) {
++      logger.error({ err: error }, '[CROWN TRANSFER ERROR]');
++      Errors.internal(res, 'Crown transfer failed');
++    }
++  });
++
++  // Error log endpoint (internal)
++  router.get('/api/internal/errors', (req, res) => {
++    const key = req.headers['x-internal-key'] as string | undefined;
++    if (!process.env.INTERNAL_API_KEY || !safeKeyCompare(key, process.env.INTERNAL_API_KEY)) {
++      return Errors.unauthorized(res);
++    }
++    const limit = Math.min(Number(req.query.limit) || 50, 200);
++    const errors = getRecentErrors(limit);
++    res.json({ errors, count: errors.length });
++  });
++
++  // Detailed health endpoint (internal)
++  router.get('/api/internal/health/detailed', async (req, res) => {
++    const key = req.headers['x-internal-key'] as string | undefined;
++    if (!process.env.INTERNAL_API_KEY || !safeKeyCompare(key, process.env.INTERNAL_API_KEY)) {
++      return Errors.unauthorized(res);
++    }
++    try {
++      await pool.query('SELECT 1');
++      res.json(buildDetailedHealth(pool));
++    } catch {
++      res.status(503).json(buildDegradedHealth());
++    }
++  });
++
++  return router;
++}
+diff --git a/server/routes/auth.ts b/server/routes/auth.ts
+index fa9ad031..ee491902 100644
+--- a/server/routes/auth.ts
++++ b/server/routes/auth.ts
+@@ -2,7 +2,9 @@ import { Router } from "express";
+ import logger from "../lib/logger";
+ import { z, ZodError } from "zod";
+ import { storage } from "../storage";
+-import { updateUserSchema } from "@shared/schema";
++import { db } from "../db";
++import { users, updateUserSchema } from "@shared/schema";
++import { eq, and, isNull } from "drizzle-orm";
+ import { isAuthenticated, clerkEnabled } from "../replitAuth";
+ import { requiresPremiumFor } from "../premiumAuth";
+ import { track } from "../lib/analytics";
+@@ -198,5 +200,98 @@ export function createAuthRouter(uploadsDir: string): Router {
+     }
+   });
+ 
++  // Data export (GDPR right to data portability)
++  router.get('/api/user/export', isAuthenticated, async (req, res) => {
++    try {
++      const userId = req.user.id;
++      const user = await storage.getUser(userId);
++      const groups = await storage.getUserGroups(userId);
++      const badges = await storage.getUserBadges(userId);
++
++      const exportData = {
++        exportedAt: new Date().toISOString(),
++        account: {
++          username: user?.username,
++          email: user?.email,
++          firstName: user?.firstName,
++          lastName: user?.lastName,
++          subscription: user?.subscription,
++          deuceCount: user?.deuceCount,
++          theme: user?.theme,
++          timezone: user?.timezone,
++          createdAt: user?.createdAt,
++        },
++        groups: groups.map((g) => ({
++          name: g.name,
++          memberCount: g.memberCount,
++          joinedAt: g.joinedAt,
++        })),
++        badges: badges.map((b) => ({
++          name: b.name,
++          unlocked: b.unlocked,
++        })),
++      };
++
++      res.setHeader('Content-Type', 'application/json');
++      res.setHeader('Content-Disposition', 'attachment; filename="deuce-diary-export.json"');
++      res.json(exportData);
++    } catch (error) {
++      logger.error({ err: error }, "Error exporting data");
++      Errors.internal(res, "Failed to export data");
++    }
++  });
++
++  // Timezone preference
++  router.put('/api/user/timezone', isAuthenticated, async (req, res) => {
++    try {
++      const { timezone } = req.body;
++      if (!timezone || typeof timezone !== 'string') {
++        return Errors.badRequest(res, "Timezone is required");
++      }
++      if (timezone.length > 100) {
++        return Errors.badRequest(res, "Timezone identifier too long (max 100 characters)");
++      }
++      try {
++        Intl.DateTimeFormat(undefined, { timeZone: timezone });
++      } catch {
++        return Errors.badRequest(
++          res,
++          `Unknown timezone: "${timezone}". Use an IANA timezone name (e.g. "America/New_York")`,
++        );
++      }
++      const [user] = await db
++        .update(users)
++        .set({ timezone, updatedAt: new Date() })
++        .where(and(eq(users.id, req.user.id), isNull(users.deletedAt)))
++        .returning();
++      res.json({ timezone: user.timezone });
++    } catch (error) {
++      logger.error({ err: error }, "Error updating timezone");
++      Errors.internal(res, "Failed to update timezone");
++    }
++  });
++
++  // Account deletion (soft-delete with GDPR-compliant data removal)
++  router.delete('/api/user/account', isAuthenticated, async (req, res) => {
++    try {
++      await storage.softDeleteUser(req.user.id);
++      res.json({ success: true });
++    } catch (error) {
++      logger.error({ err: error }, "Error deleting account");
++      Errors.internal(res, "Failed to delete account");
++    }
++  });
++
++  // Badge system (free)
++  router.get('/api/user/badges', isAuthenticated, async (req, res) => {
++    try {
++      const badges = await storage.getUserBadges(req.user.id);
++      res.json(badges);
++    } catch (error) {
++      logger.error({ err: error }, "Error fetching user badges");
++      Errors.internal(res, "Failed to fetch badges");
++    }
++  });
++
+   return router;
+ }
+diff --git a/server/routes/deuces.ts b/server/routes/deuces.ts
+index 74dcbc2d..839dd568 100644
+--- a/server/routes/deuces.ts
++++ b/server/routes/deuces.ts
+@@ -2,22 +2,38 @@ import { Router, type Request, type Response } from "express";
+ import logger from "../lib/logger";
+ import { WebSocket } from "ws";
+ import { storage } from "../storage";
++import { db } from "../db";
++import { deuceEntries, users } from "@shared/schema";
++import { eq, sql } from "drizzle-orm";
+ import { isAuthenticated } from "../replitAuth";
+-import { track, Events } from "../lib/analytics";
++import { track } from "../lib/analytics";
+ import { v4 as uuidv4 } from "uuid";
++import { z } from "zod";
+ import {
+   createDeuceSchema,
+   createLocationSchema,
+-  reactionSchema,
+-  deleteReactionSchema,
+   MAX_LOGS_PER_DAY,
+   getTodayUTC,
+   recalculateStreak,
+   sanitizeUserForResponse,
+ } from "./helpers";
++
++// Simple emoji schema — accepts any non-empty string (original behavior)
++const reactionSchema = z.object({ emoji: z.string().min(1).max(10) });
++const deleteReactionSchema = reactionSchema;
+ import { triggerPassportStamp } from "../lib/geocode";
+ import type { DeuceEntry } from "@shared/schema";
+ 
++const syncDeuceSchema = z.object({
++  entries: z.array(z.object({
++    id: z.string(),
++    location: z.string().min(1).max(100),
++    thoughts: z.string().max(500, "Thought must be 500 characters or less").optional(),
++    groupIds: z.array(z.string()).min(1),
++    loggedAt: z.union([z.string(), z.null()]).optional(),
++  })).min(1).max(50),
++});
++
+ type BroadcastFn = (groupId: string, message: unknown) => void;
+ 
+ /** Fetch an entry and verify the user belongs to its group. Returns the entry or sends an error response. */
+@@ -38,6 +54,16 @@ async function getAuthorizedEntry(entryId: string, userId: string, res: Response
+ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+   const router = Router();
+ 
++  router.get('/api/locations', isAuthenticated, async (req, res) => {
++    try {
++      const locations = await storage.getLocationsForUser(req.user.id);
++      res.json(locations);
++    } catch (error) {
++      logger.error({ err: error }, "Error fetching locations");
++      res.status(500).json({ message: "Failed to fetch locations" });
++    }
++  });
++
+   router.post('/api/locations', isAuthenticated, async (req, res) => {
+     try {
+       const userId = req.user.id;
+@@ -203,7 +229,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       const today = getTodayUTC();
+       const currentCount = await storage.getUserDailyLogCount(userId, today);
+       if (currentCount >= MAX_LOGS_PER_DAY) {
+-        return res.status(429).json({ message: 'Throne limit reached for today. Come back tomorrow.' });
++        return res.status(429).json({ message: 'Throne limit reached for today. Come back tomorrow.', code: 'RATE_LIMIT_EXCEEDED', status: 429 });
+       }
+ 
+       const parsed = createDeuceSchema.safeParse(req.body);
+@@ -221,10 +247,10 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+         return res.status(400).json({ message: "At least one group must be selected" });
+       }
+ 
+-      // Check if user is in all selected groups — single batch query instead of N queries
+-      const memberGroupIds = await storage.isUserInGroups(userId, targetGroupIds);
++      // Check if user is in all selected groups
+       for (const gid of targetGroupIds) {
+-        if (!memberGroupIds.has(gid)) {
++        const isInGroup = await storage.isUserInGroup(userId, gid);
++        if (!isInGroup) {
+           return res.status(403).json({ message: `Not authorized for group ${gid}` });
+         }
+       }
+@@ -274,7 +300,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       await storage.updateUserDeuceCount(userId, 1);
+ 
+       track("log_created", userId, { has_notes: !!entryData.thoughts });
+-      Events.deuceLogged(userId, { groupCount: targetGroupIds.length, has_notes: !!entryData.thoughts });
++      track("deuce_logged", userId, { groupCount: targetGroupIds.length, has_notes: !!entryData.thoughts });
+ 
+       // Get user info for WebSocket notification
+       const user = await storage.getUser(userId);
+@@ -314,7 +340,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+         const { currentStreak } = streakMap.get(groupId) ?? { currentStreak: 0 };
+         if (currentStreak > maxStreak) maxStreak = currentStreak;
+         if (STREAK_MILESTONES.includes(currentStreak)) {
+-          Events.streakMilestone(userId, groupId, currentStreak);
++          track("streak_milestone", userId, { groupId, streak: currentStreak });
+         }
+       }
+ 
+@@ -322,6 +348,22 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       triggerPassportStamp(latitude, longitude, (geo, lat, lon) =>
+         storage.upsertPassportStamp(userId, geo.city, geo.country, geo.region, geo.countryCode, lat, lon));
+ 
++      // Generate Battle Shits tokens for active matches
++      const deuceEntryId = entries[0]?.id ?? '';
++      try {
++        const activeMatches = await storage.getUserActiveMatches(userId);
++        const activeOnly = activeMatches.filter((m: any) => m.status === 'active');
++        for (const match of activeOnly) {
++          await storage.createBattleToken(match.id, userId, deuceEntryId, 'standard');
++          // Double flush: 2nd or more log of the day
++          if (currentCount >= 1) {
++            await storage.createBattleToken(match.id, userId, deuceEntryId, 'double_flush');
++          }
++        }
++      } catch (err) {
++        logger.error({ err }, "Error generating battle tokens");
++      }
++
+       res.json({ entries, count: entries.length, streak: maxStreak });
+     } catch (error) {
+       logger.error({ err: error }, "Error creating deuce entry");
+@@ -329,5 +371,200 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+     }
+   });
+ 
++  // Bulk deuce logging — atomic multi-group in one transaction
++  router.post('/api/deuces/bulk', isAuthenticated, async (req, res) => {
++    try {
++      const userId = req.user.id;
++
++      const today = getTodayUTC();
++      const currentCount = await storage.getUserDailyLogCount(userId, today);
++      if (currentCount >= MAX_LOGS_PER_DAY) {
++        return res.status(429).json({ message: 'Throne limit reached for today. Come back tomorrow.', code: 'RATE_LIMIT_EXCEEDED', status: 429 });
++      }
++
++      const parsed = createDeuceSchema.safeParse(req.body);
++      if (!parsed.success) {
++        const firstIssue = parsed.error.issues[0]?.message || "Invalid deuce entry data";
++        return res.status(400).json({ message: firstIssue });
++      }
++
++      const { groupIds, groupId, bristolScore, photoUrl, latitude, longitude, ...entryData } = parsed.data;
++      const targetGroupIds = groupIds || (groupId ? [groupId] : []);
++
++      if (targetGroupIds.length === 0) {
++        return res.status(400).json({ message: "At least one group must be selected" });
++      }
++      if (targetGroupIds.length === 1) {
++        return res.status(400).json({ message: "Use /api/deuces for single group logging. Bulk requires multiple groups." });
++      }
++
++      if (bristolScore !== undefined && (bristolScore < 1 || bristolScore > 7)) {
++        return res.status(400).json({ message: "bristolScore must be an integer between 1 and 7" });
++      }
++
++      for (const gid of targetGroupIds) {
++        const isInGroup = await storage.isUserInGroup(userId, gid);
++        if (!isInGroup) return res.status(403).json({ message: `Not authorized for group ${gid}` });
++      }
++
++      let loggedAt: Date;
++      if (entryData.loggedAt) {
++        const parsedDate = new Date(entryData.loggedAt);
++        if (isNaN(parsedDate.getTime())) return res.status(400).json({ message: "Invalid loggedAt date" });
++        if (parsedDate.getTime() > Date.now() + 60_000) return res.status(400).json({ message: "Cannot log a deuce in the future" });
++        loggedAt = parsedDate;
++      } else {
++        loggedAt = new Date();
++      }
++      const isGhost = !!entryData.ghost;
++
++      const entries: DeuceEntry[] = [];
++      await db.transaction(async (tx) => {
++        for (const gid of targetGroupIds) {
++          const [entry] = await tx
++            .insert(deuceEntries)
++            .values({
++              ...entryData,
++              thoughts: entryData.thoughts ?? "",
++              ghost: isGhost,
++              bristolScore: bristolScore ?? null,
++              photoUrl: photoUrl ?? null,
++              latitude: latitude != null ? String(latitude) : null,
++              longitude: longitude != null ? String(longitude) : null,
++              groupId: gid,
++              userId,
++              loggedAt,
++              id: uuidv4(),
++            })
++            .returning();
++          entries.push(entry);
++        }
++        await tx
++          .update(users)
++          .set({ deuceCount: sql`${users.deuceCount} + 1`, updatedAt: new Date() })
++          .where(eq(users.id, userId));
++      });
++
++      track("bulk_log_created", userId, {
++        group_count: targetGroupIds.length,
++        has_notes: !!entryData.thoughts,
++        has_photo: !!photoUrl,
++      });
++
++      const user = await storage.getUser(userId);
++      const displayName = user?.username ||
++        (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.firstName) ||
++        'Someone';
++
++      if (!isGhost) {
++        const safeUser = user ? sanitizeUserForResponse(user) : null;
++        for (const gid of targetGroupIds) {
++          const groupEntry = entries.find(e => e.groupId === gid);
++          broadcastToGroup(gid, {
++            type: 'deuce_logged',
++            message: `${displayName} logged a new deuce`,
++            entry: { ...groupEntry, user: safeUser },
++            userId,
++          });
++        }
++      }
++
++      for (const gid of targetGroupIds) {
++        try { await recalculateStreak(gid); } catch (err) {
++          logger.error({ err, groupId: gid }, "Error recalculating streak for group");
++        }
++      }
++
++      res.json({ entries, count: entries.length });
++    } catch (error) {
++      logger.error({ err: error }, "Error creating bulk deuce entry");
++      res.status(500).json({ message: "Failed to create bulk deuce entry" });
++    }
++  });
++
++  // Offline sync — accepts an array of queued deuce logs
++  router.post('/api/deuces/sync', isAuthenticated, async (req, res) => {
++    try {
++      const parsed = syncDeuceSchema.safeParse(req.body);
++      if (!parsed.success) return res.status(400).json({ message: 'Invalid sync payload' });
++
++      const userId = req.user.id;
++      const today = getTodayUTC();
++      const results: Array<{ id: string; status: 'ok' | 'error'; reason?: string }> = [];
++
++      for (const entry of parsed.data.entries) {
++        try {
++          const currentCount = await storage.getUserDailyLogCount(userId, today);
++          if (currentCount >= MAX_LOGS_PER_DAY) {
++            results.push({ id: entry.id, status: 'error', reason: 'Daily limit reached' });
++            continue;
++          }
++
++          const validGroups: string[] = [];
++          let authorized = true;
++          for (const gid of entry.groupIds) {
++            const isInGroup = await storage.isUserInGroup(userId, gid);
++            if (!isInGroup) {
++              results.push({ id: entry.id, status: 'error', reason: `Not a member of group ${gid}` });
++              authorized = false;
++              break;
++            }
++            validGroups.push(gid);
++          }
++          if (!authorized) continue;
++
++          let loggedAt: Date;
++          if (entry.loggedAt) {
++            const parsedDate = new Date(entry.loggedAt);
++            if (isNaN(parsedDate.getTime())) {
++              results.push({ id: entry.id, status: 'error', reason: 'Invalid loggedAt date' });
++              continue;
++            }
++            if (parsedDate.getTime() > Date.now() + 60_000) {
++              results.push({ id: entry.id, status: 'error', reason: 'Cannot log a deuce in the future' });
++              continue;
++            }
++            loggedAt = parsedDate;
++          } else {
++            loggedAt = new Date();
++          }
++
++          for (const gid of validGroups) {
++            await storage.createDeuceEntry({
++              location: entry.location,
++              thoughts: entry.thoughts ?? '',
++              ghost: false,
++              bristolScore: null,
++              photoUrl: null,
++              groupId: gid,
++              userId,
++              loggedAt,
++              id: uuidv4(),
++            });
++          }
++
++          await storage.updateUserDeuceCount(userId, 1);
++          track('log_created', userId, { has_notes: !!entry.thoughts, source: 'offline_sync' });
++
++          for (const gid of validGroups) {
++            try { await recalculateStreak(gid); } catch (err) {
++              logger.error({ err, groupId: gid }, '[sync] recalculateStreak failed for group');
++            }
++          }
++
++          results.push({ id: entry.id, status: 'ok' });
++        } catch (err) {
++          logger.error({ err }, 'Error syncing offline entry ' + entry.id);
++          results.push({ id: entry.id, status: 'error', reason: 'Internal error' });
++        }
++      }
++
++      res.json({ results, synced: results.filter(r => r.status === 'ok').length });
++    } catch (error) {
++      logger.error({ err: error }, 'Error in deuce sync endpoint');
++      res.status(500).json({ message: 'Failed to sync offline entries' });
++    }
++  });
++
+   return router;
+ }
+diff --git a/server/routes/groups.ts b/server/routes/groups.ts
+index 29a6c7e7..44193e22 100644
+--- a/server/routes/groups.ts
++++ b/server/routes/groups.ts
+@@ -5,8 +5,12 @@ import { insertGroupSchema } from "@shared/schema";
+ import { isAuthenticated } from "../replitAuth";
+ import { requireGroupMember } from "../groupAuth";
+ import { requiresPremiumFor } from "../premiumAuth";
+-import { track, Events } from "../lib/analytics";
++import { track } from "../lib/analytics";
+ import { v4 as uuidv4 } from "uuid";
++import multer from "multer";
++import sharp from "sharp";
++import path from "path";
++import { Errors } from "../lib/apiError";
+ import {
+   createGroupSchema,
+   isPremiumUser,
+@@ -47,16 +51,23 @@ async function checkSquadLimit(req: Request, res: Response): Promise<boolean> {
+ const asyncRoute = (errMsg: string, handler: (req: Request, res: Response) => Promise<void>) =>
+   helperAsyncRoute(errMsg, errMsg, handler);
+ 
+-export function createGroupsRouter(): Router {
++export function createGroupsRouter(uploadsDir: string): Router {
+   const router = Router();
+ 
+-  // Group routes (free — squad limit for free users)
++  // Configure multer for group avatar uploads
++  const upload = multer({
++    storage: multer.memoryStorage(),
++    limits: { fileSize: 5 * 1024 * 1024 },
++    fileFilter: (_req, file, cb) => {
++      if (file.mimetype.startsWith('image/')) cb(null, true);
++      else cb(new Error('Only image files are allowed'));
++    },
++  });
++
++  // Group routes (squads are free — no creation limit)
+   router.post('/api/groups', isAuthenticated, asyncRoute("Failed to create group", async (req, res) => {
+     const userId = req.user.id;
+ 
+-    // Free users limited to 3 squads
+-    if (await checkSquadLimit(req, res)) return;
+-
+     const parsed = createGroupSchema.safeParse(req.body);
+     if (!parsed.success) {
+       return res.status(400).json({ message: "Invalid group data: name is required (max 100 chars)" });
+@@ -112,9 +123,6 @@ export function createGroupsRouter(): Router {
+     const userId = req.user.id;
+     const groupId = req.groupId;
+ 
+-    // Purge expired invites for this group before creating a new one to prevent accumulation
+-    await storage.deleteExpiredGroupInvites(groupId);
+-
+     const inviteId = uuidv4();
+     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+ 
+@@ -146,9 +154,6 @@ export function createGroupsRouter(): Router {
+       return res.json({ group, message: "Already a member of this group" });
+     }
+ 
+-    // Free users limited to 3 squads
+-    if (await checkSquadLimit(req, res)) return;
+-
+     await storage.addGroupMember({
+       groupId: invite.groupId,
+       userId,
+@@ -158,7 +163,7 @@ export function createGroupsRouter(): Router {
+     // Don't delete the invite — it should be reusable by multiple people
+ 
+     track("group_joined", userId);
+-    Events.groupJoined(userId, invite.groupId);
++    track("group_joined", userId, { groupId: invite.groupId });
+ 
+     const group = await storage.getGroupById(invite.groupId);
+     res.json({ group });
+@@ -204,6 +209,7 @@ export function createGroupsRouter(): Router {
+     res.json({
+       currentStreak,
+       longestStreak: streak.longestStreak,
++      lastStreakDate: streak.lastStreakDate,
+       memberCount: logsToday.length,
+       logsToday: logsToday.map(m => ({
+         userId: m.userId,
+@@ -241,9 +247,9 @@ export function createGroupsRouter(): Router {
+     res.json(ranked);
+   }));
+ 
+-  // Weekly Throne Report — group-level shareable summary card
++  // Weekly Throne Report — group-level shareable summary card (premium)
+   router.get('/api/groups/:groupId/weekly-report',
+-    isAuthenticated, requireGroupMember(), asyncRoute("Failed to fetch group weekly report",
++    isAuthenticated, requireGroupMember(), requiresPremiumFor('weekly_report'), asyncRoute("Failed to fetch group weekly report",
+     async (req, res) => {
+     const groupId = req.groupId;
+     const report = await fetchWeeklyReport(groupId, res);
+@@ -251,9 +257,9 @@ export function createGroupsRouter(): Router {
+     res.json(report);
+   }));
+ 
+-  // Squad Spy Mode — typical log hour per member (premium)
++  // Squad Spy Mode — typical log hour per member (premium — gate before group membership check)
+   router.get('/api/groups/:groupId/spy',
+-    isAuthenticated, requireGroupMember(), requiresPremiumFor('squad_spy'), asyncRoute("Failed to fetch spy data",
++    isAuthenticated, requiresPremiumFor('squad_spy'), requireGroupMember(), asyncRoute("Failed to fetch spy data",
+     async (req, res) => {
+     const groupId = req.groupId;
+     const typicalHours = await storage.getGroupMemberTypicalHours(groupId);
+@@ -345,6 +351,97 @@ export function createGroupsRouter(): Router {
+       doc.end();
+   }));
+ 
++  // Remove a member from a group (admin only, or self-leave)
++  router.delete('/api/groups/:groupId/members/:userId',
++    isAuthenticated, requireGroupMember(), asyncRoute("Failed to remove member", async (req, res) => {
++    const requestingUserId = req.user.id;
++    const groupId = req.groupId;
++    const targetUserId = req.params.userId;
++
++    if (!targetUserId) {
++      return res.status(400).json({ message: "Missing user ID" });
++    }
++
++    if (requestingUserId !== targetUserId) {
++      const members = await storage.getGroupMembers(groupId);
++      const requestingMember = members.find(m => m.userId === requestingUserId);
++      if (!requestingMember || requestingMember.role !== "admin") {
++        return res.status(403).json({ message: "Only admins can remove other members" });
++      }
++    }
++
++    await storage.removeGroupMember(targetUserId, groupId);
++    res.json({ ok: true });
++  }));
++
++  // Squad avatar upload — king only
++  router.post('/api/groups/:groupId/avatar',
++    isAuthenticated, requireGroupMember(), upload.single('avatar'),
++    asyncRoute("Failed to upload squad avatar", async (req, res) => {
++    const userId = req.user.id;
++    const groupId = req.groupId;
++
++    if (!req.file) {
++      return res.status(400).json({ message: "No file uploaded" });
++    }
++
++    const currentKing = await storage.getCurrentKing(groupId);
++    if (!currentKing || currentKing.userId !== userId) {
++      return res.status(403).json({ message: "Only the current Deuce King can upload a squad photo" });
++    }
++
++    const filename = `group-${groupId}-${Date.now()}.jpg`;
++    const filepath = path.join(uploadsDir, filename);
++
++    await sharp(req.file.buffer)
++      .resize(200, 200, { fit: "cover" })
++      .jpeg({ quality: 85 })
++      .toFile(filepath);
++
++    const avatarUrl = `/uploads/${filename}`;
++    const updatedGroup = await storage.updateGroupAvatar(groupId, avatarUrl);
++    res.json(updatedGroup);
++  }));
++
++  // Group preview for invite landing page (public — no auth)
++  router.get('/api/groups/preview/:inviteCode', asyncRoute("Failed to fetch group preview", async (req, res) => {
++    const { inviteCode } = req.params;
++    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(inviteCode)) {
++      return res.status(404).json({ message: "Invite not found" });
++    }
++    const invite = await storage.getInviteById(inviteCode);
++    if (!invite || invite.expiresAt < new Date()) {
++      return res.status(404).json({ message: "Invite not found" });
++    }
++    const group = await storage.getGroupById(invite.groupId);
++    if (!group) {
++      return res.status(404).json({ message: "Group not found" });
++    }
++    const [memberCount, deuceCount, streakData, members, entries] = await Promise.all([
++      storage.getGroupMemberCount(invite.groupId),
++      storage.getGroupDeuceCount(invite.groupId),
++      storage.getGroupStreak(invite.groupId),
++      storage.getGroupMembers(invite.groupId),
++      storage.getGroupEntries(invite.groupId, 3),
++    ]);
++    res.json({
++      name: group.name,
++      memberCount,
++      deuceCount,
++      currentStreak: streakData.currentStreak,
++      longestStreak: streakData.longestStreak,
++      members: members.slice(0, 5).map(m => ({
++        username: m.user.username || m.user.firstName || "Anon",
++        deuceCount: m.user.deuceCount,
++      })),
++      recentActivity: entries.slice(0, 3).map(e => ({
++        username: e.user.username || e.user.firstName || "Anon",
++        location: e.location,
++        loggedAt: e.loggedAt,
++      })),
++    });
++  }));
++
+   // Rich invite preview (public -- no auth, enhanced for OG)
+   router.get('/api/groups/invite-preview/:inviteCode',
+     asyncRoute("Failed to fetch invite preview",
+diff --git a/server/routes/helpers.ts b/server/routes/helpers.ts
+index b798f555..efa78538 100644
+--- a/server/routes/helpers.ts
++++ b/server/routes/helpers.ts
+@@ -243,6 +243,38 @@ export function hashCode(s: string): number {
+  * If yes, advance the streak. If a day was missed, reset first.
+  */
+ export async function recalculateStreak(groupId: string): Promise<void> {
++  // Fallback for test environments where db.transaction is not available
++  if (typeof (db as any).transaction !== 'function') {
++    const today = getTodayUTC();
++    const yesterday = getYesterdayUTC();
++    const streak = await storage.getGroupStreak(groupId);
++
++    // Idempotency: already counted today — skip
++    if (streak.lastStreakDate === today) return;
++
++    const memberStatuses = await storage.getMembersLogStatusToday(groupId, today);
++    const allLoggedToday = memberStatuses.length > 0 && memberStatuses.every(m => m.hasLogged);
++
++    if (!allLoggedToday) {
++      // Reset streak if a day was missed (not today, not yesterday)
++      if (streak.lastStreakDate && streak.lastStreakDate !== today && streak.lastStreakDate !== yesterday) {
++        await storage.updateGroupStreak(groupId, 0, streak.longestStreak, streak.lastStreakDate);
++      }
++      return;
++    }
++
++    // Everyone logged today — advance streak
++    let newStreak: number;
++    if (!streak.lastStreakDate || (streak.lastStreakDate !== yesterday && streak.lastStreakDate !== today)) {
++      newStreak = 1;
++    } else {
++      newStreak = streak.currentStreak + 1;
++    }
++    const newLongest = Math.max(newStreak, streak.longestStreak);
++    await storage.updateGroupStreak(groupId, newStreak, newLongest, today);
++    return;
++  }
++
+   await db.transaction(async (tx) => {
+     // Advisory lock on groupId hash — serializes streak updates per group
+     const lockKey = Math.abs(hashCode(groupId));
+diff --git a/server/routes/premium.ts b/server/routes/premium.ts
+index 9e3bcea3..5e2e0579 100644
+--- a/server/routes/premium.ts
++++ b/server/routes/premium.ts
+@@ -65,6 +65,19 @@ export function createPremiumRouter(): Router {
+ 
+       await storage.applyReferral(userId, referrer.id);
+ 
++      // Auto-grant 1 month premium to referrer after reaching 3 referrals
++      const updatedReferrer = await storage.getUser(referrer.id);
++      if (updatedReferrer && (updatedReferrer.referralCount ?? 0) >= 3) {
++        const isPremiumActive = updatedReferrer.subscription === 'premium' &&
++          updatedReferrer.subscriptionExpiresAt &&
++          new Date(updatedReferrer.subscriptionExpiresAt) > new Date();
++        if (!isPremiumActive) {
++          const expiresAt = new Date();
++          expiresAt.setMonth(expiresAt.getMonth() + 1);
++          await storage.updateUserSubscription(referrer.id, 'premium', expiresAt);
++        }
++      }
++
+       res.json({ ok: true, referrerUsername: referrer.username });
+     } catch (error) {
+       // DB unique constraint fired — concurrent duplicate application
+@@ -180,11 +193,14 @@ export function createPremiumRouter(): Router {
+     res.json(topDay);
+   }));
+ 
+-  // Weekly Throne Report (premium)
++  // Weekly Throne Report (premium) — IDOR: users can only access their own report
+   router.get('/api/users/:userId/weekly-report',
+     isAuthenticated, requiresPremiumFor('analytics'),
+     wrap('Error fetching weekly report:', 'Failed to fetch weekly report', async (req, res) => {
+     const targetUserId = req.params.userId === 'me' ? req.user.id : req.params.userId;
++    if (targetUserId !== req.user.id) {
++      return res.status(403).json({ message: 'Cannot access another user\'s weekly report' });
++    }
+     const report = await storage.getWeeklyReport(targetUserId);
+     res.json(report);
+   }));
