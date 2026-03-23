@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrations — Ratchet Docs</title>
+    <meta name="description" content="Integrate Ratchet into GitHub Actions, GitLab CI, and pre-commit hooks. Automate code quality gates in minutes." />
+    <link rel="canonical" href="https://ratchetcli.com/docs/integrations" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-card: #0f0f18;
+            --bg-glass: rgba(15, 15, 24, 0.72);
+            --accent: #00d4ff;
+            --accent-dim: #00a8cc;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --text-muted: #5a5a6e;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --error: #ff4466;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(0, 212, 255, 0.3);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius: 12px;
+            --radius-lg: 20px;
+            --radius-sm: 6px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { scroll-behavior: smooth; overflow-x: hidden; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
+        ::selection { background: rgba(0, 212, 255, 0.25); color: #fff; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Nav */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            color: var(--bg-primary);
+            font-size: 14px;
+            box-shadow: 0 0 16px rgba(0, 212, 255, 0.35);
+        }
+
+        .nav-links {
+            display: none;
+            gap: 32px;
+            list-style: none;
+        }
+
+        @media (min-width: 640px) { .nav-links { display: flex; } }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            transition: color var(--transition);
+        }
+
+        .nav-links a:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+        .nav-links a.active { color: var(--accent); }
+
+        .nav-cta {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all var(--transition);
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+        }
+
+        .nav-cta:hover { background: var(--accent-dim); transform: translateY(-1px); }
+
+        .nav-desktop-ctas { display: none; align-items: center; gap: 8px; }
+        @media (min-width: 640px) { .nav-desktop-ctas { display: flex; } }
+
+        /* Layout */
+        .docs-layout {
+            display: flex;
+            padding-top: 64px;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .docs-sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 64px;
+            height: calc(100vh - 64px);
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            padding: 32px 0;
+            display: none;
+        }
+
+        @media (min-width: 768px) { .docs-sidebar { display: block; } }
+
+        .sidebar-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            padding: 0 24px;
+            margin-bottom: 8px;
+            margin-top: 24px;
+        }
+
+        .sidebar-label:first-child { margin-top: 0; }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 24px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-left: 2px solid transparent;
+            transition: all var(--transition);
+        }
+
+        .sidebar-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+        .sidebar-link.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0, 212, 255, 0.05); }
+
+        /* Main */
+        .docs-main {
+            flex: 1;
+            min-width: 0;
+            padding: 48px 24px 80px;
+            max-width: 860px;
+        }
+
+        @media (min-width: 1024px) { .docs-main { padding: 48px 64px 80px; } }
+
+        /* Page header */
+        .page-header {
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-breadcrumb {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .page-breadcrumb a { color: var(--accent); text-decoration: none; }
+
+        .page-title {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Integration sections */
+        .int-section {
+            margin-bottom: 56px;
+            padding-bottom: 56px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .int-section:last-of-type { border-bottom: none; }
+
+        .int-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .int-icon {
+            width: 52px; height: 52px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .int-icon.gh { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+        .int-icon.gl { background: rgba(252,109,38,0.1); border: 1px solid rgba(252,109,38,0.2); }
+        .int-icon.hook { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2); }
+
+        .int-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .int-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .int-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .int-tag.shipped { background: rgba(0,255,136,0.1); color: var(--success); border: 1px solid rgba(0,255,136,0.25); }
+
+        .int-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.75;
+            margin-bottom: 20px;
+        }
+
+        .int-desc strong { color: var(--text-primary); font-weight: 600; }
+        .int-desc code {
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            color: var(--accent);
+            background: rgba(0,212,255,0.06);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        /* Code blocks */
+        .code-wrap {
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-file {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .code-file-icon { font-size: 0.9rem; }
+
+        .copy-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            padding: 3px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .copy-btn:hover { color: var(--accent); border-color: var(--border-accent); }
+
+        .code-wrap pre {
+            padding: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 1.75;
+            overflow-x: auto;
+            background: var(--bg-secondary);
+            margin: 0;
+        }
+
+        /* YAML syntax */
+        .y-key { color: #79c0ff; }
+        .y-val { color: #a5d6ff; }
+        .y-str { color: #a8d8a8; }
+        .y-num { color: #ffab70; }
+        .y-cm { color: #5a5a6e; font-style: italic; }
+        .y-anchor { color: #ffa657; }
+        .y-bool { color: #ff7b72; }
+        .y-var { color: #ffa657; }
+        .sh-cmd { color: var(--accent); }
+        .sh-arg { color: #a5d6ff; }
+        .sh-flag { color: #d2a8ff; }
+        .sh-cm { color: #5a5a6e; font-style: italic; }
+        .json-key { color: #79c0ff; }
+        .json-str { color: #a8d8a8; }
+        .json-bool { color: #ff7b72; }
+
+        /* Feature callout */
+        .callout {
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .callout.info {
+            background: rgba(0,212,255,0.06);
+            border: 1px solid rgba(0,212,255,0.2);
+            color: var(--text-secondary);
+        }
+
+        .callout.success {
+            background: rgba(0,255,136,0.05);
+            border: 1px solid rgba(0,255,136,0.2);
+            color: var(--text-secondary);
+        }
+
+        .callout.warning {
+            background: rgba(255,170,0,0.06);
+            border: 1px solid rgba(255,170,0,0.2);
+            color: var(--text-secondary);
+        }
+
+        .callout-icon { flex-shrink: 0; font-size: 1rem; }
+        .callout strong { color: var(--text-primary); }
+        .callout code {
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            color: var(--accent);
+            background: rgba(0,212,255,0.06);
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        /* Feature list */
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .feature-list li strong { color: var(--text-primary); }
+        .feature-list li code {
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            color: var(--accent);
+            background: rgba(0,212,255,0.06);
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        /* PR comment preview */
+        .pr-preview {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .pr-preview-header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
+
+        .pr-preview-body {
+            padding: 16px;
+            font-size: 0.82rem;
+            font-family: var(--font-mono);
+            color: #c9d1d9;
+            line-height: 1.7;
+        }
+
+        .pr-score-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .pr-badge-before {
+            background: rgba(255,68,102,0.15);
+            color: #ff8899;
+            border: 1px solid rgba(255,68,102,0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .pr-badge-after {
+            background: rgba(0,255,136,0.1);
+            color: #66ffbb;
+            border: 1px solid rgba(0,255,136,0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .pr-delta {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border);
+            padding: 48px 0;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            text-align: center;
+        }
+
+        @media (min-width: 1024px) {
+            .footer-content { flex-direction: row; justify-content: space-between; }
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color var(--transition);
+        }
+
+        .footer-links a:hover { color: var(--accent); }
+        .footer-copy { color: var(--text-muted); font-size: 0.85rem; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 28px; right: 28px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius);
+            padding: 12px 20px;
+            font-size: 14px;
+            font-family: var(--font-mono);
+            color: var(--success);
+            z-index: 1000;
+            transform: translateY(80px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast">✓ Copied to clipboard</div>
+
+<!-- Nav -->
+<nav id="nav">
+    <div class="container">
+        <a href="/" class="logo">
+            <span class="logo-icon">⚙</span>
+            ratchet
+        </a>
+        <ul class="nav-links">
+            <li><a href="/#how-it-works">How It Works</a></li>
+            <li><a href="/#features">Commands</a></li>
+            <li><a href="/docs/scoring.html">Scoring</a></li>
+            <li><a href="/#vision">Vision</a></li>
+            <li><a href="/#pricing">Pricing</a></li>
+            <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
+            <li><a href="/docs" class="active" style="color:var(--accent);">Docs</a></li>
+        </ul>
+        <div class="nav-desktop-ctas">
+            <a href="/sandbox" class="nav-cta" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">Sandbox</a>
+            <a href="/#pricing" class="nav-cta">Get Started</a>
+        </div>
+    </div>
+</nav>
+
+<div class="docs-layout">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+        <div class="sidebar-label">Documentation</div>
+        <a href="/docs/scoring.html" class="sidebar-link">📊 Scoring</a>
+        <a href="/docs/security.html" class="sidebar-link">🔒 Security &amp; Privacy</a>
+        <a href="/docs/integrations.html" class="sidebar-link active">🔗 Integrations</a>
+
+        <div class="sidebar-label" style="margin-top:32px;">On this page</div>
+        <a href="#github-action" class="sidebar-link" style="font-size:0.82rem;">GitHub Action</a>
+        <a href="#gitlab-ci" class="sidebar-link" style="font-size:0.82rem;">GitLab CI</a>
+        <a href="#pre-commit" class="sidebar-link" style="font-size:0.82rem;">Pre-commit Hook</a>
+    </aside>
+
+    <!-- Main content -->
+    <main class="docs-main">
+        <div class="page-header">
+            <div class="page-breadcrumb"><a href="/">ratchetcli.com</a> / <a href="/docs">Docs</a> / Integrations</div>
+            <h1 class="page-title">Integrations</h1>
+            <p class="page-subtitle">Drop Ratchet into your existing workflow in minutes. Gate PRs on score, post delta comments, and block commits that introduce debt — without changing how your team works.</p>
+        </div>
+
+        <!-- ── GitHub Action ── -->
+        <div class="int-section" id="github-action">
+            <div class="int-header">
+                <div class="int-icon gh">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                </div>
+                <div>
+                    <div class="int-title">GitHub Action <span class="int-tag shipped">Shipped</span></div>
+                    <div class="int-subtitle">PR comments with score delta + optional merge gate</div>
+                </div>
+            </div>
+
+            <p class="int-desc">The official <strong>ratchet-action</strong> runs <code>ratchet scan --diff main</code> on every pull request, posts a score delta comment, and can optionally fail the check if the score drops below a threshold.</p>
+
+            <ul class="feature-list">
+                <li><strong>Score delta comment</strong> — shows before/after per dimension on every PR</li>
+                <li><strong>Merge gate</strong> — set <code>min-score</code> to block PRs that drop quality</li>
+                <li><strong>Badge generation</strong> — auto-updates your README score badge on merge to main</li>
+                <li><strong>SARIF upload</strong> — security findings appear natively in GitHub Security tab</li>
+                <li>Works with GitHub Free, Pro, Team, and Enterprise Cloud</li>
+            </ul>
+
+            <div class="callout info">
+                <span class="callout-icon">ℹ️</span>
+                <span>Store your API key as <strong>a repository secret</strong>: <strong>Settings → Secrets → Actions → New repository secret</strong>. Name it <code>ANTHROPIC_API_KEY</code> (or whichever provider you use).</span>
+            </div>
+
+            <div class="code-wrap">
+                <div class="code-header">
+                    <div class="code-file">
+                        <span class="code-file-icon">📄</span>
+                        .github/workflows/ratchet.yml
+                    </div>
+                    <button class="copy-btn" onclick="copyBlock(this, 'gh-action-code')">Copy</button>
+                </div>
+                <pre id="gh-action-code"><span class="y-key">name</span>: <span class="y-str">Ratchet Quality Gate</span>
+
+<span class="y-key">on</span>:
+  <span class="y-key">pull_request</span>:
+    <span class="y-key">types</span>: [<span class="y-str">opened</span>, <span class="y-str">synchronize</span>, <span class="y-str">reopened</span>]
+  <span class="y-key">push</span>:
+    <span class="y-key">branches</span>: [<span class="y-str">main</span>]
+
+<span class="y-key">permissions</span>:
+  <span class="y-key">contents</span>: <span class="y-str">read</span>
+  <span class="y-key">pull-requests</span>: <span class="y-str">write</span>   <span class="y-cm"># needed to post PR comments</span>
+
+<span class="y-key">jobs</span>:
+  <span class="y-key">ratchet</span>:
+    <span class="y-key">runs-on</span>: <span class="y-str">ubuntu-latest</span>
+    <span class="y-key">steps</span>:
+      - <span class="y-key">uses</span>: <span class="y-str">actions/checkout@v4</span>
+        <span class="y-key">with</span>:
+          <span class="y-key">fetch-depth</span>: <span class="y-num">0</span>          <span class="y-cm"># full history for --diff</span>
+
+      - <span class="y-key">uses</span>: <span class="y-str">actions/setup-node@v4</span>
+        <span class="y-key">with</span>:
+          <span class="y-key">node-version</span>: <span class="y-str">'20'</span>
+
+      - <span class="y-key">name</span>: <span class="y-str">Run Ratchet</span>
+        <span class="y-key">uses</span>: <span class="y-str">ratchet-run/ratchet-action@v1</span>
+        <span class="y-key">with</span>:
+          <span class="y-key">api-key</span>: <span class="y-var">${{ secrets.ANTHROPIC_API_KEY }}</span>
+          <span class="y-key">min-score</span>: <span class="y-num">70</span>             <span class="y-cm"># fail if score drops below 70</span>
+          <span class="y-key">post-comment</span>: <span class="y-bool">true</span>        <span class="y-cm"># post delta to PR</span>
+          <span class="y-key">update-badge</span>: <span class="y-bool">true</span>        <span class="y-cm"># update README badge on main push</span>
+          <span class="y-key">upload-sarif</span>: <span class="y-bool">true</span>        <span class="y-cm"># upload to GitHub Security tab</span></pre>
+            </div>
+
+            <!-- PR comment preview -->
+            <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:12px;">What the PR comment looks like:</p>
+
+            <div class="pr-preview">
+                <div class="pr-preview-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                    ratchet-bot commented just now
+                </div>
+                <div class="pr-preview-body">
+                    <div style="color:#58a6ff;font-weight:600;margin-bottom:8px;">⚙ Ratchet Score Report</div>
+                    <div class="pr-score-row">
+                        <span>Overall</span>
+                        <span class="pr-badge-before">62</span>
+                        <span style="color:#8b949e;">→</span>
+                        <span class="pr-badge-after">71</span>
+                        <span class="pr-delta">+9 ↑</span>
+                    </div>
+                    <div style="height:1px;background:#30363d;margin:10px 0;"></div>
+                    <div style="color:#8b949e;font-size:0.75rem;line-height:2;">
+                        🧪 Coverage &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 48 → 61 &nbsp; <span style="color:#66ffbb;">+13</span><br>
+                        🔀 Complexity &nbsp;&nbsp;&nbsp; 70 → 78 &nbsp; <span style="color:#66ffbb;">+8</span><br>
+                        📝 Docs &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 55 → 60 &nbsp; <span style="color:#66ffbb;">+5</span><br>
+                        🚨 Error Handling &nbsp;60 → 74 &nbsp; <span style="color:#66ffbb;">+14</span><br>
+                        🏷️ Type Safety &nbsp;&nbsp;&nbsp; 90 → 90 &nbsp; <span style="color:#8b949e;">—</span><br>
+                        🛡️ Security &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 80 → 80 &nbsp; <span style="color:#8b949e;">—</span>
+                    </div>
+                    <div style="margin-top:10px;color:#3fb950;font-size:0.75rem;">✓ Score meets minimum threshold (70). Merge when ready.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── GitLab CI ── -->
+        <div class="int-section" id="gitlab-ci">
+            <div class="int-header">
+                <div class="int-icon gl">
+                    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.955 13.587l-1.342-4.135-2.664-8.189a.455.455 0 0 0-.867 0L16.418 9.45H7.582L4.918 1.263a.455.455 0 0 0-.867 0L1.386 9.45.044 13.587a.924.924 0 0 0 .331 1.023L12 23.054l11.625-8.443a.92.92 0 0 0 .33-1.024" fill="#FC6D26"/></svg>
+                </div>
+                <div>
+                    <div class="int-title">GitLab CI <span class="int-tag shipped">Shipped</span></div>
+                    <div class="int-subtitle">Score gate + MR note via GitLab API</div>
+                </div>
+            </div>
+
+            <p class="int-desc">Add Ratchet to your <code>.gitlab-ci.yml</code> pipeline. On merge requests, the job runs <code>ratchet scan --diff</code>, posts a score delta as an MR note using the GitLab API, and optionally sets the pipeline to failed if score drops.</p>
+
+            <div class="callout warning">
+                <span class="callout-icon">⚠️</span>
+                <span>Set <strong>CI/CD Variables</strong> in your GitLab project: <code>ANTHROPIC_API_KEY</code> (masked), <code>GITLAB_API_TOKEN</code> (a project access token with <code>api</code> scope for posting MR notes).</span>
+            </div>
+
+            <div class="code-wrap">
+                <div class="code-header">
+                    <div class="code-file">
+                        <span class="code-file-icon">📄</span>
+                        .gitlab-ci.yml
+                    </div>
+                    <button class="copy-btn" onclick="copyBlock(this, 'gitlab-code')">Copy</button>
+                </div>
+                <pre id="gitlab-code"><span class="y-key">stages</span>:
+  - <span class="y-str">test</span>
+  - <span class="y-str">quality</span>
+
+<span class="y-cm"># ── Ratchet quality gate ──────────────────────</span>
+<span class="y-key">ratchet:scan</span>:
+  <span class="y-key">stage</span>: <span class="y-str">quality</span>
+  <span class="y-key">image</span>: <span class="y-str">node:20-slim</span>
+  <span class="y-key">rules</span>:
+    - <span class="y-key">if</span>: <span class="y-str">'$CI_PIPELINE_SOURCE == "merge_request_event"'</span>
+    - <span class="y-key">if</span>: <span class="y-str">'$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'</span>
+  <span class="y-key">variables</span>:
+    <span class="y-key">RATCHET_MIN_SCORE</span>: <span class="y-str">"70"</span>
+  <span class="y-key">before_script</span>:
+    - <span class="sh-cmd">npm install</span> <span class="sh-flag">-g</span> <span class="sh-arg">ratchet-run</span>
+  <span class="y-key">script</span>:
+    - <span class="sh-cm"># Run scan against base branch on MRs, full scan on main</span>
+    - |
+      <span class="sh-cmd">if</span> [[ "<span class="y-var">$CI_PIPELINE_SOURCE</span>" == "merge_request_event" ]]; <span class="sh-cmd">then</span>
+        <span class="sh-cmd">ratchet scan</span> <span class="sh-flag">--diff</span> <span class="sh-arg">origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME</span> \
+          <span class="sh-flag">--output</span> <span class="sh-arg">ratchet-report.json</span> \
+          <span class="sh-flag">--min-score</span> <span class="sh-arg">$RATCHET_MIN_SCORE</span>
+      <span class="sh-cmd">else</span>
+        <span class="sh-cmd">ratchet scan</span> <span class="sh-flag">--output</span> <span class="sh-arg">ratchet-report.json</span>
+      <span class="sh-cmd">fi</span>
+    - <span class="sh-cm"># Post score as MR note (only on merge requests)</span>
+    - |
+      <span class="sh-cmd">if</span> [[ "<span class="y-var">$CI_PIPELINE_SOURCE</span>" == "merge_request_event" ]]; <span class="sh-cmd">then</span>
+        SCORE=$(jq -r '.score' ratchet-report.json)
+        DELTA=$(jq -r '.delta // "N/A"' ratchet-report.json)
+        GRADE=$(jq -r '.grade' ratchet-report.json)
+        NOTE="⚙ **Ratchet Score**: \`${GRADE}\` (${SCORE}/100) — delta: **${DELTA}**"
+        <span class="sh-cmd">curl</span> <span class="sh-flag">--silent</span> <span class="sh-flag">--request</span> POST \
+          <span class="sh-flag">--header</span> "PRIVATE-TOKEN: <span class="y-var">$GITLAB_API_TOKEN</span>" \
+          <span class="sh-flag">--data</span> "body=${NOTE}" \
+          "<span class="y-var">$CI_API_V4_URL</span>/projects/<span class="y-var">$CI_PROJECT_ID</span>/merge_requests/<span class="y-var">$CI_MERGE_REQUEST_IID</span>/notes"
+      <span class="sh-cmd">fi</span>
+  <span class="y-key">artifacts</span>:
+    <span class="y-key">when</span>: <span class="y-str">always</span>
+    <span class="y-key">paths</span>:
+      - <span class="y-str">ratchet-report.json</span>
+    <span class="y-key">expire_in</span>: <span class="y-str">30 days</span>
+    <span class="y-key">reports</span>:
+      <span class="y-key">sast</span>: <span class="y-str">ratchet-report.json</span>   <span class="y-cm"># appears in GitLab Security tab</span></pre>
+            </div>
+
+            <div class="callout success">
+                <span class="callout-icon">✅</span>
+                <span>GitLab Self-Managed users: this works identically. Just ensure your runner has internet access for the npm install, or pre-bake a Docker image with <code>ratchet-run</code> already installed.</span>
+            </div>
+        </div>
+
+        <!-- ── Pre-commit ── -->
+        <div class="int-section" id="pre-commit">
+            <div class="int-header">
+                <div class="int-icon hook">🪝</div>
+                <div>
+                    <div class="int-title">Pre-commit Hook <span class="int-tag shipped">Shipped</span></div>
+                    <div class="int-subtitle">Block commits that introduce debt — locally, before push</div>
+                </div>
+            </div>
+
+            <p class="int-desc">Run <code>ratchet scan --diff HEAD</code> before every commit using Husky + lint-staged. Only the files in the staged changeset are scanned, keeping hook runtime under 10 seconds for typical changes.</p>
+
+            <ul class="feature-list">
+                <li><strong>Staged-files only</strong> — Ratchet scans only what you're committing, not the whole repo</li>
+                <li><strong>Fast</strong> — typical hook run is 3–8 seconds on changed files</li>
+                <li><strong>Bypassable</strong> — <code>git commit --no-verify</code> for emergency hotfixes</li>
+                <li>Works alongside ESLint, Prettier, and other lint-staged tools</li>
+            </ul>
+
+            <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:12px;font-weight:500;">Step 1 — Install Husky and lint-staged</p>
+
+            <div class="code-wrap">
+                <div class="code-header">
+                    <div class="code-file">
+                        <span class="code-file-icon">💻</span>
+                        terminal
+                    </div>
+                    <button class="copy-btn" onclick="copyBlock(this, 'husky-install')">Copy</button>
+                </div>
+                <pre id="husky-install"><span class="sh-cmd">npm install</span> <span class="sh-flag">--save-dev</span> <span class="sh-arg">husky lint-staged</span>
+<span class="sh-cmd">npx husky init</span></pre>
+            </div>
+
+            <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:12px;font-weight:500;margin-top:24px;">Step 2 — Add the pre-commit hook</p>
+
+            <div class="code-wrap">
+                <div class="code-header">
+                    <div class="code-file">
+                        <span class="code-file-icon">📄</span>
+                        .husky/pre-commit
+                    </div>
+                    <button class="copy-btn" onclick="copyBlock(this, 'precommit-hook')">Copy</button>
+                </div>
+                <pre id="precommit-hook">#!/usr/bin/env sh
+<span class="sh-cm"># Run lint-staged (ESLint, Prettier, etc.)</span>
+<span class="sh-cmd">npx lint-staged</span>
+
+<span class="sh-cm"># Ratchet: scan only staged files, block if score drops > 5 pts</span>
+<span class="sh-cmd">npx ratchet-run scan</span> <span class="sh-flag">--staged</span> <span class="sh-flag">--max-drop</span> <span class="sh-arg">5</span></pre>
+            </div>
+
+            <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:12px;font-weight:500;margin-top:24px;">Step 3 — Configure lint-staged in package.json</p>
+
+            <div class="code-wrap">
+                <div class="code-header">
+                    <div class="code-file">
+                        <span class="code-file-icon">📄</span>
+                        package.json (relevant section)
+                    </div>
+                    <button class="copy-btn" onclick="copyBlock(this, 'pkg-json')">Copy</button>
+                </div>
+                <pre id="pkg-json">{
+  <span class="json-key">"lint-staged"</span>: {
+    <span class="json-key">"*.{ts,tsx,js,jsx}"</span>: [
+      <span class="json-str">"eslint --fix"</span>,
+      <span class="json-str">"prettier --write"</span>
+    ],
+    <span class="json-key">"*.{ts,tsx}"</span>: [
+      <span class="json-str">"tsc --noEmit"</span>
+    ]
+  },
+  <span class="json-key">"ratchet"</span>: {
+    <span class="json-key">"model"</span>: <span class="json-str">"claude-3-5-haiku-20241022"</span>,  <span class="sh-cm">// fast model for hooks</span>
+    <span class="json-key">"maxDrop"</span>: <span class="sh-arg">5</span>,              <span class="sh-cm">// block if score drops &gt; 5 pts</span>
+    <span class="json-key">"skipDimensions"</span>: [<span class="json-str">"docs"</span>]  <span class="sh-cm">// skip doc checks in pre-commit</span>
+  }
+}</pre>
+            </div>
+
+            <div class="callout info">
+                <span class="callout-icon">💡</span>
+                <span>Use a fast/cheap model like <strong>claude-3-5-haiku</strong> or <strong>gpt-4o-mini</strong> in pre-commit hooks to keep latency low. Save the full model for CI and <code>ratchet fix</code> runs.</span>
+            </div>
+
+            <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:12px;font-weight:500;margin-top:24px;">What a blocked commit looks like</p>
+
+            <div class="code-wrap">
+                <div class="code-header">
+                    <div class="code-file">
+                        <span class="code-file-icon">💻</span>
+                        terminal output
+                    </div>
+                </div>
+                <pre><span style="color:#8b949e;">$ git commit -m "refactor: simplify payment handler"</span>
+<span style="color:#ffa657;">⚙ ratchet scan --staged</span>
+
+<span style="color:var(--text-secondary);">  Scanning 3 staged files...</span>
+<span style="color:var(--text-secondary);">  src/payments/handler.ts .............. ✓</span>
+<span style="color:var(--text-secondary);">  src/payments/validate.ts ............. ✓</span>
+<span style="color:var(--text-secondary);">  src/payments/webhook.ts .............. ✗</span>
+
+<span style="color:var(--error);">  Score drop detected: 74 → 67 (−7 pts)</span>
+<span style="color:var(--error);">  Exceeds --max-drop threshold of 5.</span>
+
+<span style="color:var(--text-muted);">  Affected dimension: Error Handling (−14 pts)</span>
+<span style="color:var(--text-muted);">  Issue: webhook.ts:88 — bare catch block swallowing PaymentError</span>
+
+<span style="color:var(--warning);">  Fix with: npx ratchet-run fix src/payments/webhook.ts</span>
+<span style="color:var(--warning);">  Or bypass: git commit --no-verify</span>
+
+<span style="color:var(--error);">husky - pre-commit hook exited with code 1 (error)</span></pre>
+            </div>
+        </div>
+
+        <!-- Page nav -->
+        <div style="display:flex;justify-content:space-between;gap:16px;padding-top:32px;border-top:1px solid var(--border);">
+            <a href="/docs/security.html" style="display:flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:0.9rem;font-weight:500;">← Security &amp; Privacy</a>
+            <a href="/#features" style="display:flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:0.9rem;font-weight:500;">All Commands →</a>
+        </div>
+    </main>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <a href="/" class="logo">
+                <span class="logo-icon" style="width:26px;height:26px;font-size:12px;">⚙</span>
+                ratchet
+            </a>
+            <ul class="footer-links">
+                <li><a href="https://www.npmjs.com/package/ratchet-run" target="_blank">npm</a></li>
+                <li><a href="/#features">Commands</a></li>
+                <li><a href="/docs/scoring.html">Scoring</a></li>
+                <li><a href="/#vision">Vision</a></li>
+                <li><a href="/#pricing">Pricing</a></li>
+                <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
+                <li><a href="/docs">Docs</a></li>
+                <li><a href="mailto:ratchet@kcemate.com">Contact</a></li>
+            </ul>
+            <p class="footer-copy">© 2026 Ratchet. Built for developers.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.style.background = window.scrollY > 40
+            ? 'rgba(10,10,15,0.97)'
+            : 'rgba(10,10,15,0.85)';
+    }, { passive: true });
+
+    function copyBlock(btn, id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        // Strip HTML tags to get plain text
+        const temp = document.createElement('div');
+        temp.innerHTML = el.innerHTML;
+        const text = temp.innerText || temp.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            btn.textContent = 'Copied!';
+            showToast('✓ Copied to clipboard');
+            setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+        }).catch(() => {
+            const t = document.createElement('textarea');
+            t.value = text;
+            t.style.cssText = 'position:fixed;opacity:0;';
+            document.body.appendChild(t);
+            t.select();
+            document.execCommand('copy');
+            document.body.removeChild(t);
+            btn.textContent = 'Copied!';
+            showToast('✓ Copied to clipboard');
+            setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+        });
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2200);
+    }
+</script>
+</body>
+</html>

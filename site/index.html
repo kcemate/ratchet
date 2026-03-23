@@ -1526,10 +1526,10 @@
             <li><a href="#how-it-works">How It Works</a></li>
             <li><a href="#features">Commands</a></li>
             <li><a href="#scoring">Scoring</a></li>
-            <li><a href="#vision">Vision</a></li>
             <li><a href="#pricing">Pricing</a></li>
             <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
-            <li><a href="/docs" style="color:#a1a1aa;">Docs</a></li>
+            <li><a href="/compare">Compare</a></li>
+            <li><a href="/docs/scoring">Docs</a></li>
         </ul>
         <div class="nav-desktop-ctas">
             <a href="/sandbox" class="nav-cta" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">Sandbox</a>
@@ -1551,7 +1551,9 @@
         <a href="#vision" class="mobile-link">Vision</a>
         <a href="#pricing" class="mobile-link">Pricing</a>
         <a href="/sandbox" class="mobile-link">Sandbox</a>
-        <a href="/docs" class="mobile-link">Docs</a>
+        <a href="/compare" class="mobile-link">Compare</a>
+        <a href="/docs/scoring" class="mobile-link">Docs</a>
+        <a href="/case-study" class="mobile-link">Case Study</a>
     </div>
     <div class="mobile-ctas">
         <a href="/sandbox" class="mobile-cta outline">Try Sandbox</a>
@@ -2339,6 +2341,51 @@
 
         </div>
 
+        <!-- Pricing Calculator -->
+        <div class="fade-in" style="margin-top:48px;max-width:600px;margin-left:auto;margin-right:auto;">
+            <div class="glass" style="padding:32px;">
+                <h3 style="font-size:18px;font-weight:700;margin-bottom:4px;text-align:center;">💡 Estimate your usage</h3>
+                <p style="font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:24px;">How many source files in your repo?</p>
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                    <input type="range" id="calcSlider" min="10" max="500" value="80" style="flex:1;accent-color:var(--accent);height:6px;cursor:pointer;" oninput="updateCalc()">
+                    <span id="calcFileCount" style="font-family:var(--font-mono);color:var(--accent);font-size:16px;font-weight:600;min-width:60px;text-align:right;">80 files</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:var(--radius-sm);">
+                    <div>
+                        <div style="font-size:13px;color:var(--text-muted);">Estimated cycles/month</div>
+                        <div id="calcCycles" style="font-size:24px;font-weight:700;color:var(--text-primary);font-family:var(--font-mono);">8</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:13px;color:var(--text-muted);">Recommended plan</div>
+                        <div id="calcPlan" style="font-size:18px;font-weight:700;color:var(--success);">Free</div>
+                    </div>
+                </div>
+                <p id="calcNote" style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:12px;">1 cycle ≈ 1 torque click. A weekly scan + 7-click torque session = ~8 cycles/month.</p>
+            </div>
+        </div>
+        <script>
+        function updateCalc() {
+            const files = parseInt(document.getElementById('calcSlider').value);
+            document.getElementById('calcFileCount').textContent = files + ' files';
+            const cycles = Math.max(4, Math.round(files / 10) * 4);
+            document.getElementById('calcCycles').textContent = cycles;
+            let plan, note;
+            if (cycles <= 12) {
+                plan = 'Free';
+                note = 'Free tier covers unlimited scans + quick-fixes. Torque requires Pro.';
+            } else if (cycles <= 150) {
+                plan = 'Pro ($35/mo)';
+                note = 'Pro includes 150 cycles/month — plenty for your repo size.';
+            } else {
+                plan = 'Enterprise';
+                note = cycles + ' cycles/month exceeds Pro. Contact us for unlimited cycles.';
+            }
+            document.getElementById('calcPlan').textContent = plan;
+            document.getElementById('calcPlan').style.color = plan === 'Free' ? 'var(--success)' : plan.includes('Pro') ? 'var(--accent)' : 'var(--warning)';
+            document.getElementById('calcNote').textContent = note;
+        }
+        </script>
+
         <p class="pricing-note fade-in">Need more cycles? <strong>$0.75/cycle</strong> on any paid plan. &nbsp;·&nbsp; <strong>Teams?</strong> <a href="mailto:ratchet@kcemate.com" style="color:var(--accent);text-decoration:none;">Contact us</a> for multi-seat pricing.</p>
     </div>
 </section>
@@ -2401,11 +2448,13 @@
             <ul class="footer-links">
                 <li><a href="https://www.npmjs.com/package/ratchet-run" target="_blank">npm</a></li>
                 <li><a href="#features">Commands</a></li>
-                <li><a href="#scoring">Scoring</a></li>
-                <li><a href="#vision">Vision</a></li>
-                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="/docs/scoring">Scoring</a></li>
+                <li><a href="/docs/security">Security</a></li>
+                <li><a href="/compare">Compare</a></li>
+                <li><a href="/case-study">Case Study</a></li>
                 <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
-                <li><a href="/docs">Docs</a></li>
+                <li><a href="/docs/integrations">Integrations</a></li>
+                <li><a href="#pricing">Pricing</a></li>
                 <li><a href="mailto:ratchet@kcemate.com">Contact</a></li>
             </ul>
             <p class="footer-copy">© 2026 Ratchet. Built for developers.</p>
@@ -2413,11 +2462,33 @@
     </div>
 </footer>
 
+<!-- ── STICKY CTA BAR (desktop only, shows after scrolling past hero) ── -->
+<div id="stickyCta" style="position:fixed;bottom:-80px;left:0;right:0;z-index:99;transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1);pointer-events:none;">
+    <div style="max-width:1200px;margin:0 auto;padding:0 24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(10,10,15,0.95);backdrop-filter:blur(16px);border:1px solid rgba(0,212,255,0.2);border-radius:var(--radius);padding:12px 24px;box-shadow:0 -4px 30px rgba(0,0,0,0.5);pointer-events:auto;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-family:var(--font-mono);color:var(--accent);font-size:14px;">npm install -g ratchet-run</span>
+                <span style="color:var(--text-muted);font-size:13px;">→ then run <code style="color:var(--text-secondary);font-family:var(--font-mono);font-size:13px;">ratchet scan</code></span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <a href="/sandbox" style="color:var(--accent);text-decoration:none;font-size:14px;font-weight:500;">Try Sandbox</a>
+                <a href="#pricing" style="display:inline-flex;align-items:center;padding:8px 20px;border-radius:var(--radius-sm);background:var(--accent);color:var(--bg-primary);font-weight:600;font-size:14px;text-decoration:none;">View Pricing</a>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    @media (max-width: 768px) { #stickyCta { display: none !important; } }
+</style>
+
 <script>
     /* ── Nav scroll ── */
     const nav = document.getElementById('nav');
     window.addEventListener('scroll', () => {
         nav.classList.toggle('scrolled', window.scrollY > 40);
+        // Sticky CTA: show after scrolling past ~600px (past hero)
+        const sticky = document.getElementById('stickyCta');
+        if (sticky) sticky.style.bottom = window.scrollY > 600 ? '20px' : '-80px';
     }, { passive: true });
 
     /* ── Copy install ── */

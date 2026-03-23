@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoring Methodology — Ratchet Docs</title>
+    <meta name="description" content="How Ratchet scores your codebase across 6 dimensions: coverage, complexity, docs, error handling, types, and security." />
+    <link rel="canonical" href="https://ratchetcli.com/docs/scoring" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-card: #0f0f18;
+            --bg-glass: rgba(15, 15, 24, 0.72);
+            --accent: #00d4ff;
+            --accent-dim: #00a8cc;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --text-muted: #5a5a6e;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --error: #ff4466;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(0, 212, 255, 0.3);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius: 12px;
+            --radius-lg: 20px;
+            --radius-sm: 6px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { scroll-behavior: smooth; overflow-x: hidden; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
+        ::selection { background: rgba(0, 212, 255, 0.25); color: #fff; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Nav */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            color: var(--bg-primary);
+            font-size: 14px;
+            box-shadow: 0 0 16px rgba(0, 212, 255, 0.35);
+        }
+
+        .nav-links {
+            display: none;
+            gap: 32px;
+            list-style: none;
+        }
+
+        @media (min-width: 640px) { .nav-links { display: flex; } }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            transition: color var(--transition);
+        }
+
+        .nav-links a:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+        .nav-links a.active { color: var(--accent); }
+
+        .nav-cta {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all var(--transition);
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+        }
+
+        .nav-cta:hover {
+            background: var(--accent-dim);
+            transform: translateY(-1px);
+        }
+
+        .nav-desktop-ctas { display: none; align-items: center; gap: 8px; }
+        @media (min-width: 640px) { .nav-desktop-ctas { display: flex; } }
+
+        /* Layout */
+        .docs-layout {
+            display: flex;
+            padding-top: 64px;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .docs-sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 64px;
+            height: calc(100vh - 64px);
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            padding: 32px 0;
+            display: none;
+        }
+
+        @media (min-width: 768px) { .docs-sidebar { display: block; } }
+
+        .sidebar-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            padding: 0 24px;
+            margin-bottom: 8px;
+            margin-top: 24px;
+        }
+
+        .sidebar-label:first-child { margin-top: 0; }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 24px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-left: 2px solid transparent;
+            transition: all var(--transition);
+        }
+
+        .sidebar-link:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.03);
+        }
+
+        .sidebar-link.active {
+            color: var(--accent);
+            border-left-color: var(--accent);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        /* Main content */
+        .docs-main {
+            flex: 1;
+            min-width: 0;
+            padding: 48px 24px 80px;
+            max-width: 860px;
+        }
+
+        @media (min-width: 1024px) {
+            .docs-main { padding: 48px 64px 80px; }
+        }
+
+        /* Page header */
+        .page-header {
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-breadcrumb {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .page-breadcrumb a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .page-title {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Score overview */
+        .score-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .score-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .score-chip-icon {
+            font-size: 1.5rem;
+            margin-bottom: 6px;
+        }
+
+        .score-chip-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .score-chip-pts {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* Section headers */
+        h2.section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2.section-title .section-icon {
+            width: 36px; height: 36px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--border-accent);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+
+        /* Score bar */
+        .score-bar-wrap {
+            margin-bottom: 32px;
+        }
+
+        .score-bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .score-bar-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .score-bar-value {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .score-bar-track {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Dimension cards */
+        .dimension {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .dimension:hover {
+            border-color: var(--border-accent);
+        }
+
+        .dimension-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .dimension-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .dimension-icon.cyan { background: rgba(0, 212, 255, 0.12); border: 1px solid rgba(0, 212, 255, 0.2); }
+        .dimension-icon.green { background: rgba(0, 255, 136, 0.12); border: 1px solid rgba(0, 255, 136, 0.2); }
+        .dimension-icon.yellow { background: rgba(255, 170, 0, 0.12); border: 1px solid rgba(255, 170, 0, 0.2); }
+        .dimension-icon.red { background: rgba(255, 68, 102, 0.12); border: 1px solid rgba(255, 68, 102, 0.2); }
+        .dimension-icon.purple { background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.2); }
+        .dimension-icon.orange { background: rgba(255, 120, 40, 0.12); border: 1px solid rgba(255, 120, 40, 0.2); }
+
+        .dimension-info { flex: 1; }
+
+        .dimension-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .dimension-tagline {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .dimension-max {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--border-accent);
+            color: var(--accent);
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        /* Before/after code */
+        .code-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 640px) {
+            .code-pair { grid-template-columns: 1fr; }
+        }
+
+        .code-block {
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .code-block-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            font-weight: 500;
+        }
+
+        .code-block.before .code-block-header {
+            background: rgba(255, 68, 102, 0.15);
+            border: 1px solid rgba(255, 68, 102, 0.25);
+            border-bottom: none;
+            color: #ff8899;
+        }
+
+        .code-block.after .code-block-header {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-bottom: none;
+            color: #66ffbb;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            background: var(--bg-secondary);
+        }
+
+        .code-block.before pre {
+            border: 1px solid rgba(255, 68, 102, 0.15);
+            border-top: none;
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+
+        .code-block.after pre {
+            border: 1px solid rgba(0, 255, 136, 0.15);
+            border-top: none;
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+
+        .kw { color: #79c0ff; }
+        .fn { color: #d2a8ff; }
+        .str { color: #a5d6ff; }
+        .cm { color: #5a5a6e; font-style: italic; }
+        .num { color: #ffab70; }
+        .type { color: #ffa657; }
+        .ok { color: var(--success); }
+        .bad { color: var(--error); }
+        .dim-text { color: var(--text-muted); }
+
+        /* Score pills */
+        .score-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .score-pill.high { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.25); color: var(--success); }
+        .score-pill.med { background: rgba(255,170,0,0.1); border: 1px solid rgba(255,170,0,0.25); color: var(--warning); }
+        .score-pill.low { background: rgba(255,68,102,0.1); border: 1px solid rgba(255,68,102,0.25); color: var(--error); }
+
+        /* Scoring formula */
+        .formula-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            margin: 48px 0;
+        }
+
+        .formula-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        .formula {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            line-height: 2;
+        }
+
+        .formula .label { color: var(--text-secondary); }
+        .formula .val { color: var(--accent); font-weight: 600; }
+
+        /* Grade table */
+        .grade-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+            font-size: 0.9rem;
+        }
+
+        .grade-table th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .grade-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            vertical-align: middle;
+        }
+
+        .grade-table tr:last-child td { border-bottom: none; }
+
+        .grade-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 700;
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            text-align: center;
+            line-height: 36px;
+        }
+
+        .grade-s { background: rgba(0, 212, 255, 0.15); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+        .grade-a { background: rgba(0, 255, 136, 0.12); color: var(--success); border: 1px solid rgba(0,255,136,0.25); }
+        .grade-b { background: rgba(100, 200, 255, 0.1); color: #64c8ff; border: 1px solid rgba(100,200,255,0.2); }
+        .grade-c { background: rgba(255, 170, 0, 0.1); color: var(--warning); border: 1px solid rgba(255,170,0,0.2); }
+        .grade-d { background: rgba(255, 100, 40, 0.1); color: #ff6428; border: 1px solid rgba(255,100,40,0.2); }
+        .grade-f { background: rgba(255, 68, 102, 0.1); color: var(--error); border: 1px solid rgba(255,68,102,0.2); }
+
+        /* Footer */
+        footer {
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border);
+            padding: 48px 0;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            text-align: center;
+        }
+
+        @media (min-width: 1024px) {
+            .footer-content { flex-direction: row; justify-content: space-between; }
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color var(--transition);
+        }
+
+        .footer-links a:hover { color: var(--accent); }
+        .footer-copy { color: var(--text-muted); font-size: 0.85rem; }
+
+        /* Util */
+        .mt-8 { margin-top: 8px; }
+        .mt-16 { margin-top: 16px; }
+        .mt-24 { margin-top: 24px; }
+        .mt-32 { margin-top: 32px; }
+        .mb-8 { margin-bottom: 8px; }
+        .mb-16 { margin-bottom: 16px; }
+        .text-accent { color: var(--accent); }
+        .text-muted { color: var(--text-muted); }
+        .text-secondary { color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav id="nav">
+    <div class="container">
+        <a href="/" class="logo">
+            <span class="logo-icon">⚙</span>
+            ratchet
+        </a>
+        <ul class="nav-links">
+            <li><a href="/#how-it-works">How It Works</a></li>
+            <li><a href="/#features">Commands</a></li>
+            <li><a href="/docs/scoring.html" class="active">Scoring</a></li>
+            <li><a href="/#vision">Vision</a></li>
+            <li><a href="/#pricing">Pricing</a></li>
+            <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
+            <li><a href="/docs" style="color:#a1a1aa;">Docs</a></li>
+        </ul>
+        <div class="nav-desktop-ctas">
+            <a href="/sandbox" class="nav-cta" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">Sandbox</a>
+            <a href="/#pricing" class="nav-cta">Get Started</a>
+        </div>
+    </div>
+</nav>
+
+<div class="docs-layout">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+        <div class="sidebar-label">Documentation</div>
+        <a href="/docs/scoring.html" class="sidebar-link active">📊 Scoring</a>
+        <a href="/docs/security.html" class="sidebar-link">🔒 Security &amp; Privacy</a>
+        <a href="/docs/integrations.html" class="sidebar-link">🔗 Integrations</a>
+
+        <div class="sidebar-label" style="margin-top:32px;">On this page</div>
+        <a href="#overview" class="sidebar-link" style="font-size:0.82rem;">Overview</a>
+        <a href="#coverage" class="sidebar-link" style="font-size:0.82rem;">Test Coverage</a>
+        <a href="#complexity" class="sidebar-link" style="font-size:0.82rem;">Complexity</a>
+        <a href="#docs" class="sidebar-link" style="font-size:0.82rem;">Documentation</a>
+        <a href="#error-handling" class="sidebar-link" style="font-size:0.82rem;">Error Handling</a>
+        <a href="#types" class="sidebar-link" style="font-size:0.82rem;">Type Safety</a>
+        <a href="#security" class="sidebar-link" style="font-size:0.82rem;">Security</a>
+        <a href="#grades" class="sidebar-link" style="font-size:0.82rem;">Grade Scale</a>
+    </aside>
+
+    <!-- Main content -->
+    <main class="docs-main">
+        <div class="page-header" id="overview">
+            <div class="page-breadcrumb"><a href="/">ratchetcli.com</a> / <a href="/docs">Docs</a> / Scoring</div>
+            <h1 class="page-title">Scoring Methodology</h1>
+            <p class="page-subtitle">Ratchet evaluates your codebase across 6 orthogonal dimensions, each scored 0–100. The composite score is a weighted average — giving you a single ratchet number that can only go up.</p>
+        </div>
+
+        <!-- Overview grid -->
+        <div class="score-overview">
+            <div class="score-chip">
+                <div class="score-chip-icon">🧪</div>
+                <div class="score-chip-name">Coverage</div>
+                <div class="score-chip-pts">25 pts</div>
+            </div>
+            <div class="score-chip">
+                <div class="score-chip-icon">🔀</div>
+                <div class="score-chip-name">Complexity</div>
+                <div class="score-chip-pts">20 pts</div>
+            </div>
+            <div class="score-chip">
+                <div class="score-chip-icon">📝</div>
+                <div class="score-chip-name">Docs</div>
+                <div class="score-chip-pts">15 pts</div>
+            </div>
+            <div class="score-chip">
+                <div class="score-chip-icon">🚨</div>
+                <div class="score-chip-name">Error Handling</div>
+                <div class="score-chip-pts">20 pts</div>
+            </div>
+            <div class="score-chip">
+                <div class="score-chip-icon">🏷️</div>
+                <div class="score-chip-name">Type Safety</div>
+                <div class="score-chip-pts">10 pts</div>
+            </div>
+            <div class="score-chip">
+                <div class="score-chip-icon">🛡️</div>
+                <div class="score-chip-name">Security</div>
+                <div class="score-chip-pts">10 pts</div>
+            </div>
+        </div>
+
+        <div class="formula-card">
+            <div class="formula-title">Composite Score Formula</div>
+            <div class="formula">
+                <span class="label">score</span> = (<span class="val">coverage</span> × 0.25)
+                          + (<span class="val">complexity</span> × 0.20)
+                          + (<span class="val">error_handling</span> × 0.20)
+                          + (<span class="val">docs</span> × 0.15)
+                          + (<span class="val">type_safety</span> × 0.10)
+                          + (<span class="val">security</span> × 0.10)<br>
+                <span class="label dim-text"># All inputs normalized 0–100. Score is always an integer.</span>
+            </div>
+        </div>
+
+        <!-- ── 1. Test Coverage ── -->
+        <div class="dimension" id="coverage">
+            <div class="dimension-header">
+                <div class="dimension-icon cyan">🧪</div>
+                <div class="dimension-info">
+                    <div class="dimension-name">Test Coverage</div>
+                    <div class="dimension-tagline">Are your code paths exercised by automated tests?</div>
+                </div>
+                <span class="dimension-max">max 25 pts</span>
+            </div>
+
+            <div class="score-bar-wrap">
+                <div class="score-bar-header">
+                    <span class="score-bar-label">Line coverage → 50%</span>
+                    <span class="score-bar-value">12 / 25</span>
+                </div>
+                <div class="score-bar-track">
+                    <div class="score-bar-fill" style="width:48%"></div>
+                </div>
+            </div>
+            <div class="score-bar-wrap">
+                <div class="score-bar-header">
+                    <span class="score-bar-label">Branch coverage → 80%</span>
+                    <span class="score-bar-value">20 / 25</span>
+                </div>
+                <div class="score-bar-track">
+                    <div class="score-bar-fill" style="width:80%"></div>
+                </div>
+            </div>
+
+            <p class="section-desc mt-16">Ratchet instruments your test runner (Jest, Vitest, pytest, Go test) and collects Istanbul/coverage.py output. Branch coverage is weighted 1.4× over line coverage to reward tests that exercise conditional logic.</p>
+
+            <div class="code-pair">
+                <div class="code-block before">
+                    <div class="code-block-header">
+                        <span>✗ before — no test</span>
+                        <span class="score-pill low">0 / 25</span>
+                    </div>
+                    <pre><span class="kw">export function</span> <span class="fn">divide</span>(a, b) {
+  <span class="kw">return</span> a / b;
+  <span class="cm">// division by zero?</span>
+  <span class="cm">// NaN? Infinity? nobody knows.</span>
+}</pre>
+                </div>
+                <div class="code-block after">
+                    <div class="code-block-header">
+                        <span>✓ after — branches covered</span>
+                        <span class="score-pill high">23 / 25</span>
+                    </div>
+                    <pre><span class="kw">export function</span> <span class="fn">divide</span>(a, b) {
+  <span class="kw">if</span> (b === <span class="num">0</span>) <span class="kw">throw new</span> <span class="type">Error</span>(<span class="str">'div/0'</span>);
+  <span class="kw">return</span> a / b;
+}
+
+<span class="cm">// divide.test.ts</span>
+<span class="fn">it</span>(<span class="str">'throws on zero'</span>, () =>
+  <span class="fn">expect</span>(() => <span class="fn">divide</span>(<span class="num">1</span>,<span class="num">0</span>)).<span class="fn">toThrow</span>());
+<span class="fn">it</span>(<span class="str">'returns quotient'</span>, () =>
+  <span class="fn">expect</span>(<span class="fn">divide</span>(<span class="num">10</span>,<span class="num">2</span>)).<span class="fn">toBe</span>(<span class="num">5</span>));</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 2. Complexity ── -->
+        <div class="dimension" id="complexity">
+            <div class="dimension-header">
+                <div class="dimension-icon purple">🔀</div>
+                <div class="dimension-info">
+                    <div class="dimension-name">Complexity</div>
+                    <div class="dimension-tagline">Cyclomatic complexity and cognitive load per function</div>
+                </div>
+                <span class="dimension-max">max 20 pts</span>
+            </div>
+
+            <div class="score-bar-wrap">
+                <div class="score-bar-header">
+                    <span class="score-bar-label">Avg cyclomatic complexity ≤ 5</span>
+                    <span class="score-bar-value">20 / 20</span>
+                </div>
+                <div class="score-bar-track">
+                    <div class="score-bar-fill" style="width:100%"></div>
+                </div>
+            </div>
+
+            <p class="section-desc mt-16">Ratchet uses the McCabe cyclomatic complexity metric. A score of 1 = no branches. Each <code style="font-family:var(--font-mono);color:var(--accent);font-size:0.85em;">if</code>, <code style="font-family:var(--font-mono);color:var(--accent);font-size:0.85em;">&&</code>, <code style="font-family:var(--font-mono);color:var(--accent);font-size:0.85em;">||</code>, loop, or catch adds 1. Functions above 10 receive zero complexity points and trigger a <strong>quick-fix</strong> suggestion to extract sub-functions.</p>
+
+            <div class="code-pair">
+                <div class="code-block before">
+                    <div class="code-block-header">
+                        <span>✗ before — complexity 14</span>
+                        <span class="score-pill low">2 / 20</span>
+                    </div>
+                    <pre><span class="kw">function</span> <span class="fn">processOrder</span>(order) {
+  <span class="kw">if</span> (order.type === <span class="str">'digital'</span>) {
+    <span class="kw">if</span> (order.paid) {
+      <span class="kw">if</span> (order.email) {
+        <span class="kw">try</span> {
+          sendEmail(order.email);
+          <span class="kw">if</span> (order.coupon) {
+            applyCoupon(order);
+          }
+        } <span class="kw">catch</span>(e) { <span class="cm">/* ... */</span> }
+      }
+    }
+  } <span class="kw">else if</span> (order.type === <span class="str">'physical'</span>) {
+    <span class="cm">// ... 40 more lines</span>
+  }
+}</pre>
+                </div>
+                <div class="code-block after">
+                    <div class="code-block-header">
+                        <span>✓ after — complexity 3 each</span>
+                        <span class="score-pill high">19 / 20</span>
+                    </div>
+                    <pre><span class="kw">function</span> <span class="fn">fulfillDigital</span>(order) {
+  <span class="kw">if</span> (!order.paid || !order.email) <span class="kw">return</span>;
+  <span class="kw">try</span> {
+    <span class="fn">sendEmail</span>(order.email);
+    <span class="kw">if</span> (order.coupon) <span class="fn">applyCoupon</span>(order);
+  } <span class="kw">catch</span>(e) { <span class="fn">log</span>(e); }
+}
+
+<span class="kw">function</span> <span class="fn">processOrder</span>(order) {
+  <span class="kw">const</span> handlers = {
+    digital: <span class="fn">fulfillDigital</span>,
+    physical: <span class="fn">fulfillPhysical</span>,
+  };
+  handlers[order.type]?.(order);
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 3. Documentation ── -->
+        <div class="dimension" id="docs">
+            <div class="dimension-header">
+                <div class="dimension-icon yellow">📝</div>
+                <div class="dimension-info">
+                    <div class="dimension-name">Documentation</div>
+                    <div class="dimension-tagline">JSDoc / docstring coverage on public-facing exports</div>
+                </div>
+                <span class="dimension-max">max 15 pts</span>
+            </div>
+
+            <div class="score-bar-wrap">
+                <div class="score-bar-header">
+                    <span class="score-bar-label">Public exports documented → 60%</span>
+                    <span class="score-bar-value">9 / 15</span>
+                </div>
+                <div class="score-bar-track">
+                    <div class="score-bar-fill" style="width:60%"></div>
+                </div>
+            </div>
+
+            <p class="section-desc mt-16">Only exported symbols (functions, classes, types) count. Internal helpers are excluded to avoid documentation noise. Ratchet checks for a summary sentence, parameter descriptions, and a return type annotation.</p>
+
+            <div class="code-pair">
+                <div class="code-block before">
+                    <div class="code-block-header">
+                        <span>✗ before — no docs</span>
+                        <span class="score-pill low">0 / 15</span>
+                    </div>
+                    <pre><span class="kw">export function</span> <span class="fn">formatCurrency</span>(
+  amount,
+  currency,
+  locale
+) {
+  <span class="kw">return new</span> <span class="type">Intl.NumberFormat</span>(locale, {
+    style: <span class="str">'currency'</span>,
+    currency,
+  }).<span class="fn">format</span>(amount);
+}</pre>
+                </div>
+                <div class="code-block after">
+                    <div class="code-block-header">
+                        <span>✓ after — full JSDoc</span>
+                        <span class="score-pill high">14 / 15</span>
+                    </div>
+                    <pre><span class="cm">/**
+ * Format a number as a locale-aware
+ * currency string.
+ * @param amount  - Numeric value
+ * @param currency - ISO 4217 code
+ * @param locale  - BCP 47 locale tag
+ * @returns Formatted string, e.g. "$1,234.56"
+ */</span>
+<span class="kw">export function</span> <span class="fn">formatCurrency</span>(
+  amount: <span class="type">number</span>,
+  currency: <span class="type">string</span>,
+  locale: <span class="type">string</span>
+): <span class="type">string</span> { <span class="cm">/* ... */</span> }</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 4. Error Handling ── -->
+        <div class="dimension" id="error-handling">
+            <div class="dimension-header">
+                <div class="dimension-icon red">🚨</div>
+                <div class="dimension-info">
+                    <div class="dimension-name">Error Handling</div>
+                    <div class="dimension-tagline">Are failures caught, typed, and surfaced correctly?</div>
+                </div>
+                <span class="dimension-max">max 20 pts</span>
+            </div>
+
+            <div class="score-bar-wrap">
+                <div class="score-bar-header">
+                    <span class="score-bar-label">Bare catch blocks eliminated</span>
+                    <span class="score-bar-value">16 / 20</span>
+                </div>
+                <div class="score-bar-track">
+                    <div class="score-bar-fill" style="width:80%"></div>
+                </div>
+            </div>
+
+            <p class="section-desc mt-16">Ratchet penalizes empty catch blocks, swallowed errors, and unhandled promise rejections. It rewards typed error discrimination (using <code style="font-family:var(--font-mono);color:var(--accent);font-size:0.85em;">instanceof</code> or error codes), explicit re-throws, and boundary-level fallbacks.</p>
+
+            <div class="code-pair">
+                <div class="code-block before">
+                    <div class="code-block-header">
+                        <span>✗ before — swallowed</span>
+                        <span class="score-pill low">3 / 20</span>
+                    </div>
+                    <pre><span class="kw">async function</span> <span class="fn">fetchUser</span>(id) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">api</span>.<span class="fn">get</span>(<span class="str">`/users/<span class="type">${id}</span>`</span>);
+    <span class="kw">return</span> res.data;
+  } <span class="kw">catch</span> (e) {
+    <span class="cm">// TODO: handle this later</span>
+    <span class="kw">return null</span>;
+  }
+}</pre>
+                </div>
+                <div class="code-block after">
+                    <div class="code-block-header">
+                        <span>✓ after — typed + re-thrown</span>
+                        <span class="score-pill high">19 / 20</span>
+                    </div>
+                    <pre><span class="kw">async function</span> <span class="fn">fetchUser</span>(id: <span class="type">string</span>)
+    : <span class="type">Promise</span>&lt;<span class="type">User</span>&gt; {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">api</span>.<span class="fn">get</span>(<span class="str">`/users/<span class="type">${id}</span>`</span>);
+    <span class="kw">return</span> <span class="fn">parseUser</span>(res.data);
+  } <span class="kw">catch</span> (e) {
+    <span class="kw">if</span> (e <span class="kw">instanceof</span> <span class="type">NotFoundError</span>) <span class="kw">return null</span>;
+    <span class="fn">logger</span>.<span class="fn">error</span>(<span class="str">'fetchUser failed'</span>, { id, e });
+    <span class="kw">throw</span> e;
+  }
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 5. Type Safety ── -->
+        <div class="dimension" id="types">
+            <div class="dimension-header">
+                <div class="dimension-icon green">🏷️</div>
+                <div class="dimension-info">
+                    <div class="dimension-name">Type Safety</div>
+                    <div class="dimension-tagline">Explicit types on function signatures and key variables</div>
+                </div>
+                <span class="dimension-max">max 10 pts</span>
+            </div>
+
+            <div class="score-bar-wrap">
+                <div class="score-bar-header">
+                    <span class="score-bar-label">Typed function signatures → 70%</span>
+                    <span class="score-bar-value">7 / 10</span>
+                </div>
+                <div class="score-bar-track">
+                    <div class="score-bar-fill" style="width:70%"></div>
+                </div>
+            </div>
+
+            <p class="section-desc mt-16">For TypeScript projects, Ratchet counts <code style="font-family:var(--font-mono);color:var(--accent);font-size:0.85em;">any</code> escapes, missing return types, and unannotated function parameters. For Python, it checks <code style="font-family:var(--font-mono);color:var(--accent);font-size:0.85em;">mypy --strict</code> compliance. Dynamically-typed projects (vanilla JS) are evaluated on JSDoc type annotations instead.</p>
+
+            <div class="code-pair">
+                <div class="code-block before">
+                    <div class="code-block-header">
+                        <span>✗ before — any escapes</span>
+                        <span class="score-pill low">2 / 10</span>
+                    </div>
+                    <pre><span class="kw">function</span> <span class="fn">transform</span>(data: <span class="bad">any</span>): <span class="bad">any</span> {
+  <span class="kw">const</span> result: <span class="bad">any</span> = {};
+  <span class="kw">for</span> (<span class="kw">const</span> key <span class="kw">in</span> data) {
+    result[key] = data[key];
+  }
+  <span class="kw">return</span> result;
+}</pre>
+                </div>
+                <div class="code-block after">
+                    <div class="code-block-header">
+                        <span>✓ after — fully typed</span>
+                        <span class="score-pill high">10 / 10</span>
+                    </div>
+                    <pre><span class="kw">function</span> <span class="fn">transform</span>&lt;<span class="type">T extends Record</span>
+    &lt;<span class="type">string</span>, <span class="type">unknown</span>&gt;&gt;(data: <span class="type">T</span>): <span class="type">T</span> {
+  <span class="kw">const</span> result = {} <span class="kw">as</span> <span class="type">T</span>;
+  <span class="kw">for</span> (<span class="kw">const</span> key <span class="kw">in</span> data) {
+    result[key] = data[key];
+  }
+  <span class="kw">return</span> result;
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 6. Security ── -->
+        <div class="dimension" id="security">
+            <div class="dimension-header">
+                <div class="dimension-icon orange">🛡️</div>
+                <div class="dimension-info">
+                    <div class="dimension-name">Security</div>
+                    <div class="dimension-tagline">Static analysis for OWASP Top 10 and secret exposure</div>
+                </div>
+                <span class="dimension-max">max 10 pts</span>
+            </div>
+
+            <div class="score-bar-wrap">
+                <div class="score-bar-header">
+                    <span class="score-bar-label">No high-severity findings</span>
+                    <span class="score-bar-value">10 / 10</span>
+                </div>
+                <div class="score-bar-track">
+                    <div class="score-bar-fill" style="width:100%"></div>
+                </div>
+            </div>
+
+            <p class="section-desc mt-16">Ratchet integrates with Semgrep (open rules set) to detect SQL injection, XSS, hardcoded credentials, unsafe deserialization, and path traversal. Each high-severity finding deducts 3 pts; medium findings deduct 1 pt. Security score floors at 0.</p>
+
+            <div class="code-pair">
+                <div class="code-block before">
+                    <div class="code-block-header">
+                        <span>✗ before — SQL injection</span>
+                        <span class="score-pill low">0 / 10</span>
+                    </div>
+                    <pre><span class="kw">async function</span> <span class="fn">getUser</span>(username) {
+  <span class="kw">const</span> sql = <span class="bad">`SELECT * FROM users
+    WHERE username='${username}'`</span>;
+  <span class="kw">return</span> db.<span class="fn">query</span>(sql);
+  <span class="cm">// username = "' OR '1'='1"</span>
+}</pre>
+                </div>
+                <div class="code-block after">
+                    <div class="code-block-header">
+                        <span>✓ after — parameterized</span>
+                        <span class="score-pill high">10 / 10</span>
+                    </div>
+                    <pre><span class="kw">async function</span> <span class="fn">getUser</span>(
+  username: <span class="type">string</span>
+): <span class="type">Promise</span>&lt;<span class="type">User | null</span>&gt; {
+  <span class="kw">return</span> db.<span class="fn">query</span>(
+    <span class="ok">'SELECT * FROM users WHERE username=?'</span>,
+    [username]
+  );
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grade table -->
+        <div style="margin-top:48px;" id="grades">
+            <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:8px;">Grade Scale</h2>
+            <p class="text-secondary mb-16">Your composite score maps to a letter grade displayed in <code style="font-family:var(--font-mono);color:var(--accent);font-size:0.85em;">ratchet scan</code> output and CI badges.</p>
+
+            <table class="grade-table">
+                <thead>
+                    <tr>
+                        <th>Grade</th>
+                        <th>Score Range</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="grade-badge grade-s">S</span></td>
+                        <td><span style="font-family:var(--font-mono);">90 – 100</span></td>
+                        <td style="color:var(--text-secondary);">Exceptional. Ship it with confidence.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="grade-badge grade-a">A</span></td>
+                        <td><span style="font-family:var(--font-mono);">80 – 89</span></td>
+                        <td style="color:var(--text-secondary);">Production-ready. Minor gaps only.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="grade-badge grade-b">B</span></td>
+                        <td><span style="font-family:var(--font-mono);">65 – 79</span></td>
+                        <td style="color:var(--text-secondary);">Good baseline. Worth a quick-fix pass.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="grade-badge grade-c">C</span></td>
+                        <td><span style="font-family:var(--font-mono);">50 – 64</span></td>
+                        <td style="color:var(--text-secondary);">Needs attention. Run <code style="font-family:var(--font-mono);font-size:0.85em;">ratchet fix</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="grade-badge grade-d">D</span></td>
+                        <td><span style="font-family:var(--font-mono);">35 – 49</span></td>
+                        <td style="color:var(--text-secondary);">Significant debt. Prioritize this sprint.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="grade-badge grade-f">F</span></td>
+                        <td><span style="font-family:var(--font-mono);">0 – 34</span></td>
+                        <td style="color:var(--text-secondary);">Critical issues. Block merges until resolved.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Docs nav links -->
+        <div style="display:flex;justify-content:flex-end;gap:16px;margin-top:64px;padding-top:32px;border-top:1px solid var(--border);">
+            <a href="/docs/security.html" style="display:flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:0.9rem;font-weight:500;">Security &amp; Privacy →</a>
+        </div>
+    </main>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <a href="/" class="logo">
+                <span class="logo-icon" style="width:26px;height:26px;font-size:12px;">⚙</span>
+                ratchet
+            </a>
+            <ul class="footer-links">
+                <li><a href="https://www.npmjs.com/package/ratchet-run" target="_blank">npm</a></li>
+                <li><a href="/#features">Commands</a></li>
+                <li><a href="/docs/scoring.html">Scoring</a></li>
+                <li><a href="/#vision">Vision</a></li>
+                <li><a href="/#pricing">Pricing</a></li>
+                <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
+                <li><a href="/docs">Docs</a></li>
+                <li><a href="mailto:ratchet@kcemate.com">Contact</a></li>
+            </ul>
+            <p class="footer-copy">© 2026 Ratchet. Built for developers.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.style.background = window.scrollY > 40
+            ? 'rgba(10,10,15,0.97)'
+            : 'rgba(10,10,15,0.85)';
+    }, { passive: true });
+</script>
+</body>
+</html>

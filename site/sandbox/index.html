@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ratchet Sandbox — See It In Action</title>
+    <meta name="description" content="Watch ratchet scan your codebase, identify issues, and autonomously fix them one click at a time." />
+    <meta property="og:title" content="Ratchet Sandbox — See It In Action" />
+    <meta property="og:description" content="Watch ratchet scan, quick-fix, and torque your codebase to a higher score." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ratchetcli.com/sandbox" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-card: #0f0f18;
+            --bg-glass: rgba(15, 15, 24, 0.72);
+            --accent: #00d4ff;
+            --accent-dim: #00a8cc;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --text-muted: #5a5a6e;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --error: #ff4466;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(0, 212, 255, 0.3);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius: 12px;
+            --radius-lg: 20px;
+            --radius-sm: 6px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { scroll-behavior: smooth; overflow-x: hidden; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
+        ::selection { background: rgba(0, 212, 255, 0.25); color: #fff; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ── Glass ── */
+        .glass {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            background: rgba(10, 10, 15, 0.95);
+            border-bottom-color: rgba(0, 212, 255, 0.15);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--bg-primary);
+            font-size: 14px;
+            box-shadow: 0 0 16px rgba(0, 212, 255, 0.35);
+        }
+
+        .nav-links {
+            display: none;
+            gap: 32px;
+            list-style: none;
+        }
+
+        @media (min-width: 640px) { .nav-links { display: flex; } }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            transition: color var(--transition);
+        }
+
+        .nav-links a:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+        .nav-links a.active { color: var(--accent); }
+
+        .nav-cta {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all var(--transition);
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+        }
+
+        .nav-cta:hover {
+            background: var(--accent-dim);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .nav-desktop-ctas { display: none; align-items: center; gap: 8px; }
+        @media (min-width: 640px) { .nav-desktop-ctas { display: flex; } }
+
+        /* Hamburger */
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            z-index: 1010;
+        }
+        @media (min-width: 640px) { .hamburger { display: none; } }
+
+        .hamburger-line {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--text-secondary);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active .hamburger-line:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.active .hamburger-line:nth-child(2) { opacity: 0; }
+        .hamburger.active .hamburger-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        .mobile-menu {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.97);
+            z-index: 99;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-menu.open { opacity: 1; pointer-events: all; }
+
+        .mobile-menu-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            text-align: center;
+        }
+
+        .mobile-link {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 600;
+            transition: color var(--transition);
+        }
+
+        .mobile-link:hover { color: var(--accent); }
+
+        /* ── Page layout ── */
+        .page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 64px;
+        }
+
+        .sandbox-hero {
+            padding: 64px 0 40px;
+            text-align: center;
+        }
+
+        .sandbox-hero .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 212, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 100px;
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .sandbox-hero h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 700;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .sandbox-hero h1 span {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sandbox-hero p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        /* ── Terminal ── */
+        .terminal-wrap {
+            max-width: 780px;
+            margin: 0 auto 48px;
+            padding: 0 24px;
+            width: 100%;
+        }
+
+        .terminal-card {
+            background: #0d0d14;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: var(--radius-lg);
+            box-shadow:
+                0 0 0 1px rgba(0, 212, 255, 0.05),
+                0 20px 60px rgba(0, 0, 0, 0.6),
+                0 0 80px rgba(0, 212, 255, 0.06);
+            overflow: hidden;
+            font-family: var(--font-mono);
+        }
+
+        /* Title bar / chrome */
+        .terminal-titlebar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #161620;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 12px 16px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .dot-red   { background: #ff5f57; }
+        .dot-amber { background: #febc2e; }
+        .dot-green { background: #28c840; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            letter-spacing: 0.02em;
+        }
+
+        /* Body */
+        .terminal-body {
+            padding: 20px 24px 24px;
+            min-height: 420px;
+            font-size: 0.84rem;
+            line-height: 1.7;
+            color: #c8c8d8;
+            position: relative;
+        }
+
+        @media (max-width: 480px) {
+            .terminal-body {
+                padding: 14px 14px 18px;
+                font-size: 0.76rem;
+                min-height: 360px;
+            }
+        }
+
+        .terminal-output {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Cursor */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1em;
+            background: var(--accent);
+            margin-left: 1px;
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Inline color helpers used in JS */
+        .c-prompt { color: var(--accent); }
+        .c-cmd    { color: #ffffff; font-weight: 600; }
+        .c-dim    { color: var(--text-muted); }
+        .c-success{ color: var(--success); }
+        .c-warn   { color: var(--warning); }
+        .c-score  { color: var(--accent); font-weight: 600; }
+        .c-label  { color: var(--text-secondary); }
+        .c-plus   { color: var(--success); }
+
+        /* Progress bar */
+        .progress-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
+            overflow: hidden;
+            max-width: 200px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.05s linear;
+        }
+
+        /* Replay btn */
+        .replay-wrap {
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .replay-btn {
+            background: transparent;
+            border: 1px solid var(--border-accent);
+            color: var(--accent);
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            padding: 8px 20px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .replay-btn:hover {
+            background: rgba(0, 212, 255, 0.08);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        /* ── CTA section ── */
+        .cta-section {
+            text-align: center;
+            padding: 0 24px 80px;
+        }
+
+        .cta-section h2 {
+            font-size: clamp(1.5rem, 3.5vw, 2rem);
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .cta-section p {
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            font-size: 1rem;
+        }
+
+        .cta-install-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(15, 15, 24, 0.9);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius);
+            padding: 14px 20px;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cta-install-box .prompt-sign { color: var(--accent); }
+
+        .copy-btn {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            color: var(--accent);
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            transition: all var(--transition);
+        }
+
+        .copy-btn:hover { background: rgba(0, 212, 255, 0.18); }
+
+        .cta-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all var(--transition);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-dim);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 12px 28px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all var(--transition);
+        }
+
+        .btn-ghost:hover {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text-primary);
+        }
+
+        /* ── Footer ── */
+        footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color var(--transition);
+        }
+
+        .footer-links a:hover { color: var(--text-secondary); }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav id="nav">
+    <div class="container">
+        <a href="/" class="logo">
+            <span class="logo-icon">⚙</span>
+            ratchet
+        </a>
+        <ul class="nav-links">
+            <li><a href="/#how-it-works">How It Works</a></li>
+            <li><a href="/#features">Commands</a></li>
+            <li><a href="/#scoring">Scoring</a></li>
+            <li><a href="/#vision">Vision</a></li>
+            <li><a href="/#pricing">Pricing</a></li>
+            <li><a href="/sandbox" style="color:var(--accent);" class="active">Sandbox</a></li>
+            <li><a href="/docs" style="color:#a1a1aa;">Docs</a></li>
+        </ul>
+        <div class="nav-desktop-ctas">
+            <a href="/sandbox" class="nav-cta" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">Sandbox</a>
+            <a href="/#pricing" class="nav-cta">Get Started</a>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobile-menu">
+    <div class="mobile-menu-content">
+        <a href="/#how-it-works" class="mobile-link">How It Works</a>
+        <a href="/#features" class="mobile-link">Commands</a>
+        <a href="/#scoring" class="mobile-link">Scoring</a>
+        <a href="/#vision" class="mobile-link">Vision</a>
+        <a href="/#pricing" class="mobile-link">Pricing</a>
+        <a href="/sandbox" class="mobile-link">Sandbox</a>
+        <a href="/docs" class="mobile-link">Docs</a>
+    </div>
+</div>
+
+<!-- ── Main ── -->
+<div class="page-wrapper">
+    <section class="sandbox-hero">
+        <div class="container">
+            <div class="eyebrow">⚡ Live Demo</div>
+            <h1>Watch Ratchet <span>Fix Your Code</span></h1>
+            <p>A pre-recorded replay of ratchet scanning, diagnosing, and autonomously improving a real codebase.</p>
+        </div>
+    </section>
+
+    <!-- Terminal -->
+    <div class="terminal-wrap">
+        <div class="terminal-card">
+            <div class="terminal-titlebar">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-amber"></span>
+                <span class="dot dot-green"></span>
+                <span class="terminal-title">ratchet — ~/my-project</span>
+            </div>
+            <div class="terminal-body">
+                <div class="terminal-output" id="term-out"></div>
+                <span class="cursor" id="cursor"></span>
+            </div>
+        </div>
+
+        <div class="replay-wrap">
+            <button class="replay-btn" id="replay-btn">
+                ↺ Replay
+            </button>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <h2>Try it on your codebase</h2>
+        <p>Install ratchet globally and run your first scan in under 60 seconds.</p>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+            <div class="cta-install-box">
+                <span class="prompt-sign">$</span>
+                <span>npm install -g ratchet-run</span>
+                <button class="copy-btn" id="copy-btn">Copy</button>
+            </div>
+            <div class="cta-buttons">
+                <a href="https://www.npmjs.com/package/ratchet-run" target="_blank" class="btn-primary">Install from npm</a>
+                <a href="/#pricing" class="btn-ghost">View Pricing</a>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- ── Footer ── -->
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <a href="/" class="logo">
+                <span class="logo-icon" style="width:26px;height:26px;font-size:12px;">⚙</span>
+                ratchet
+            </a>
+            <ul class="footer-links">
+                <li><a href="https://www.npmjs.com/package/ratchet-run" target="_blank">npm</a></li>
+                <li><a href="/#features">Commands</a></li>
+                <li><a href="/#scoring">Scoring</a></li>
+                <li><a href="/#vision">Vision</a></li>
+                <li><a href="/#pricing">Pricing</a></li>
+                <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
+                <li><a href="/docs">Docs</a></li>
+                <li><a href="mailto:ratchet@kcemate.com">Contact</a></li>
+            </ul>
+            <p class="footer-copy">© 2026 Ratchet. Built for developers.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* ── Nav scroll ── */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+
+/* ── Hamburger ── */
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobile-menu');
+
+hamburger.addEventListener('click', () => {
+    const isOpen = hamburger.classList.toggle('active');
+    mobileMenu.classList.toggle('open', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+});
+
+document.querySelectorAll('.mobile-link').forEach(link => {
+    link.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        mobileMenu.classList.remove('open');
+        document.body.style.overflow = '';
+    });
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+        hamburger.classList.remove('active');
+        mobileMenu.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+});
+
+/* ── Copy button ── */
+document.getElementById('copy-btn').addEventListener('click', function() {
+    navigator.clipboard.writeText('npm install -g ratchet-run').then(() => {
+        this.textContent = 'Copied!';
+        setTimeout(() => { this.textContent = 'Copy'; }, 1800);
+    });
+});
+
+/* ── Terminal animation ── */
+const out = document.getElementById('term-out');
+const cursor = document.getElementById('cursor');
+let animHandle = null;
+let running = false;
+
+// Helpers to append HTML spans without touching cursor position
+function span(cls, text) {
+    return `<span class="${cls}">${esc(text)}</span>`;
+}
+function esc(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function raw(html) { return html; } // pre-escaped / structural HTML
+
+// Wait for a given ms
+function wait(ms) {
+    return new Promise(res => { animHandle = setTimeout(res, ms); });
+}
+
+// Type text char-by-char into a <span> we append once (for typewriter feel)
+async function type(html_prefix, text, cssClass, speed_min=40, speed_max=80) {
+    const span_el = document.createElement('span');
+    if (cssClass) span_el.className = cssClass;
+    out.appendChild(span_el);
+    for (const ch of text) {
+        span_el.textContent += ch;
+        await wait(speed_min + Math.random() * (speed_max - speed_min));
+    }
+}
+
+// Append a pre-built HTML string (instant)
+function append(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    while (div.firstChild) out.appendChild(div.firstChild);
+}
+
+// Append a full line (adds newline wrapper)
+function line(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    out.appendChild(div);
+}
+
+function br() {
+    out.appendChild(document.createElement('br'));
+}
+
+// Animated progress bar
+async function progressBar(label) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'progress-line';
+    wrapper.innerHTML = `
+        <span class="c-dim" style="min-width:90px">${esc(label)}</span>
+        <div class="progress-track"><div class="progress-fill" id="pfill"></div></div>
+        <span class="c-dim" id="pct">0%</span>
+    `;
+    out.appendChild(wrapper);
+
+    const fill = wrapper.querySelector('.progress-fill');
+    const pct  = wrapper.querySelector('#pct');
+
+    for (let i = 0; i <= 100; i += 2) {
+        fill.style.width = i + '%';
+        pct.textContent  = i + '%';
+        await wait(22);
+    }
+    pct.textContent = '100%';
+    // replace with done text
+    wrapper.innerHTML = `<span class="c-dim">Scanning... </span><span class="c-success">done ✓</span>`;
+}
+
+async function runAnimation() {
+    if (running) return;
+    running = true;
+    out.innerHTML = '';
+    cursor.style.display = 'inline-block';
+
+    // ── 1. $ ratchet scan ──────────────────────────────────────────────
+    append(`<span class="c-prompt">$</span> `);
+    await type('', 'ratchet scan', 'c-cmd', 45, 90);
+    br();
+    await wait(300);
+
+    // Progress bar
+    await progressBar('Scanning...');
+    await wait(200);
+
+    // Score output
+    line(`<br>`);
+    line(`<span class="c-label">  Codebase score: </span><span class="c-score">72 / 100</span>`);
+    line(`<br>`);
+    line(`<span class="c-dim">  ┌─────────────────────────────────┐</span>`);
+    line(`<span class="c-dim">  │</span> <span class="c-label">Testing        </span> <span class="c-warn">18</span><span class="c-dim">/25</span>   <span class="c-dim">████████░░  72%</span>`);
+    line(`<span class="c-dim">  │</span> <span class="c-label">Security       </span> <span class="c-warn">12</span><span class="c-dim">/15</span>   <span class="c-dim">████████░░  80%</span>`);
+    line(`<span class="c-dim">  │</span> <span class="c-label">TypeSafety     </span> <span class="c-warn"> 9</span><span class="c-dim">/15</span>   <span class="c-dim">██████░░░░  60%</span>`);
+    line(`<span class="c-dim">  │</span> <span class="c-label">ErrorHandling  </span> <span class="c-warn">14</span><span class="c-dim">/20</span>   <span class="c-dim">███████░░░  70%</span>`);
+    line(`<span class="c-dim">  │</span> <span class="c-label">Performance    </span> <span class="c-success"> 8</span><span class="c-dim">/10</span>   <span class="c-dim">████████░░  80%</span>`);
+    line(`<span class="c-dim">  │</span> <span class="c-label">CodeQuality    </span> <span class="c-warn">11</span><span class="c-dim">/15</span>   <span class="c-dim">███████░░░  73%</span>`);
+    line(`<span class="c-dim">  └─────────────────────────────────┘</span>`);
+    await wait(1000);
+    br();
+
+    // ── 2. $ ratchet quick-fix ────────────────────────────────────────
+    append(`<span class="c-prompt">$</span> `);
+    await type('', 'ratchet quick-fix', 'c-cmd', 45, 90);
+    br();
+    await wait(350);
+
+    line(`<br><span class="c-warn">⚡ Top 3 fixes:</span><br>`);
+    await wait(180);
+    line(`<span class="c-dim">  1. </span><span class="c-label">Empty catch blocks (4 found)</span>     <span class="c-plus">+4 pts</span>  <span class="c-dim">ErrorHandling ↑</span>`);
+    await wait(120);
+    line(`<span class="c-dim">  2. </span><span class="c-label">Replace console.log → pino (12)</span>  <span class="c-plus">+3 pts</span>  <span class="c-dim">CodeQuality ↑</span>`);
+    await wait(120);
+    line(`<span class="c-dim">  3. </span><span class="c-label">Null checks on 3 functions</span>       <span class="c-plus">+3 pts</span>  <span class="c-dim">TypeSafety ↑</span>`);
+    await wait(120);
+    line(`<br><span class="c-dim">  Predicted score after all fixes: </span><span class="c-score">82 / 100</span>`);
+    await wait(900);
+    br();
+
+    // ── 3. $ ratchet torque --clicks 3 ───────────────────────────────
+    append(`<span class="c-prompt">$</span> `);
+    await type('', 'ratchet torque --clicks 3', 'c-cmd', 45, 90);
+    br();
+    await wait(350);
+
+    line(`<br><span class="c-dim">  Running autonomous fix loop…</span><br>`);
+    await wait(500);
+
+    // Click 1
+    line(`<span class="c-dim">  ── Click 1 ──────────────────────────────────────</span>`);
+    await wait(200);
+    line(`<span class="c-dim">    Fixing 4 empty catch blocks…  </span>`);
+    await wait(700);
+    line(`<span class="c-success">    ✓ Tests pass.</span>  <span class="c-label">Score: </span><span class="c-score">76</span><span class="c-dim">/100</span>  <span class="c-success">✅ committed</span>`);
+    await wait(400);
+
+    // Click 2
+    line(`<span class="c-dim">  ── Click 2 ──────────────────────────────────────</span>`);
+    await wait(200);
+    line(`<span class="c-dim">    Replacing 12 console.log → pino…  </span>`);
+    await wait(800);
+    line(`<span class="c-success">    ✓ Tests pass.</span>  <span class="c-label">Score: </span><span class="c-score">79</span><span class="c-dim">/100</span>  <span class="c-success">✅ committed</span>`);
+    await wait(400);
+
+    // Click 3
+    line(`<span class="c-dim">  ── Click 3 ──────────────────────────────────────</span>`);
+    await wait(200);
+    line(`<span class="c-dim">    Adding null checks to 3 functions…  </span>`);
+    await wait(750);
+    line(`<span class="c-success">    ✓ Tests pass.</span>  <span class="c-label">Score: </span><span class="c-score">82</span><span class="c-dim">/100</span>  <span class="c-success">✅ committed</span>`);
+    await wait(600);
+
+    // Final summary
+    br();
+    line(`<span class="c-success">  🏁 Score: 82/100 </span><span class="c-plus">(+10 points)</span><span class="c-success">  ✅ All changes committed</span>`);
+    br();
+
+    // Done — hide cursor, show replay prompt
+    await wait(400);
+    cursor.style.display = 'none';
+    running = false;
+}
+
+document.getElementById('replay-btn').addEventListener('click', () => {
+    if (animHandle) clearTimeout(animHandle);
+    running = false;
+    runAnimation();
+});
+
+// Auto-start
+runAnimation();
+</script>
+</body>
+</html>
