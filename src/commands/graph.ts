@@ -16,10 +16,6 @@ import { join } from 'path';
 import { isIndexed, reindex, runCypher, getImpactDetailed, getDependencyClusters } from '../core/gitnexus.js';
 import { tryOr, wrapAction } from '../lib/cli.js';
 
-function getCwd(): string {
-  return process.cwd();
-}
-
 function requireIndexed(cwd: string): void {
   if (!isIndexed(cwd)) {
     process.stdout.write(chalk.yellow('  ⚠ GitNexus is not indexed. Run: ratchet graph index\n'));
@@ -31,7 +27,7 @@ function requireIndexed(cwd: string): void {
  * Show GitNexus index status for the current repo.
  */
 async function graphStatus(): Promise<void> {
-  const cwd = getCwd();
+  const cwd = process.cwd();
   const indexed = isIndexed(cwd);
 
   if (!indexed) {
@@ -52,7 +48,7 @@ async function graphStatus(): Promise<void> {
  * Trigger a full re-index via gitnexus analyze.
  */
 async function graphIndex(force: boolean): Promise<void> {
-  const cwd = getCwd();
+  const cwd = process.cwd();
   process.stdout.write(chalk.cyan('  Indexing repository with GitNexus...\n'));
 
   const ok = await reindex(cwd, force);
@@ -69,7 +65,7 @@ async function graphIndex(force: boolean): Promise<void> {
  * Run a raw Cypher query against the graph.
  */
 async function graphQuery(cypher: string): Promise<void> {
-  const cwd = getCwd();
+  const cwd = process.cwd();
 
   requireIndexed(cwd);
 
@@ -88,7 +84,7 @@ async function graphQuery(cypher: string): Promise<void> {
  * Show detailed blast radius for a target file or symbol.
  */
 async function graphImpact(target: string): Promise<void> {
-  const cwd = getCwd();
+  const cwd = process.cwd();
 
   requireIndexed(cwd);
 
@@ -139,7 +135,7 @@ async function graphImpact(target: string): Promise<void> {
  * Show dependency clusters for the current repo.
  */
 async function graphClusters(): Promise<void> {
-  const cwd = getCwd();
+  const cwd = process.cwd();
 
   requireIndexed(cwd);
 
