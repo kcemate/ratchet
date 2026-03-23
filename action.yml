@@ -4,35 +4,46 @@ author: "giovanni-labs"
 
 inputs:
   threshold:
-    description: "Minimum total score required (0–100). If set, the action exits with failure when the score falls below this value."
+    description: "Minimum total score required (0–100). Fails the action if the score is below this value."
     required: false
     default: ""
   category-thresholds:
-    description: 'Comma-separated category minimums in "Category=Score" format, e.g. "Security=12,Testing=20". Each specified category gates independently.'
+    description: 'Comma-separated category minimums in "Category=Score" format, e.g. "Security=12,Testing=20". Each listed category gates independently.'
     required: false
     default: ""
   explain:
-    description: "Pass --explain to ratchet scan to include category-level detail in the output."
+    description: "Pass --explain to include human-readable why/fix explanations per subcategory in the scan output."
     required: false
     default: "false"
   working-directory:
-    description: "Directory to run the scan in (relative to the repository root)."
+    description: "Directory to scan, relative to the repository root."
     required: false
     default: "."
   version:
-    description: "ratchet-run version to install. Use 'latest' or a specific semver tag."
+    description: "ratchet-run version to install. Accepts 'latest' or any published semver tag (e.g. '1.0.8')."
     required: false
     default: "latest"
+  baseline:
+    description: "Path to a previous ratchet-scan.json for delta comparison. When provided, the PR comment shows score change (e.g. +3 pts)."
+    required: false
+    default: ""
 
 outputs:
   score:
     description: "The overall ratchet score (0–100)."
+    value: ${{ steps.run.outputs.score }}
+  score-delta:
+    description: "Score change vs baseline (e.g. +3, -1, 0). Empty when no baseline is provided."
+    value: ${{ steps.run.outputs.score-delta }}
   json:
     description: "Absolute path to the ratchet-scan.json output file."
+    value: ${{ steps.run.outputs.json }}
   badge-url:
-    description: "shields.io dynamic badge URL encoding the current score."
+    description: "shields.io badge URL for embedding the current score in a README."
+    value: ${{ steps.run.outputs.badge-url }}
   pr-comment-id:
-    description: "GitHub API ID of the posted PR comment (empty if not in a PR)."
+    description: "GitHub comment ID of the posted PR score card (empty when not in a PR context)."
+    value: ${{ steps.run.outputs.pr-comment-id }}
 
 runs:
   using: composite
@@ -46,6 +57,7 @@ runs:
         INPUT_EXPLAIN: ${{ inputs.explain }}
         INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         INPUT_VERSION: ${{ inputs.version }}
+        INPUT_BASELINE: ${{ inputs.baseline }}
         GITHUB_TOKEN: ${{ github.token }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         GITHUB_SHA: ${{ github.sha }}
