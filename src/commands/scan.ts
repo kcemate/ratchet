@@ -113,6 +113,7 @@ import {
   DUP_SCORE_THRESHOLDS,
   scoreStrictConfig,
 } from '../core/scan-constants.js';
+import { classifyFiles, filterByClass } from '../core/file-classifier.js';
 import {
   scoreCoverageRatio,
   scoreEdgeCases,
@@ -391,15 +392,15 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
 // ├─ Coverage ............... /8
 // ├─ Empty catches .......... /5
 // └─ Structured logging ..... /7
-function scoreErrorHandling(files: string[], contents: Map<string, string>): CategoryResult {
+function scoreErrorHandling(files: string[], prodFiles: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
 
   const tryCatchTotal = countMatches(srcFiles, contents, /\btry\s*\{/g);
   const { count: emptyCatchTotal, matchedFiles: emptyCatchFiles } = countMatchesWithFiles(
-    srcFiles, contents, /\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g,
+    prodFiles, contents, /\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g,
   );
-  const consoleErrorCount = countMatches(srcFiles, contents, /\bconsole\.(?:error|warn|log)\s*\(/g);
-  const structuredLogCount = countMatches(srcFiles, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g);
+  const consoleErrorCount = countMatches(prodFiles, contents, /\bconsole\.(?:error|warn|log)\s*\(/g);
+  const structuredLogCount = countMatches(prodFiles, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g);
 
   let asyncTotal = 0;
   const asyncNoHandlerFiles: string[] = [];
@@ -444,12 +445,13 @@ function scoreErrorHandling(files: string[], contents: Map<string, string>): Cat
 // ├─ Async patterns ......... /3
 // ├─ Console cleanup ........ /5
 // └─ Import hygiene ......... /2
-function scorePerformance(files: string[], contents: Map<string, string>): CategoryResult {
+function scorePerformance(files: string[], prodFiles: string[], contents: Map<string, string>): CategoryResult {
   const srcFiles = files.filter(f => !isTestFile(f));
   const appFiles = srcFiles.filter(f => !f.replace(/\\/g, '/').includes('/scripts/'));
+  const prodAppFiles = prodFiles.filter(f => !f.replace(/\\/g, '/').includes('/scripts/'));
 
   const { count: consoleLogCount, matchedFiles: consoleLogFiles } = countMatchesWithFiles(
-    appFiles, contents, /\bconsole\.log\s*\(/g,
+    prodAppFiles, contents, /\bconsole\.log\s*\(/g,
   );
 
   let awaitInLoopCount = 0;
@@ -628,13 +630,15 @@ export async function runScan(cwd: string): Promise<ScanResult> {
 
   const files = findSourceFiles(cwd);
   const contents = readContents(files);
+  const fileClassifications = classifyFiles(files);
+  const prodFiles = filterByClass(files, fileClassifications, 'production');
 
   const categories: CategoryResult[] = [
     scoreTests(files, contents, cwd),
     scoreSecurity(files, contents),
     scoreTypes(files, cwd, contents),
-    scoreErrorHandling(files, contents),
-    scorePerformance(files, contents),
+    scoreErrorHandling(files, prodFiles, contents),
+    scorePerformance(files, prodFiles, contents),
     scoreCodeQuality(files, contents),
   ];
 
