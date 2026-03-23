@@ -10,3 +10,5 @@ coverage/
 stripe-config.json
 .npmrc
 api/.wrangler/
+.claude/
+ratchet-state.json
