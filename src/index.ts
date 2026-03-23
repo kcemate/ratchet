@@ -21,6 +21,7 @@ import { stopCommand } from './commands/stop.js';
 import { registerGraphCommand } from './commands/graph.js';
 import { strategyCommand } from './commands/strategy.js';
 import { swarmCommand } from './commands/swarm.js';
+import { quickFixCommand } from './commands/quick-fix.js';
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -64,5 +65,6 @@ program.addCommand(stopCommand());
 registerGraphCommand(program);
 program.addCommand(strategyCommand());
 program.addCommand(swarmCommand());
+program.addCommand(quickFixCommand());
 
 program.parse(process.argv);
