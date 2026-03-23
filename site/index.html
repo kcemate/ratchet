@@ -1728,16 +1728,16 @@
     <div class="container">
         <div class="section-header fade-in">
             <p class="section-label">Commands</p>
-            <h2 class="section-title">Four commands. Every angle covered.</h2>
-            <p class="section-subtitle">Ratchet covers the full improvement lifecycle — from scoring where you stand, to autonomously fixing what needs fixing, to visualizing the big picture.</p>
+            <h2 class="section-title">Six commands. Every angle covered.</h2>
+            <p class="section-subtitle">Ratchet covers the full improvement lifecycle — from scoring where you stand, to finding your highest-impact fixes, to autonomously shipping them, to tracking progress in CI.</p>
         </div>
 
         <div class="features-grid">
             <div class="feature-card fade-in fade-in-d1">
                 <div class="feature-icon">📊</div>
                 <h3>scan</h3>
-                <p>Get an objective quality score across six dimensions — code quality, testing, security, error handling, performance, and type safety. Works on any language, any size project. Run it locally or pipe the JSON output to your own dashboards.</p>
-                <span class="feature-tag">ratchet scan</span>
+                <p>Get an objective quality score across six dimensions — code quality, testing, security, error handling, performance, and type safety. Auto-detects your language. Use <code style="color:var(--accent);font-size:13px;">--baseline</code> to save your score and track deltas over time. Use <code style="color:var(--accent);font-size:13px;">--diff main</code> to scan only changed files for PR-scoped reviews.</p>
+                <span class="feature-tag">ratchet scan --baseline</span>
             </div>
             <div class="feature-card fade-in fade-in-d2">
                 <div class="feature-icon">⚡</div>
@@ -1756,6 +1756,18 @@
                 <h3>vision</h3>
                 <p>Generate a self-contained interactive HTML dependency graph — every file, every import, color-coded by health and sized by blast radius. Find circular dependencies, identify oversized modules, and get a spatial sense of your codebase at a glance.</p>
                 <span class="feature-tag">ratchet vision --open</span>
+            </div>
+            <div class="feature-card fade-in fade-in-d1">
+                <div class="feature-icon">🎯</div>
+                <h3>quick-fix <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);font-weight:600;vertical-align:middle;margin-left:6px;">New</span></h3>
+                <p>See your top 3 highest-impact issues with exact point predictions — "fixing X would improve your score to Y." Know where to focus before spending a single AI credit. Free, instant, zero config.</p>
+                <span class="feature-tag">ratchet quick-fix</span>
+            </div>
+            <div class="feature-card fade-in fade-in-d2">
+                <div class="feature-icon">🔄</div>
+                <h3>CI/CD Native <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);font-weight:600;vertical-align:middle;margin-left:6px;">New</span></h3>
+                <p>GitHub Action drops your score + delta into every PR comment automatically. Use <code style="color:var(--accent);font-size:13px;">--diff main</code> to scan only changed files. Use <code style="color:var(--accent);font-size:13px;">--baseline</code> to track improvement over time. One line in your workflow.</p>
+                <span class="feature-tag">ratchet scan --diff main --baseline</span>
             </div>
         </div>
     </div>
@@ -2074,7 +2086,7 @@
                 </div>
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
-                        Any language. Ratchet works at the file and project level — not the AST level — so it评分 doesn't care about your language. TypeScript, Python, Go, Rust, Ruby, Java, C++, whatever you're running.
+                        TypeScript and JavaScript get the deepest analysis (AST-confirmed findings). Other languages work with pattern-based scanning — use <code>--language</code> to specify or let Ratchet auto-detect. Python, Go, Rust, Ruby, Java, and more are supported.
                     </div>
                 </div>
             </div>
@@ -2098,7 +2110,31 @@
                 </div>
                 <div class="faq-answer">
                     <div class="faq-answer-inner">
-                        Yes. Run <code>ratchet scan --fail-on 80</code> and Ratchet exits non-zero if your score drops below the threshold. A GitHub Action is available on the Team plan for first-class pipeline integration.
+                        Yes. The GitHub Action posts your score + per-category delta directly in PR comments. Use <code>--diff main</code> to scan only changed files, <code>--baseline</code> to track improvement over time, and <code>--fail-on 80</code> to block merges below your threshold. Available on Pro and above.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item fade-in fade-in-d3">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>What is quick-fix?</span>
+                    <div class="q-icon">+</div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <code>ratchet quick-fix</code> analyzes your scan results and shows the top 3 highest-impact issues with exact point predictions — e.g., "fixing empty catches would improve your score to 89." It's free, instant, and helps you decide where to focus before spending AI credits on torque/improve.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item fade-in fade-in-d3">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>How does baseline tracking work?</span>
+                    <div class="q-icon">+</div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Run <code>ratchet scan --baseline</code> to save your current score. Every future scan shows the delta — overall and per-category, color-coded green/red. It's stored locally in <code>.ratchet/baseline.json</code> and works great with CI to track improvement commit by commit.
                     </div>
                 </div>
             </div>
@@ -2147,6 +2183,8 @@
                 <div class="pricing-divider"></div>
                 <ul class="pricing-features">
                     <li>Scan: unlimited</li>
+                    <li>Quick-fix: top 3 issues + predictions</li>
+                    <li>Baseline &amp; delta tracking</li>
                     <li>Vision: 1/week</li>
                     <li>Quality score across 6 dimensions</li>
                     <li>JSON &amp; Markdown export</li>
@@ -2187,6 +2225,8 @@
                     <li>150 improvement cycles/month</li>
                     <li>BYOK — bring your own API key</li>
                     <li>ratchet torque + improve</li>
+                    <li>GitHub Action + PR comments</li>
+                    <li>Score badge for README</li>
                     <li>Unlimited vision</li>
                     <li>PDF reports</li>
                     <li>Everything in Builder</li>
