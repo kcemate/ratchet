@@ -45,7 +45,12 @@ function loadRatchetIgnore(dir: string): string[] {
   }
 }
 
-export function findSourceFiles(dir: string): string[] {
+export interface FindSourceFilesOptions {
+  scanProductionOnly?: boolean; // default: true — excludes test files
+}
+
+export function findSourceFiles(dir: string, options: FindSourceFilesOptions = {}): string[] {
+  const { scanProductionOnly = true } = options;
   const results: string[] = [];
   const ignoredPaths = loadRatchetIgnore(dir);
 
@@ -75,6 +80,7 @@ export function findSourceFiles(dir: string): string[] {
       if (stat.isDirectory()) {
         walk(fullPath);
       } else if (CODE_EXTENSIONS.has(extname(entry))) {
+        if (scanProductionOnly && isTestFile(fullPath)) continue;
         results.push(fullPath);
       }
     }

@@ -634,7 +634,11 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
 
 // --- Main scan logic ---
 
-export async function runScan(cwd: string): Promise<ScanResult> {
+export interface RunScanOptions {
+  includeTests?: boolean;
+}
+
+export async function runScan(cwd: string, options: RunScanOptions = {}): Promise<ScanResult> {
   let projectName = cwd.split('/').pop() ?? 'unknown';
   const pkgPath = join(cwd, 'package.json');
   if (existsSync(pkgPath)) {
@@ -646,18 +650,23 @@ export async function runScan(cwd: string): Promise<ScanResult> {
     }
   }
 
-  const files = findSourceFiles(cwd);
-  const contents = readContents(files);
-  const fileClassifications = classifyFiles(files);
-  const prodFiles = filterByClass(files, fileClassifications, 'production');
+  // Always include test files for the Testing scorer (needs them for coverage ratio).
+  // When scanProductionOnly is on, exclude test files from all other scorers.
+  const allFiles = findSourceFiles(cwd, { scanProductionOnly: false });
+  const scoringFiles = options.includeTests
+    ? allFiles
+    : allFiles.filter(f => !isTestFile(f));
+  const contents = readContents(allFiles);
+  const fileClassifications = classifyFiles(scoringFiles);
+  const prodFiles = filterByClass(scoringFiles, fileClassifications, 'production');
 
   const categories: CategoryResult[] = [
-    scoreTests(files, contents, cwd),
-    scoreSecurity(files, contents),
-    scoreTypes(files, cwd, contents),
-    scoreErrorHandling(files, prodFiles, contents),
-    scorePerformance(files, prodFiles, contents),
-    scoreCodeQuality(files, contents),
+    scoreTests(allFiles, contents, cwd),
+    scoreSecurity(scoringFiles, contents),
+    scoreTypes(scoringFiles, cwd, contents),
+    scoreErrorHandling(scoringFiles, prodFiles, contents),
+    scorePerformance(scoringFiles, prodFiles, contents),
+    scoreCodeQuality(scoringFiles, contents),
   ];
 
   const total = categories.reduce((sum, c) => sum + c.score, 0);
@@ -780,6 +789,7 @@ export function scanCommand(): Command {
     )
     .option('--output-json', 'Output the full scan result as JSON for CI/CD integration.')
     .option('--explain', "Show human-readable explanations for each subcategory's issues.")
+    .option('--include-tests', 'Include test files in the scan (by default, test files are excluded).')
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -788,7 +798,8 @@ export function scanCommand(): Command {
       '  $ ratchet scan --fail-on 80\n' +
       '  $ ratchet scan --fail-on 80 --fail-on-category Security=12\n' +
       '  $ ratchet scan --output-json > scan-result.json\n' +
-      '  $ ratchet scan --explain\n',
+      '  $ ratchet scan --explain\n' +
+      '  $ ratchet scan --include-tests\n',
     )
     .action(async (dir: string, options: Record<string, unknown>) => {
       const { resolve } = await import('path');
@@ -797,7 +808,7 @@ export function scanCommand(): Command {
       const { trackEvent } = await import('../core/telemetry.js');
       trackEvent('scan');
 
-      const result = await runScan(cwd);
+      const result = await runScan(cwd, { includeTests: options['includeTests'] as boolean | undefined });
 
       if (options['outputJson']) {
         process.stdout.write(JSON.stringify(result, null, 2) + '\n');
