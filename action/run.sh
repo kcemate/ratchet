@@ -10,6 +10,7 @@ CATEGORY_THRESHOLDS="${INPUT_CATEGORY_THRESHOLDS:-}"
 EXPLAIN="${INPUT_EXPLAIN:-false}"
 WORKING_DIRECTORY="${INPUT_WORKING_DIRECTORY:-.}"
 VERSION="${INPUT_VERSION:-latest}"
+BASELINE="${INPUT_BASELINE:-}"
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-}"
 GITHUB_SHA="${GITHUB_SHA:-}"
@@ -30,7 +31,7 @@ error() {
 
 has_cmd() { command -v "$1" &>/dev/null; }
 
-# Extract a JSON top-level field (dot-notation) using jq or node
+# Extract a top-level JSON number field using jq or node
 json_get() {
   local file="$1" field="$2"
   if has_cmd jq; then
@@ -48,16 +49,16 @@ json_get() {
   fi
 }
 
-# Extract category score by name
+# Extract category score by name (categories is an array: [{name, score, max, ...}])
 json_cat_score() {
   local file="$1" name="$2"
   if has_cmd jq; then
-    jq -r ".categories[\"$name\"].score // .categories[\"$name\"] // empty" "$file" 2>/dev/null
+    jq -r --arg n "$name" '.categories[] | select(.name == $n) | .score' "$file" 2>/dev/null
   elif has_cmd node; then
     node -e "
       const d = JSON.parse(require('fs').readFileSync('$file','utf8'));
-      const c = d.categories && (d.categories['$name'].score ?? d.categories['$name']);
-      process.stdout.write(c != null ? String(c) : '');
+      const c = (d.categories || []).find(x => x.name === '$name');
+      process.stdout.write(c != null ? String(c.score) : '');
     "
   fi
 }
@@ -92,6 +93,7 @@ for k in "${!CAT_THRESHOLDS[@]}"; do
   echo "            $k >= ${CAT_THRESHOLDS[$k]}"
 done
 echo " Explain   : $EXPLAIN"
+[ -n "$BASELINE" ] && echo " Baseline  : $BASELINE"
 echo ""
 
 # ─── Install ratchet-run ───────────────────────────────────────────────────────
@@ -135,17 +137,45 @@ echo "✔ Output: $SCAN_JSON"
 echo ""
 
 # ─── Parse score ───────────────────────────────────────────────────────────────
-raw_score="$(json_get "$SCAN_JSON" "score")"
+raw_score="$(json_get "$SCAN_JSON" "total")"
 SCORE="$(echo "$raw_score" | tr -d '"' | xargs)"
 SCORE="${SCORE:-0}"
 echo "📊 Overall Score: $SCORE / 100"
+
+# ─── Delta comparison (optional baseline) ─────────────────────────────────────
+SCORE_DELTA=""
+if [ -n "$BASELINE" ] && [ -f "$BASELINE" ]; then
+  baseline_raw="$(json_get "$BASELINE" "total")"
+  BASELINE_SCORE="$(echo "$baseline_raw" | tr -d '"' | xargs)"
+  if [ -n "$BASELINE_SCORE" ] && [ "$BASELINE_SCORE" != "null" ]; then
+    if has_cmd node; then
+      SCORE_DELTA="$(node -e "
+        const d = $SCORE - $BASELINE_SCORE;
+        process.stdout.write(d > 0 ? '+' + d : String(d));
+      ")"
+    fi
+    echo "📈 Delta vs baseline: ${SCORE_DELTA} pts (was ${BASELINE_SCORE})"
+  else
+    echo "⚠ Could not read baseline score from '$BASELINE'"
+  fi
+elif [ -n "$BASELINE" ]; then
+  echo "⚠ Baseline file not found: '$BASELINE' — skipping delta"
+fi
 echo ""
 
 # ─── Badge URL ─────────────────────────────────────────────────────────────────
-BADGE_URL="https://img.shields.io/badge/dynamic/json?color=informational&label=Ratchet+Score&query=$.score&url=https%3A%2F%2Fraw.githubusercontent.com%2F${GITHUB_REPOSITORY}%2F${GITHUB_SHA}%2F${WORKING_DIRECTORY}%2Fratchet-scan.json"
+BADGE_COLOR="brightgreen"
+if [ -n "$SCORE" ]; then
+  if [ "$SCORE" -lt 50 ] 2>/dev/null; then BADGE_COLOR="red"
+  elif [ "$SCORE" -lt 70 ] 2>/dev/null; then BADGE_COLOR="orange"
+  elif [ "$SCORE" -lt 85 ] 2>/dev/null; then BADGE_COLOR="yellow"
+  fi
+fi
+BADGE_URL="https://img.shields.io/badge/Ratchet%20Score-${SCORE}%2F100-${BADGE_COLOR}"
 
 # ─── Set outputs ────────────────────────────────────────────────────────────────
 set_output "score" "$SCORE"
+set_output "score-delta" "$SCORE_DELTA"
 set_output "json" "$SCAN_JSON"
 set_output "badge-url" "$BADGE_URL"
 set_output "pr-comment-id" ""
@@ -197,36 +227,44 @@ if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ -n "$GITHUB_TOKEN" ]; then
   [ -z "$PR_NUMBER" ] && echo "⚠ Could not determine PR number from ref '$GITHUB_REF'" && PR_NUMBER=""
 
   if [ -n "$PR_NUMBER" ]; then
-    # Build category markdown table
+    # Build category markdown table from array [{name, score, max}]
     CAT_TABLE=""
-    if [ -n "$(json_get "$SCAN_JSON" "categories")" ]; then
-      CAT_TABLE=$'| Category | Score |\n|---|---|\n'
-      if has_cmd jq; then
-        while IFS='=' read -r name score; do
-          [ -n "$name" ] && CAT_TABLE+="| $name | $score |\n"
-        done < <(jq -r '.categories | to_entries | .[] | "\(.key)=\(.value.score // .value)"' "$SCAN_JSON" 2>/dev/null)
-      fi
+    if has_cmd jq && jq -e '.categories | length > 0' "$SCAN_JSON" &>/dev/null; then
+      CAT_TABLE=$'| Category | Score | Max |\n|---|---|---|\n'
+      while IFS=$'\t' read -r name score max; do
+        [ -n "$name" ] && CAT_TABLE+="| ${name} | ${score} | ${max} |\n"
+      done < <(jq -r '.categories[] | [.name, (.score|tostring), (.max|tostring)] | @tsv' "$SCAN_JSON" 2>/dev/null)
     fi
 
     if [ "$EXIT_CODE" = "0" ]; then
-      STATUS_EMOJI="✅" STATUS_TEXT="**Passed**"
+      STATUS_EMOJI="✅" STATUS_TEXT="Passed"
     else
-      STATUS_EMOJI="❌" STATUS_TEXT="**Failed**"
+      STATUS_EMOJI="❌" STATUS_TEXT="Failed"
     fi
 
-    COMMENT_BODY="${STATUS_EMOJI} **Ratchet Code Quality Scan — ${STATUS_TEXT}**
+    DELTA_LINE=""
+    if [ -n "$SCORE_DELTA" ]; then
+      DELTA_LINE="**Score delta:** ${SCORE_DELTA} pts vs baseline  "
+    fi
 
-**Overall Score:** ${SCORE} / 100
+    COMMENT_BODY="${STATUS_EMOJI} **Ratchet Code Quality — ${STATUS_TEXT}**
+
+**Score: ${SCORE} / 100**
+${DELTA_LINE}
 [![Ratchet Score](${BADGE_URL})](https://github.com/${GITHUB_REPOSITORY}/actions)
 
-$(if [ -n "$CAT_TABLE" ]; then printf "\`\`\`\n${STATUS_EMOJI} Category Breakdown\n${CAT_TABLE}\n\`\`\`\n"; fi)\`\`\`yaml
-threshold:${THRESHOLD:+" $THRESHOLD"}\ncategory_thresholds:${CATEGORY_THRESHOLDS:+" $CATEGORY_THRESHOLDS"}\n\`\`\`
-
-> Powered by [ratchet-run](https://github.com/samloux/ratchet) · [View full report](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/${WORKING_DIRECTORY}/ratchet-scan.json)
+$(if [ -n "$CAT_TABLE" ]; then printf "### Category Breakdown\n\n${CAT_TABLE}\n"; fi)
+> [View scan JSON](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/${WORKING_DIRECTORY}/ratchet-scan.json) · Powered by [ratchet-run](https://github.com/giovanni-labs/ratchet)
 "
 
     # Escape for JSON
-    ESCAPED_BODY="$(printf '%s' "$COMMENT_BODY" | jq -Rs .)"
+    if has_cmd jq; then
+      ESCAPED_BODY="$(printf '%s' "$COMMENT_BODY" | jq -Rs .)"
+    else
+      # Fallback: node
+      ESCAPED_BODY="$(node -e "process.stdout.write(JSON.stringify(require('fs').readFileSync('/dev/stdin','utf8')))" <<< "$COMMENT_BODY")"
+    fi
+
     COMMENT_RESPONSE="$(
       curl -s -X POST \
         -H "Authorization: token $GITHUB_TOKEN" \
