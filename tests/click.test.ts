@@ -5,6 +5,16 @@ import { tmpdir } from 'os';
 import { execFileSync } from 'child_process';
 import type { Agent } from '../src/core/agents/base.js';
 import type { Target, BuildResult, RatchetConfig } from '../src/types.js';
+
+// Mock prevalidation to avoid real LLM calls during unit tests
+vi.mock('../src/core/prevalidate.js', () => ({
+  prevalidate: vi.fn().mockResolvedValue({
+    recommendation: 'accept',
+    confidence: 0.95,
+    concerns: [],
+  }),
+}));
+
 import { executeClick } from '../src/core/click.js';
 
 function initRepo(dir: string): void {

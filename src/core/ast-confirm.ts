@@ -23,7 +23,16 @@ export function confirmWithAST(content: string, rule: ASTRule): number {
 function countEmptyCatches(sf: ts.SourceFile): number {
   let count = 0;
   function visit(node: ts.Node) {
-    if (ts.isCatchClause(node) && node.block.statements.length === 0) count++;
+    if (ts.isCatchClause(node)) {
+      const block = node.block;
+      // A catch is only "empty" if it has no statements AND no leading/trailing comments.
+      // Comment-only catches (e.g. // intentionally empty) are considered documented intent.
+      if (block.statements.length === 0) {
+        const text = sf.text.slice(block.getStart(sf) + 1, block.getEnd() - 1).trim();
+        const hasComment = /\/\/|\/\*/.test(text);
+        if (!hasComment) count++;
+      }
+    }
     ts.forEachChild(node, visit);
   }
   visit(sf);

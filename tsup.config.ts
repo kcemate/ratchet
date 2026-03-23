@@ -9,4 +9,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   shims: true,
+  external: ['typescript'],
 });
