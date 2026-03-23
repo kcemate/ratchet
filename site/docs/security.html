@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security &amp; Privacy — Ratchet Docs</title>
+    <meta name="description" content="Ratchet is local-first. Your code never leaves your machine. BYOK, no telemetry, zero data retention." />
+    <link rel="canonical" href="https://ratchetcli.com/docs/security" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-card: #0f0f18;
+            --bg-glass: rgba(15, 15, 24, 0.72);
+            --accent: #00d4ff;
+            --accent-dim: #00a8cc;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --text-muted: #5a5a6e;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --error: #ff4466;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(0, 212, 255, 0.3);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius: 12px;
+            --radius-lg: 20px;
+            --radius-sm: 6px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { scroll-behavior: smooth; overflow-x: hidden; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
+        ::selection { background: rgba(0, 212, 255, 0.25); color: #fff; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Nav */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            color: var(--bg-primary);
+            font-size: 14px;
+            box-shadow: 0 0 16px rgba(0, 212, 255, 0.35);
+        }
+
+        .nav-links {
+            display: none;
+            gap: 32px;
+            list-style: none;
+        }
+
+        @media (min-width: 640px) { .nav-links { display: flex; } }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            transition: color var(--transition);
+        }
+
+        .nav-links a:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+        .nav-links a.active { color: var(--accent); }
+
+        .nav-cta {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all var(--transition);
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+        }
+
+        .nav-cta:hover { background: var(--accent-dim); transform: translateY(-1px); }
+
+        .nav-desktop-ctas { display: none; align-items: center; gap: 8px; }
+        @media (min-width: 640px) { .nav-desktop-ctas { display: flex; } }
+
+        /* Layout */
+        .docs-layout {
+            display: flex;
+            padding-top: 64px;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .docs-sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 64px;
+            height: calc(100vh - 64px);
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            padding: 32px 0;
+            display: none;
+        }
+
+        @media (min-width: 768px) { .docs-sidebar { display: block; } }
+
+        .sidebar-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            padding: 0 24px;
+            margin-bottom: 8px;
+            margin-top: 24px;
+        }
+
+        .sidebar-label:first-child { margin-top: 0; }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 24px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-left: 2px solid transparent;
+            transition: all var(--transition);
+        }
+
+        .sidebar-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+        .sidebar-link.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0, 212, 255, 0.05); }
+
+        /* Main */
+        .docs-main {
+            flex: 1;
+            min-width: 0;
+            padding: 48px 24px 80px;
+            max-width: 860px;
+        }
+
+        @media (min-width: 1024px) { .docs-main { padding: 48px 64px 80px; } }
+
+        /* Page header */
+        .page-header {
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-breadcrumb {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .page-breadcrumb a { color: var(--accent); text-decoration: none; }
+
+        .page-title {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Trust banner */
+        .trust-banner {
+            background: linear-gradient(135deg, rgba(0,212,255,0.06) 0%, rgba(0,255,136,0.04) 100%);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-lg);
+            padding: 28px 32px;
+            margin-bottom: 48px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 24px;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .trust-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .trust-item-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .trust-item-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Security sections */
+        .sec-section {
+            margin-bottom: 48px;
+            padding-bottom: 48px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sec-section:last-of-type { border-bottom: none; }
+
+        .sec-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .sec-icon-wrap {
+            width: 52px; height: 52px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .sec-icon-wrap.cyan { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2); }
+        .sec-icon-wrap.green { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2); }
+        .sec-icon-wrap.purple { background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.2); }
+        .sec-icon-wrap.yellow { background: rgba(255,170,0,0.1); border: 1px solid rgba(255,170,0,0.2); }
+        .sec-icon-wrap.dim { background: rgba(90,90,110,0.15); border: 1px solid rgba(90,90,110,0.25); }
+
+        .sec-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .sec-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .sec-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .sec-tag.shipped { background: rgba(0,255,136,0.1); color: var(--success); border: 1px solid rgba(0,255,136,0.25); }
+        .sec-tag.soon { background: rgba(255,170,0,0.1); color: var(--warning); border: 1px solid rgba(255,170,0,0.25); }
+
+        .sec-body {
+            color: var(--text-secondary);
+            line-height: 1.75;
+            font-size: 0.95rem;
+        }
+
+        .sec-body p { margin-bottom: 16px; }
+        .sec-body p:last-child { margin-bottom: 0; }
+
+        .sec-body strong { color: var(--text-primary); font-weight: 600; }
+        .sec-body code {
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            color: var(--accent);
+            background: rgba(0,212,255,0.06);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        /* Detail list */
+        .detail-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .detail-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .detail-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .detail-list li strong { color: var(--text-primary); }
+
+        /* Network diagram */
+        .network-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            margin-top: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 2;
+        }
+
+        .net-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .net-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .net-dot.green { background: var(--success); }
+        .net-dot.red { background: var(--error); }
+        .net-label { color: var(--text-secondary); }
+        .net-val { color: var(--text-primary); font-weight: 500; }
+        .net-badge-ok { color: var(--success); font-size: 0.78rem; }
+        .net-badge-no { color: var(--error); font-size: 0.78rem; }
+
+        /* BYOK code block */
+        .code-snippet {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .code-snippet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .copy-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            padding: 3px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .copy-btn:hover { color: var(--accent); border-color: var(--border-accent); }
+
+        .code-snippet pre {
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 1.7;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        .kw { color: #79c0ff; }
+        .str { color: #a5d6ff; }
+        .cm { color: #5a5a6e; font-style: italic; }
+        .ok { color: var(--success); }
+
+        /* Coming soon card */
+        .coming-soon-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .coming-soon-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(255,170,0,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .enterprise-feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .ent-feat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .ent-feat-icon {
+            font-size: 1rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border);
+            padding: 48px 0;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            text-align: center;
+        }
+
+        @media (min-width: 1024px) {
+            .footer-content { flex-direction: row; justify-content: space-between; }
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color var(--transition);
+        }
+
+        .footer-links a:hover { color: var(--accent); }
+        .footer-copy { color: var(--text-muted); font-size: 0.85rem; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 28px; right: 28px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius);
+            padding: 12px 20px;
+            font-size: 14px;
+            font-family: var(--font-mono);
+            color: var(--success);
+            z-index: 1000;
+            transform: translateY(80px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast">✓ Copied to clipboard</div>
+
+<!-- Nav -->
+<nav id="nav">
+    <div class="container">
+        <a href="/" class="logo">
+            <span class="logo-icon">⚙</span>
+            ratchet
+        </a>
+        <ul class="nav-links">
+            <li><a href="/#how-it-works">How It Works</a></li>
+            <li><a href="/#features">Commands</a></li>
+            <li><a href="/docs/scoring.html">Scoring</a></li>
+            <li><a href="/#vision">Vision</a></li>
+            <li><a href="/#pricing">Pricing</a></li>
+            <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
+            <li><a href="/docs" class="active" style="color:#a1a1aa;">Docs</a></li>
+        </ul>
+        <div class="nav-desktop-ctas">
+            <a href="/sandbox" class="nav-cta" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">Sandbox</a>
+            <a href="/#pricing" class="nav-cta">Get Started</a>
+        </div>
+    </div>
+</nav>
+
+<div class="docs-layout">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+        <div class="sidebar-label">Documentation</div>
+        <a href="/docs/scoring.html" class="sidebar-link">📊 Scoring</a>
+        <a href="/docs/security.html" class="sidebar-link active">🔒 Security &amp; Privacy</a>
+        <a href="/docs/integrations.html" class="sidebar-link">🔗 Integrations</a>
+
+        <div class="sidebar-label" style="margin-top:32px;">On this page</div>
+        <a href="#local-first" class="sidebar-link" style="font-size:0.82rem;">Local-First</a>
+        <a href="#byok" class="sidebar-link" style="font-size:0.82rem;">BYOK</a>
+        <a href="#network" class="sidebar-link" style="font-size:0.82rem;">Network Activity</a>
+        <a href="#telemetry" class="sidebar-link" style="font-size:0.82rem;">No Telemetry</a>
+        <a href="#enterprise" class="sidebar-link" style="font-size:0.82rem;">Enterprise</a>
+    </aside>
+
+    <!-- Main content -->
+    <main class="docs-main">
+        <div class="page-header">
+            <div class="page-breadcrumb"><a href="/">ratchetcli.com</a> / <a href="/docs">Docs</a> / Security &amp; Privacy</div>
+            <h1 class="page-title">Security &amp; Privacy</h1>
+            <p class="page-subtitle">Your source code is your most valuable asset. Ratchet is designed from the ground up so that code stays on your machine — and only your machine.</p>
+        </div>
+
+        <!-- Trust banner -->
+        <div class="trust-banner">
+            <div class="trust-item">
+                <div class="trust-icon">🏠</div>
+                <div>
+                    <div class="trust-item-title">Local-first</div>
+                    <div class="trust-item-desc">All analysis runs in your process</div>
+                </div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">🔑</div>
+                <div>
+                    <div class="trust-item-title">Your API key</div>
+                    <div class="trust-item-desc">Direct call to the LLM provider</div>
+                </div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">🚫</div>
+                <div>
+                    <div class="trust-item-title">Zero telemetry</div>
+                    <div class="trust-item-desc">No usage data collected</div>
+                </div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">🔍</div>
+                <div>
+                    <div class="trust-item-title">Open source core</div>
+                    <div class="trust-item-desc">Audit it yourself on GitHub</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Local-First ── -->
+        <div class="sec-section" id="local-first">
+            <div class="sec-header">
+                <div class="sec-icon-wrap cyan">🏠</div>
+                <div>
+                    <div class="sec-title">Local-First Architecture <span class="sec-tag shipped">Shipped</span></div>
+                    <div class="sec-subtitle">All computation happens in your terminal process</div>
+                </div>
+            </div>
+            <div class="sec-body">
+                <p>Ratchet is a CLI tool that runs entirely within your local environment. When you invoke <code>ratchet scan</code> or <code>ratchet fix</code>, the tool reads files from your filesystem, constructs prompts, and sends those prompts <strong>directly to the AI provider of your choice</strong> — no Ratchet servers in the middle.</p>
+                <p>There is no cloud processing step, no file upload endpoint, and no intermediate proxy. The process is identical whether you're on a corporate laptop, an air-gapped CI runner, or a personal machine.</p>
+
+                <ul class="detail-list">
+                    <li><strong>No code upload</strong> — source files are never transmitted to Ratchet servers</li>
+                    <li><strong>No auth server</strong> — your license key is validated against a public signature, offline-capable</li>
+                    <li><strong>No cloud storage</strong> — scan results are written to <code>ratchet-report.json</code> locally</li>
+                    <li><strong>No dependency on Ratchet uptime</strong> — tool works even if ratchetcli.com is down</li>
+                    <li><strong>Filesystem isolation</strong> — Ratchet only reads files within the project directory you specify</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ── BYOK ── -->
+        <div class="sec-section" id="byok">
+            <div class="sec-header">
+                <div class="sec-icon-wrap green">🔑</div>
+                <div>
+                    <div class="sec-title">Bring Your Own Key (BYOK) <span class="sec-tag shipped">Shipped</span></div>
+                    <div class="sec-subtitle">Your API key, your LLM provider, your terms</div>
+                </div>
+            </div>
+            <div class="sec-body">
+                <p>Ratchet never handles your API keys on its servers. You configure them locally via environment variables or a <code>.ratchet.env</code> file. Prompts go from your machine directly to OpenAI, Anthropic, or any compatible endpoint — governed by <strong>your provider's privacy policy</strong>, not ours.</p>
+                <p>This means you can use your company's enterprise agreement with Anthropic (which includes zero data retention) simply by setting your key in the environment. Ratchet inherits those guarantees automatically.</p>
+            </div>
+
+            <div class="code-snippet">
+                <div class="code-snippet-header">
+                    <span>~/.ratchet.env — or set as env vars</span>
+                    <button class="copy-btn" onclick="copyCode(this, 'byok-code')">Copy</button>
+                </div>
+                <pre id="byok-code"><span class="cm"># Anthropic (default)</span>
+<span class="ok">ANTHROPIC_API_KEY</span>=sk-ant-xxxxxxxxxxxxxxxxxxxxxxxx
+
+<span class="cm"># OpenAI</span>
+<span class="ok">OPENAI_API_KEY</span>=sk-xxxxxxxxxxxxxxxxxxxxxxxx
+
+<span class="cm"># Groq (fast local-equivalent)</span>
+<span class="ok">GROQ_API_KEY</span>=gsk_xxxxxxxxxxxxxxxxxxxxxxxx
+
+<span class="cm"># Custom OpenAI-compatible endpoint (Ollama, LM Studio, etc.)</span>
+<span class="ok">RATCHET_LLM_BASE_URL</span>=http://localhost:11434/v1
+<span class="ok">RATCHET_LLM_MODEL</span>=llama3.2:latest</pre>
+            </div>
+
+            <ul class="detail-list" style="margin-top:20px;">
+                <li>Keys are read from environment at runtime — <strong>never cached or stored</strong> by Ratchet</li>
+                <li>Use <code>--model</code> flag to switch providers per-run without changing config</li>
+                <li>Fully supports Ollama and local models — <strong>zero external calls</strong> in that configuration</li>
+                <li>Enterprise Anthropic keys with zero-retention policy are fully compatible</li>
+            </ul>
+        </div>
+
+        <!-- ── Network Activity ── -->
+        <div class="sec-section" id="network">
+            <div class="sec-header">
+                <div class="sec-icon-wrap purple">🌐</div>
+                <div>
+                    <div class="sec-title">Network Activity <span class="sec-tag shipped">Shipped</span></div>
+                    <div class="sec-subtitle">Every outbound connection, documented</div>
+                </div>
+            </div>
+            <div class="sec-body">
+                <p>Below is the complete list of network connections Ratchet makes during a typical run. There are exactly two: one to validate your license key (a signed JWT checked against a public key — no server roundtrip in offline mode), and one to your configured LLM API endpoint.</p>
+            </div>
+
+            <div class="network-card">
+                <div class="net-row">
+                    <div class="net-dot green"></div>
+                    <span class="net-label">License check&nbsp;&nbsp;&nbsp;</span>
+                    <span class="net-val">api.ratchetcli.com/v1/license</span>
+                    <span style="margin-left:auto;" class="net-badge-ok">✓ allowed, no code sent</span>
+                </div>
+                <div class="net-row">
+                    <div class="net-dot green"></div>
+                    <span class="net-label">LLM prompts&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    <span class="net-val">api.anthropic.com (or your configured endpoint)</span>
+                    <span style="margin-left:auto;" class="net-badge-ok">✓ your key, your policy</span>
+                </div>
+                <div class="net-row">
+                    <div class="net-dot red"></div>
+                    <span class="net-label">Analytics&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    <span class="net-val">— none —</span>
+                    <span style="margin-left:auto;" class="net-badge-no">✗ blocked by design</span>
+                </div>
+                <div class="net-row">
+                    <div class="net-dot red"></div>
+                    <span class="net-label">Error reporting&nbsp;</span>
+                    <span class="net-val">— none —</span>
+                    <span style="margin-left:auto;" class="net-badge-no">✗ blocked by design</span>
+                </div>
+                <div class="net-row">
+                    <div class="net-dot red"></div>
+                    <span class="net-label">Code storage&nbsp;&nbsp;&nbsp;</span>
+                    <span class="net-val">— none —</span>
+                    <span style="margin-left:auto;" class="net-badge-no">✗ does not exist</span>
+                </div>
+            </div>
+
+            <p style="margin-top:16px;font-size:0.85rem;color:var(--text-muted);">
+                To verify: run <code style="font-family:var(--font-mono);color:var(--accent);font-size:0.85em;">sudo tcpdump -i any host ratchetcli.com</code> during a scan and confirm only the license endpoint is contacted.
+            </p>
+        </div>
+
+        <!-- ── No Telemetry ── -->
+        <div class="sec-section" id="telemetry">
+            <div class="sec-header">
+                <div class="sec-icon-wrap yellow">🚫</div>
+                <div>
+                    <div class="sec-title">No Telemetry <span class="sec-tag shipped">Shipped</span></div>
+                    <div class="sec-subtitle">We don't collect usage data. Full stop.</div>
+                </div>
+            </div>
+            <div class="sec-body">
+                <p>Many developer tools collect anonymous usage metrics to "improve the product." Ratchet collects nothing. No command invocations, no error reports, no feature flags, no A/B tests, no session IDs.</p>
+                <p>If you find a bug, we ask you to <strong>file a GitHub issue</strong>. That is the only feedback mechanism. This is intentional — it keeps our data surface at zero and means we can make strong privacy guarantees to security-sensitive teams without carve-outs.</p>
+
+                <ul class="detail-list">
+                    <li><strong>No analytics SDK</strong> — PostHog, Segment, Mixpanel are not in the dependency tree</li>
+                    <li><strong>No crash reporting</strong> — Sentry, Bugsnag, Rollbar are not installed</li>
+                    <li><strong>No feature flags</strong> — LaunchDarkly, Flagsmith not used; all features are local</li>
+                    <li><strong>No update pings</strong> — version checks happen via npm registry, like any npm install</li>
+                    <li>Verify by auditing <code>node_modules/.package-lock.json</code> — no telemetry packages present</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ── Enterprise ── -->
+        <div class="sec-section" id="enterprise">
+            <div class="sec-header">
+                <div class="sec-icon-wrap dim">🏢</div>
+                <div>
+                    <div class="sec-title">Enterprise Security Controls <span class="sec-tag soon">Coming Soon</span></div>
+                    <div class="sec-subtitle">SOC 2, audit logs, SSO, and policy enforcement</div>
+                </div>
+            </div>
+
+            <div class="coming-soon-card">
+                <p style="color:var(--text-secondary);font-size:0.95rem;line-height:1.7;margin-bottom:24px;">
+                    Enterprise tier is in private beta. The following controls are in development for security-sensitive organizations. <a href="mailto:ratchet@kcemate.com" style="color:var(--accent);text-decoration:none;">Contact us</a> to get early access.
+                </p>
+
+                <div class="enterprise-feature-list">
+                    <div class="ent-feat"><span class="ent-feat-icon">🔐</span> SSO / SAML 2.0 integration</div>
+                    <div class="ent-feat"><span class="ent-feat-icon">📋</span> SOC 2 Type II report</div>
+                    <div class="ent-feat"><span class="ent-feat-icon">📜</span> Immutable audit logs</div>
+                    <div class="ent-feat"><span class="ent-feat-icon">📁</span> Per-project data residency</div>
+                    <div class="ent-feat"><span class="ent-feat-icon">🛡️</span> Custom Semgrep rule packs</div>
+                    <div class="ent-feat"><span class="ent-feat-icon">🔒</span> Network egress allowlist config</div>
+                    <div class="ent-feat"><span class="ent-feat-icon">👥</span> Role-based access controls</div>
+                    <div class="ent-feat"><span class="ent-feat-icon">📊</span> Org-wide score dashboard</div>
+                    <div class="ent-feat"><span class="ent-feat-icon">🔑</span> Customer-managed encryption keys</div>
+                    <div class="ent-feat"><span class="ent-feat-icon">🤝</span> BAA / DPA available on request</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page nav -->
+        <div style="display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:32px;border-top:1px solid var(--border);">
+            <a href="/docs/scoring.html" style="display:flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:0.9rem;font-weight:500;">← Scoring</a>
+            <a href="/docs/integrations.html" style="display:flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:0.9rem;font-weight:500;">Integrations →</a>
+        </div>
+    </main>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <a href="/" class="logo">
+                <span class="logo-icon" style="width:26px;height:26px;font-size:12px;">⚙</span>
+                ratchet
+            </a>
+            <ul class="footer-links">
+                <li><a href="https://www.npmjs.com/package/ratchet-run" target="_blank">npm</a></li>
+                <li><a href="/#features">Commands</a></li>
+                <li><a href="/docs/scoring.html">Scoring</a></li>
+                <li><a href="/#vision">Vision</a></li>
+                <li><a href="/#pricing">Pricing</a></li>
+                <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
+                <li><a href="/docs">Docs</a></li>
+                <li><a href="mailto:ratchet@kcemate.com">Contact</a></li>
+            </ul>
+            <p class="footer-copy">© 2026 Ratchet. Built for developers.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.style.background = window.scrollY > 40
+            ? 'rgba(10,10,15,0.97)'
+            : 'rgba(10,10,15,0.85)';
+    }, { passive: true });
+
+    function copyCode(btn, id) {
+        const pre = document.getElementById(id);
+        const text = pre ? pre.innerText : '';
+        navigator.clipboard.writeText(text).then(() => {
+            btn.textContent = 'Copied!';
+            showToast('✓ Copied to clipboard');
+            setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+        });
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2200);
+    }
+</script>
+</body>
+</html>
