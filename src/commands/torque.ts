@@ -786,6 +786,23 @@ export function torqueCommand(): Command {
                     `(${archNames}${etcSuffix})\n`,
                   );
                 }
+
+                // Proactive --architect recommendation when structural issues dominate
+                if (!options.architect) {
+                  const structuralPoints = nonSweepableGaps.reduce((sum, g) => sum + g.pointsAvailable, 0);
+                  const structuralDominant = structuralPoints >= reachablePoints || (nonSweepableGaps.length > 0 && reachablePoints <= 2);
+                  if (structuralDominant && nonSweepableGaps.length > 0) {
+                    const details = nonSweepableGaps
+                      .slice(0, 3)
+                      .map(g => `${g.subcategory}: ${g.currentIssueCount} issues (+${g.pointsAvailable}pts)`)
+                      .join(', ');
+                    process.stdout.write(
+                      chalk.yellow(`\n  ⚠️  Structural issues detected — ${chalk.bold('--architect')} recommended\n`) +
+                      chalk.dim(`     ${details}\n`) +
+                      chalk.dim(`     Run: ${chalk.green('ratchet torque --architect')}\n`),
+                    );
+                  }
+                }
                 process.stdout.write('\n');
                 lastKnownScore = scan.total;
               },
