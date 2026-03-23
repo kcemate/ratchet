@@ -643,6 +643,34 @@
             border-radius: var(--radius-sm);
         }
 
+        /* ── Before/After Section ── */
+        .before-after-section { padding: 80px 0; background: var(--bg-primary); }
+        .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 960px; margin: 0 auto; }
+        @media (max-width: 768px) { .ba-grid { grid-template-columns: 1fr; } }
+        .ba-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        .ba-panel-header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+        .ba-label { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+        .ba-label.before { color: var(--error); }
+        .ba-label.after { color: var(--success); }
+        .ba-code { padding: 20px; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; color: var(--text-secondary); white-space: pre; overflow-x: auto; }
+        .ba-code .hl-red { color: var(--error); text-decoration: line-through; opacity: 0.7; }
+        .ba-code .hl-green { color: var(--success); }
+        .ba-code .hl-dim { color: var(--text-muted); }
+        .ba-code .hl-key { color: var(--accent); }
+        .ba-arrow { display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--accent); }
+        @media (max-width: 768px) { .ba-arrow { transform: rotate(90deg); } }
+
+        /* ── Social Proof ── */
+        .social-proof-section { padding: 60px 0; background: var(--bg-primary); }
+        .proof-card { max-width: 720px; margin: 0 auto; text-align: center; padding: 40px; background: var(--bg-glass); backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+        .proof-stat { font-size: clamp(36px, 5vw, 56px); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; }
+        .proof-stat .from { color: var(--text-muted); }
+        .proof-stat .arrow { color: var(--accent); margin: 0 8px; }
+        .proof-stat .to { color: var(--success); }
+        .proof-desc { color: var(--text-secondary); font-size: 17px; margin-bottom: 24px; }
+        .proof-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+        .proof-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 100px; font-size: 13px; font-weight: 600; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.2); color: var(--accent); }
+
         /* ── Pawl / Mechanic Section ── */
         .pawl-section {
             padding: 80px 0;
@@ -1217,7 +1245,7 @@
         }
 
         @media (min-width: 1024px) {
-            .pricing-grid { grid-template-columns: repeat(5, 1fr); }
+            .pricing-grid { grid-template-columns: repeat(3, 1fr); }
             .pricing-card.popular { grid-column: span 1; max-width: none; justify-self: auto; }
         }
 
@@ -1541,7 +1569,7 @@
         </div>
         <h1>Stop shipping<br><span class="gradient">tech debt.</span></h1>
         <p class="hero-subtitle">
-            Ratchet is an AI-powered CLI that scores, fixes, and tests your code automatically — one committed improvement at a time.
+            Ratchet finds the highest-impact fix in your codebase, ships it only if tests pass, and repeats. Your score only goes up.
         </p>
         <div class="install-cmd" onclick="copyInstall(this)">
             <span class="prefix">$</span>
@@ -1716,6 +1744,59 @@
                     5 landed &nbsp;·&nbsp; 2 rolled back &nbsp;·&nbsp; <span style="color:var(--success);">Score: 72 → 84/100 (+12)</span>
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── BEFORE / AFTER ── -->
+<section class="before-after-section" id="before-after">
+    <div class="container">
+        <div class="section-header fade-in">
+            <p class="section-label">Real Transformation</p>
+            <h2 class="section-title">See what Ratchet actually does.</h2>
+            <p class="section-subtitle">This is a real fix from Click 1 — removing an empty catch that silently swallows errors. Ratchet found it, fixed it, ran tests, and committed.</p>
+        </div>
+
+        <div class="ba-grid fade-in">
+            <div class="ba-panel">
+                <div class="ba-panel-header">
+                    <span class="ba-label before">✗ Before</span>
+                    <span style="color:var(--text-muted);font-size:12px;margin-left:auto;">src/services/auth.ts</span>
+                </div>
+                <div class="ba-code"><span class="hl-key">async function</span> validateSession(token: string) {
+  <span class="hl-key">try</span> {
+    <span class="hl-key">const</span> session = <span class="hl-key">await</span> db.sessions.findOne({ token });
+    <span class="hl-key">if</span> (!session) <span class="hl-key">return null</span>;
+    <span class="hl-key">return</span> session;
+  } <span class="hl-key">catch</span> (err) {
+    <span class="hl-red">// empty — error silently swallowed</span>
+  }
+}</div>
+            </div>
+
+            <div class="ba-panel">
+                <div class="ba-panel-header">
+                    <span class="ba-label after">✓ After</span>
+                    <span style="color:var(--text-muted);font-size:12px;margin-left:auto;">src/services/auth.ts</span>
+                </div>
+                <div class="ba-code"><span class="hl-key">async function</span> validateSession(token: string) {
+  <span class="hl-key">try</span> {
+    <span class="hl-key">const</span> session = <span class="hl-key">await</span> db.sessions.findOne({ token });
+    <span class="hl-key">if</span> (!session) <span class="hl-key">return null</span>;
+    <span class="hl-key">return</span> session;
+  } <span class="hl-key">catch</span> (err) {
+    <span class="hl-green">logger.error('Session validation failed', {</span>
+    <span class="hl-green">  error: err instanceof Error ? err.message : String(err),</span>
+    <span class="hl-green">  tokenPrefix: token.slice(0, 8),</span>
+    <span class="hl-green">});</span>
+    <span class="hl-green">return null;</span>
+  }
+}</div>
+            </div>
+        </div>
+
+        <div style="text-align:center;margin-top:24px;" class="fade-in">
+            <span style="color:var(--text-muted);font-size:14px;">Error Handling: <span style="color:var(--error);">3/20</span> → <span style="color:var(--success);">6/20 (+3 pts)</span> &nbsp;·&nbsp; Tests: <span style="color:var(--success);">all passing</span> &nbsp;·&nbsp; Committed: <span style="font-family:var(--font-mono);color:var(--accent);font-size:13px;">a3f9b21</span></span>
         </div>
     </div>
 </section>
@@ -2157,6 +2238,27 @@
 <!-- ── SECTION GLOW TRANSITION ── -->
 <div class="section-glow" style="background:radial-gradient(ellipse 60% 100% at 50% 0%, rgba(0,212,255,0.04) 0%, transparent 70%);"></div>
 
+<!-- ── SOCIAL PROOF ── -->
+<section class="social-proof-section" id="proof">
+    <div class="container">
+        <div class="proof-card fade-in">
+            <div class="proof-stat">
+                <span class="from">72</span><span class="arrow">→</span><span class="to">86</span>
+            </div>
+            <p class="proof-desc">Ratchet's score on its own codebase. We dogfood every feature — the CLI improves itself.</p>
+            <div class="proof-badges">
+                <div class="proof-badge">🧪 1,627 tests passing</div>
+                <div class="proof-badge">🔒 Security 15/15</div>
+                <div class="proof-badge">⚡ Error Handling 20/20</div>
+                <div class="proof-badge">📊 Performance 10/10</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── SECTION GLOW TRANSITION ── -->
+<div class="section-glow" style="background:radial-gradient(ellipse 60% 100% at 50% 0%, rgba(0,212,255,0.04) 0%, transparent 70%);"></div>
+
 <!-- ── PRICING ── -->
 <section class="pricing-section" id="pricing">
     <div class="container">
@@ -2172,7 +2274,7 @@
             <span class="billing-label" id="label-annual">Annual &nbsp;<span class="save-badge">Save ~20%</span></span>
         </div>
 
-        <div class="pricing-grid fade-in">
+        <div class="pricing-grid fade-in" style="grid-template-columns: repeat(3, 1fr);">
 
             <!-- FREE -->
             <div class="pricing-card">
@@ -2182,7 +2284,7 @@
                 <div class="pricing-tagline">See your score. Feel the itch.</div>
                 <div class="pricing-divider"></div>
                 <ul class="pricing-features">
-                    <li>Scan: unlimited</li>
+                    <li>Unlimited scans</li>
                     <li>Quick-fix: top 3 issues + predictions</li>
                     <li>Baseline &amp; delta tracking</li>
                     <li>Vision: 1/week</li>
@@ -2190,27 +2292,6 @@
                     <li>JSON &amp; Markdown export</li>
                 </ul>
                 <a href="#install" class="pricing-cta pricing-cta-outline">Get Started</a>
-            </div>
-
-            <!-- BUILDER -->
-            <div class="pricing-card">
-                <div class="pricing-tier">Builder</div>
-                <div class="pricing-price" data-monthly="$12" data-annual="$115">$12</div>
-                <div class="pricing-period" id="period-builder">/mo</div>
-                <div class="pricing-tagline">BYOK. Your key, your rate.</div>
-                <div class="pricing-divider"></div>
-                <ul class="pricing-features">
-                    <li>30 improvement cycles/month</li>
-                    <li>BYOK — bring your own API key</li>
-                    <li>ratchet improve access</li>
-                    <li>Everything in Free</li>
-                </ul>
-                <a href="https://buy.stripe.com/bJe3cx54f7lD4dxevF7ok00"
-                   class="pricing-cta pricing-cta-outline"
-                   id="cta-builder"
-                   data-monthly="https://buy.stripe.com/bJe3cx54f7lD4dxevF7ok00"
-                   data-annual="https://buy.stripe.com/4gM4gB1S37lD2Zp1Pq7ok01"
-                   target="_blank" rel="noopener">Start Building</a>
             </div>
 
             <!-- PRO — MOST POPULAR -->
@@ -2227,9 +2308,8 @@
                     <li>ratchet torque + improve</li>
                     <li>GitHub Action + PR comments</li>
                     <li>Score badge for README</li>
-                    <li>Unlimited vision</li>
-                    <li>PDF reports</li>
-                    <li>Everything in Builder</li>
+                    <li>Unlimited vision + PDF reports</li>
+                    <li>Everything in Free</li>
                 </ul>
                 <a href="https://buy.stripe.com/bJeeVf68jcFXh0j0EP7ok02"
                    class="pricing-cta pricing-cta-primary"
@@ -2239,49 +2319,27 @@
                    target="_blank" rel="noopener">Go Pro</a>
             </div>
 
-            <!-- TEAM -->
-            <div class="pricing-card">
-                <div class="pricing-tier">Team</div>
-                <div class="pricing-price purple" data-monthly="$149" data-annual="$1430">$149</div>
-                <div class="pricing-period" id="period-team">/mo</div>
-                <div class="pricing-tagline">Hosted. No API key needed.</div>
-                <div class="pricing-divider"></div>
-                <ul class="pricing-features">
-                    <li>5 seats included</li>
-                    <li>500 improvement cycles/month</li>
-                    <li>Hosted — no API key required</li>
-                    <li>CI/CD GitHub Action</li>
-                    <li>Slack &amp; Discord notifications</li>
-                    <li>Everything in Pro</li>
-                </ul>
-                <a href="https://buy.stripe.com/aFaeVf40bbBT8tN0EP7ok04"
-                   class="pricing-cta pricing-cta-outline"
-                   id="cta-team"
-                   data-monthly="https://buy.stripe.com/aFaeVf40bbBT8tN0EP7ok04"
-                   data-annual="https://buy.stripe.com/7sY00l1S3fW99xR1Py7ok05"
-                   target="_blank" rel="noopener">Start Team Trial</a>
-            </div>
-
             <!-- ENTERPRISE -->
             <div class="pricing-card">
                 <div class="pricing-tier">Enterprise</div>
                 <div class="pricing-price muted" data-monthly="Custom" data-annual="Custom">Custom</div>
                 <div class="pricing-period">&nbsp;</div>
-                <div class="pricing-tagline">Air-gapped. Your rules. Your SLA.</div>
+                <div class="pricing-tagline">Hosted. Air-gapped. Your rules.</div>
                 <div class="pricing-divider"></div>
                 <ul class="pricing-features">
                     <li>Unlimited cycles</li>
-                    <li>Self-hosted / air-gapped</li>
-                    <li>Custom scoring rules</li>
-                    <li>SLA + dedicated support</li>
-                    <li>Everything in Team</li>
+                    <li>Hosted — no API key required</li>
+                    <li>Self-hosted / air-gapped option</li>
+                    <li>Custom scoring rules &amp; SLA</li>
+                    <li>Slack &amp; Discord notifications</li>
+                    <li>Everything in Pro</li>
                 </ul>
                 <a href="mailto:ratchet@kcemate.com" class="pricing-cta pricing-cta-outline">Contact Sales</a>
             </div>
 
         </div>
 
-        <p class="pricing-note fade-in">Need more cycles? <strong>$0.75/cycle</strong> on any paid plan.</p>
+        <p class="pricing-note fade-in">Need more cycles? <strong>$0.75/cycle</strong> on any paid plan. &nbsp;·&nbsp; <strong>Teams?</strong> <a href="mailto:ratchet@kcemate.com" style="color:var(--accent);text-decoration:none;">Contact us</a> for multi-seat pricing.</p>
     </div>
 </section>
 
