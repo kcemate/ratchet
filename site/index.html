@@ -1240,13 +1240,7 @@
         }
 
         @media (min-width: 640px) {
-            .pricing-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
-            .pricing-card.popular { grid-column: span 2; max-width: 460px; justify-self: center; }
-        }
-
-        @media (min-width: 1024px) {
-            .pricing-grid { grid-template-columns: repeat(3, 1fr); }
-            .pricing-card.popular { grid-column: span 1; max-width: none; justify-self: auto; }
+            .pricing-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
         }
 
         .pricing-card {
@@ -2276,7 +2270,7 @@
             <span class="billing-label" id="label-annual">Annual &nbsp;<span class="save-badge">Save 25%</span></span>
         </div>
 
-        <div class="pricing-grid fade-in" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="pricing-grid fade-in">
 
             <!-- FREE -->
             <div class="pricing-card">
