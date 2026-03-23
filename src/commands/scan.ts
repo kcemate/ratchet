@@ -114,6 +114,17 @@ import {
   scoreStrictConfig,
 } from '../core/scan-constants.js';
 import { classifyFiles, filterByClass } from '../core/file-classifier.js';
+import { confirmWithAST, type ASTRule } from '../core/ast-confirm.js';
+
+function astConfirmedCount(files: string[], contents: Map<string, string>, rule: ASTRule): number {
+  let total = 0;
+  for (const file of files) {
+    const content = contents.get(file) ?? '';
+    const astCount = confirmWithAST(content, rule);
+    if (astCount >= 0) total += astCount;
+  }
+  return total;
+}
 import {
   scoreCoverageRatio,
   scoreEdgeCases,
@@ -249,6 +260,9 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
     // contextAware=false: secret patterns match inside string literals by design
     secretCount += countMatches(srcFiles, contents, pattern, false);
   }
+  // AST confirmation: use AST count to eliminate false positives from regex
+  const astSecretCount = astConfirmedCount(srcFiles, contents, 'hardcoded-secret');
+  if (astSecretCount >= 0) secretCount = astSecretCount;
   const usesEnvVars = anyFileHasMatch(srcFiles, contents, /\bprocess\.env\b|\bos\.environ\b|\bos\.getenv\b/);
   const { score: secretsScore, summary: secretsSummary } = scoreSecrets(secretCount, usesEnvVars);
 
@@ -396,9 +410,11 @@ function scoreErrorHandling(files: string[], prodFiles: string[], contents: Map<
   const srcFiles = files.filter(f => !isTestFile(f));
 
   const tryCatchTotal = countMatches(srcFiles, contents, /\btry\s*\{/g);
-  const { count: emptyCatchTotal, matchedFiles: emptyCatchFiles } = countMatchesWithFiles(
+  const { count: emptyCatchRegex, matchedFiles: emptyCatchFiles } = countMatchesWithFiles(
     prodFiles, contents, /\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}/g,
   );
+  const emptyCatchAst = astConfirmedCount(emptyCatchFiles, contents, 'empty-catch');
+  const emptyCatchTotal = emptyCatchAst >= 0 ? emptyCatchAst : emptyCatchRegex;
   const consoleErrorCount = countMatches(prodFiles, contents, /\bconsole\.(?:error|warn|log)\s*\(/g);
   const structuredLogCount = countMatches(prodFiles, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g);
 
@@ -450,9 +466,11 @@ function scorePerformance(files: string[], prodFiles: string[], contents: Map<st
   const appFiles = srcFiles.filter(f => !f.replace(/\\/g, '/').includes('/scripts/'));
   const prodAppFiles = prodFiles.filter(f => !f.replace(/\\/g, '/').includes('/scripts/'));
 
-  const { count: consoleLogCount, matchedFiles: consoleLogFiles } = countMatchesWithFiles(
+  const { count: consoleLogRegex, matchedFiles: consoleLogFiles } = countMatchesWithFiles(
     prodAppFiles, contents, /\bconsole\.log\s*\(/g,
   );
+  const consoleLogAst = astConfirmedCount(consoleLogFiles, contents, 'console-usage');
+  const consoleLogCount = consoleLogAst >= 0 ? consoleLogAst : consoleLogRegex;
 
   let awaitInLoopCount = 0;
   for (const file of appFiles) {

@@ -120,7 +120,7 @@ describe('scoring regression: messy-js', () => {
     const cat = getCat(result, 'Security');
     expect(cat.score).toBe(0);
     expect(getSub(result, 'Security', 'Secrets & env vars').score).toBe(0);
-    expect(getSub(result, 'Security', 'Secrets & env vars').issuesFound).toBe(4);
+    expect(getSub(result, 'Security', 'Secrets & env vars').issuesFound).toBe(2);
   });
 
   it('Type Safety category — zero (JS only)', () => {
@@ -145,7 +145,7 @@ describe('scoring regression: messy-js', () => {
   });
 
   it('issue counts', () => {
-    expect(result.totalIssuesFound).toBe(74);
+    expect(result.totalIssuesFound).toBe(72);
   });
 });
 
