@@ -37,15 +37,20 @@ function makeTarget(): Target {
   };
 }
 
-function makeAgent(buildSuccess: boolean = true, filesModified: string[] = []): Agent {
+function makeAgent(buildSuccess: boolean = true, filesModified: string[] = [], cwd?: string): Agent {
   return {
     analyze: vi.fn().mockResolvedValue('Mocked analysis'),
     propose: vi.fn().mockResolvedValue('Mocked proposal: add a comment'),
-    build: vi.fn().mockResolvedValue({
-      success: buildSuccess,
-      output: 'build output',
-      filesModified,
-    } satisfies BuildResult),
+    build: vi.fn().mockImplementation(async () => {
+      // When cwd is provided and build should succeed, actually write a file so git
+      // detects real changes (required for the empty-diff detection gate in click.ts).
+      if (buildSuccess && cwd) {
+        const modified = filesModified.length > 0 ? filesModified : ['README.md'];
+        writeFileSync(join(cwd, modified[0]), `# changed at ${Date.now()}\n`);
+        return { success: true, output: 'build output', filesModified: modified } satisfies BuildResult;
+      }
+      return { success: buildSuccess, output: 'build output', filesModified } satisfies BuildResult;
+    }),
   };
 }
 
@@ -62,7 +67,7 @@ describe('executeClick', () => {
   });
 
   it('runs analyze → propose → build sequence', async () => {
-    const agent = makeAgent(true);
+    const agent = makeAgent(true, [], dir);
     const config = makeConfig({ testCommand: 'node --version' });
 
     const { click } = await executeClick({
@@ -82,7 +87,7 @@ describe('executeClick', () => {
   });
 
   it('sets testsPassed=true when tests pass', async () => {
-    const agent = makeAgent(true);
+    const agent = makeAgent(true, [], dir);
     const config = makeConfig({ testCommand: 'node --version', autoCommit: false });
 
     const { click, rolled_back } = await executeClick({
@@ -98,7 +103,7 @@ describe('executeClick', () => {
   });
 
   it('rolls back and sets testsPassed=false when tests fail', async () => {
-    const agent = makeAgent(true);
+    const agent = makeAgent(true, [], dir);
     const config = makeConfig({ testCommand: 'node -e "process.exit(1)"', autoCommit: false });
 
     const { click, rolled_back } = await executeClick({
@@ -115,7 +120,7 @@ describe('executeClick', () => {
   });
 
   it('rolls back when build fails', async () => {
-    const agent = makeAgent(false);
+    const agent = makeAgent(false, [], dir);
     const config = makeConfig({ testCommand: 'node --version', autoCommit: false });
 
     const { click, rolled_back } = await executeClick({

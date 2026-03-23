@@ -212,7 +212,24 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       rollbackReason = 'build failed';
       await rollback(cwd, clickNumber, stashCreated);
       rolledBack = true;
-    } else {
+    } else if (buildResult.filesModified.length === 0) {
+      // Agent reported no files modified — confirm via git before treating as no-op.
+      // A clean working tree means the agent genuinely made no changes.
+      const gitSt = await git.status(cwd).catch(() => null);
+      if (gitSt?.clean) {
+        logger.info(`[ratchet] ⏭ Click ${clickNumber} — agent found nothing to change`);
+        if (stashCreated) {
+          await git.gitDropStash(cwd).catch(() => {});
+        }
+        testsPassed = true; // no changes = no regression
+      } else {
+        // Git shows changes that the agent didn't report in filesModified.
+        // Fall through to the normal test-gate path with an empty filesModified list.
+        // (Tests may still catch regressions from unreported changes.)
+        buildResult = { ...buildResult, filesModified: gitSt?.unstaged ?? [] };
+      }
+    }
+    if (!rolledBack && buildResult.success && !testsPassed) {
       // Click guards: reject over-aggressive changes before running tests
       // Use pre-resolved guards from context if available; otherwise fall back to config + mode defaults
       const effectiveGuards = ctx.resolvedGuards !== undefined

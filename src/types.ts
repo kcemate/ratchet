@@ -183,6 +183,10 @@ export interface RatchetRun {
   timeoutReached?: boolean;
   /** Set when the run stopped due to --budget being exhausted. */
   budgetReached?: boolean;
+  /** Number of clicks skipped because all issues were pre-validation false positives. */
+  skippedClicks?: number;
+  /** Total false positives filtered by the pre-validation gate across all clicks. */
+  falsePositivesFound?: number;
 }
 
 export interface BuildResult {
