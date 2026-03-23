@@ -675,6 +675,7 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
 
 export interface RunScanOptions {
   includeTests?: boolean;
+  files?: string[];
 }
 
 export async function runScan(cwd: string, options: RunScanOptions = {}): Promise<ScanResult> {
@@ -691,7 +692,8 @@ export async function runScan(cwd: string, options: RunScanOptions = {}): Promis
 
   // Always include test files for the Testing scorer (needs them for coverage ratio).
   // When scanProductionOnly is on, exclude test files from all other scorers.
-  const allFiles = findSourceFiles(cwd, { scanProductionOnly: false });
+  // If specific files are passed (e.g. --diff), use those instead.
+  const allFiles = options.files ?? findSourceFiles(cwd, { scanProductionOnly: false });
   const scoringFiles = options.includeTests
     ? allFiles
     : allFiles.filter(f => !isTestFile(f));
@@ -868,6 +870,10 @@ export function scanCommand(): Command {
     )
     .option('--baseline', 'Save current scan result as baseline to .ratchet/baseline.json.')
     .option('--no-baseline', 'Skip baseline comparison for this run.')
+    .option(
+      '--diff [base]',
+      'Scan only files changed since <base> (branch, commit, or HEAD~N). Defaults to HEAD~1.',
+    )
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -880,7 +886,9 @@ export function scanCommand(): Command {
       '  $ ratchet scan --include-tests\n' +
       '  $ ratchet scan --language python\n' +
       '  $ ratchet scan --baseline\n' +
-      '  $ ratchet scan --no-baseline\n',
+      '  $ ratchet scan --no-baseline\n' +
+      '  $ ratchet scan --diff main\n' +
+      '  $ ratchet scan --diff HEAD~3\n',
     )
     .action(async (dir: string, options: Record<string, unknown>) => {
       const { resolve } = await import('path');
@@ -914,7 +922,38 @@ export function scanCommand(): Command {
       }
       void resolvedLang; // available for future language-aware scoring
 
-      const result = await runScan(cwd, { includeTests: options['includeTests'] as boolean | undefined });
+      // --- --diff: filter to changed files only ---
+      let diffFiles: string[] | undefined;
+      const diffOpt = options['diff'] as string | boolean | undefined;
+      if (diffOpt !== undefined) {
+        const base = typeof diffOpt === 'string' ? diffOpt : 'HEAD~1';
+        const { execSync } = await import('child_process');
+        let changedRaw = '';
+        try {
+          changedRaw = execSync(`git diff --name-only ${base}`, {
+            cwd,
+            encoding: 'utf8',
+            stdio: ['pipe', 'pipe', 'pipe'],
+          });
+        } catch {
+          logger.warn({ base }, 'git diff failed — scanning all files');
+        }
+        if (changedRaw) {
+          const changedAbs = new Set(
+            changedRaw.split('\n').filter(Boolean).map(f => resolve(cwd, f)),
+          );
+          const allSrcFiles = findSourceFiles(cwd);
+          diffFiles = allSrcFiles.filter(f => changedAbs.has(f));
+          process.stdout.write(
+            `Scanning ${diffFiles.length} changed file${diffFiles.length !== 1 ? 's' : ''} (vs ${base})\n`,
+          );
+        }
+      }
+
+      const result = await runScan(cwd, {
+        includeTests: options['includeTests'] as boolean | undefined,
+        files: diffFiles,
+      });
 
       if (options['outputJson']) {
         process.stdout.write(JSON.stringify(result, null, 2) + '\n');
