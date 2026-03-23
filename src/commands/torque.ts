@@ -1048,7 +1048,31 @@ export function torqueCommand(): Command {
             `  Run ${chalk.green('ratchet tighten --pr')} to open a pull request.\n` + '\n',
           );
         } else {
-          process.stdout.write(chalk.dim('\n  No clicks landed. Try adjusting your target description.\n') + '\n');
+          const skipped = run.skippedClicks ?? 0;
+          const fps = run.falsePositivesFound ?? 0;
+          process.stdout.write('\n');
+          if (fps > 0 || skipped > 0) {
+            process.stdout.write(chalk.yellow('  No clicks landed — scanner issues were filtered as false positives.\n'));
+            if (fps > 0) {
+              process.stdout.write(chalk.dim(`  • ${fps} false positive(s) filtered (patterns found only in comments, strings, or docs)\n`));
+            }
+            if (skipped > 0) {
+              process.stdout.write(chalk.dim(`  • ${skipped} click(s) skipped — no real issues to fix after filtering\n`));
+            }
+            process.stdout.write('\n');
+            process.stdout.write('  Next steps:\n');
+            process.stdout.write(`  • Run ${chalk.green('ratchet scan')} to review remaining issues manually\n`);
+            process.stdout.write(`  • Use ${chalk.green('ratchet torque --architect')} for structural issues that need multi-file refactors\n`);
+            process.stdout.write(`  • Review flagged files directly — the scanner found patterns in non-code contexts\n`);
+          } else {
+            process.stdout.write(chalk.dim('  No clicks landed.\n'));
+            process.stdout.write('\n');
+            process.stdout.write('  Next steps:\n');
+            process.stdout.write(`  • Try ${chalk.green('ratchet torque --architect')} for structural issues requiring larger refactors\n`);
+            process.stdout.write(`  • Try ${chalk.green('ratchet torque --plan-first')} to generate a multi-step plan before executing\n`);
+            process.stdout.write(`  • Run ${chalk.green('ratchet scan')} to review remaining issues and adjust your target\n`);
+          }
+          process.stdout.write('\n');
         }
 
         // Print economics summary (or JSON output)

@@ -27,6 +27,7 @@ import { runPlanFirst } from './engine-plan.js';
 import { runArchitectEngine } from './engine-architect.js';
 import { countTestFiles } from './detect.js';
 import { logger } from '../lib/logger.js';
+import { prevalidateIssues } from './issue-prevalidation.js';
 
 // Re-export public API from sub-modules
 export { nextGuardProfile, isGuardRejection } from './engine-guards.js';
@@ -800,14 +801,33 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         }
       }
 
-      await callbacks.onClickStart?.(i, clicks, hardenPhase);
-
       // Pop the next group of issues from the backlog
       // In harden mode, don't use backlog (focus on test writing)
       let clickIssues: IssueTask[] | undefined;
       if (!hardenMode && state.backlogGroups.length > 0) {
         clickIssues = state.backlogGroups.shift();
       }
+
+      // Pre-validation gate: check for false positives before starting the click.
+      // If all issues in this group are false positives (pattern only in comments/strings/docs),
+      // skip without spending a click slot (decrement i so the loop counter doesn't advance).
+      if (clickIssues && clickIssues.length > 0) {
+        const prevalidation = await prevalidateIssues(clickIssues, cwd);
+        if (prevalidation.falsePositives.length > 0) {
+          run.falsePositivesFound = (run.falsePositivesFound ?? 0) + prevalidation.falsePositives.length;
+          if (prevalidation.validIssues.length === 0) {
+            run.skippedClicks = (run.skippedClicks ?? 0) + 1;
+            logger.info(
+              `[ratchet] ⏭ Click ${i} — skipped (${prevalidation.falsePositives.length} false positive(s) filtered)`,
+            );
+            i--;
+            continue;
+          }
+          clickIssues = prevalidation.validIssues;
+        }
+      }
+
+      await callbacks.onClickStart?.(i, clicks, hardenPhase);
 
       try {
         const clickStartMs = Date.now();
