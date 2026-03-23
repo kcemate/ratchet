@@ -2273,7 +2273,7 @@
         <div class="pricing-toggle fade-in">
             <span class="billing-label active" id="label-monthly">Monthly</span>
             <button class="toggle-switch" id="billingToggle" aria-label="Toggle annual billing" onclick="toggleBilling()"></button>
-            <span class="billing-label" id="label-annual">Annual &nbsp;<span class="save-badge">Save ~20%</span></span>
+            <span class="billing-label" id="label-annual">Annual &nbsp;<span class="save-badge">Save 25%</span></span>
         </div>
 
         <div class="pricing-grid fade-in" style="grid-template-columns: repeat(3, 1fr);">
@@ -2287,9 +2287,9 @@
                 <div class="pricing-divider"></div>
                 <ul class="pricing-features">
                     <li>Unlimited scans</li>
+                    <li>5 improvement cycles/month</li>
                     <li>Quick-fix: top 3 issues + predictions</li>
                     <li>Baseline &amp; delta tracking</li>
-                    <li>Vision: 1/week</li>
                     <li>Quality score across 6 dimensions</li>
                     <li>JSON &amp; Markdown export</li>
                 </ul>
@@ -2300,12 +2300,12 @@
             <div class="pricing-card popular">
                 <div class="popular-badge">⭐ Most Popular</div>
                 <div class="pricing-tier">Pro</div>
-                <div class="pricing-price success" data-monthly="$35" data-annual="$336">$35</div>
+                <div class="pricing-price success" data-monthly="$29" data-annual="$261">$29</div>
                 <div class="pricing-period" id="period-pro">/mo</div>
                 <div class="pricing-tagline">Full torque. Full vision. Full speed.</div>
                 <div class="pricing-divider"></div>
                 <ul class="pricing-features">
-                    <li>150 improvement cycles/month</li>
+                    <li>100 improvement cycles/month</li>
                     <li>BYOK — bring your own API key</li>
                     <li>ratchet torque + improve</li>
                     <li>GitHub Action + PR comments</li>
@@ -2321,22 +2321,23 @@
                    target="_blank" rel="noopener">Go Pro</a>
             </div>
 
-            <!-- ENTERPRISE -->
+            <!-- TEAM -->
             <div class="pricing-card">
-                <div class="pricing-tier">Enterprise</div>
-                <div class="pricing-price muted" data-monthly="Custom" data-annual="Custom">Custom</div>
-                <div class="pricing-period">&nbsp;</div>
-                <div class="pricing-tagline">Hosted. Air-gapped. Your rules.</div>
+                <div class="pricing-tier">Team</div>
+                <div class="pricing-price purple" data-monthly="$79" data-annual="$711">$79</div>
+                <div class="pricing-period" id="period-team">/mo</div>
+                <div class="pricing-tagline">Ship clean code together.</div>
                 <div class="pricing-divider"></div>
                 <ul class="pricing-features">
-                    <li>Unlimited cycles</li>
-                    <li>Hosted — no API key required</li>
-                    <li>Self-hosted / air-gapped option</li>
-                    <li>Custom scoring rules &amp; SLA</li>
-                    <li>Slack &amp; Discord notifications</li>
+                    <li>3 seats included</li>
+                    <li>300 shared cycles/month</li>
+                    <li>BYOK — bring your own API key</li>
+                    <li>ratchet torque + improve</li>
+                    <li>GitHub Action + PR comments</li>
+                    <li>Priority support</li>
                     <li>Everything in Pro</li>
                 </ul>
-                <a href="mailto:ratchet@kcemate.com" class="pricing-cta pricing-cta-outline">Contact Sales</a>
+                <a href="mailto:ratchet@kcemate.com" class="pricing-cta pricing-cta-outline">Get Started</a>
             </div>
 
         </div>
@@ -2370,23 +2371,26 @@
             const cycles = Math.max(4, Math.round(files / 10) * 4);
             document.getElementById('calcCycles').textContent = cycles;
             let plan, note;
-            if (cycles <= 12) {
+            if (cycles <= 5) {
                 plan = 'Free';
-                note = 'Free tier covers unlimited scans + quick-fixes. Torque requires Pro.';
-            } else if (cycles <= 150) {
-                plan = 'Pro ($35/mo)';
-                note = 'Pro includes 150 cycles/month — plenty for your repo size.';
+                note = 'Free tier gives you 5 cycles/month + unlimited scans.';
+            } else if (cycles <= 100) {
+                plan = 'Pro ($29/mo)';
+                note = 'Pro includes 100 cycles/month — plenty for your repo size.';
+            } else if (cycles <= 300) {
+                plan = 'Team ($79/mo)';
+                note = 'Team includes 300 shared cycles/month + 3 seats.';
             } else {
-                plan = 'Enterprise';
-                note = cycles + ' cycles/month exceeds Pro. Contact us for unlimited cycles.';
+                plan = 'Team + overage';
+                note = cycles + ' cycles/month. Team plan + $0.50/extra cycle covers it.';
             }
             document.getElementById('calcPlan').textContent = plan;
-            document.getElementById('calcPlan').style.color = plan === 'Free' ? 'var(--success)' : plan.includes('Pro') ? 'var(--accent)' : 'var(--warning)';
+            document.getElementById('calcPlan').style.color = plan === 'Free' ? 'var(--success)' : plan.includes('Pro') ? 'var(--accent)' : '#a78bfa';
             document.getElementById('calcNote').textContent = note;
         }
         </script>
 
-        <p class="pricing-note fade-in">Need more cycles? <strong>$0.75/cycle</strong> on any paid plan. &nbsp;·&nbsp; <strong>Teams?</strong> <a href="mailto:ratchet@kcemate.com" style="color:var(--accent);text-decoration:none;">Contact us</a> for multi-seat pricing.</p>
+        <p class="pricing-note fade-in">Need more cycles? <strong>$0.50/cycle</strong> on any paid plan. &nbsp;·&nbsp; <strong>Need more seats?</strong> <a href="mailto:ratchet@kcemate.com" style="color:var(--accent);text-decoration:none;">Contact us</a> for custom team sizing.</p>
     </div>
 </section>
 
