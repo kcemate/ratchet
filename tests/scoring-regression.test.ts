@@ -136,7 +136,7 @@ describe('scoring regression: messy-js', () => {
 
   it('Performance — console.log penalty', () => {
     const consoleSub = getSub(result, 'Performance', 'Console cleanup');
-    expect(consoleSub.issuesFound).toBe(43);
+    expect(consoleSub.issuesFound).toBe(42);
   });
 
   it('Code Quality — dead code detected', () => {
@@ -145,7 +145,7 @@ describe('scoring regression: messy-js', () => {
   });
 
   it('issue counts', () => {
-    expect(result.totalIssuesFound).toBe(75);
+    expect(result.totalIssuesFound).toBe(74);
   });
 });
 

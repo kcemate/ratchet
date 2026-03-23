@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
 import { join, extname, relative, resolve } from 'path';
+import { stripCommentsAndStrings } from './code-context.js';
 
 // ---------------------------------------------------------------------------
 // Shared constants for file discovery and analysis
@@ -99,15 +100,38 @@ export function readContents(files: string[]): Map<string, string> {
 // File-scanning utilities — eliminate repeated for-loop boilerplate
 // ---------------------------------------------------------------------------
 
+/**
+ * Per-scan cache of stripped content. Keyed by original content string so
+ * the same file content is never stripped twice within a scan run.
+ * Use clearStrippedCache() at the start of a new scan if needed.
+ */
+const strippedCache = new Map<string, string>();
+
+export function clearStrippedCache(): void {
+  strippedCache.clear();
+}
+
+function getStripped(content: string): string {
+  let stripped = strippedCache.get(content);
+  if (stripped === undefined) {
+    stripped = stripCommentsAndStrings(content);
+    strippedCache.set(content, stripped);
+  }
+  return stripped;
+}
+
 /** Sum all regex matches across a set of files. */
 export function countMatches(
   files: string[],
   contents: Map<string, string>,
   pattern: RegExp,
+  contextAware = true,
 ): number {
   let total = 0;
   for (const file of files) {
-    total += (contents.get(file)?.match(pattern) ?? []).length;
+    const raw = contents.get(file) ?? '';
+    const src = contextAware ? getStripped(raw) : raw;
+    total += (src.match(pattern) ?? []).length;
   }
   return total;
 }
@@ -117,11 +141,14 @@ export function countMatchesWithFiles(
   files: string[],
   contents: Map<string, string>,
   pattern: RegExp,
+  contextAware = true,
 ): { count: number; matchedFiles: string[] } {
   let count = 0;
   const matchedFiles: string[] = [];
   for (const file of files) {
-    const n = (contents.get(file)?.match(pattern) ?? []).length;
+    const raw = contents.get(file) ?? '';
+    const src = contextAware ? getStripped(raw) : raw;
+    const n = (src.match(pattern) ?? []).length;
     count += n;
     if (n > 0) matchedFiles.push(file);
   }
@@ -133,8 +160,14 @@ export function anyFileHasMatch(
   files: string[],
   contents: Map<string, string>,
   pattern: RegExp,
+  contextAware = true,
 ): boolean {
-  return files.some(file => pattern.test(contents.get(file) ?? ''));
+  return files.some(file => {
+    const raw = contents.get(file) ?? '';
+    const src = contextAware ? getStripped(raw) : raw;
+    pattern.lastIndex = 0;
+    return pattern.test(src);
+  });
 }
 
 // ---------------------------------------------------------------------------

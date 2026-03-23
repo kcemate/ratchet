@@ -203,7 +203,8 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
 
   const edgePatterns =
     /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
-  const edgeCaseCount = countMatches(testFiles, contents, edgePatterns);
+  // contextAware=false: this pattern intentionally matches inside test description strings
+  const edgeCaseCount = countMatches(testFiles, contents, edgePatterns, false);
   const { score: edgeCaseScore, summary: edgeCaseSummary } = scoreEdgeCases(edgeCaseCount);
 
   const totalTestCases = countMatches(testFiles, contents, /\b(?:it|test)\s*[.(]/g);
@@ -244,7 +245,8 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
   // --- Secrets & env vars /3 ---
   let secretCount = 0;
   for (const pattern of SECRET_PATTERNS) {
-    secretCount += countMatches(srcFiles, contents, pattern);
+    // contextAware=false: secret patterns match inside string literals by design
+    secretCount += countMatches(srcFiles, contents, pattern, false);
   }
   const usesEnvVars = anyFileHasMatch(srcFiles, contents, /\bprocess\.env\b|\bos\.environ\b|\bos\.getenv\b/);
   const { score: secretsScore, summary: secretsSummary } = scoreSecrets(secretCount, usesEnvVars);
