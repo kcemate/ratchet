@@ -1,0 +1,647 @@
+diff --git a/server/__tests__/analytics-broadcast.test.ts b/server/__tests__/analytics-broadcast.test.ts
+index 814fe892..0f431584 100644
+--- a/server/__tests__/analytics-broadcast.test.ts
++++ b/server/__tests__/analytics-broadcast.test.ts
+@@ -189,6 +189,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/api-premium.test.ts b/server/__tests__/api-premium.test.ts
+index 6ec80651..4a0b6502 100644
+--- a/server/__tests__/api-premium.test.ts
++++ b/server/__tests__/api-premium.test.ts
+@@ -198,6 +198,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/api-theme.test.ts b/server/__tests__/api-theme.test.ts
+index 9d34b72a..bb519661 100644
+--- a/server/__tests__/api-theme.test.ts
++++ b/server/__tests__/api-theme.test.ts
+@@ -140,6 +140,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/api-v2.test.ts b/server/__tests__/api-v2.test.ts
+index e8d227b9..3860c44b 100644
+--- a/server/__tests__/api-v2.test.ts
++++ b/server/__tests__/api-v2.test.ts
+@@ -183,6 +183,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/api.test.ts b/server/__tests__/api.test.ts
+index e1bb0de7..3e1aa45e 100644
+--- a/server/__tests__/api.test.ts
++++ b/server/__tests__/api.test.ts
+@@ -179,6 +179,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/auth-edge-cases.test.ts b/server/__tests__/auth-edge-cases.test.ts
+index 9abb2b29..99d94951 100644
+--- a/server/__tests__/auth-edge-cases.test.ts
++++ b/server/__tests__/auth-edge-cases.test.ts
+@@ -114,6 +114,7 @@ const memStore = vi.hoisted(() => {
+     },
+     async getGroupMembers(groupId: string) { return _members.filter(m => m.groupId === groupId).map(m => ({ ...m, user: _users.get(m.userId) })); },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some(m => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter(gid => _members.some(m => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter(m => !(m.userId === userId && m.groupId === groupId)); },
+     async getGroupMemberRole(_groupId: string, _userId: string) {
+       const m = _members.find(m => m.groupId === _groupId && m.userId === _userId); return m?.role ?? null;
+diff --git a/server/__tests__/auth-security.test.ts b/server/__tests__/auth-security.test.ts
+index a1573e90..607ff1de 100644
+--- a/server/__tests__/auth-security.test.ts
++++ b/server/__tests__/auth-security.test.ts
+@@ -183,6 +183,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/bingo-coverage.test.ts b/server/__tests__/bingo-coverage.test.ts
+index e898f000..6997004b 100644
+--- a/server/__tests__/bingo-coverage.test.ts
++++ b/server/__tests__/bingo-coverage.test.ts
+@@ -116,6 +116,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/boundary-values.test.ts b/server/__tests__/boundary-values.test.ts
+index 5e1bf405..fea9e29d 100644
+--- a/server/__tests__/boundary-values.test.ts
++++ b/server/__tests__/boundary-values.test.ts
+@@ -127,6 +127,7 @@ const memStore = vi.hoisted(() => {
+       return _members.filter(m => m.groupId === groupId).map(m => ({ ...m, user: _users.get(m.userId) }));
+     },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some(m => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter(gid => _members.some(m => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter(m => !(m.userId === userId && m.groupId === groupId)); },
+     async getGroupMemberRole(_groupId: string, _userId: string) {
+       const m = _members.find(m => m.groupId === _groupId && m.userId === _userId); return m?.role ?? null;
+diff --git a/server/__tests__/clerk-auth.test.ts b/server/__tests__/clerk-auth.test.ts
+index 44a2b913..9428e090 100644
+--- a/server/__tests__/clerk-auth.test.ts
++++ b/server/__tests__/clerk-auth.test.ts
+@@ -146,6 +146,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/clerk-webhook.test.ts b/server/__tests__/clerk-webhook.test.ts
+index 1c35abba..fd353674 100644
+--- a/server/__tests__/clerk-webhook.test.ts
++++ b/server/__tests__/clerk-webhook.test.ts
+@@ -199,6 +199,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/concurrent-race-conditions.test.ts b/server/__tests__/concurrent-race-conditions.test.ts
+index 94501070..5ff78915 100644
+--- a/server/__tests__/concurrent-race-conditions.test.ts
++++ b/server/__tests__/concurrent-race-conditions.test.ts
+@@ -119,6 +119,7 @@ const memStore = vi.hoisted(() => {
+     },
+     async getGroupMembers(groupId: string) { return _members.filter(m => m.groupId === groupId).map(m => ({ ...m, user: _users.get(m.userId) })); },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some(m => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter(gid => _members.some(m => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter(m => !(m.userId === userId && m.groupId === groupId)); },
+     async getGroupMemberRole(_groupId: string, _userId: string) {
+       const m = _members.find(m => m.groupId === _groupId && m.userId === _userId); return m?.role ?? null;
+diff --git a/server/__tests__/edge-cases.test.ts b/server/__tests__/edge-cases.test.ts
+index 45386587..a86a9d29 100644
+--- a/server/__tests__/edge-cases.test.ts
++++ b/server/__tests__/edge-cases.test.ts
+@@ -191,6 +191,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/group-member-management.test.ts b/server/__tests__/group-member-management.test.ts
+index 8e424f5e..78bb0dc9 100644
+--- a/server/__tests__/group-member-management.test.ts
++++ b/server/__tests__/group-member-management.test.ts
+@@ -143,6 +143,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/group-pagination-spy-reminder.test.ts b/server/__tests__/group-pagination-spy-reminder.test.ts
+index 344dedca..8de99f52 100644
+--- a/server/__tests__/group-pagination-spy-reminder.test.ts
++++ b/server/__tests__/group-pagination-spy-reminder.test.ts
+@@ -122,6 +122,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/invite-flow.test.ts b/server/__tests__/invite-flow.test.ts
+index 0d133148..129c34b2 100644
+--- a/server/__tests__/invite-flow.test.ts
++++ b/server/__tests__/invite-flow.test.ts
+@@ -149,6 +149,7 @@ const memStore = vi.hoisted(() => {
+         .map((m) => ({ ...m, user: { ..._users.get(m.userId)!, personalRecord: undefined } }));
+     },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some((m) => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId)); },
+ 
+     async createDeuceEntry(entry: any) {
+diff --git a/server/__tests__/king.test.ts b/server/__tests__/king.test.ts
+index 46997fa3..0e6a1aa0 100644
+--- a/server/__tests__/king.test.ts
++++ b/server/__tests__/king.test.ts
+@@ -92,6 +92,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/malformed-requests.test.ts b/server/__tests__/malformed-requests.test.ts
+index bc2fda37..6752601f 100644
+--- a/server/__tests__/malformed-requests.test.ts
++++ b/server/__tests__/malformed-requests.test.ts
+@@ -129,6 +129,7 @@ const memStore = vi.hoisted(() => {
+       return _members.filter(m => m.groupId === groupId).map(m => ({ ...m, user: _users.get(m.userId) }));
+     },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some(m => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter(gid => _members.some(m => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter(m => !(m.userId === userId && m.groupId === groupId)); },
+     async getGroupMemberRole(_groupId: string, _userId: string) {
+       const m = _members.find(m => m.groupId === _groupId && m.userId === _userId); return m?.role ?? null;
+diff --git a/server/__tests__/new-features.test.ts b/server/__tests__/new-features.test.ts
+index d197bb66..d5c93466 100644
+--- a/server/__tests__/new-features.test.ts
++++ b/server/__tests__/new-features.test.ts
+@@ -189,6 +189,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/passport.test.ts b/server/__tests__/passport.test.ts
+index c70aa888..d56b65cc 100644
+--- a/server/__tests__/passport.test.ts
++++ b/server/__tests__/passport.test.ts
+@@ -177,6 +177,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/premium-flow.test.ts b/server/__tests__/premium-flow.test.ts
+index a07e4930..769ba540 100644
+--- a/server/__tests__/premium-flow.test.ts
++++ b/server/__tests__/premium-flow.test.ts
+@@ -209,6 +209,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/public-endpoints.test.ts b/server/__tests__/public-endpoints.test.ts
+index 18d1ddab..dae6a7fd 100644
+--- a/server/__tests__/public-endpoints.test.ts
++++ b/server/__tests__/public-endpoints.test.ts
+@@ -132,6 +132,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/push.test.ts b/server/__tests__/push.test.ts
+index 7e2cbd54..a9bfeb20 100644
+--- a/server/__tests__/push.test.ts
++++ b/server/__tests__/push.test.ts
+@@ -157,6 +157,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/rate-limit-precision.test.ts b/server/__tests__/rate-limit-precision.test.ts
+index c1dac8cb..95dda89e 100644
+--- a/server/__tests__/rate-limit-precision.test.ts
++++ b/server/__tests__/rate-limit-precision.test.ts
+@@ -121,6 +121,7 @@ const memStore = vi.hoisted(() => {
+     },
+     async getGroupMembers(groupId: string) { return _members.filter(m => m.groupId === groupId).map(m => ({ ...m, user: _users.get(m.userId) })); },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some(m => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter(gid => _members.some(m => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter(m => !(m.userId === userId && m.groupId === groupId)); },
+     async getGroupMemberRole(_groupId: string, _userId: string) {
+       const m = _members.find(m => m.groupId === _groupId && m.userId === _userId); return m?.role ?? null;
+diff --git a/server/__tests__/referral-edge-cases.test.ts b/server/__tests__/referral-edge-cases.test.ts
+index 47ca2096..c8fc419c 100644
+--- a/server/__tests__/referral-edge-cases.test.ts
++++ b/server/__tests__/referral-edge-cases.test.ts
+@@ -129,6 +129,7 @@ const memStore = vi.hoisted(() => {
+       return _members.filter(m => m.groupId === groupId).map(m => ({ ...m, user: _users.get(m.userId) }));
+     },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some(m => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter(gid => _members.some(m => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter(m => !(m.userId === userId && m.groupId === groupId)); },
+     async getGroupMemberRole(_groupId: string, _userId: string) {
+       const m = _members.find(m => m.groupId === _groupId && m.userId === _userId); return m?.role ?? null;
+diff --git a/server/__tests__/referral.test.ts b/server/__tests__/referral.test.ts
+index 246945da..748f653a 100644
+--- a/server/__tests__/referral.test.ts
++++ b/server/__tests__/referral.test.ts
+@@ -184,6 +184,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/routes-coverage.test.ts b/server/__tests__/routes-coverage.test.ts
+index 03320e6c..947d8a7f 100644
+--- a/server/__tests__/routes-coverage.test.ts
++++ b/server/__tests__/routes-coverage.test.ts
+@@ -230,6 +230,9 @@ const memStore = vi.hoisted(() => {
+         (m) => m.userId === userId && m.groupId === groupId,
+       );
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter(
+         (m) => !(m.userId === userId && m.groupId === groupId),
+diff --git a/server/__tests__/share-card.test.ts b/server/__tests__/share-card.test.ts
+index 0486073c..77902fff 100644
+--- a/server/__tests__/share-card.test.ts
++++ b/server/__tests__/share-card.test.ts
+@@ -184,6 +184,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/streak-concurrent.test.ts b/server/__tests__/streak-concurrent.test.ts
+index bb12a621..de347776 100644
+--- a/server/__tests__/streak-concurrent.test.ts
++++ b/server/__tests__/streak-concurrent.test.ts
+@@ -137,6 +137,7 @@ const memStore = vi.hoisted(() => {
+         .map((m) => ({ ...m, user: { ..._users.get(m.userId)!, personalRecord: undefined } }));
+     },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some((m) => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId)); },
+ 
+     async createDeuceEntry(entry: any) {
+diff --git a/server/__tests__/streak-edge-cases.test.ts b/server/__tests__/streak-edge-cases.test.ts
+index 7399e538..b2255d47 100644
+--- a/server/__tests__/streak-edge-cases.test.ts
++++ b/server/__tests__/streak-edge-cases.test.ts
+@@ -164,6 +164,7 @@ const memStore = vi.hoisted(() => {
+         .map((m) => ({ ...m, user: { ..._users.get(m.userId)!, personalRecord: undefined } }));
+     },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some((m) => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId)); },
+ 
+     async createDeuceEntry(entry: any) {
+diff --git a/server/__tests__/tier-rules.test.ts b/server/__tests__/tier-rules.test.ts
+index 65f61736..7b4746a4 100644
+--- a/server/__tests__/tier-rules.test.ts
++++ b/server/__tests__/tier-rules.test.ts
+@@ -211,6 +211,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/user-account-sync.test.ts b/server/__tests__/user-account-sync.test.ts
+index 80d1f116..dda6378e 100644
+--- a/server/__tests__/user-account-sync.test.ts
++++ b/server/__tests__/user-account-sync.test.ts
+@@ -153,6 +153,9 @@ const memStore = vi.hoisted(() => {
+     async isUserInGroup(userId: string, groupId: string) {
+       return _members.some((m) => m.userId === userId && m.groupId === groupId);
+     },
++    async isUserInGroups(userId: string, groupIds: string[]) {
++      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)));
++    },
+     async removeGroupMember(userId: string, groupId: string) {
+       _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId));
+     },
+diff --git a/server/__tests__/websocket-concurrent.test.ts b/server/__tests__/websocket-concurrent.test.ts
+index f3b25de0..ba4a58ed 100644
+--- a/server/__tests__/websocket-concurrent.test.ts
++++ b/server/__tests__/websocket-concurrent.test.ts
+@@ -51,6 +51,7 @@ const memStore = vi.hoisted(() => {
+     async addGroupMember(member: any) { const m = { id: _memberId++, groupId: member.groupId, userId: member.userId, role: member.role ?? "member", joinedAt: new Date() }; _members.push(m); return m; },
+     async getGroupMembers(groupId: string) { return _members.filter((m) => m.groupId === groupId).map((m) => ({ ...m, user: { ..._users.get(m.userId), personalRecord: undefined } })); },
+     async isUserInGroup(userId: string, groupId: string) { return _members.some((m) => m.userId === userId && m.groupId === groupId); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(userId: string, groupId: string) { _members = _members.filter((m) => !(m.userId === userId && m.groupId === groupId)); },
+     async createDeuceEntry(entry: any) {
+       const e = { id: entry.id, userId: entry.userId, groupId: entry.groupId, location: entry.location, thoughts: entry.thoughts, ghost: entry.ghost ?? false, loggedAt: entry.loggedAt, createdAt: new Date() };
+diff --git a/server/__tests__/ws-broadcast-edge-cases.test.ts b/server/__tests__/ws-broadcast-edge-cases.test.ts
+index 1b849cb2..ba548c1e 100644
+--- a/server/__tests__/ws-broadcast-edge-cases.test.ts
++++ b/server/__tests__/ws-broadcast-edge-cases.test.ts
+@@ -74,6 +74,7 @@ const memStore = vi.hoisted(() => {
+     async addGroupMember(member: any) { const m = { id: _memberId++, groupId: member.groupId, userId: member.userId, role: member.role ?? "member", joinedAt: new Date() }; _members.push(m); return m; },
+     async getGroupMembers(gid: string) { return _members.filter(m => m.groupId === gid).map(m => ({ ...m, user: { ..._users.get(m.userId) } })); },
+     async isUserInGroup(uid: string, gid: string) { return _members.some(m => m.userId === uid && m.groupId === gid); },
++    async isUserInGroups(userId: string, groupIds: string[]) { return new Set(groupIds.filter(gid => _members.some(m => m.userId === userId && m.groupId === gid))); },
+     async removeGroupMember(uid: string, gid: string) { _members = _members.filter(m => !(m.userId === uid && m.groupId === gid)); },
+     async createDeuceEntry(entry: any) {
+       const e = { id: entry.id, userId: entry.userId, groupId: entry.groupId, location: entry.location, thoughts: entry.thoughts ?? null, ghost: entry.ghost ?? false, loggedAt: entry.loggedAt, createdAt: new Date() };
+diff --git a/server/routes/deuces.ts b/server/routes/deuces.ts
+index 839dd568..12326ca3 100644
+--- a/server/routes/deuces.ts
++++ b/server/routes/deuces.ts
+@@ -4,9 +4,11 @@ import { WebSocket } from "ws";
+ import { storage } from "../storage";
+ import { db } from "../db";
+ import { deuceEntries, users } from "@shared/schema";
++import type { DeuceEntry } from "@shared/schema";
+ import { eq, sql } from "drizzle-orm";
+ import { isAuthenticated } from "../replitAuth";
+ import { track } from "../lib/analytics";
++import { triggerPassportStamp } from "../lib/geocode";
+ import { v4 as uuidv4 } from "uuid";
+ import { z } from "zod";
+ import {
+@@ -20,9 +22,6 @@ import {
+ 
+ // Simple emoji schema — accepts any non-empty string (original behavior)
+ const reactionSchema = z.object({ emoji: z.string().min(1).max(10) });
+-const deleteReactionSchema = reactionSchema;
+-import { triggerPassportStamp } from "../lib/geocode";
+-import type { DeuceEntry } from "@shared/schema";
+ 
+ const syncDeuceSchema = z.object({
+   entries: z.array(z.object({
+@@ -130,7 +129,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+     try {
+       const userId = req.user.id;
+       const { entryId } = req.params;
+-      const parsed = deleteReactionSchema.safeParse(req.body);
++      const parsed = reactionSchema.safeParse(req.body);
+       if (!parsed.success) {
+         return res.status(400).json({ message: "Emoji is required" });
+       }
+@@ -247,10 +246,10 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+         return res.status(400).json({ message: "At least one group must be selected" });
+       }
+ 
+-      // Check if user is in all selected groups
++      // Check if user is in all selected groups (batch)
++      const memberGroupIds = await storage.isUserInGroups(userId, targetGroupIds);
+       for (const gid of targetGroupIds) {
+-        const isInGroup = await storage.isUserInGroup(userId, gid);
+-        if (!isInGroup) {
++        if (!memberGroupIds.has(gid)) {
+           return res.status(403).json({ message: `Not authorized for group ${gid}` });
+         }
+       }
+@@ -402,9 +401,9 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+         return res.status(400).json({ message: "bristolScore must be an integer between 1 and 7" });
+       }
+ 
++      const bulkMemberGroupIds = await storage.isUserInGroups(userId, targetGroupIds);
+       for (const gid of targetGroupIds) {
+-        const isInGroup = await storage.isUserInGroup(userId, gid);
+-        if (!isInGroup) return res.status(403).json({ message: `Not authorized for group ${gid}` });
++        if (!bulkMemberGroupIds.has(gid)) return res.status(403).json({ message: `Not authorized for group ${gid}` });
+       }
+ 
+       let loggedAt: Date;
+@@ -475,6 +474,35 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+         }
+       }
+ 
++      // Streak milestone tracking
++      const STREAK_MILESTONES = [7, 30, 100, 365];
++      const streakMap = await storage.getGroupStreaksBatch(targetGroupIds);
++      for (const gid of targetGroupIds) {
++        const { currentStreak } = streakMap.get(gid) ?? { currentStreak: 0 };
++        if (STREAK_MILESTONES.includes(currentStreak)) {
++          track("streak_milestone", userId, { groupId: gid, streak: currentStreak });
++        }
++      }
++
++      // Passport stamp (fire-and-forget)
++      triggerPassportStamp(latitude, longitude, (geo, lat, lon) =>
++        storage.upsertPassportStamp(userId, geo.city, geo.country, geo.region, geo.countryCode, lat, lon));
++
++      // Battle tokens for active matches
++      const bulkEntryId = entries[0]?.id ?? '';
++      try {
++        const activeMatches = await storage.getUserActiveMatches(userId);
++        const activeOnly = activeMatches.filter((m: any) => m.status === 'active');
++        for (const match of activeOnly) {
++          await storage.createBattleToken(match.id, userId, bulkEntryId, 'standard');
++          if (currentCount >= 1) {
++            await storage.createBattleToken(match.id, userId, bulkEntryId, 'double_flush');
++          }
++        }
++      } catch (err) {
++        logger.error({ err }, "Error generating battle tokens");
++      }
++
+       res.json({ entries, count: entries.length });
+     } catch (error) {
+       logger.error({ err: error }, "Error creating bulk deuce entry");
+@@ -492,6 +520,11 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       const today = getTodayUTC();
+       const results: Array<{ id: string; status: 'ok' | 'error'; reason?: string }> = [];
+ 
++      const syncUser = await storage.getUser(userId);
++      const syncDisplayName = syncUser?.username ||
++        (syncUser?.firstName && syncUser?.lastName ? `${syncUser.firstName} ${syncUser.lastName}` : syncUser?.firstName) ||
++        'Someone';
++
+       for (const entry of parsed.data.entries) {
+         try {
+           const currentCount = await storage.getUserDailyLogCount(userId, today);
+@@ -529,8 +562,9 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+             loggedAt = new Date();
+           }
+ 
++          const syncEntries: DeuceEntry[] = [];
+           for (const gid of validGroups) {
+-            await storage.createDeuceEntry({
++            const created = await storage.createDeuceEntry({
+               location: entry.location,
+               thoughts: entry.thoughts ?? '',
+               ghost: false,
+@@ -541,11 +575,44 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+               loggedAt,
+               id: uuidv4(),
+             });
++            syncEntries.push(created);
+           }
+ 
+           await storage.updateUserDeuceCount(userId, 1);
+           track('log_created', userId, { has_notes: !!entry.thoughts, source: 'offline_sync' });
+ 
++          // WebSocket broadcast to group members
++          const safeUser = syncUser ? sanitizeUserForResponse(syncUser) : null;
++          for (const gid of validGroups) {
++            const groupEntry = syncEntries.find(e => e.groupId === gid);
++            broadcastToGroup(gid, {
++              type: 'deuce_logged',
++              message: `${syncDisplayName} logged a new deuce`,
++              entry: { ...groupEntry, user: safeUser },
++              userId,
++            });
++          }
++
++          // Battle tokens for active matches
++          const syncEntryId = syncEntries[0]?.id ?? '';
++          const syncCount = await storage.getUserDailyLogCount(userId, today);
++          try {
++            const activeMatches = await storage.getUserActiveMatches(userId);
++            const activeOnly = activeMatches.filter((m: any) => m.status === 'active');
++            for (const match of activeOnly) {
++              await storage.createBattleToken(match.id, userId, syncEntryId, 'standard');
++              if (syncCount >= 1) {
++                await storage.createBattleToken(match.id, userId, syncEntryId, 'double_flush');
++              }
++            }
++          } catch (err) {
++            logger.error({ err }, '[sync] Error generating battle tokens');
++          }
++
++          // Passport stamp (fire-and-forget)
++          triggerPassportStamp(undefined, undefined, (geo, lat, lon) =>
++            storage.upsertPassportStamp(userId, geo.city, geo.country, geo.region, geo.countryCode, lat, lon));
++
+           for (const gid of validGroups) {
+             try { await recalculateStreak(gid); } catch (err) {
+               logger.error({ err, groupId: gid }, '[sync] recalculateStreak failed for group');
+diff --git a/server/routes/groups.ts b/server/routes/groups.ts
+index 44193e22..4f87b204 100644
+--- a/server/routes/groups.ts
++++ b/server/routes/groups.ts
+@@ -362,14 +362,22 @@ export function createGroupsRouter(uploadsDir: string): Router {
+       return res.status(400).json({ message: "Missing user ID" });
+     }
+ 
++    const members = await storage.getGroupMembers(groupId);
++
+     if (requestingUserId !== targetUserId) {
+-      const members = await storage.getGroupMembers(groupId);
+       const requestingMember = members.find(m => m.userId === requestingUserId);
+       if (!requestingMember || requestingMember.role !== "admin") {
+         return res.status(403).json({ message: "Only admins can remove other members" });
+       }
+     }
+ 
++    // Guard: cannot remove the last admin while other members remain
++    const admins = members.filter(m => m.role === "admin");
++    const targetIsAdmin = admins.some(m => m.userId === targetUserId);
++    if (targetIsAdmin && admins.length === 1 && members.length > 1) {
++      return res.status(400).json({ message: "Cannot remove the last admin. Transfer admin role first." });
++    }
++
+     await storage.removeGroupMember(targetUserId, groupId);
+     res.json({ ok: true });
+   }));

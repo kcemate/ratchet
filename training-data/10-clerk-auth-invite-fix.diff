@@ -1,0 +1,16 @@
+diff --git a/client/src/pages/invite-landing.tsx b/client/src/pages/invite-landing.tsx
+index aa643f7d..c99cdde9 100644
+--- a/client/src/pages/invite-landing.tsx
++++ b/client/src/pages/invite-landing.tsx
+@@ -8,7 +8,10 @@ import { useAuth } from "@/hooks/useAuth";
+ import { useToast } from "@/hooks/use-toast";
+ import { SignInButton, SignUpButton, useAuth as useClerkAuth } from "@clerk/clerk-react";
+ 
+-const CLERK_ENABLED = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
++// Hardcoded true — useAuth.ts does the same. The env var isn't available
++// inside Docker build (Railway injects it at runtime only), so reading
++// import.meta.env here always resolves to false in production builds.
++const CLERK_ENABLED = true;
+ 
+ interface GroupPreview {
+   name: string;

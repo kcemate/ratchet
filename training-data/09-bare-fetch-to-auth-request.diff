@@ -1,0 +1,30 @@
+diff --git a/client/src/components/battle-challenge-modal.tsx b/client/src/components/battle-challenge-modal.tsx
+index 0b44eb5f..3cc30f34 100644
+--- a/client/src/components/battle-challenge-modal.tsx
++++ b/client/src/components/battle-challenge-modal.tsx
+@@ -52,9 +52,7 @@ export function BattleChallengeModal({ open, onOpenChange }: BattleChallengeModa
+   const { data: groupDetail, isLoading: loadingMembers } = useQuery<GroupDetail>({
+     queryKey: ["/api/groups", selectedGroupId],
+     queryFn: async () => {
+-      const res = await fetch(`/api/groups/${selectedGroupId}`);
+-      if (!res.ok) throw new Error("Failed to load group");
+-      return res.json();
++      return apiRequest<GroupDetail>(`/api/groups/${selectedGroupId}`);
+     },
+     enabled: open && !!selectedGroupId,
+   });
+diff --git a/client/src/pages/battle-match.tsx b/client/src/pages/battle-match.tsx
+index 656c637b..43fe20e1 100644
+--- a/client/src/pages/battle-match.tsx
++++ b/client/src/pages/battle-match.tsx
+@@ -629,9 +629,7 @@ export default function BattleMatch() {
+   const { data, isLoading, error, refetch } = useQuery<MatchData>({
+     queryKey: ["/api/battle/match", matchId],
+     queryFn: async () => {
+-      const res = await fetch(`/api/battle/match/${matchId}`);
+-      if (!res.ok) throw new Error("Failed to fetch match");
+-      return res.json();
++      return apiRequest<MatchData>(`/api/battle/match/${matchId}`);
+     },
+     enabled: !!matchId,
+     refetchInterval: 10000, // Poll every 10s for updates

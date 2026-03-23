@@ -1,0 +1,741 @@
+diff --git a/client/src/App.tsx b/client/src/App.tsx
+index 32aff47c..14c589e0 100644
+--- a/client/src/App.tsx
++++ b/client/src/App.tsx
+@@ -1,6 +1,6 @@
+ import { Switch, Route, Redirect, useLocation } from "wouter";
+ import { queryClient } from "./lib/queryClient";
+-import { QueryClientProvider, useMutation } from "@tanstack/react-query";
++import { QueryClientProvider } from "@tanstack/react-query";
+ import { Toaster } from "@/components/ui/toaster";
+ import { Button } from "@/components/ui/button";
+ import { TooltipProvider } from "@/components/ui/tooltip";
+@@ -11,7 +11,7 @@ import { BottomNavigation } from "@/components/bottom-navigation";
+ import { NotificationBanner } from "@/components/notification-banner";
+ import { useToast } from "@/hooks/use-toast";
+ import { apiRequest } from "@/lib/queryClient";
+-import { mutationErrorHandler } from "@/lib/authUtils";
++import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+ import { ThemeProvider } from "@/contexts/ThemeContext";
+ import { ErrorBoundary } from "@/components/error-boundary";
+ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+@@ -156,7 +156,7 @@ function Router() {
+   const { toast } = useToast();
+ 
+   // Handle invite link joining
+-  const joinGroupMutation = useMutation({
++  const joinGroupMutation = useMutationWithToast({
+     mutationFn: (inviteId: string) =>
+       apiRequest<{ message: string; group: { id: string; name: string } }>(`/api/join/${inviteId}`, { method: "POST" }),
+     onSuccess: (response: { message: string; group: { id: string; name: string } }) => {
+@@ -169,9 +169,9 @@ function Router() {
+       queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
+       setLocation("/groups");
+     },
+-    onError: (error) => {
++    errorMessage: (e) => e.message || "Failed to join group",
++    onError: () => {
+       setProcessingInvite(false);
+-      mutationErrorHandler(toast, (e) => e.message || "Failed to join group")(error);
+     },
+   });
+ 
+diff --git a/client/src/components/battle-challenge-modal.tsx b/client/src/components/battle-challenge-modal.tsx
+index 3cc30f34..8b57bd68 100644
+--- a/client/src/components/battle-challenge-modal.tsx
++++ b/client/src/components/battle-challenge-modal.tsx
+@@ -1,12 +1,12 @@
+ import { useState } from "react";
+-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
++import { useQuery, useQueryClient } from "@tanstack/react-query";
+ import { Button } from "@/components/ui/button";
+ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+ import { Badge } from "@/components/ui/badge";
+ import { useAuth } from "@/hooks/useAuth";
+ import { apiRequest } from "@/lib/queryClient";
+-import { useToast } from "@/hooks/use-toast";
+ import { useLocation } from "wouter";
++import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+ 
+ interface Group {
+   id: string;
+@@ -36,7 +36,6 @@ interface BattleChallengeModalProps {
+ 
+ export function BattleChallengeModal({ open, onOpenChange }: BattleChallengeModalProps) {
+   const { user } = useAuth();
+-  const { toast } = useToast();
+   const queryClient = useQueryClient();
+   const [, setLocation] = useLocation();
+ 
+@@ -57,7 +56,7 @@ export function BattleChallengeModal({ open, onOpenChange }: BattleChallengeModa
+     enabled: open && !!selectedGroupId,
+   });
+ 
+-  const challengeMutation = useMutation({
++  const challengeMutation = useMutationWithToast({
+     mutationFn: (vars: { groupId: string; opponentId: string; matchType: string }) =>
+       apiRequest<{ id: string }>("/api/battle/challenge", {
+         method: "POST",
+@@ -65,13 +64,12 @@ export function BattleChallengeModal({ open, onOpenChange }: BattleChallengeModa
+       }),
+     onSuccess: (data) => {
+       queryClient.invalidateQueries({ queryKey: ["/api/battle/matches"] });
+-      toast({ title: "Challenge sent! ⚔️", description: "Your opponent has been challenged to battle." });
+       onOpenChange(false);
+       setLocation(`/battle/${data.id}`);
+     },
+-    onError: (err: Error) => {
+-      toast({ title: "Challenge failed", description: err.message, variant: "destructive" });
+-    },
++    successMessage: "Challenge sent! ⚔️",
++    errorMessage: (err) => err.message,
++    errorTitle: "Challenge failed",
+   });
+ 
+   if (!open) return null;
+diff --git a/client/src/components/create-group-modal.tsx b/client/src/components/create-group-modal.tsx
+index 4163cc6f..47e6db77 100644
+--- a/client/src/components/create-group-modal.tsx
++++ b/client/src/components/create-group-modal.tsx
+@@ -1,5 +1,5 @@
+ import { useState } from "react";
+-import { useMutation, useQueryClient } from "@tanstack/react-query";
++import { useQueryClient } from "@tanstack/react-query";
+ import {
+   Dialog,
+   DialogContent,
+@@ -10,10 +10,9 @@ import { Button } from "@/components/ui/button";
+ import { Label } from "@/components/ui/label";
+ import { Input } from "@/components/ui/input";
+ import { Textarea } from "@/components/ui/textarea";
+-import { useToast } from "@/hooks/use-toast";
+ import { apiRequest } from "@/lib/queryClient";
+-import { mutationErrorHandler } from "@/lib/authUtils";
+ import { Loader2, CheckCircle2, Users } from "lucide-react";
++import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+ 
+ interface CreateGroupModalProps {
+   open: boolean;
+@@ -61,17 +60,16 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps)
+   const [showIconPicker, setShowIconPicker] = useState(false);
+   const [nameError, setNameError] = useState("");
+   const [createdName, setCreatedName] = useState<string | null>(null);
+-  const { toast } = useToast();
+   const queryClient = useQueryClient();
+ 
+-  const createGroupMutation = useMutation({
++  const createGroupMutation = useMutationWithToast({
+     mutationFn: (data: { name: string; description?: string }) =>
+       apiRequest("/api/groups", { method: "POST", body: JSON.stringify(data) }),
+     onSuccess: (_, vars) => {
+       queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
+       setCreatedName(vars.name);
+     },
+-    onError: mutationErrorHandler(toast, "Failed to create group"),
++    errorMessage: "Failed to create group",
+   });
+ 
+   const resetForm = () => {
+diff --git a/client/src/components/edit-username-modal.tsx b/client/src/components/edit-username-modal.tsx
+index 08d22785..a5c22276 100644
+--- a/client/src/components/edit-username-modal.tsx
++++ b/client/src/components/edit-username-modal.tsx
+@@ -1,11 +1,11 @@
+ import { useState } from "react";
+-import { useMutation, useQueryClient } from "@tanstack/react-query";
++import { useQueryClient } from "@tanstack/react-query";
+ import { useForm } from "react-hook-form";
+ import { zodResolver } from "@hookform/resolvers/zod";
+ import { updateUserSchema, type UpdateUserRequest } from "@shared/schema";
+ import { apiRequest } from "@/lib/queryClient";
+ import { useToast } from "@/hooks/use-toast";
+-import { mutationErrorHandler } from "@/lib/authUtils";
++import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+ 
+ import {
+   Dialog,
+@@ -43,7 +43,7 @@ export function EditUsernameModal({ open, onOpenChange, currentUsername }: EditU
+     },
+   });
+ 
+-  const updateUsernameMutation = useMutation({
++  const updateUsernameMutation = useMutationWithToast({
+     mutationFn: (data: UpdateUserRequest) =>
+       apiRequest("/api/auth/user", { method: "PUT", body: JSON.stringify(data) }),
+     onSuccess: () => {
+@@ -52,10 +52,7 @@ export function EditUsernameModal({ open, onOpenChange, currentUsername }: EditU
+       onOpenChange(false);
+       form.reset();
+     },
+-    onError: mutationErrorHandler(
+-      toast,
+-      (e) => e.message?.includes("Username already taken") ? "Username already taken" : "Failed to update username",
+-    ),
++    errorMessage: (e) => e.message?.includes("Username already taken") ? "Username already taken" : "Failed to update username",
+   });
+ 
+   const handleSubmit = (data: UpdateUserRequest) => {
+diff --git a/client/src/components/invite-modal.tsx b/client/src/components/invite-modal.tsx
+index 68a4dab4..8cef2751 100644
+--- a/client/src/components/invite-modal.tsx
++++ b/client/src/components/invite-modal.tsx
+@@ -1,5 +1,4 @@
+ import { useState, useEffect } from "react";
+-import { useMutation } from "@tanstack/react-query";
+ import {
+   Dialog,
+   DialogContent,
+@@ -11,7 +10,7 @@ import { Label } from "@/components/ui/label";
+ import { Input } from "@/components/ui/input";
+ import { useToast } from "@/hooks/use-toast";
+ import { apiRequest } from "@/lib/queryClient";
+-import { mutationErrorHandler } from "@/lib/authUtils";
++import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+ 
+ interface InviteModalProps {
+   open: boolean;
+@@ -27,7 +26,7 @@ export function InviteModal({ open, onOpenChange, groupId }: InviteModalProps) {
+   const [inviteLink, setInviteLink] = useState("");
+   const { toast } = useToast();
+ 
+-  const createInviteMutation = useMutation({
++  const createInviteMutation = useMutationWithToast({
+     mutationFn: () =>
+       apiRequest<{ id: string; inviteLink: string }>(`/api/groups/${groupId}/invite`, {
+         method: "POST",
+@@ -46,7 +45,7 @@ export function InviteModal({ open, onOpenChange, groupId }: InviteModalProps) {
+       setInviteLink(`${window.location.origin}/join/${inviteId}`);
+       toast({ title: "Success", description: "Invite link generated successfully!" });
+     },
+-    onError: mutationErrorHandler(toast, "Failed to generate invite link"),
++    errorMessage: "Failed to generate invite link",
+   });
+ 
+   const copyToClipboard = async () => {
+diff --git a/client/src/components/profile-picture-upload.tsx b/client/src/components/profile-picture-upload.tsx
+index 76e815f5..5859c7a6 100644
+--- a/client/src/components/profile-picture-upload.tsx
++++ b/client/src/components/profile-picture-upload.tsx
+@@ -1,12 +1,12 @@
+ import { useState, useRef } from "react";
+-import { useMutation, useQueryClient } from "@tanstack/react-query";
++import { useQueryClient } from "@tanstack/react-query";
+ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+ import { Button } from "@/components/ui/button";
+ import { useToast } from "@/hooks/use-toast";
+ import { Upload, Camera } from "lucide-react";
+ import { apiRequest } from "@/lib/queryClient";
+ import { getAuthToken } from "@/lib/auth-token";
+-import { mutationErrorHandler } from "@/lib/authUtils";
++import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+ 
+ interface ProfilePictureUploadProps {
+   user: {
+@@ -36,11 +36,11 @@ export function ProfilePictureUpload({
+     lg: "h-24 w-24"
+   };
+ 
+-  const uploadMutation = useMutation({
++  const uploadMutation = useMutationWithToast({
+     mutationFn: async (file: File) => {
+       const formData = new FormData();
+       formData.append('profilePicture', file);
+-      
++
+       // For FormData, we need to use fetch directly since apiRequest expects JSON
+       const token = await getAuthToken();
+       const headers: Record<string, string> = {};
+@@ -51,12 +51,12 @@ export function ProfilePictureUpload({
+         headers,
+         credentials: "include",
+       });
+-      
++
+       if (!response.ok) {
+         const error = await response.text();
+         throw new Error(`${response.status}: ${error}`);
+       }
+-      
++
+       return await response.json();
+     },
+     onSuccess: () => {
+@@ -67,10 +67,10 @@ export function ProfilePictureUpload({
+       });
+       setIsUploading(false);
+     },
+-    onError: (error) => {
+-      mutationErrorHandler(toast, "Failed to upload profile picture. Please try again.")(error);
++    onError: () => {
+       setIsUploading(false);
+     },
++    errorMessage: "Failed to upload profile picture. Please try again.",
+   });
+ 
+   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+diff --git a/client/src/components/reactions.tsx b/client/src/components/reactions.tsx
+index 5f69ce16..80a98b67 100644
+--- a/client/src/components/reactions.tsx
++++ b/client/src/components/reactions.tsx
+@@ -1,8 +1,9 @@
+ import { useState, useRef } from "react";
+ import { Button } from "@/components/ui/button";
+ import { useAuth } from "@/hooks/useAuth";
+-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
++import { useQuery, useQueryClient } from "@tanstack/react-query";
+ import { apiRequest } from "@/lib/queryClient";
++import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+ import { getUserDisplayName } from "@/lib/userUtils";
+ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+@@ -68,7 +69,7 @@ export function Reactions({ entryId, maxVisible = 4 }: ReactionsProps) {
+     setTimeout(() => setFloaters(prev => prev.filter(f => f.id !== id)), 800);
+   };
+ 
+-  const addReactionMutation = useMutation({
++  const addReactionMutation = useMutationWithToast({
+     mutationFn: async (emoji: string) => {
+       return await apiRequest(`/api/entries/${entryId}/reactions`, {
+         method: 'POST',
+@@ -82,9 +83,10 @@ export function Reactions({ entryId, maxVisible = 4 }: ReactionsProps) {
+       spawnFloater(emoji);
+       setTimeout(() => setAnimatingEmoji(null), 350);
+     },
++    errorMessage: "Failed to add reaction",
+   });
+ 
+-  const removeReactionMutation = useMutation({
++  const removeReactionMutation = useMutationWithToast({
+     mutationFn: async (emoji: string) => {
+       return await apiRequest(`/api/entries/${entryId}/reactions`, {
+         method: 'DELETE',
+@@ -94,6 +96,7 @@ export function Reactions({ entryId, maxVisible = 4 }: ReactionsProps) {
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ['/api/entries', entryId, 'reactions'] });
+     },
++    errorMessage: "Failed to remove reaction",
+   });
+ 
+   const handleEmojiClick = (emoji: string) => {
+diff --git a/client/src/components/streak-insurance-button.tsx b/client/src/components/streak-insurance-button.tsx
+index 06c597e6..ecb27c83 100644
+--- a/client/src/components/streak-insurance-button.tsx
++++ b/client/src/components/streak-insurance-button.tsx
+@@ -1,4 +1,4 @@
+-import { useMutation } from "@tanstack/react-query";
++import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+ import { Button } from "@/components/ui/button";
+ import { apiRequest, queryClient } from "@/lib/queryClient";
+ import { useAuth } from "@/hooks/useAuth";
+@@ -12,12 +12,12 @@ export function StreakInsuranceButton() {
+   const isPremium = user?.subscription === "premium";
+   const alreadyUsed = !!user?.streakInsuranceUsed;
+ 
+-  const useInsuranceMutation = useMutation({
++  const useInsuranceMutation = useMutationWithToast({
+     mutationFn: () =>
+-      apiRequest("/api/user/streak-insurance", {
++      apiRequest<{ extended: boolean; message: string }>("/api/user/streak-insurance", {
+         method: "PUT",
+       }),
+-    onSuccess: (data: { extended: boolean; message: string }) => {
++    onSuccess: (data) => {
+       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+       queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
+       toast({
+@@ -25,13 +25,8 @@ export function StreakInsuranceButton() {
+         description: data.message,
+       });
+     },
+-    onError: (error: Error) => {
+-      toast({
+-        title: "Insurance Failed",
+-        description: error.message || "Couldn't activate streak insurance.",
+-        variant: "destructive",
+-      });
+-    },
++    errorMessage: (error) => error.message || "Couldn't activate streak insurance.",
++    errorTitle: "Insurance Failed",
+   });
+ 
+   if (!isPremium) {
+diff --git a/client/src/hooks/useMutationWithToast.ts b/client/src/hooks/useMutationWithToast.ts
+new file mode 100644
+index 00000000..aa58c1ab
+--- /dev/null
++++ b/client/src/hooks/useMutationWithToast.ts
+@@ -0,0 +1,64 @@
++import { useMutation } from "@tanstack/react-query";
++import type { UseMutationOptions, UseMutationResult } from "@tanstack/react-query";
++import { useToast } from "@/hooks/use-toast";
++import { mutationErrorHandler } from "@/lib/authUtils";
++
++export interface MutationWithToastOptions<
++  TData = unknown,
++  TError extends Error = Error,
++  TVariables = void,
++  TContext = unknown,
++> extends Omit<UseMutationOptions<TData, TError, TVariables, TContext>, "onError"> {
++  /** If provided, shows a destructive toast on error (via mutationErrorHandler, handles 401 redirects). */
++  errorMessage?: string | ((error: TError) => string);
++  /** Optional title for the error toast (defaults to "Error"). */
++  errorTitle?: string;
++  /** If provided, shows a success toast after onSuccess fires. */
++  successMessage?: string | ((data: TData, variables: TVariables) => string);
++  /** Original onError callback — runs after the error toast is shown. */
++  onError?: (error: TError, variables: TVariables, context: TContext | undefined) => void;
++}
++
++/**
++ * Thin wrapper around useMutation that provides:
++ *   - Automatic error toast via mutationErrorHandler (handles 401 redirect) when errorMessage is set
++ *   - Automatic success toast when successMessage is set
++ *   - All standard useMutation options pass through unchanged
++ */
++export function useMutationWithToast<
++  TData = unknown,
++  TError extends Error = Error,
++  TVariables = void,
++  TContext = unknown,
++>(
++  options: MutationWithToastOptions<TData, TError, TVariables, TContext>,
++): UseMutationResult<TData, TError, TVariables, TContext> {
++  const { toast } = useToast();
++  const { successMessage, errorMessage, errorTitle, onSuccess, onError, ...rest } = options;
++
++  return useMutation<TData, TError, TVariables, TContext>({
++    ...rest,
++    onSuccess:
++      successMessage || onSuccess
++        ? (data, variables, context) => {
++            if (successMessage) {
++              const msg =
++                typeof successMessage === "function"
++                  ? successMessage(data, variables)
++                  : successMessage;
++              toast({ title: msg });
++            }
++            onSuccess?.(data, variables, context);
++          }
++        : undefined,
++    onError:
++      errorMessage !== undefined || onError
++        ? (error, variables, context) => {
++            if (errorMessage !== undefined) {
++              mutationErrorHandler(toast, errorMessage as string | ((e: Error) => string), errorTitle)(error);
++            }
++            onError?.(error, variables, context);
++          }
++        : undefined,
++  });
++}
+diff --git a/client/src/pages/referral.tsx b/client/src/pages/referral.tsx
+index 78d371ea..8d5b4be2 100644
+--- a/client/src/pages/referral.tsx
++++ b/client/src/pages/referral.tsx
+@@ -1,11 +1,11 @@
+ import { useState } from "react";
+-import { useQuery, useMutation } from "@tanstack/react-query";
++import { useQuery } from "@tanstack/react-query";
+ import { Button } from "@/components/ui/button";
+ import { Input } from "@/components/ui/input";
+ import { apiRequest } from "@/lib/queryClient";
+ import { useToast } from "@/hooks/use-toast";
+ import { useLocation } from "wouter";
+-import { mutationErrorHandler } from "@/lib/authUtils";
++import { useMutationWithToast } from "@/hooks/useMutationWithToast";
+ import { Copy, Share2, Users, Award, Clock, RefreshCw } from "lucide-react";
+ import { BackHeader } from "@/components/back-header";
+ import { useAuth } from "@/hooks/useAuth";
+@@ -80,7 +80,7 @@ export default function Referral() {
+     queryKey: ["/api/referrals/leaderboard"],
+   });
+ 
+-  const applyMutation = useMutation({
++  const applyMutation = useMutationWithToast({
+     mutationFn: () =>
+       apiRequest<{ referrerUsername: string }>("/api/referral/apply", {
+         method: "POST",
+@@ -93,7 +93,8 @@ export default function Referral() {
+       });
+       setApplyCode("");
+     },
+-    onError: mutationErrorHandler(toast, (e) => e.message || "Something went wrong.", "Couldn't apply code"),
++    errorMessage: (e) => e.message || "Something went wrong.",
++    errorTitle: "Couldn't apply code",
+   });
+ 
+   const getShareText = () => {
+---END_COMMIT---
+diff --git a/server/routes.ts b/server/routes.ts
+index 9c24ec0f..3d75b1bb 100644
+--- a/server/routes.ts
++++ b/server/routes.ts
+@@ -1,7 +1,17 @@
+-import express, { type Express } from "express";
++import express, { type Express, type Request, type Response } from "express";
+ import logger from "./lib/logger";
+-import { createServer, type Server } from "http";
++import { createServer, type Server, type IncomingMessage } from "http";
+ import { WebSocketServer, WebSocket } from "ws";
++
++/** WebSocket connection that has been authenticated and annotated with per-connection state. */
++interface AuthenticatedWebSocket extends WebSocket {
++  userId: string;
++  missedPongs: number;
++  subscribedGroups: Set<string>;
++}
++
++/** HTTP IncomingMessage augmented with session data injected by session middleware. */
++type SessionRequest = IncomingMessage & { session?: { userId?: string } };
+ import { storage } from "./storage";
+ import { setupAuth, clerkEnabled, clerk, getSession } from "./replitAuth";
+ import { registerClerkWebhook } from "./routes/webhooks";
+@@ -58,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
+ 
+   const wss = new WebSocketServer({ noServer: true });
+   registerWss(wss);
+-  const groupConnections = new Map<string, Set<WebSocket>>();
++  const groupConnections = new Map<string, Set<AuthenticatedWebSocket>>();
+ 
+   // Authenticate WebSocket upgrade requests
+   const sessionMiddleware = getSession();
+@@ -98,11 +108,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
+           return;
+         }
+       } else {
+-        const res = { end() {}, setHeader() {}, getHeader() {} } as any;
++        const res = { end() {}, setHeader() {}, getHeader() {} } as unknown as Response;
++        const sessionReq = req as SessionRequest;
+         await new Promise<void>((resolve) => {
+-          sessionMiddleware(req as any, res, () => resolve());
++          sessionMiddleware(sessionReq as unknown as Request, res, () => resolve());
+         });
+-        userId = (req as any).session?.userId || null;
++        userId = sessionReq.session?.userId || null;
+         if (!userId) {
+           incWsCounter('failedAuthentications');
+           socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+@@ -119,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
+       }
+ 
+       wss.handleUpgrade(req, socket, head, (ws) => {
+-        (ws as any).userId = userId;
++        (ws as AuthenticatedWebSocket).userId = userId!;
+         wss.emit('connection', ws, req);
+       });
+     } catch (error) {
+@@ -134,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
+ 
+   const pingInterval = setInterval(() => {
+     wss.clients.forEach((ws) => {
+-      const client = ws as any;
++      const client = ws as AuthenticatedWebSocket;
+       if (client.missedPongs >= MAX_MISSED_PONGS) {
+         incWsCounter('forcedDisconnects');
+         logger.info(
+@@ -164,14 +175,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
+   });
+ 
+   wss.on('connection', (ws: WebSocket) => {
+-    const userId = (ws as any).userId as string;
++    const authWs = ws as AuthenticatedWebSocket;
++    const userId = authWs.userId;
+     incWsCounter('totalConnections');
+     logger.info(`WebSocket connection authenticated for user ${userId}`);
+ 
+-    (ws as any).missedPongs = 0;
+-    ws.on('pong', () => { (ws as any).missedPongs = 0; });
++    authWs.missedPongs = 0;
++    ws.on('pong', () => { authWs.missedPongs = 0; });
+ 
+-    (ws as any).subscribedGroups = new Set<string>();
++    authWs.subscribedGroups = new Set<string>();
+ 
+     ws.on('message', async (message) => {
+       try {
+@@ -189,8 +201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
+             return;
+           }
+           if (!groupConnections.has(groupId)) groupConnections.set(groupId, new Set());
+-          groupConnections.get(groupId)?.add(ws);
+-          (ws as any).subscribedGroups.add(groupId);
++          groupConnections.get(groupId)?.add(authWs);
++          authWs.subscribedGroups.add(groupId);
+           ws.send(JSON.stringify({ type: 'join_group_ok', groupId }));
+         } else if (data.type === 'leave_group') {
+           const groupId = data.groupId;
+@@ -200,10 +212,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
+           }
+           const conns = groupConnections.get(groupId);
+           if (conns) {
+-            conns.delete(ws);
++            conns.delete(authWs);
+             if (conns.size === 0) groupConnections.delete(groupId);
+           }
+-          (ws as any).subscribedGroups.delete(groupId);
++          authWs.subscribedGroups.delete(groupId);
+         }
+       } catch (error) {
+         logger.error('Error parsing WebSocket message:', error);
+@@ -212,11 +224,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
+ 
+     ws.on('close', () => {
+       incWsCounter('gracefulDisconnects');
+-      const subscribed: Set<string> = (ws as any).subscribedGroups;
+-      for (const groupId of subscribed) {
++      for (const groupId of authWs.subscribedGroups) {
+         const conns = groupConnections.get(groupId);
+         if (conns) {
+-          conns.delete(ws);
++          conns.delete(authWs);
+           if (conns.size === 0) groupConnections.delete(groupId);
+         }
+       }
+diff --git a/server/routes/deuces.ts b/server/routes/deuces.ts
+index 12326ca3..1768ad9b 100644
+--- a/server/routes/deuces.ts
++++ b/server/routes/deuces.ts
+@@ -4,7 +4,7 @@ import { WebSocket } from "ws";
+ import { storage } from "../storage";
+ import { db } from "../db";
+ import { deuceEntries, users } from "@shared/schema";
+-import type { DeuceEntry } from "@shared/schema";
++import type { DeuceEntry, BattleMatch } from "@shared/schema";
+ import { eq, sql } from "drizzle-orm";
+ import { isAuthenticated } from "../replitAuth";
+ import { track } from "../lib/analytics";
+@@ -351,7 +351,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       const deuceEntryId = entries[0]?.id ?? '';
+       try {
+         const activeMatches = await storage.getUserActiveMatches(userId);
+-        const activeOnly = activeMatches.filter((m: any) => m.status === 'active');
++        const activeOnly = activeMatches.filter((m: BattleMatch) => m.status === 'active');
+         for (const match of activeOnly) {
+           await storage.createBattleToken(match.id, userId, deuceEntryId, 'standard');
+           // Double flush: 2nd or more log of the day
+@@ -492,7 +492,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       const bulkEntryId = entries[0]?.id ?? '';
+       try {
+         const activeMatches = await storage.getUserActiveMatches(userId);
+-        const activeOnly = activeMatches.filter((m: any) => m.status === 'active');
++        const activeOnly = activeMatches.filter((m: BattleMatch) => m.status === 'active');
+         for (const match of activeOnly) {
+           await storage.createBattleToken(match.id, userId, bulkEntryId, 'standard');
+           if (currentCount >= 1) {
+@@ -598,7 +598,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+           const syncCount = await storage.getUserDailyLogCount(userId, today);
+           try {
+             const activeMatches = await storage.getUserActiveMatches(userId);
+-            const activeOnly = activeMatches.filter((m: any) => m.status === 'active');
++            const activeOnly = activeMatches.filter((m: BattleMatch) => m.status === 'active');
+             for (const match of activeOnly) {
+               await storage.createBattleToken(match.id, userId, syncEntryId, 'standard');
+               if (syncCount >= 1) {
+diff --git a/server/routes/helpers.ts b/server/routes/helpers.ts
+index efa78538..0cbf2b5c 100644
+--- a/server/routes/helpers.ts
++++ b/server/routes/helpers.ts
+@@ -244,7 +244,7 @@ export function hashCode(s: string): number {
+  */
+ export async function recalculateStreak(groupId: string): Promise<void> {
+   // Fallback for test environments where db.transaction is not available
+-  if (typeof (db as any).transaction !== 'function') {
++  if (typeof (db as { transaction?: unknown }).transaction !== 'function') {
+     const today = getTodayUTC();
+     const yesterday = getYesterdayUTC();
+     const streak = await storage.getGroupStreak(groupId);
+---END_COMMIT---
+diff --git a/server/routes/deuces.ts b/server/routes/deuces.ts
+index 807043c2..ba90db31 100644
+--- a/server/routes/deuces.ts
++++ b/server/routes/deuces.ts
+@@ -18,6 +18,7 @@ import {
+   getTodayUTC,
+   recalculateStreak,
+   sanitizeUserForResponse,
++  getUserDisplayName,
+ } from "./helpers";
+ 
+ // Simple emoji schema — accepts any non-empty string (original behavior)
+@@ -307,9 +308,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       const user = await storage.getUser(userId);
+ 
+       // Create display name for notifications
+-      const displayName = user?.username ||
+-                          (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.firstName) ||
+-                          'Someone';
++      const displayName = getUserDisplayName(user);
+ 
+       // Send WebSocket notification to all groups (skip for ghost logs)
+       if (!isGhost) {
+@@ -452,9 +451,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       });
+ 
+       const user = await storage.getUser(userId);
+-      const displayName = user?.username ||
+-        (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.firstName) ||
+-        'Someone';
++      const displayName = getUserDisplayName(user);
+ 
+       if (!isGhost) {
+         const safeUser = user ? sanitizeUserForResponse(user) : null;
+@@ -521,9 +518,7 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       const results: Array<{ id: string; status: 'ok' | 'error'; reason?: string }> = [];
+ 
+       const syncUser = await storage.getUser(userId);
+-      const syncDisplayName = syncUser?.username ||
+-        (syncUser?.firstName && syncUser?.lastName ? `${syncUser.firstName} ${syncUser.lastName}` : syncUser?.firstName) ||
+-        'Someone';
++      const syncDisplayName = getUserDisplayName(syncUser);
+ 
+       for (const entry of parsed.data.entries) {
+         try {
+diff --git a/server/routes/helpers.ts b/server/routes/helpers.ts
+index 9c9f63c3..1ffe51d4 100644
+--- a/server/routes/helpers.ts
++++ b/server/routes/helpers.ts
+@@ -42,6 +42,12 @@ export function asyncRoute<T extends Request = Request>(
+  * API responses visible to other users (e.g. entries in a group feed).
+  * Keeps only the fields needed for display purposes.
+  */
++export function getUserDisplayName(user: { username?: string | null; firstName?: string | null; lastName?: string | null } | null | undefined): string {
++  return user?.username ||
++    (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.firstName) ||
++    'Someone';
++}
++
+ export function sanitizeUserForResponse(user: Record<string, unknown>) {
+   return {
+     id: user.id,
+---END_COMMIT---
+diff --git a/server/routes/deuces.ts b/server/routes/deuces.ts
+index 12326ca3..807043c2 100644
+--- a/server/routes/deuces.ts
++++ b/server/routes/deuces.ts
+@@ -35,6 +35,8 @@ const syncDeuceSchema = z.object({
+ 
+ type BroadcastFn = (groupId: string, message: unknown) => void;
+ 
++const STREAK_MILESTONES = [7, 30, 100, 365];
++
+ /** Fetch an entry and verify the user belongs to its group. Returns the entry or sends an error response. */
+ async function getAuthorizedEntry(entryId: string, userId: string, res: Response) {
+   const entry = await storage.getEntryById(entryId);
+@@ -324,7 +326,6 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       }
+ 
+       // Recalculate streaks for all affected groups
+-      const STREAK_MILESTONES = [7, 30, 100, 365];
+       let maxStreak = 0;
+       for (const groupId of targetGroupIds) {
+         try {
+@@ -475,7 +476,6 @@ export function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {
+       }
+ 
+       // Streak milestone tracking
+-      const STREAK_MILESTONES = [7, 30, 100, 365];
+       const streakMap = await storage.getGroupStreaksBatch(targetGroupIds);
+       for (const gid of targetGroupIds) {
+         const { currentStreak } = streakMap.get(gid) ?? { currentStreak: 0 };
+---END_COMMIT---

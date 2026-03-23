@@ -1,0 +1,80 @@
+diff --git a/client/src/core/logger.ts b/client/src/core/logger.ts
+index d459b4cd..75cb8d9f 100644
+--- a/client/src/core/logger.ts
++++ b/client/src/core/logger.ts
+@@ -1,7 +1,7 @@
+ const logger = {
+   error: (...args: unknown[]) => console.error(...args),
+   warn: (...args: unknown[]) => console.warn(...args),
+-  info: (...args: unknown[]) => console.log(...args),
++  info: (...args: unknown[]) => console.info(...args),
+ };
+ 
+ export default logger;
+---END_COMMIT---
+diff --git a/client/src/components/error-boundary.tsx b/client/src/components/error-boundary.tsx
+index 33dae19f..be91c012 100644
+--- a/client/src/components/error-boundary.tsx
++++ b/client/src/components/error-boundary.tsx
+@@ -1,5 +1,6 @@
+ import { Component, type ErrorInfo, type ReactNode } from "react";
+ import { Button } from "@/components/ui/button";
++import logger from "@/core/logger";
+ 
+ interface Props {
+   children: ReactNode;
+@@ -27,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
+   }
+ 
+   componentDidCatch(error: Error, info: ErrorInfo) {
+-    console.error("ErrorBoundary caught:", error, info.componentStack);
++    logger.error("ErrorBoundary caught:", error, info.componentStack);
+   }
+ 
+   private isChunkLoadError(): boolean {
+diff --git a/client/src/core/logger.ts b/client/src/core/logger.ts
+new file mode 100644
+index 00000000..d459b4cd
+--- /dev/null
++++ b/client/src/core/logger.ts
+@@ -0,0 +1,7 @@
++const logger = {
++  error: (...args: unknown[]) => console.error(...args),
++  warn: (...args: unknown[]) => console.warn(...args),
++  info: (...args: unknown[]) => console.log(...args),
++};
++
++export default logger;
+---END_COMMIT---
+diff --git a/server/routes/helpers.ts b/server/routes/helpers.ts
+index efa78538..9c9f63c3 100644
+--- a/server/routes/helpers.ts
++++ b/server/routes/helpers.ts
+@@ -6,6 +6,9 @@ import { groups, groupMembers, deuceEntries } from "@shared/schema";
+ import { eq, and, sql } from "drizzle-orm";
+ import { storage } from "../storage";
+ 
++// --- Shared types ---
++export type AuthReq = Request & { user: { id: string } };
++
+ // --- Route utilities ---
+ 
+ export function parseOrFail<T>(schema: ZodSchema<T>, body: unknown, res: Response, message: string): T | null {
+diff --git a/server/routes/premium.ts b/server/routes/premium.ts
+index 5e2e0579..8039990b 100644
+--- a/server/routes/premium.ts
++++ b/server/routes/premium.ts
+@@ -1,11 +1,10 @@
+ import { Router, Request, Response } from "express";
+ import logger from "../lib/logger";
+ 
+-type AuthReq = Request & { user: { id: string } };
+ import { storage } from "../storage";
+ import { isAuthenticated } from "../replitAuth";
+ import { requiresPremiumFor } from "../premiumAuth";
+-import { getTodayUTC, getYesterdayUTC, subscriptionUpgradeSchema, referralApplySchema, getTitle } from "./helpers";
++import { getTodayUTC, getYesterdayUTC, subscriptionUpgradeSchema, referralApplySchema, getTitle, type AuthReq } from "./helpers";
+ import { getTodayChallenge, todayChallengeDate } from "../challenges";
+ 
+ /** Wraps an async route handler with standard 500 error handling. */
+---END_COMMIT---
