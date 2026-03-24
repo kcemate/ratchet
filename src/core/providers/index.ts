@@ -2,6 +2,7 @@ export type { Provider, ProviderOptions, ProviderType } from './base.js';
 export { OpenRouterProvider } from './openrouter.js';
 export { AnthropicProvider } from './anthropic.js';
 export { OpenAIProvider } from './openai.js';
+export { LocalMLXProvider, LOCAL_MLX_DEFAULT_PORT } from './local.js';
 
 import type { Provider } from './base.js';
 import { OpenRouterProvider } from './openrouter.js';

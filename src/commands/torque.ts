@@ -11,6 +11,8 @@ import { runEngine, runSweepEngine, runArchitectEngine } from '../core/engine.js
 import { runFeatureEngine, resolveSpec } from '../core/engine-feature.js';
 import type { ClickPhase, HardenPhase, RunEconomics } from '../core/engine.js';
 import { ShellAgent } from '../core/agents/shell.js';
+import { APIAgent } from '../core/agents/api.js';
+import { LocalMLXProvider, LOCAL_MLX_DEFAULT_PORT } from '../core/providers/local.js';
 import { buildSwarmConfig } from '../core/swarm.js';
 import { isValidSpecialization } from '../core/agents/specialized.js';
 import { RatchetLogger } from '../core/logger.js';
@@ -144,6 +146,8 @@ export function torqueCommand(): Command {
     .option('--no-strategy', 'Disable self-evolving strategy loading and evolution for this run')
     .option('--parallel <number>', 'Run multiple specs/targets in parallel (requires multiple --spec or --specs-file)')
     .option('--specs-file <path>', 'Path to a markdown file where each ## heading is a separate task spec')
+    .option('--local', 'Use local on-device MLX model instead of cloud API (privacy mode)', false)
+    .option('--local-port <number>', `Port for local MLX server (default: ${LOCAL_MLX_DEFAULT_PORT})`)
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -191,6 +195,8 @@ export function torqueCommand(): Command {
         parallel?: string;
         specsFile?: string;
         model?: string;
+        local: boolean;
+        localPort?: string;
       }) => {
         const cwd = process.cwd();
 
@@ -498,6 +504,10 @@ export function torqueCommand(): Command {
           ['Mode',   featureMode ? chalk.yellow('feature') : hardenMode ? chalk.yellow('harden') : chalk.dim('normal')],
         );
         if (options.scope) fields.push(['Scope', chalk.cyan(formatScopeForDisplay(options.scope, scopeFiles, cwd))]);
+        if (options.local) {
+          const port = options.localPort ?? String(LOCAL_MLX_DEFAULT_PORT);
+          fields.push(['Model', chalk.green(`local MLX :${port}`)]);
+        }
         if (options.architect) fields.push(['Architect', chalk.yellow('enabled')]);
         if (options.planFirst) fields.push(['Plan-first', chalk.yellow('enabled')]);
         if (options.fast) fields.push(['Fast', chalk.yellow('context pruning')]);
@@ -514,11 +524,34 @@ export function torqueCommand(): Command {
         // Set up logger
         const logger = new RatchetLogger(target.name, cwd);
 
-        // Create agent
-        const agent = new ShellAgent({
-          model: config.model,
-          cwd,
-        });
+        // Create agent — local mode uses on-device MLX model via OpenAI-compatible API
+        let agent: ShellAgent | APIAgent;
+        if (options.local) {
+          const port = options.localPort ? parseInt(options.localPort, 10) : LOCAL_MLX_DEFAULT_PORT;
+          if (isNaN(port) || port < 1 || port > 65535) {
+            exitWithError(`  Invalid --local-port value: ${options.localPort}\n  Must be a valid port number (1–65535).`);
+          }
+          const localProvider = new LocalMLXProvider(port);
+          const running = await localProvider.isRunning();
+          if (!running) {
+            exitWithError(
+              `  Local MLX server not reachable on port ${port}.\n\n` +
+              `  Start it with:\n` +
+              `    mlx_lm.server --model training-data/ratchet-fix-fused-v2 --port ${port}\n\n` +
+              `  Or install mlx-lm:\n` +
+              `    pip install mlx-lm`,
+            );
+          }
+          process.stdout.write(
+            chalk.dim('  🔒 Local mode: using on-device model (best for console, catch, N+1 fixes)\n') + '\n',
+          );
+          agent = new APIAgent({ provider: localProvider });
+        } else {
+          agent = new ShellAgent({
+            model: config.model,
+            cwd,
+          });
+        }
 
         // Spinner state
         let spinner: ReturnType<typeof ora> | null = null;
