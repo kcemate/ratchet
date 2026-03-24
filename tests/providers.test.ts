@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { OpenRouterProvider } from '../src/core/providers/openrouter.js';
 import { AnthropicProvider } from '../src/core/providers/anthropic.js';
 import { OpenAIProvider } from '../src/core/providers/openai.js';
+import { LocalMLXProvider, LOCAL_MLX_DEFAULT_PORT } from '../src/core/providers/local.js';
 import { detectProvider } from '../src/core/providers/index.js';
 import { APIAgent, createAPIAgent } from '../src/core/agents/api.js';
 import type { Provider } from '../src/core/providers/base.js';
@@ -190,6 +191,130 @@ describe('OpenAIProvider', () => {
 
     const p = new OpenAIProvider('key-789');
     await expect(p.sendMessage('prompt')).rejects.toThrow('OpenAI API error 429');
+
+    vi.unstubAllGlobals();
+  });
+});
+
+// --- LocalMLXProvider ---
+
+describe('LocalMLXProvider', () => {
+  it('exposes default port constant', () => {
+    expect(LOCAL_MLX_DEFAULT_PORT).toBe(8899);
+  });
+
+  it('constructs with defaults', () => {
+    const p = new LocalMLXProvider();
+    expect(p).toBeDefined();
+    expect(typeof p.sendMessage).toBe('function');
+    expect(typeof p.isRunning).toBe('function');
+  });
+
+  it('constructs with custom port', () => {
+    const p = new LocalMLXProvider(11434);
+    expect(p).toBeDefined();
+  });
+
+  it('POSTs to localhost completions endpoint', async () => {
+    const fetchMock = mockFetchOk('local response');
+    vi.stubGlobal('fetch', fetchMock);
+
+    const p = new LocalMLXProvider(8899);
+    const result = await p.sendMessage('test prompt');
+
+    expect(result).toBe('local response');
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://localhost:8899/v1/chat/completions');
+    expect(init.method).toBe('POST');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('uses custom port in URL', async () => {
+    const fetchMock = mockFetchOk('response');
+    vi.stubGlobal('fetch', fetchMock);
+
+    const p = new LocalMLXProvider(11434);
+    await p.sendMessage('prompt');
+
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://localhost:11434/v1/chat/completions');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('sends the default model path when none specified', async () => {
+    const fetchMock = mockFetchOk('response');
+    vi.stubGlobal('fetch', fetchMock);
+
+    const p = new LocalMLXProvider();
+    await p.sendMessage('prompt');
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.model).toContain('ratchet-fix-fused-v2');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('uses custom model when provided via options', async () => {
+    const fetchMock = mockFetchOk('response');
+    vi.stubGlobal('fetch', fetchMock);
+
+    const p = new LocalMLXProvider();
+    await p.sendMessage('prompt', { model: '/path/to/my-model' });
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.model).toBe('/path/to/my-model');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('throws on non-ok response', async () => {
+    vi.stubGlobal('fetch', mockFetchError(500, 'Internal Server Error'));
+
+    const p = new LocalMLXProvider();
+    await expect(p.sendMessage('prompt')).rejects.toThrow('Local MLX API error 500');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('isRunning returns true when server responds ok', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+
+    const p = new LocalMLXProvider();
+    expect(await p.isRunning()).toBe(true);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('isRunning returns false when server is not reachable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+
+    const p = new LocalMLXProvider();
+    expect(await p.isRunning()).toBe(false);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('isRunning returns false when server responds with error status', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+
+    const p = new LocalMLXProvider();
+    expect(await p.isRunning()).toBe(false);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('checks models endpoint for isRunning', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const p = new LocalMLXProvider(8899);
+    await p.isRunning();
+
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://localhost:8899/v1/models');
 
     vi.unstubAllGlobals();
   });
