@@ -705,6 +705,8 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
 export interface RunScanOptions {
   includeTests?: boolean;
   files?: string[];
+  /** Include non-production directories (scripts/, migrations/, seed/, etc.) in scoring. */
+  includeNonProduction?: boolean;
 }
 
 export async function runScan(cwd: string, options: RunScanOptions = {}): Promise<ScanResult> {
@@ -722,7 +724,11 @@ export async function runScan(cwd: string, options: RunScanOptions = {}): Promis
   // Always include test files for the Testing scorer (needs them for coverage ratio).
   // When scanProductionOnly is on, exclude test files from all other scorers.
   // If specific files are passed (e.g. --diff), use those instead.
-  const allFiles = options.files ?? findSourceFiles(cwd, { scanProductionOnly: false });
+  const includeNonProduction = options.includeNonProduction ?? false;
+  const allFiles = options.files ?? findSourceFiles(cwd, {
+    scanProductionOnly: false,
+    includeNonProduction,
+  });
   const scoringFiles = options.includeTests
     ? allFiles
     : allFiles.filter(f => !isTestFile(f));
@@ -985,9 +991,18 @@ export function scanCommand(): Command {
         }
       }
 
+      // Load scan config from .ratchet.yml if present
+      let includeNonProduction = false;
+      try {
+        const { loadConfig } = await import('../core/config.js');
+        const cfg = loadConfig(cwd);
+        includeNonProduction = cfg.scan?.includeNonProduction ?? false;
+      } catch { /* use default */ }
+
       const result = await runScan(cwd, {
         includeTests: options['includeTests'] as boolean | undefined,
         files: diffFiles,
+        includeNonProduction,
       });
 
       if (options['outputJson']) {

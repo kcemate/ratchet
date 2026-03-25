@@ -11,6 +11,17 @@ export const IGNORE_DIRS = new Set([
   'node_modules', 'dist', '.git', '.next', 'build', 'coverage',
   '__pycache__', '.cache', 'vendor', 'out', '.ratchet',
 ]);
+
+/**
+ * Non-production directories excluded from code quality scoring by default.
+ * These directories contain scripts, test data, or support files that are not
+ * representative of production code quality. Pass includeNonProduction: true
+ * to FindSourceFilesOptions to scan them.
+ */
+export const NON_PROD_DIRS = new Set([
+  'scripts', 'migrations', 'seed', 'seeds', 'fixtures', 'examples',
+  'docs', '__fixtures__', '__mocks__',
+]);
 export const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.go', '.rs']);
 export const TEST_PATTERNS = ['.test.', '.spec.', '_test.', '_spec.', '/test/', '/tests/', '/spec/'];
 
@@ -50,10 +61,11 @@ function loadRatchetIgnore(dir: string): string[] {
 
 export interface FindSourceFilesOptions {
   scanProductionOnly?: boolean; // default: true — excludes test files
+  includeNonProduction?: boolean; // default: false — excludes NON_PROD_DIRS
 }
 
 export function findSourceFiles(dir: string, options: FindSourceFilesOptions = {}): string[] {
-  const { scanProductionOnly = true } = options;
+  const { scanProductionOnly = true, includeNonProduction = false } = options;
   const results: string[] = [];
   const ignoredPaths = loadRatchetIgnore(dir);
 
@@ -72,6 +84,7 @@ export function findSourceFiles(dir: string, options: FindSourceFilesOptions = {
 
     for (const entry of entries) {
       if (IGNORE_DIRS.has(entry)) continue;
+      if (!includeNonProduction && NON_PROD_DIRS.has(entry)) continue;
       const fullPath = join(current, entry);
       if (isIgnored(fullPath)) continue;
       let stat;

@@ -90,6 +90,12 @@ targets:
 #   - path: migrations/
 #     rule: no-delete
 #     reason: "Migration files are append-only"
+
+# Scan settings. Non-production directories (scripts/, migrations/, seed/,
+# fixtures/, examples/, docs/, __fixtures__/, __mocks__/) are excluded by
+# default so your score reflects production code quality only.
+# scan:
+#   include_non_production: false  # set to true to score all directories
 `;
 }
 

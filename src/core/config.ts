@@ -35,6 +35,9 @@ interface RawConfig {
     rule?: string;
     reason?: string;
   }>;
+  scan?: {
+    include_non_production?: boolean;
+  };
 }
 
 export function loadConfig(cwd: string = process.cwd()): RatchetConfig {
@@ -100,12 +103,17 @@ export function parseConfig(raw: string): RatchetConfig {
         }))
     : undefined;
 
+  const scan = data.scan ? {
+    includeNonProduction: data.scan.include_non_production ?? false,
+  } : undefined;
+
   return {
     agent,
     model: data.model,
     defaults,
     targets,
     boundaries,
+    scan,
   };
 }
 

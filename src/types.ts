@@ -88,6 +88,16 @@ export interface RatchetConfig {
   swarm?: SwarmConfig;
   /** Click scope guards — named profile or explicit limits */
   guards?: GuardProfileName | ClickGuards;
+  /** Scan-specific settings */
+  scan?: {
+    /**
+     * Include non-production directories (scripts/, migrations/, seed/, fixtures/,
+     * examples/, docs/, __fixtures__/, __mocks__/) in code quality scoring.
+     * Default: false (these directories are excluded to keep scores focused on
+     * production code quality).
+     */
+    includeNonProduction?: boolean;
+  };
   /** Set to 'auto-detected' when config was generated from project detection, not a .ratchet.yml */
   _source?: 'file' | 'auto-detected';
   /** True when no test command was found during auto-detection; harden mode should be enabled */
