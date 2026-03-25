@@ -261,7 +261,10 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
   const edgeCaseCount = countMatches(testFiles, contents, edgePatterns, false);
   const { score: edgeCaseScore, summary: edgeCaseSummary } = scoreEdgeCases(edgeCaseCount);
 
-  const totalTestCases = countMatches(testFiles, contents, /\b(?:it|test)\s*[.(]/g);
+  const totalTestCasesRegex = countMatches(testFiles, contents, /\b(?:it|test)\s*[.(]/g);
+  // AST-confirm: count actual it()/test() call expressions (not matches inside strings)
+  const astTestCount = astConfirmedCount(testFiles, contents, 'test-assertion');
+  const totalTestCases = astTestCount >= 0 ? astTestCount : totalTestCasesRegex;
   const assertCount = countMatches(testFiles, contents, /\b(?:expect|assert)\s*[.(]/g);
   const describeCount = countMatches(testFiles, contents, /\bdescribe\s*[.(]/g);
   const { score: testQualityScore, summary: testQualitySummary } =
@@ -418,9 +421,12 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
 
   // --- Any type count /8 ---
   const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
-  const { count: anyCount, matchedFiles: anyTypeFiles } = countMatchesWithFiles(
+  const { count: anyCountRegex, matchedFiles: anyTypeFiles } = countMatchesWithFiles(
     srcTsFiles, contents, /:\s*any\b|<any>|\bas\s+any\b/g,
   );
+  // AST-confirm: count actual 'any' type keywords (not in strings/comments)
+  const astAnyCount = astConfirmedCount(srcTsFiles, contents, 'type-any');
+  const anyCount = astAnyCount >= 0 ? astAnyCount : anyCountRegex;
   let totalLines = 0;
   for (const file of srcTsFiles) totalLines += (contents.get(file) ?? '').split('\n').length;
 
@@ -652,6 +658,14 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
   let duplicatedLines = 0;
   for (const [, count] of lineFrequency) { if (count >= 3) duplicatedLines++; }
 
+  // AST-confirm todo/fixme: only count markers in real comment nodes, not strings
+  const astTodoCount = astConfirmedCount(srcFiles, contents, 'todo-fixme');
+  if (astTodoCount >= 0) todoCount = astTodoCount;
+
+  // AST-based complex function detection: supplement line-count analysis
+  const astComplexCount = astConfirmedCount(srcFiles, contents, 'complex-function');
+  if (astComplexCount > longFnCount) longFnCount = astComplexCount;
+
   const avgLen = fnCount > 0 ? totalFnLength / fnCount : 0;
   const { score: fnLenScore, summary: fnLenSummary } = scoreFunctionLength(avgLen, fnCount);
   const { score: lineLenScore, summary: lineLenSummary } = scoreLineLength(longLineCount);
@@ -667,7 +681,7 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
     subcategories: [
       {
         name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary,
-        issuesFound: longFnCount, issuesDescription: 'functions >50 lines', locations: longFuncFiles,
+        issuesFound: longFnCount, issuesDescription: 'functions >50 lines or high complexity', locations: longFuncFiles,
       },
       {
         name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary,
