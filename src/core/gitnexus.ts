@@ -683,3 +683,41 @@ export function getDependencyClusters(files: string[], cwd: string): string[][] 
 
   return [...clusters.values()];
 }
+
+export interface GitNexusApiImpact {
+  routes: Array<{ path: string; handler: string; methods: string[] }>;
+  shapeIssues: Array<{ route: string; expected: string; actual: string }>;
+  risk: string;
+}
+
+/**
+ * Run `gitnexus api_impact <routeOrEndpoint>` — API route impact analysis.
+ * Returns affected routes, handler info, shape issues, and risk level.
+ * Graceful no-op if GitNexus is not indexed or api_impact is unavailable.
+ */
+export async function getApiImpact(
+  routeOrEndpoint: string,
+  cwd: string,
+): Promise<GitNexusApiImpact | null> {
+  if (!isIndexed(cwd)) return null;
+
+  try {
+    const args = ['api_impact', routeOrEndpoint, '--repo', getRepoName(cwd)];
+    const raw = await runGitNexusAsync(args, cwd);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (parsed.error) return null;
+
+    const routes = Array.isArray(parsed.routes) ? parsed.routes as GitNexusApiImpact['routes'] : [];
+    const shapeIssues = Array.isArray(parsed.shape_issues ?? parsed.shapeIssues)
+      ? (parsed.shape_issues ?? parsed.shapeIssues) as GitNexusApiImpact['shapeIssues']
+      : [];
+    const risk = typeof parsed.risk === 'string' ? parsed.risk : 'unknown';
+
+    return { routes, shapeIssues, risk };
+  } catch (err) {
+    logger.debug({ err, routeOrEndpoint }, 'getApiImpact failed (non-fatal)');
+    return null;
+  }
+}
