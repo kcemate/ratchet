@@ -79,6 +79,55 @@ function printEconomics(economics: RunEconomics): void {
   }
 }
 
+function printDeductionBreakdown(result: ScanResult): void {
+  const deductedCategories = result.categories.filter(c => c.score < c.max);
+  if (deductedCategories.length === 0) {
+    process.stdout.write(chalk.green('\n  ✨ No deductions — perfect score!\n\n'));
+    return;
+  }
+
+  process.stdout.write(chalk.bold('\n  📊 Score Deduction Breakdown\n'));
+  process.stdout.write(chalk.dim('  ' + '─'.repeat(74)) + '\n');
+
+  for (const cat of deductedCategories) {
+    const catDeduction = cat.max - cat.score;
+    process.stdout.write(
+      `\n  ${cat.emoji} ${chalk.bold(cat.name)} ` +
+      `${chalk.dim(`${cat.score}/${cat.max}`)}  ` +
+      `${chalk.red(`−${catDeduction} pts`)}\n`,
+    );
+
+    for (const sub of cat.subcategories) {
+      if (sub.score >= sub.max) continue;
+      const deduction = sub.max - sub.score;
+      const reason = sub.issuesDescription ?? sub.summary ?? '—';
+
+      if (sub.locations && sub.locations.length > 0) {
+        const shown = sub.locations.slice(0, 5);
+        for (let i = 0; i < shown.length; i++) {
+          const loc = shown[i]!;
+          const subLabel = i === 0 ? sub.name.padEnd(22) : ''.padEnd(22);
+          process.stdout.write(
+            `    ${chalk.dim(subLabel)}  ${chalk.cyan(loc.padEnd(38))}  ` +
+            `${chalk.yellow(reason)}  ${chalk.red(`−${deduction} pts`)}\n`,
+          );
+        }
+        if (sub.locations.length > 5) {
+          process.stdout.write(
+            chalk.dim(`    ${''.padEnd(22)}  ... and ${sub.locations.length - 5} more\n`),
+          );
+        }
+      } else {
+        process.stdout.write(
+          `    ${chalk.dim(sub.name.padEnd(22))}  ${chalk.dim('(no specific locations)'.padEnd(38))}  ` +
+          `${chalk.yellow(reason)}  ${chalk.red(`−${deduction} pts`)}\n`,
+        );
+      }
+    }
+  }
+  process.stdout.write('\n');
+}
+
 export function torqueCommand(): Command {
   const cmd = new Command('torque');
 
@@ -134,6 +183,11 @@ export function torqueCommand(): Command {
       false,
     )
     .option('--json', 'Output full run economics as JSON (for CI/CD integration)', false)
+    .option(
+      '--explain-deductions',
+      'After scanning, show a detailed breakdown of points lost per subcategory and file',
+      false,
+    )
     .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
     .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
     .option('--scope <spec>', 'Limit changes to specific files: diff, branch, staged, <glob>, or file:a.ts,b.ts')
@@ -198,6 +252,7 @@ export function torqueCommand(): Command {
         timeout?: string;
         budget?: string;
         stopOnRegression: boolean;
+        explainDeductions: boolean;
         parallel?: string;
         specsFile?: string;
         model?: string;
@@ -1037,6 +1092,11 @@ export function torqueCommand(): Command {
           scoreAfter = await runScan(cwd);
         } catch {
           // Non-fatal
+        }
+
+        // --explain-deductions: show per-subcategory/file deduction breakdown
+        if (options.explainDeductions && scoreAfter) {
+          printDeductionBreakdown(scoreAfter);
         }
 
         // Compute pass/fail counts (used below and in final summary)
