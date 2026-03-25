@@ -12,3 +12,10 @@ stripe-config.json
 api/.wrangler/
 .claude/
 ratchet-state.json
+
+# Local training data
+training-data/ratchet-fix-fused*/
+training-data/ratchet-fix-adapters*/
+training-data/ratchet-fix-f16/
+training-data/mlx-split/
+.wrangler/
