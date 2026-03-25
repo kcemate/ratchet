@@ -34,6 +34,8 @@ export function classifyFiles(files: string[]): Map<string, FileClass> {
   return result;
 }
 
-export function filterByClass(files: string[], classifications: Map<string, FileClass>, ...include: FileClass[]): string[] {
+export function filterByClass(
+  files: string[], classifications: Map<string, FileClass>, ...include: FileClass[]
+): string[] {
   return files.filter(f => include.includes(classifications.get(f) ?? 'production'));
 }

@@ -7,7 +7,10 @@ import { stripCommentsAndStrings } from './code-context.js';
 // Used by both scan.ts and scan-cache.ts to avoid duplication
 // ---------------------------------------------------------------------------
 
-export const IGNORE_DIRS = new Set(['node_modules', 'dist', '.git', '.next', 'build', 'coverage', '__pycache__', '.cache', 'vendor', 'out', '.ratchet']);
+export const IGNORE_DIRS = new Set([
+  'node_modules', 'dist', '.git', '.next', 'build', 'coverage',
+  '__pycache__', '.cache', 'vendor', 'out', '.ratchet',
+]);
 export const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.go', '.rs']);
 export const TEST_PATTERNS = ['.test.', '.spec.', '_test.', '_spec.', '/test/', '/tests/', '/spec/'];
 

@@ -107,7 +107,8 @@ export function torqueCommand(): Command {
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
     .option(
       '--focus-category <category>',
-      'Force torque to target a specific score category: testing, security, type-safety, error-handling, performance, code-quality',
+      'Force torque to target a specific score category:' +
+      ' testing, security, type-safety, error-handling, performance, code-quality',
     )
     .option('--debate', 'Enable debate round in swarm mode — judge picks winner (default: true)', true)
     .option('--no-debate', 'Disable debate round — pick winner by score only')
@@ -545,7 +546,9 @@ export function torqueCommand(): Command {
         if (options.local) {
           const port = options.localPort ? parseInt(options.localPort, 10) : LOCAL_MLX_DEFAULT_PORT;
           if (isNaN(port) || port < 1 || port > 65535) {
-            exitWithError(`  Invalid --local-port value: ${options.localPort}\n  Must be a valid port number (1–65535).`);
+            exitWithError(
+              `  Invalid --local-port value: ${options.localPort}\n  Must be a valid port number (1–65535).`,
+            );
           }
           const localProvider = new LocalMLXProvider(port);
           const running = await localProvider.isRunning();
@@ -840,7 +843,9 @@ export function torqueCommand(): Command {
                 // Proactive --architect recommendation when structural issues dominate
                 if (!options.architect) {
                   const structuralPoints = nonSweepableGaps.reduce((sum, g) => sum + g.pointsAvailable, 0);
-                  const structuralDominant = structuralPoints >= reachablePoints || (nonSweepableGaps.length > 0 && reachablePoints <= 2);
+                  const structuralDominant =
+                    structuralPoints >= reachablePoints ||
+                    (nonSweepableGaps.length > 0 && reachablePoints <= 2);
                   if (structuralDominant && nonSweepableGaps.length > 0) {
                     const details = nonSweepableGaps
                       .slice(0, 3)
@@ -1119,25 +1124,44 @@ export function torqueCommand(): Command {
           const fps = run.falsePositivesFound ?? 0;
           process.stdout.write('\n');
           if (fps > 0 || skipped > 0) {
-            process.stdout.write(chalk.yellow('  No clicks landed — scanner issues were filtered as false positives.\n'));
+            process.stdout.write(
+              chalk.yellow('  No clicks landed — scanner issues were filtered as false positives.\n'),
+            );
             if (fps > 0) {
-              process.stdout.write(chalk.dim(`  • ${fps} false positive(s) filtered (patterns found only in comments, strings, or docs)\n`));
+              process.stdout.write(
+                chalk.dim(
+                  `  • ${fps} false positive(s) filtered (patterns found only in comments, strings, or docs)\n`,
+                ),
+              );
             }
             if (skipped > 0) {
-              process.stdout.write(chalk.dim(`  • ${skipped} click(s) skipped — no real issues to fix after filtering\n`));
+              process.stdout.write(
+                chalk.dim(`  • ${skipped} click(s) skipped — no real issues to fix after filtering\n`),
+              );
             }
             process.stdout.write('\n');
             process.stdout.write('  Next steps:\n');
             process.stdout.write(`  • Run ${chalk.green('ratchet scan')} to review remaining issues manually\n`);
-            process.stdout.write(`  • Use ${chalk.green('ratchet torque --architect')} for structural issues that need multi-file refactors\n`);
-            process.stdout.write(`  • Review flagged files directly — the scanner found patterns in non-code contexts\n`);
+            process.stdout.write(
+              `  • Use ${chalk.green('ratchet torque --architect')}` +
+              ` for structural issues that need multi-file refactors\n`,
+            );
+            process.stdout.write(
+              `  • Review flagged files directly — the scanner found patterns in non-code contexts\n`,
+            );
           } else {
             process.stdout.write(chalk.dim('  No clicks landed.\n'));
             process.stdout.write('\n');
             process.stdout.write('  Next steps:\n');
-            process.stdout.write(`  • Try ${chalk.green('ratchet torque --architect')} for structural issues requiring larger refactors\n`);
-            process.stdout.write(`  • Try ${chalk.green('ratchet torque --plan-first')} to generate a multi-step plan before executing\n`);
-            process.stdout.write(`  • Run ${chalk.green('ratchet scan')} to review remaining issues and adjust your target\n`);
+            process.stdout.write(
+              `  • Try ${chalk.green('ratchet torque --architect')} for structural issues requiring larger refactors\n`,
+            );
+            process.stdout.write(
+              `  • Try ${chalk.green('ratchet torque --plan-first')} to generate a multi-step plan before executing\n`,
+            );
+            process.stdout.write(
+              `  • Run ${chalk.green('ratchet scan')} to review remaining issues and adjust your target\n`,
+            );
           }
           process.stdout.write('\n');
         }

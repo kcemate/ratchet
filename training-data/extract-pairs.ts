@@ -25,13 +25,24 @@ const CATEGORIES: Record<string, string> = {
 };
 
 const INSTRUCTIONS: Record<string, string> = {
-  'empty-catch-to-structured-error': 'Replace the empty catch block with structured error handling using a logger. Log the error context including the operation name and any relevant variables.',
-  'console-to-structured-logging': 'Replace console.log/console.error calls with structured logging using pino logger. Include appropriate log levels and context objects.',
-  'auth-rate-limiting': 'Add authentication middleware and rate limiting to this Express route. Use proper middleware scoping (route-specific, not path-prefix).',
-  'route-decomposition': 'Decompose this monolithic routes file into domain-specific modules. Each module should handle one resource type with its own router.',
+  'empty-catch-to-structured-error':
+    'Replace the empty catch block with structured error handling using a logger.' +
+    ' Log the error context including the operation name and any relevant variables.',
+  'console-to-structured-logging':
+    'Replace console.log/console.error calls with structured logging using pino logger.' +
+    ' Include appropriate log levels and context objects.',
+  'auth-rate-limiting':
+    'Add authentication middleware and rate limiting to this Express route.' +
+    ' Use proper middleware scoping (route-specific, not path-prefix).',
+  'route-decomposition':
+    'Decompose this monolithic routes file into domain-specific modules.' +
+    ' Each module should handle one resource type with its own router.',
   'n-plus-one-query-fix': 'Fix the N+1 query by using batch fetching instead of per-item database calls.',
-  'bare-fetch-to-auth-request': 'Replace bare fetch() calls with the authenticated apiRequest() wrapper that includes the Bearer token header.',
-  'auth-integration-fix': 'Fix the auth integration to properly handle the Clerk authentication flow with redirect URLs.',
+  'bare-fetch-to-auth-request':
+    'Replace bare fetch() calls with the authenticated apiRequest() wrapper' +
+    ' that includes the Bearer token header.',
+  'auth-integration-fix':
+    'Fix the auth integration to properly handle the Clerk authentication flow with redirect URLs.',
   'mixed-sweep-fixes': 'Apply the code quality improvement shown in this diff.',
   'mixed-torque-fixes': 'Apply the code quality improvement shown in this diff.',
 };
@@ -119,8 +130,17 @@ for (const diffFile of readdirSync(dir).filter(f => f.endsWith('.diff')).sort())
 // Write JSONL (standard fine-tuning format)
 const jsonl = pairs.map(p => JSON.stringify({
   messages: [
-    { role: 'system', content: 'You are Ratchet Fix, a code quality improvement engine. Given a code snippet with issues, output only the fixed version. Focus on: structured error handling, logging, type safety, auth patterns, and code organization.' },
-    { role: 'user', content: `File: ${p.file}\nCategory: ${p.category}\nInstruction: ${p.instruction}\n\nCode to fix:\n\`\`\`typescript\n${p.before}\n\`\`\`` },
+    {
+      role: 'system',
+      content: 'You are Ratchet Fix, a code quality improvement engine. Given a code snippet with issues,' +
+        ' output only the fixed version. Focus on: structured error handling, logging, type safety,' +
+        ' auth patterns, and code organization.',
+    },
+    {
+      role: 'user',
+      content: `File: ${p.file}\nCategory: ${p.category}\nInstruction: ${p.instruction}` +
+        `\n\nCode to fix:\n\`\`\`typescript\n${p.before}\n\`\`\``,
+    },
     { role: 'assistant', content: `\`\`\`typescript\n${p.after}\n\`\`\`` }
   ]
 })).join('\n');
@@ -144,7 +164,8 @@ ${Object.entries(catCounts).sort((a,b) => b[1]-a[1]).map(([k,v]) => `- ${k}: ${v
 
 ## Source Commits
 - Ratchet: 98205fb, 9e600e8, b188e98, 15249d0, cb297f6
-- DeuceDiary: 3b90e02f, d4673ce2, f20c7e64, ef2d7631, 70bedc60, 0f5f8513, 7fa3eb88, 73078970, 589cda32, 7a9249fe, 1162da95
+- DeuceDiary: 3b90e02f, d4673ce2, f20c7e64, ef2d7631, 70bedc60,
+  0f5f8513, 7fa3eb88, 73078970, 589cda32, 7a9249fe, 1162da95
 
 ## Usage
 \`\`\`bash
