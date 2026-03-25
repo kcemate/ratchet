@@ -454,8 +454,17 @@ function scoreErrorHandling(files: string[], prodFiles: string[], contents: Map<
   );
   const emptyCatchAst = astConfirmedCount(emptyCatchFiles, contents, 'empty-catch');
   const emptyCatchTotal = emptyCatchAst >= 0 ? emptyCatchAst : emptyCatchRegex;
-  const consoleErrorCount = countMatches(prodFiles, contents, /\bconsole\.(?:error|warn|log)\s*\(/g);
-  const structuredLogCount = countMatches(prodFiles, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g);
+  // Exclude scripts/training-data from structured logging check (same filter as performance)
+  const prodAppFilesForLogging = prodFiles.filter(f => {
+    const norm = f.replace(/\\/g, '/');
+    return !norm.includes('/scripts/') && !norm.includes('/training-data/');
+  });
+  const { matchedFiles: consoleErrorFiles, count: consoleErrorRegex } = countMatchesWithFiles(
+    prodAppFilesForLogging, contents, /\bconsole\.(?:error|warn|log)\s*\(/g,
+  );
+  const consoleErrorAst = astConfirmedCount(consoleErrorFiles, contents, 'console-usage');
+  const consoleErrorCount = consoleErrorAst >= 0 ? consoleErrorAst : consoleErrorRegex;
+  const structuredLogCount = countMatches(prodAppFilesForLogging, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g);
 
   let asyncTotal = 0;
   const asyncNoHandlerFiles: string[] = [];
