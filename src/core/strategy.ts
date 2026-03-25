@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { logger } from '../lib/logger.js';
 import type { ScanResult } from '../commands/scan.js';
 import type { RatchetRun, Click } from '../types.js';
+import type { AsyncWriter } from './async-writer.js';
 
 // ── Types
 
@@ -542,12 +543,23 @@ export async function loadStrategy(cwd: string): Promise<Strategy | null> {
 
 /**
  * Save strategy to .ratchet/strategy.md.
+ * When an AsyncWriter is provided, the write is enqueued instead of awaited
+ * so it does not block the click loop.
  */
-export async function saveStrategy(cwd: string, strategy: Strategy): Promise<void> {
+export async function saveStrategy(
+  cwd: string,
+  strategy: Strategy,
+  writer?: AsyncWriter,
+): Promise<void> {
+  const content = serializeStrategy(strategy);
+  if (writer) {
+    writer.enqueueRaw(STRATEGY_FILE, content);
+    logger.debug({ version: strategy.version }, 'Strategy enqueued for async write');
+    return;
+  }
   const dir = join(cwd, '.ratchet');
   await mkdir(dir, { recursive: true });
   const filePath = join(cwd, STRATEGY_FILE);
-  const content = serializeStrategy(strategy);
   await writeFile(filePath, content, 'utf-8');
   logger.debug({ version: strategy.version, path: filePath }, 'Strategy saved');
 }

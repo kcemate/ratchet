@@ -203,6 +203,12 @@ export function torqueCommand(): Command {
     .option('--budget <dollars>', 'Maximum estimated cost in USD (stops when budget would be exceeded)')
     .option('--stop-on-regression', 'Stop immediately when a score regression is detected', false)
     .option('--no-strategy', 'Disable self-evolving strategy loading and evolution for this run')
+    .option(
+      '--deep-analyze',
+      'Run a multi-turn ReACT analysis loop before the first click — reads files, ' +
+      'queries GitNexus for blast radius, and produces a structured risk assessment',
+      false,
+    )
     .option('--parallel <number>', 'Run multiple specs/targets in parallel (requires multiple --spec or --specs-file)')
     .option('--specs-file <path>', 'Path to a markdown file where each ## heading is a separate task spec')
     .option('--local', 'Use local on-device MLX model instead of cloud API (privacy mode)', false)
@@ -258,6 +264,7 @@ export function torqueCommand(): Command {
         model?: string;
         local: boolean;
         localPort?: string;
+        deepAnalyze: boolean;
       }) => {
         const cwd = process.cwd();
 
@@ -857,6 +864,7 @@ export function torqueCommand(): Command {
             stopOnRegression: options.stopOnRegression,
             noStrategy: (options as Record<string, unknown>)['strategy'] === false,
             focusCategory: options.focusCategory,
+            deepAnalyze: options.deepAnalyze,
             scope: scopeFiles,
             scopeArg: options.scope,
             callbacks: {

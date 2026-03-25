@@ -208,6 +208,8 @@ export interface RatchetRun {
   skippedClicks?: number;
   /** Total false positives filtered by the pre-validation gate across all clicks. */
   falsePositivesFound?: number;
+  /** Structured analysis produced by the --deep-analyze ReACT loop (when enabled). */
+  reactAnalysis?: import('./core/analyze-react.js').ReactAnalysis;
 }
 
 export interface BuildResult {
