@@ -9,6 +9,7 @@ import { clearCache as clearGitNexusCache } from './gitnexus.js';
 import { resolveGuards } from './engine-guards.js';
 import type { EngineRunOptions, ClickPhase } from './engine.js';
 import { logger } from '../lib/logger.js';
+import { selectModel } from '../lib/model-router.js';
 
 /**
  * Architect engine: make high-leverage structural improvements that eliminate many issues at once.
@@ -70,10 +71,13 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
       try {
         const clickStartMs = Date.now();
 
+        // Architect mode uses the complex (premium) model tier
+        const architectConfig = { ...config, model: selectModel('complex', config) };
+
         const result = await executeClick({
           clickNumber,
           target: options.target,
-          config,
+          config: architectConfig,
           agent,
           cwd,
           architectMode: true,

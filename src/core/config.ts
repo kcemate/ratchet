@@ -20,6 +20,11 @@ export const DEFAULT_CONFIG: RatchetConfig = {
 interface RawConfig {
   agent?: string;
   model?: string;
+  models?: {
+    cheap?: string;
+    default?: string;
+    premium?: string;
+  };
   defaults?: {
     clicks?: number;
     test_command?: string;
@@ -103,6 +108,7 @@ export function parseConfig(raw: string): RatchetConfig {
   return {
     agent,
     model: data.model,
+    models: data.models,
     defaults,
     targets,
     boundaries,

@@ -10,6 +10,7 @@ import { clearCache as clearGitNexusCache } from './gitnexus.js';
 import { resolveGuards } from './engine-guards.js';
 import type { EngineRunOptions, ClickPhase } from './engine.js';
 import { logger } from '../lib/logger.js';
+import { selectModel } from '../lib/model-router.js';
 
 /**
  * Split an array into chunks of a given size.
@@ -105,6 +106,9 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
       try {
         const clickStartMs = Date.now();
 
+        // Sweep mode uses the mechanical (cheap) model tier
+        const sweepConfig = { ...config, model: selectModel('mechanical', config) };
+
         let click: Click;
         let rolled_back: boolean;
 
@@ -153,7 +157,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
           const result = await executeClick({
             clickNumber,
             target: options.target,
-            config,
+            config: sweepConfig,
             agent,
             cwd,
             sweepMode: true,
