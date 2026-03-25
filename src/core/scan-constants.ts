@@ -177,6 +177,34 @@ export function countMatchesWithFiles(
   return { count, matchedFiles };
 }
 
+/**
+ * Sum matches and record file:line locations for each matching line.
+ * Useful for --explain-deductions output.
+ */
+export function countMatchesWithLocations(
+  files: string[],
+  contents: Map<string, string>,
+  pattern: RegExp,
+  contextAware = true,
+): { count: number; locations: string[] } {
+  let count = 0;
+  const locations: string[] = [];
+  // Strip the global flag so we can safely call .test() per line
+  const linePattern = new RegExp(pattern.source, pattern.flags.replace('g', ''));
+  for (const file of files) {
+    const raw = contents.get(file) ?? '';
+    const src = contextAware ? getStripped(raw) : raw;
+    const lines = src.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (linePattern.test(lines[i] ?? '')) {
+        count++;
+        locations.push(`${file}:${i + 1}`);
+      }
+    }
+  }
+  return { count, locations };
+}
+
 /** Return true if at least one file contains the pattern. */
 export function anyFileHasMatch(
   files: string[],

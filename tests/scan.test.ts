@@ -630,4 +630,58 @@ describe('app', () => {
       expect(goodResult.total).toBeGreaterThan(badResult.total);
     });
   });
+
+  describe('--explain-deductions: file:line locations', () => {
+    it('console.log locations include file:line format', async () => {
+      writeFileSync(join(dir, 'app.ts'), [
+        'export function debug(x: unknown) {',
+        '  console.log(x);',
+        '  console.log("done");',
+        '}',
+      ].join('\n'));
+      const result = await runScan(dir);
+      const perfCat = result.categories.find(c => c.name === 'Performance');
+      const consoleSub = perfCat?.subcategories.find(s => s.name === 'Console cleanup');
+      expect(consoleSub?.locations).toBeDefined();
+      const locs = consoleSub?.locations ?? [];
+      expect(locs.length).toBeGreaterThan(0);
+      // locations should be file:line format
+      expect(locs.every(l => /:\d+$/.test(l))).toBe(true);
+      // both lines should be present
+      expect(locs.some(l => l.endsWith(':2'))).toBe(true);
+      expect(locs.some(l => l.endsWith(':3'))).toBe(true);
+    });
+
+    it('line length locations include file:line format', async () => {
+      const longLine = 'x'.repeat(130);
+      writeFileSync(join(dir, 'app.ts'), `export const a = 1;\n// ${longLine}\nexport const b = 2;\n`);
+      const result = await runScan(dir);
+      const qualityCat = result.categories.find(c => c.name === 'Code Quality');
+      const lineSub = qualityCat?.subcategories.find(s => s.name === 'Line length');
+      expect(lineSub?.issuesFound).toBeGreaterThan(0);
+      const locs = lineSub?.locations ?? [];
+      expect(locs.length).toBeGreaterThan(0);
+      // should contain file:line entries
+      expect(locs.every(l => /:\d+$/.test(l))).toBe(true);
+      // long line is on line 2
+      expect(locs.some(l => l.endsWith(':2'))).toBe(true);
+    });
+
+    it('any type locations include file:line format', async () => {
+      writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true } }));
+      writeFileSync(join(dir, 'app.ts'), [
+        'export function process(data: any): void {',
+        '  const x: any = data;',
+        '  console.log(x);',
+        '}',
+      ].join('\n'));
+      const result = await runScan(dir);
+      const typeCat = result.categories.find(c => c.name === 'Type Safety');
+      const anySub = typeCat?.subcategories.find(s => s.name === 'Any type count');
+      expect(anySub?.issuesFound).toBeGreaterThan(0);
+      const locs = anySub?.locations ?? [];
+      expect(locs.length).toBeGreaterThan(0);
+      expect(locs.every(l => /:\d+$/.test(l))).toBe(true);
+    });
+  });
 });

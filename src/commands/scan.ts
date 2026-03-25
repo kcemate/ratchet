@@ -109,6 +109,7 @@ import {
   scoreByThresholds,
   countMatches,
   countMatchesWithFiles,
+  countMatchesWithLocations,
   anyFileHasMatch,
   DUP_SCORE_THRESHOLDS,
   scoreStrictConfig,
@@ -526,10 +527,13 @@ function scorePerformance(files: string[], prodFiles: string[], contents: Map<st
   const appFiles = srcFiles.filter(f => !f.replace(/\\/g, '/').includes('/scripts/'));
   const prodAppFiles = prodFiles.filter(f => !f.replace(/\\/g, '/').includes('/scripts/'));
 
-  const { count: consoleLogRegex, matchedFiles: consoleLogFiles } = countMatchesWithFiles(
+  const { count: consoleLogRegex, matchedFiles: consoleLogMatchedFiles } = countMatchesWithFiles(
     prodAppFiles, contents, /\bconsole\.log\s*\(/g,
   );
-  const consoleLogAst = astConfirmedCount(consoleLogFiles, contents, 'console-usage');
+  const { locations: consoleLogLocations } = countMatchesWithLocations(
+    prodAppFiles, contents, /\bconsole\.log\s*\(/g,
+  );
+  const consoleLogAst = astConfirmedCount(consoleLogMatchedFiles, contents, 'console-usage');
   const consoleLogCount = consoleLogAst >= 0 ? consoleLogAst : consoleLogRegex;
 
   let awaitInLoopCount = 0;
@@ -584,7 +588,7 @@ function scorePerformance(files: string[], prodFiles: string[], contents: Map<st
       },
       {
         name: 'Console cleanup', score: Math.min(consoleScore, 5), max: 5, summary: consoleSummary,
-        issuesFound: consoleLogCount, issuesDescription: 'console.log calls in src', locations: consoleLogFiles,
+        issuesFound: consoleLogCount, issuesDescription: 'console.log call', locations: consoleLogLocations,
       },
       {
         name: 'Import hygiene', score: Math.min(importScore, 2), max: 2, summary: importHygieneSummary,
@@ -616,9 +620,12 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
     const content = contents.get(file) ?? '';
     const lines = content.split('\n');
 
-    const fileLongLines = lines.filter(l => l.length > 120).length;
-    longLineCount += fileLongLines;
-    if (fileLongLines > 0) longLineFiles.push(file);
+    for (let li = 0; li < lines.length; li++) {
+      if ((lines[li] ?? '').length > 120) {
+        longLineCount++;
+        longLineFiles.push(`${file}:${li + 1}`);
+      }
+    }
 
     commentedCodeCount += lines.filter(l =>
       /^\s*\/\/\s*(?:const|let|var|function|return|if\s*\(|for\s*\(|while\s*\(|import|export)\b/.test(l),
@@ -685,7 +692,7 @@ function scoreCodeQuality(files: string[], contents: Map<string, string>): Categ
       },
       {
         name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary,
-        issuesFound: longLineCount, issuesDescription: 'lines >120 chars', locations: longLineFiles,
+        issuesFound: longLineCount, issuesDescription: 'line >120 chars', locations: longLineFiles,
       },
       {
         name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary,
@@ -750,6 +757,60 @@ export async function runScan(cwd: string, options: RunScanOptions = {}): Promis
   const { totalIssuesFound, issuesByType } = aggregateAndSortIssues(categories);
 
   return { projectName, total, maxTotal, categories, totalIssuesFound, issuesByType };
+}
+
+function renderDeductions(result: ScanResult, cwd: string): void {
+  printHeader('📋 Score Deductions');
+
+  let hasAnyDeductions = false;
+
+  for (const cat of result.categories) {
+    const catDeduction = cat.max - cat.score;
+    if (catDeduction <= 0) continue;
+
+    hasAnyDeductions = true;
+    process.stdout.write(
+      `\n  ${cat.emoji} ${chalk.bold(cat.name)}` +
+      `  ${chalk.dim(`${cat.score}/${cat.max} pts`)}` +
+      `  ${chalk.red(`(−${catDeduction} pts)`)}\n`,
+    );
+
+    for (const sub of cat.subcategories) {
+      if (sub.issuesFound === 0) continue;
+      const subDeduction = sub.max - sub.score;
+
+      const locations = sub.locations ?? [];
+      const desc = sub.issuesDescription ?? 'issue';
+
+      if (locations.length > 0) {
+        process.stdout.write(
+          `    ${chalk.dim(sub.name)}` +
+          (subDeduction > 0 ? `  ${chalk.red(`−${subDeduction} pts`)}` : '') +
+          `:\n`,
+        );
+        const shown = locations.slice(0, 12);
+        for (const loc of shown) {
+          const rel = loc.replace(cwd + '/', '').replace(cwd + '\\', '');
+          process.stdout.write(`      ${chalk.cyan(rel)} — ${chalk.dim(desc)}\n`);
+        }
+        if (locations.length > 12) {
+          process.stdout.write(chalk.dim(`      ... and ${locations.length - 12} more\n`));
+        }
+      } else {
+        process.stdout.write(
+          `    ${chalk.dim(sub.name)}` +
+          (subDeduction > 0 ? `  ${chalk.red(`−${subDeduction} pts`)}` : '') +
+          `:  ${chalk.dim(sub.summary)}\n`,
+        );
+      }
+    }
+  }
+
+  if (!hasAnyDeductions) {
+    process.stdout.write(chalk.green('\n  ✔ No deductions — perfect score!\n'));
+  }
+
+  process.stdout.write('\n');
 }
 
 function renderScan(result: ScanResult, opts?: { explain?: boolean; baseline?: Baseline | null }): void {
@@ -901,6 +962,10 @@ export function scanCommand(): Command {
     )
     .option('--output-json', 'Output the full scan result as JSON for CI/CD integration.')
     .option('--explain', "Show human-readable explanations for each subcategory's issues.")
+    .option(
+      '-e, --explain-deductions',
+      'Show exactly which files and line numbers caused score deductions.',
+    )
     .option('--include-tests', 'Include test files in the scan (by default, test files are excluded).')
     .option(
       '--language <lang>',
@@ -922,6 +987,8 @@ export function scanCommand(): Command {
       '  $ ratchet scan --fail-on 80 --fail-on-category Security=12\n' +
       '  $ ratchet scan --output-json > scan-result.json\n' +
       '  $ ratchet scan --explain\n' +
+      '  $ ratchet scan --explain-deductions\n' +
+      '  $ ratchet scan -e\n' +
       '  $ ratchet scan --include-tests\n' +
       '  $ ratchet scan --language python\n' +
       '  $ ratchet scan --baseline\n' +
@@ -1019,6 +1086,10 @@ export function scanCommand(): Command {
       }
 
       renderScan(result, { explain: options['explain'] as boolean | undefined, baseline });
+
+      if (options['explainDeductions']) {
+        renderDeductions(result, cwd);
+      }
 
       if (saveAsBaseline) {
         saveBaseline(cwd, result);
