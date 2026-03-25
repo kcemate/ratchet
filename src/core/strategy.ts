@@ -51,6 +51,8 @@ export interface RunSummary {
   landed: number;
   rolledBack: number;
   keyInsight: string;
+  /** Average LOC delta across landed clicks (negative = net line reduction) */
+  avgLocDelta?: number;
 }
 
 export interface Strategy {
@@ -500,16 +502,19 @@ function buildMarkdownBody(strategy: Strategy): string {
   // Run history
   if (strategy.runSummaries.length > 0) {
     sections.push(`## 📈 Run History (last ${strategy.runSummaries.length})\n`);
-    sections.push(`| Date | Mode | Score | Δ | L/RB | Key Insight |`);
-    sections.push(`|------|------|-------|---|------|-------------|`);
+    sections.push(`| Date | Mode | Score | Δ | L/RB | Avg LOC Δ | Key Insight |`);
+    sections.push(`|------|------|-------|---|------|-----------|-------------|`);
     for (const rs of [...strategy.runSummaries].reverse()) {
       const delta = rs.scoreAfter - rs.scoreBefore;
       const sign = delta > 0 ? '+' : '';
       const date = rs.date.split('T')[0];
       const total = rs.landed + rs.rolledBack;
+      const locPart = rs.avgLocDelta !== undefined
+        ? `${rs.avgLocDelta >= 0 ? '+' : ''}${rs.avgLocDelta}`
+        : '—';
       sections.push(
         `| ${date} | ${rs.mode} | ${rs.scoreBefore}→${rs.scoreAfter} | ` +
-        `${sign}${delta} | ${rs.landed}/${total} | ${rs.keyInsight} |`,
+        `${sign}${delta} | ${rs.landed}/${total} | ${locPart} | ${rs.keyInsight} |`,
       );
     }
     sections.push('');
@@ -649,6 +654,12 @@ export async function evolveStrategy(
   // Build key insight for this run
   const keyInsight = deriveKeyInsight(landedClicks, rolledBackClicks, scoreBefore, scoreAfter);
 
+  // Compute average LOC delta across landed clicks (clicks that provided locDelta)
+  const landedWithLoc = landedClicks.filter(c => typeof c.locDelta === 'number');
+  const avgLocDelta = landedWithLoc.length > 0
+    ? Math.round(landedWithLoc.reduce((sum, c) => sum + c.locDelta!, 0) / landedWithLoc.length)
+    : undefined;
+
   // Add run summary
   const runMode = detectRunMode(run);
   const summary: RunSummary = {
@@ -660,6 +671,7 @@ export async function evolveStrategy(
     landed: landedClicks.length,
     rolledBack: rolledBackClicks.length,
     keyInsight,
+    ...(avgLocDelta !== undefined ? { avgLocDelta } : {}),
   };
 
   strategy.runSummaries.push(summary);
@@ -681,7 +693,13 @@ export async function evolveStrategy(
   await saveStrategy(cwd, strategy);
 
   logger.info(
-    { version: strategy.version, keyInsight, landed: landedClicks.length, rolledBack: rolledBackClicks.length },
+    {
+      version: strategy.version,
+      keyInsight,
+      landed: landedClicks.length,
+      rolledBack: rolledBackClicks.length,
+      avgLocDelta,
+    },
     'Strategy evolved'
   );
 
@@ -751,7 +769,10 @@ export function buildStrategyContext(strategy: Strategy): string {
     const last = strategy.runSummaries[strategy.runSummaries.length - 1];
     const delta = last.scoreAfter - last.scoreBefore;
     const sign = delta >= 0 ? '+' : '';
-    lines.push(`\nLast run: ${sign}${delta} score, ${last.landed} landed / ${last.rolledBack} rolled back`);
+    const locPart = last.avgLocDelta !== undefined
+      ? `, avg LOC delta: ${last.avgLocDelta >= 0 ? '+' : ''}${last.avgLocDelta}`
+      : '';
+    lines.push(`\nLast run: ${sign}${delta} score, ${last.landed} landed / ${last.rolledBack} rolled back${locPart}`);
   }
 
   if (lines.length === 1) {
@@ -848,6 +869,24 @@ function extractInsights(
       description: desc,
       evidence: `${rolledBack.length}/${total} clicks rolled back in run ${run.id.slice(0, 8)}`,
       confidence: 0.5 + rollRate * 0.3,
+      createdAt: now,
+      runId: run.id,
+    });
+  }
+
+  // Complexity-reducing clicks bonus: landed clicks that shed net lines while keeping score same/better
+  const reducingLanded = landed.filter(c => typeof c.locDelta === 'number' && c.locDelta < 0);
+  if (reducingLanded.length >= 1) {
+    const totalReduced = reducingLanded.reduce((sum, c) => sum + Math.abs(c.locDelta!), 0);
+    const avgReduced = Math.round(totalReduced / reducingLanded.length);
+    // Confidence scales with how many reducing clicks there were and average reduction size
+    const conf = Math.min(0.9, 0.55 + (reducingLanded.length / Math.max(total, 1)) * 0.2 + Math.min(0.15, avgReduced / 500));
+    insights.push({
+      id: randomUUID(),
+      type: 'what-works',
+      description: `Line-reducing changes land cleanly (avg -${avgReduced} LOC)`,
+      evidence: `${reducingLanded.length}/${total} clicks reduced net LOC in run ${run.id.slice(0, 8)}`,
+      confidence: conf,
       createdAt: now,
       runId: run.id,
     });
