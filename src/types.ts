@@ -62,9 +62,20 @@ export interface TestGateResult {
   warningMessage?: string;
 }
 
+export interface ModelTiers {
+  /** Model for mechanical tasks (sweeps, formatting) */
+  cheap?: string;
+  /** Model for standard tasks (normal clicks, single-file fixes) */
+  default?: string;
+  /** Model for complex tasks (architect, debate judge, multi-file refactor) */
+  premium?: string;
+}
+
 export interface RatchetConfig {
   agent: 'claude-code' | 'codex' | 'shell';
   model?: string;
+  /** Per-task-type model overrides */
+  models?: ModelTiers;
   defaults: {
     clicks: number;
     testCommand: string;
