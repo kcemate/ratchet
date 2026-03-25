@@ -1,6 +1,7 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { logger } from '../lib/logger.js';
+import { selectModel } from '../lib/model-router.js';
 
 const execFileAsync = promisify(execFile);
 const log = logger;
@@ -191,8 +192,10 @@ export async function runDebate(
   const command = config.command ?? 'claude';
   const baseArgs = config.extraArgs ?? ['--print', '--permission-mode', 'bypassPermissions'];
 
-  if (config.model && !baseArgs.some((a) => a.startsWith('--model'))) {
-    baseArgs.push('--model', config.model);
+  // Debate judging is a complex reasoning task — default to the premium model tier
+  const judgeModel = config.model ?? selectModel('complex');
+  if (!baseArgs.some((a) => a.startsWith('--model'))) {
+    baseArgs.push('--model', judgeModel);
   }
 
   const judgePrompt = buildJudgePrompt(proposals, config.strategyContext);

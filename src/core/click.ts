@@ -18,6 +18,7 @@ import { prevalidate } from './prevalidate.js';
 import type { PrevalidateResult, PrevalidateOptions } from './prevalidate.js';
 import { buildClickContext } from './context-pruner.js';
 import { logger } from '../lib/logger.js';
+import { selectModel } from '../lib/model-router.js';
 
 export interface ClickContext {
   clickNumber: number;
@@ -114,6 +115,12 @@ export function determineOutcome(rolledBack: boolean, rollbackReason?: string): 
 export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
   const { clickNumber, target, config, agent, cwd, hardenPhase, issues, onPhase } = ctx;
   const timestamp = new Date();
+
+  // Route to the appropriate model tier based on click mode
+  const effectiveModel = selectModel(
+    ctx.architectMode ? 'complex' : ctx.sweepMode ? 'mechanical' : 'standard',
+    config,
+  );
   const wallStartMs = Date.now();
   let agentStartMs = wallStartMs;
   let agentEndMs = wallStartMs;
@@ -255,7 +262,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       let prevalidateResult: PrevalidateResult | undefined;
       try {
         const prevalidateOpts: PrevalidateOptions = { strict: false };
-        prevalidateResult = await prevalidate(cwd, config.model, prevalidateOpts);
+        prevalidateResult = await prevalidate(cwd, effectiveModel, prevalidateOpts);
         if (prevalidateResult.concerns.length > 0) {
           logger.warn(
             `[ratchet] 🔍 Prevalidate click ${clickNumber}: confidence=${prevalidateResult.confidence.toFixed(2)}, ` +
@@ -377,7 +384,7 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
     wallTimeMs: Date.now() - wallStartMs,
     agentTimeMs: agentEndMs - agentStartMs,
     testTimeMs: testEndMs - testStartMs,
-    estimatedCost: estimateCost(linesChanged, config.model),
+    estimatedCost: estimateCost(linesChanged, effectiveModel),
     outcome: determineOutcome(rolledBack, rollbackReason),
     rollbackReason: classifyRollbackReason(rollbackReason),
     issuesFixed: 0,   // updated by engine after re-scan
