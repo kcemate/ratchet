@@ -6,6 +6,15 @@ import { join, resolve } from 'path';
 import { printHeader, warnIfNotRepo } from '../lib/cli.js';
 import { logger } from '../lib/logger.js';
 
+// ── Repo classification
+
+export interface RepoClassification {
+  /** Human-readable framework label, e.g. "Next.js app", "Express API" */
+  framework: string;
+  /** Directories that should be excluded from scanning, with trailing slash */
+  excludeDirs: string[];
+}
+
 export type ProjectType = 'node' | 'python' | 'go' | 'rust' | 'make' | 'unknown';
 
 export interface DetectedProject {
@@ -99,6 +108,72 @@ async function detectExcludeDirs(cwd: string): Promise<string[]> {
     if (await exists(join(cwd, dir))) found.push(dir + '/');
   }
   return found;
+}
+
+/**
+ * Classify the repo to determine its framework and which directories to exclude.
+ * Returns a RepoClassification with a human-readable label and a list of
+ * non-production directories that should not be scored.
+ */
+export async function classifyRepo(cwd: string): Promise<RepoClassification> {
+  const pkg = await readPackageJson(cwd);
+  const allDeps = { ...pkg?.devDependencies, ...pkg?.dependencies };
+
+  // Framework detection (order matters — most specific first)
+  let framework = 'Node.js project';
+  if (!pkg) {
+    if (await exists(join(cwd, 'go.mod'))) framework = 'Go project';
+    else if (await exists(join(cwd, 'Cargo.toml'))) framework = 'Rust project';
+    else if (await exists(join(cwd, 'pyproject.toml')) || await exists(join(cwd, 'setup.py'))) {
+      framework = 'Python project';
+    } else {
+      framework = 'Unknown project';
+    }
+  } else if (
+    allDeps['next'] ||
+    await exists(join(cwd, 'next.config.js')) ||
+    await exists(join(cwd, 'next.config.ts')) ||
+    await exists(join(cwd, 'next.config.mjs'))
+  ) {
+    framework = 'Next.js app';
+  } else if (allDeps['@nestjs/core']) {
+    framework = 'NestJS app';
+  } else if (allDeps['react']) {
+    framework = 'React app';
+  } else if (allDeps['fastify']) {
+    framework = 'Fastify API';
+  } else if (allDeps['express']) {
+    framework = 'Express API';
+  } else if (allDeps['hono']) {
+    framework = 'Hono API';
+  } else {
+    framework = 'Node.js library';
+  }
+
+  // Detect directories to exclude — always check for these
+  const excludeCandidates = [
+    'migrations', 'migration',           // DB migrations
+    'fixtures', '__fixtures__',          // test fixtures
+    'e2e', 'integration-tests', 'integration_tests', // e2e / integration
+    'scripts',                           // build/deploy scripts
+    'docs', 'documentation',             // docs
+    'benchmarks', 'bench',               // benchmarks
+    'examples', 'example',               // examples
+    'storybook', '.storybook',           // Storybook
+    '__mocks__',                         // Jest mocks
+  ];
+
+  const excludeDirs: string[] = [];
+  for (const dir of excludeCandidates) {
+    if (await exists(join(cwd, dir))) excludeDirs.push(dir + '/');
+  }
+
+  // Framework-specific extra exclusions
+  if (framework === 'Next.js app') {
+    if (await exists(join(cwd, 'public'))) excludeDirs.push('public/');
+  }
+
+  return { framework, excludeDirs };
 }
 
 export async function detectProject(cwd: string): Promise<DetectedProject> {
@@ -234,23 +309,24 @@ export function initCommand(): Command {
         process.stdout.write(chalk.dim('  Overwriting existing .ratchet.yml…') + '\n');
       }
 
-      // Detect project + calibrate (framework, monorepo, excludes)
-      const detectSpinner = ora('Detecting project type and calibrating…').start();
+      // Detect project + classify repo (framework, monorepo, excludes)
+      const detectSpinner = ora('Detecting project type and scanning repo…').start();
       let project: DetectedProject;
+      let classification: RepoClassification;
       try {
-        project = await detectProject(cwd);
+        [project, classification] = await Promise.all([
+          detectProject(cwd),
+          classifyRepo(cwd),
+        ]);
 
         const extras: string[] = [];
-        if (project.testFramework) extras.push(`framework: ${chalk.cyan(project.testFramework)}`);
+        if (project.testFramework) extras.push(`test: ${chalk.cyan(project.testFramework)}`);
         if (project.packageManager) extras.push(`pm: ${chalk.cyan(project.packageManager)}`);
-        if (project.isMonorepo) extras.push(chalk.yellow('monorepo detected'));
-        if (project.excludeDirs && project.excludeDirs.length > 0) {
-          extras.push(`${project.excludeDirs.length} non-prod dirs`);
-        }
+        if (project.isMonorepo) extras.push(chalk.yellow('monorepo'));
 
         detectSpinner.succeed(
-          `${chalk.cyan(project.type)} project — ` +
-          `test: ${chalk.green(project.testCommand)}` +
+          `${chalk.cyan(classification.framework)} detected — ` +
+          `${chalk.green(project.testCommand)}` +
           (extras.length > 0 ? `  (${extras.join(', ')})` : ''),
         );
       } catch (err) {
@@ -279,22 +355,36 @@ export function initCommand(): Command {
         process.exit(1);
       }
 
-      // Emit calibration hints
+      // Write .ratchetignore with auto-detected exclusions
+      if (classification.excludeDirs.length > 0) {
+        const ratchetIgnorePath = join(cwd, '.ratchetignore');
+        const ignoreContent =
+          '# Auto-generated by ratchet init — directories excluded from scan scoring\n' +
+          classification.excludeDirs.join('\n') + '\n';
+        try {
+          await writeFile(ratchetIgnorePath, ignoreContent, 'utf-8');
+        } catch (err) {
+          logger.warn({ err }, 'Failed to write .ratchetignore');
+        }
+      }
+
+      // Emit calibration summary
+      if (classification.excludeDirs.length > 0) {
+        process.stdout.write(
+          chalk.green(`\n  Detected: ${classification.framework}.`) +
+          chalk.dim(
+            ` Pre-configured exclusions: ${classification.excludeDirs.join(', ')}\n` +
+            '  (written to .ratchetignore — edit to adjust)\n',
+          ),
+        );
+      }
+
       if (project.isMonorepo) {
         process.stdout.write(
           chalk.yellow('\n  ⚠ Monorepo detected.') +
           chalk.dim(
             ' Consider adding separate targets per package\n' +
             '  (e.g. packages/api/, packages/web/) in .ratchet.yml.\n',
-          ),
-        );
-      }
-
-      if (project.excludeDirs && project.excludeDirs.length > 0) {
-        process.stdout.write(
-          chalk.dim(
-            `\n  Tip: ${project.excludeDirs.join(', ')} detected — ` +
-            'uncomment the exclude lines in .ratchet.yml to skip them.\n',
           ),
         );
       }

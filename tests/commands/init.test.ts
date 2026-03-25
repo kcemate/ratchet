@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, writeFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { detectProject, buildConfig } from '../../src/commands/init.js';
+import { detectProject, buildConfig, classifyRepo } from '../../src/commands/init.js';
 import type { DetectedProject } from '../../src/commands/init.js';
 
 let tmp: string;
@@ -148,5 +148,86 @@ describe('buildConfig', () => {
     const goProject: DetectedProject = { type: 'go', testCommand: 'go test ./...' };
     const config = buildConfig(goProject, 'pkg');
     expect(config).toContain('test_command: go test ./...');
+  });
+});
+
+describe('classifyRepo', () => {
+  it('classifies an empty directory as unknown project', async () => {
+    const result = await classifyRepo(tmp);
+    expect(result.framework).toBe('Unknown project');
+    expect(result.excludeDirs).toEqual([]);
+  });
+
+  it('classifies a plain Node.js project (no framework deps)', async () => {
+    await writeFile(join(tmp, 'package.json'), JSON.stringify({ name: 'my-lib' }));
+    const result = await classifyRepo(tmp);
+    expect(result.framework).toBe('Node.js library');
+  });
+
+  it('classifies a Next.js project by next.config.js', async () => {
+    await writeFile(join(tmp, 'package.json'), JSON.stringify({ dependencies: { next: '14.0.0' } }));
+    const result = await classifyRepo(tmp);
+    expect(result.framework).toBe('Next.js app');
+  });
+
+  it('classifies a React app by react dependency', async () => {
+    await writeFile(join(tmp, 'package.json'), JSON.stringify({ dependencies: { react: '18.0.0' } }));
+    const result = await classifyRepo(tmp);
+    expect(result.framework).toBe('React app');
+  });
+
+  it('classifies an Express project', async () => {
+    await writeFile(join(tmp, 'package.json'), JSON.stringify({ dependencies: { express: '4.18.0' } }));
+    const result = await classifyRepo(tmp);
+    expect(result.framework).toBe('Express API');
+  });
+
+  it('detects migrations/ as an exclude dir', async () => {
+    await writeFile(join(tmp, 'package.json'), JSON.stringify({ name: 'app' }));
+    const { mkdir } = await import('fs/promises');
+    await mkdir(join(tmp, 'migrations'));
+    const result = await classifyRepo(tmp);
+    expect(result.excludeDirs).toContain('migrations/');
+  });
+
+  it('detects __fixtures__/ as an exclude dir', async () => {
+    await writeFile(join(tmp, 'package.json'), JSON.stringify({ name: 'app' }));
+    const { mkdir } = await import('fs/promises');
+    await mkdir(join(tmp, '__fixtures__'));
+    const result = await classifyRepo(tmp);
+    expect(result.excludeDirs).toContain('__fixtures__/');
+  });
+
+  it('detects multiple exclude dirs at once', async () => {
+    await writeFile(join(tmp, 'package.json'), JSON.stringify({ name: 'app' }));
+    const { mkdir } = await import('fs/promises');
+    await mkdir(join(tmp, 'migrations'));
+    await mkdir(join(tmp, 'fixtures'));
+    await mkdir(join(tmp, 'scripts'));
+    const result = await classifyRepo(tmp);
+    expect(result.excludeDirs).toContain('migrations/');
+    expect(result.excludeDirs).toContain('fixtures/');
+    expect(result.excludeDirs).toContain('scripts/');
+  });
+
+  it('returns no excludeDirs for a minimal project', async () => {
+    await writeFile(join(tmp, 'package.json'), JSON.stringify({ name: 'clean-app' }));
+    const result = await classifyRepo(tmp);
+    expect(result.excludeDirs).toEqual([]);
+  });
+
+  it('classifies Go project without package.json', async () => {
+    await writeFile(join(tmp, 'go.mod'), 'module example.com/app\n\ngo 1.21\n');
+    const result = await classifyRepo(tmp);
+    expect(result.framework).toBe('Go project');
+  });
+
+  it('prefers Next.js over React when both deps exist', async () => {
+    await writeFile(
+      join(tmp, 'package.json'),
+      JSON.stringify({ dependencies: { next: '14.0.0', react: '18.0.0' } }),
+    );
+    const result = await classifyRepo(tmp);
+    expect(result.framework).toBe('Next.js app');
   });
 });
