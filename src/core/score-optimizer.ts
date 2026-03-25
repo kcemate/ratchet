@@ -253,6 +253,27 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   },
 ];
 
+// ─── Category → Subcategory Mapping
+
+export const CATEGORY_SUBCATEGORY_MAP: Record<string, string[]> = {
+  testing: ['Coverage ratio', 'Edge case depth', 'Test quality'],
+  security: ['Secrets & env vars', 'Input validation', 'Auth & rate limiting'],
+  'type-safety': ['Strict config', 'Any type count'],
+  'error-handling': ['Coverage', 'Empty catches', 'Structured logging'],
+  performance: ['Async patterns', 'Console cleanup', 'Import hygiene'],
+  'code-quality': ['Function length', 'Line length', 'Dead code', 'Duplication'],
+};
+
+/**
+ * Filter tier gaps to only those belonging to the given category.
+ * Unknown category names return the full gap list unchanged.
+ */
+export function filterGapsByCategory(gaps: TierGap[], category: string): TierGap[] {
+  const subcategories = CATEGORY_SUBCATEGORY_MAP[category];
+  if (!subcategories) return gaps;
+  return gaps.filter(g => subcategories.includes(g.subcategory));
+}
+
 // ─── Tier Analysis
 
 export interface TierGap {
@@ -387,8 +408,11 @@ export function analyzeScoreGaps(scan: ScanResult): TierGap[] {
  * not severity × count × gap_ratio. This means the engine will target
  * the changes that move the score most efficiently.
  */
-export function buildScoreOptimizedBacklog(scan: ScanResult): IssueTask[] {
-  const gaps = analyzeScoreGaps(scan);
+export function buildScoreOptimizedBacklog(scan: ScanResult, focusCategory?: string): IssueTask[] {
+  let gaps = analyzeScoreGaps(scan);
+  if (focusCategory) {
+    gaps = filterGapsByCategory(gaps, focusCategory);
+  }
   const tasks: IssueTask[] = [];
 
   for (const gap of gaps) {

@@ -212,6 +212,8 @@ export interface EngineRunOptions {
   stopOnRegression?: boolean;
   /** If true, skip loading and evolving strategy for this run */
   noStrategy?: boolean;
+  /** Force torque to target only subcategories within this score category */
+  focusCategory?: string;
 }
 
 export interface RunSummary {
@@ -297,7 +299,7 @@ async function initializeRun(options: EngineRunOptions): Promise<{
   incrementalScanner: IncrementalScanner;
   baselineFailures: string[];
 }> {
-  const { config, cwd, createBranch = true, scoreOptimized = true, scope: scopeFiles = [], scopeArg } = options;
+  const { config, cwd, createBranch = true, scoreOptimized = true, scope: scopeFiles = [], scopeArg, focusCategory } = options;
   const callbacks = options.callbacks ?? {};
 
   const run: RatchetRun = {
@@ -348,7 +350,7 @@ async function initializeRun(options: EngineRunOptions): Promise<{
     await callbacks.onScanComplete?.(currentScan);
     previousTotal = currentScan.total;
     const backlog = scoreOptimized
-      ? buildScoreOptimizedBacklog(currentScan)
+      ? buildScoreOptimizedBacklog(currentScan, focusCategory)
       : buildBacklog(currentScan);
     // Enrich backlog with blast-radius risk scores from GitNexus
     enrichBacklogWithRisk(backlog, cwd);
@@ -356,7 +358,7 @@ async function initializeRun(options: EngineRunOptions): Promise<{
   }
 
   // Smart guard escalation: mutable guards that can be bumped mid-run
-  const currentGuards = resolveGuards(options.target, config, 'normal');
+  const currentGuards = resolveGuards(options.target, config, 'normal', focusCategory);
   const currentGuardProfileName: string = (() => {
     const source = config.guards ?? options.target.guards;
     if (typeof source === 'string') return source;
@@ -460,6 +462,7 @@ async function postClickRescan(
   cwd: string,
   incrementalScanner: IncrementalScanner,
   callbacks: EngineCallbacks,
+  focusCategory?: string,
 ): Promise<{ rolled_back: boolean; regressionDetected: boolean }> {
   if (!click.testsPassed || rolled_back || !state.currentScan) {
     return { rolled_back, regressionDetected: false };
@@ -520,7 +523,7 @@ async function postClickRescan(
       state.previousTotal = newTotal;
       state.currentScan = newScan;
       const newBacklog = scoreOptimized
-        ? buildScoreOptimizedBacklog(newScan)
+        ? buildScoreOptimizedBacklog(newScan, focusCategory)
         : buildBacklog(newScan);
       state.backlogGroups = groupBacklogBySubcategory(newBacklog);
     }
@@ -542,6 +545,7 @@ async function checkStallAndEscalate(
   hardenMode: boolean,
   escalateEnabled: boolean,
   callbacks: EngineCallbacks,
+  focusCategory?: string,
 ): Promise<void> {
   // Capture midpoint score for stall detection
   if (clickNumber === Math.floor(clicks / 2) && state.scoreAtMidpoint === undefined) {
@@ -567,7 +571,7 @@ async function checkStallAndEscalate(
     logger.warn('Stall detected — escalating to cross-file sweep mode');
     await callbacks.onEscalate?.(escalateReason);
 
-    const fullBacklog = buildScoreOptimizedBacklog(state.currentScan);
+    const fullBacklog = buildScoreOptimizedBacklog(state.currentScan, focusCategory);
     const sweepableBacklog = fullBacklog.filter((task) => !task.architectPrompt);
     if (sweepableBacklog.length > 0) {
       state.backlogGroups = groupBacklogBySubcategory(sweepableBacklog);
@@ -747,6 +751,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     planFirst = false,
     scope: scopeFiles = [],
     noStrategy = false,
+    focusCategory,
   } = options;
 
   const { run, state, incrementalScanner, baselineFailures } = await initializeRun(options);
@@ -974,10 +979,10 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         let regressionDetected: boolean;
         ({ rolled_back, regressionDetected } = await postClickRescan(
-          i, click, rolled_back, clickEconomics, state, scoreOptimized, cwd, incrementalScanner, callbacks,
+          i, click, rolled_back, clickEconomics, state, scoreOptimized, cwd, incrementalScanner, callbacks, focusCategory,
         ));
 
-        await checkStallAndEscalate(i, clicks, state, hardenMode, escalateEnabled, callbacks);
+        await checkStallAndEscalate(i, clicks, state, hardenMode, escalateEnabled, callbacks, focusCategory);
 
         // Post-click async reindex: keep GitNexus graph fresh for subsequent clicks
         if (!rolled_back && click.testsPassed) {
