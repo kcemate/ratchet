@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import { access, writeFile } from 'fs/promises';
+import { access, readFile, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { printHeader, warnIfNotRepo } from '../lib/cli.js';
 import { logger } from '../lib/logger.js';
@@ -12,6 +12,9 @@ export interface DetectedProject {
   type: ProjectType;
   testCommand: string;
   packageManager?: 'npm' | 'yarn' | 'pnpm';
+  testFramework?: 'vitest' | 'jest' | 'mocha';
+  isMonorepo?: boolean;
+  excludeDirs?: string[];
 }
 
 async function exists(p: string): Promise<boolean> {
@@ -23,15 +26,96 @@ async function exists(p: string): Promise<boolean> {
   }
 }
 
+/** Read package.json and return parsed object, or null on failure. */
+async function readPackageJson(
+  cwd: string,
+): Promise<{
+  name?: string;
+  scripts?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  dependencies?: Record<string, string>;
+  workspaces?: string[] | { packages?: string[] };
+} | null> {
+  const pkgPath = join(cwd, 'package.json');
+  if (!(await exists(pkgPath))) return null;
+  try {
+    return JSON.parse(await readFile(pkgPath, 'utf-8')) as {
+      name?: string;
+      scripts?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+      dependencies?: Record<string, string>;
+      workspaces?: string[] | { packages?: string[] };
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Detect which test framework a Node project uses and return the best test command. */
+function detectTestFramework(
+  pkg: NonNullable<Awaited<ReturnType<typeof readPackageJson>>>,
+  pm: 'npm' | 'yarn' | 'pnpm',
+): { testCommand: string; testFramework?: 'vitest' | 'jest' | 'mocha' } {
+  const allDeps = { ...pkg.devDependencies, ...pkg.dependencies };
+  const testScript = pkg.scripts?.['test'] ?? '';
+  const runPrefix = pm === 'npm' ? 'npx' : pm;
+
+  if (allDeps['vitest'] || testScript.includes('vitest')) {
+    return { testCommand: `${runPrefix} vitest run`, testFramework: 'vitest' };
+  }
+  if (allDeps['jest'] || testScript.includes('jest')) {
+    return { testCommand: `${runPrefix} jest`, testFramework: 'jest' };
+  }
+  if (allDeps['mocha'] || testScript.includes('mocha')) {
+    return { testCommand: `${runPrefix} mocha`, testFramework: 'mocha' };
+  }
+  // Fall back to the test script as-is, or pm test
+  const fallback = testScript && !testScript.startsWith('echo') ? testScript : `${pm} test`;
+  return { testCommand: fallback };
+}
+
+/** Check if a Node project is a monorepo (workspaces, lerna, pnpm-workspace). */
+async function detectMonorepo(
+  cwd: string,
+  pkg: NonNullable<Awaited<ReturnType<typeof readPackageJson>>>,
+): Promise<boolean> {
+  if (pkg.workspaces) return true;
+  if (await exists(join(cwd, 'lerna.json'))) return true;
+  if (await exists(join(cwd, 'pnpm-workspace.yaml'))) return true;
+  if (await exists(join(cwd, 'packages'))) return true;
+  return false;
+}
+
+/** Detect common non-production directories that should be excluded from scanning. */
+async function detectExcludeDirs(cwd: string): Promise<string[]> {
+  const candidates = [
+    'e2e', 'integration-tests', 'integration_tests',
+    'docs', 'scripts', 'fixtures', 'benchmarks',
+    'storybook', '.storybook', 'coverage', 'examples',
+    '__mocks__', '__fixtures__',
+  ];
+  const found: string[] = [];
+  for (const dir of candidates) {
+    if (await exists(join(cwd, dir))) found.push(dir + '/');
+  }
+  return found;
+}
+
 export async function detectProject(cwd: string): Promise<DetectedProject> {
-  if (await exists(join(cwd, 'package.json'))) {
-    if (await exists(join(cwd, 'pnpm-lock.yaml'))) {
-      return { type: 'node', testCommand: 'pnpm test', packageManager: 'pnpm' };
-    }
-    if (await exists(join(cwd, 'yarn.lock'))) {
-      return { type: 'node', testCommand: 'yarn test', packageManager: 'yarn' };
-    }
-    return { type: 'node', testCommand: 'npm test', packageManager: 'npm' };
+  const pkg = await readPackageJson(cwd);
+
+  if (pkg !== null) {
+    const pm: 'npm' | 'yarn' | 'pnpm' = (await exists(join(cwd, 'pnpm-lock.yaml')))
+      ? 'pnpm'
+      : (await exists(join(cwd, 'yarn.lock')))
+        ? 'yarn'
+        : 'npm';
+
+    const { testCommand, testFramework } = detectTestFramework(pkg, pm);
+    const isMonorepo = await detectMonorepo(cwd, pkg);
+    const excludeDirs = await detectExcludeDirs(cwd);
+
+    return { type: 'node', testCommand, packageManager: pm, testFramework, isMonorepo, excludeDirs };
   }
 
   if (
@@ -40,15 +124,18 @@ export async function detectProject(cwd: string): Promise<DetectedProject> {
     (await exists(join(cwd, 'setup.py'))) ||
     (await exists(join(cwd, 'setup.cfg')))
   ) {
-    return { type: 'python', testCommand: 'pytest' };
+    const excludeDirs = await detectExcludeDirs(cwd);
+    return { type: 'python', testCommand: 'pytest', excludeDirs };
   }
 
   if (await exists(join(cwd, 'go.mod'))) {
-    return { type: 'go', testCommand: 'go test ./...' };
+    const excludeDirs = await detectExcludeDirs(cwd);
+    return { type: 'go', testCommand: 'go test ./...', excludeDirs };
   }
 
   if (await exists(join(cwd, 'Cargo.toml'))) {
-    return { type: 'rust', testCommand: 'cargo test' };
+    const excludeDirs = await detectExcludeDirs(cwd);
+    return { type: 'rust', testCommand: 'cargo test', excludeDirs };
   }
 
   if (await exists(join(cwd, 'Makefile'))) {
@@ -62,23 +149,37 @@ export function buildConfig(project: DetectedProject, targetDir: string): string
   const safePath = targetDir.endsWith('/') ? targetDir : `${targetDir}/`;
   const targetName = safePath.replace(/\/$/, '').replace(/.*\//, '') || 'main';
 
+  const monorepoComment = project.isMonorepo
+    ? '# monorepo: true  # Detected workspaces — consider separate targets per package\n\n'
+    : '';
+
+  const excludeBlock =
+    project.excludeDirs && project.excludeDirs.length > 0
+      ? '\n# Non-production directories detected — uncomment to exclude from scanning:\n' +
+        project.excludeDirs.map(d => `# exclude: ${d}`).join('\n') + '\n'
+      : '';
+
+  const frameworkNote = project.testFramework
+    ? `  # Detected test framework: ${project.testFramework}\n`
+    : '';
+
   return `# .ratchet.yml — Ratchet configuration
 # Run 'ratchet torque --target ${targetName}' to start the click loop.
 # Docs: https://github.com/ratchet-run/ratchet
-
+${monorepoComment}
 agent: claude-code
 model: claude-sonnet-4-6
 
 defaults:
   clicks: 7
-  test_command: ${project.testCommand}
+${frameworkNote}  test_command: ${project.testCommand}
   auto_commit: true
 
 targets:
   - name: ${targetName}
     path: ${safePath}
     description: "Iteratively improve code quality in ${safePath}"
-
+${excludeBlock}
 # Boundaries protect critical paths from agent modification.
 # boundaries:
 #   - path: src/auth/
@@ -99,8 +200,9 @@ export function initCommand(): Command {
   cmd
     .description(
       'Initialize Ratchet in the current project.\n' +
-      'Auto-detects project type and test command, then writes .ratchet.yml.\n\n' +
-      'Supports: npm, yarn, pnpm, pytest, go test, cargo test, make test'
+      'Auto-detects project type, test framework, package manager,\n' +
+      'monorepo layout, and non-production dirs, then writes .ratchet.yml.\n\n' +
+      'Supports: npm, yarn, pnpm (vitest/jest/mocha), pytest, go test, cargo test, make test'
     )
     .argument('[dir]', 'Directory to initialize (default: current directory)', '.')
     .option('--force', 'Overwrite existing .ratchet.yml', false)
@@ -132,14 +234,24 @@ export function initCommand(): Command {
         process.stdout.write(chalk.dim('  Overwriting existing .ratchet.yml…') + '\n');
       }
 
-      // Detect project
-      const detectSpinner = ora('Detecting project type…').start();
+      // Detect project + calibrate (framework, monorepo, excludes)
+      const detectSpinner = ora('Detecting project type and calibrating…').start();
       let project: DetectedProject;
       try {
         project = await detectProject(cwd);
+
+        const extras: string[] = [];
+        if (project.testFramework) extras.push(`framework: ${chalk.cyan(project.testFramework)}`);
+        if (project.packageManager) extras.push(`pm: ${chalk.cyan(project.packageManager)}`);
+        if (project.isMonorepo) extras.push(chalk.yellow('monorepo detected'));
+        if (project.excludeDirs && project.excludeDirs.length > 0) {
+          extras.push(`${project.excludeDirs.length} non-prod dirs`);
+        }
+
         detectSpinner.succeed(
-          `${chalk.cyan(project.type)} project detected → ` +
-            `test command: ${chalk.green(project.testCommand)}`,
+          `${chalk.cyan(project.type)} project — ` +
+          `test: ${chalk.green(project.testCommand)}` +
+          (extras.length > 0 ? `  (${extras.join(', ')})` : ''),
         );
       } catch (err) {
         detectSpinner.fail('Failed to detect project type');
@@ -167,12 +279,33 @@ export function initCommand(): Command {
         process.exit(1);
       }
 
+      // Emit calibration hints
+      if (project.isMonorepo) {
+        process.stdout.write(
+          chalk.yellow('\n  ⚠ Monorepo detected.') +
+          chalk.dim(
+            ' Consider adding separate targets per package\n' +
+            '  (e.g. packages/api/, packages/web/) in .ratchet.yml.\n',
+          ),
+        );
+      }
+
+      if (project.excludeDirs && project.excludeDirs.length > 0) {
+        process.stdout.write(
+          chalk.dim(
+            `\n  Tip: ${project.excludeDirs.join(', ')} detected — ` +
+            'uncomment the exclude lines in .ratchet.yml to skip them.\n',
+          ),
+        );
+      }
+
       process.stdout.write(
         `\n${chalk.bold('Next steps:')}\n` +
-        `  ${chalk.dim('1.')} Edit ${chalk.cyan('.ratchet.yml')} — set your targets and boundaries\n` +
+        `  ${chalk.dim('1.')} Edit ${chalk.cyan('.ratchet.yml')} — review targets and boundaries\n` +
         `  ${chalk.dim('2.')} Run ` +
         `${chalk.green(`ratchet torque --target ${detectedTargetName}`)} to start the loop\n\n`,
       );
+
     });
 
   return cmd;
