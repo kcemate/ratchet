@@ -42,7 +42,7 @@ export class ShellAgent implements Agent {
       baseArgs.push('--model', config.model);
     }
     this.extraArgs = baseArgs;
-    this.timeout = config.timeout ?? 600_000; // 10 minutes
+    this.timeout = config.timeout ?? 1_200_000; // 20 minutes
     if (config.cwd) this._cwd = config.cwd;
   }
 
