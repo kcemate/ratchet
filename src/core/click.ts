@@ -437,7 +437,7 @@ function resolveGuardsFromConfig(
   sweepMode?: boolean,
   architectMode?: boolean,
 ): ClickGuards | null {
-  if (architectMode) return GUARD_PROFILES.broad;
+  if (architectMode) return GUARD_PROFILES.refactor;
   if (sweepMode) {
     // If guards is an explicit ClickGuards object, enforce sweep floor; otherwise use refactor profile
     if (guards && typeof guards === 'object') {
