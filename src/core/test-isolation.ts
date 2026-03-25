@@ -4,7 +4,6 @@ import { join, resolve } from 'path';
 import { runTests } from './runner.js';
 import type { RatchetConfig } from '../types.js';
 import { logger } from '../lib/logger.js';
-import chalk from 'chalk';
 
 export interface TestGateResult {
   passed: boolean;
@@ -79,7 +78,7 @@ export async function progressiveGates(
   const useProgressiveGates = defaults.progressiveGates ?? false;
   const { command: testCmd, warnings: testCmdWarnings } = validateTestCommand(defaults.testCommand);
   for (const warning of testCmdWarnings) {
-    console.warn(chalk.yellow(`⚠  ratchet: ${warning}`));
+    logger.warn(`⚠  ratchet: ${warning}`);
   }
 
   // Test isolation disabled — plain full-suite run
