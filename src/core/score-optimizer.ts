@@ -465,6 +465,60 @@ function findCategoryForSubcategory(scan: ScanResult, subcategory: string): stri
 }
 
 /**
+ * Generate a smart "next best move" recommendation after a torque run.
+ * Returns a formatted block with the exact CLI command to run next.
+ */
+export function generateNextMoveRecommendation(scan: ScanResult): string {
+  if (scan.total >= 95) {
+    return `\n  🎉 Score is ${scan.total}/100 — excellent shape! Keep maintaining quality.\n`;
+  }
+
+  const gaps = analyzeScoreGaps(scan);
+  const actionableGaps = gaps.filter(g => g.pointsAvailable > 2);
+
+  if (actionableGaps.length === 0) {
+    return `\n  💡 Next best move:\n     Only small gaps remain — run ${chalk_green('ratchet improve')} for incremental polish.\n`;
+  }
+
+  const top = actionableGaps[0]!;
+
+  // Find parent category name for --focus-category flag
+  let category = 'general';
+  for (const cat of scan.categories) {
+    for (const sub of cat.subcategories) {
+      if (sub.name === top.subcategory) {
+        category = cat.name.toLowerCase();
+        break;
+      }
+    }
+  }
+
+  // Determine architect mode: many hits spread across many files
+  const needsArchitect = top.currentCount > 10 && top.files.length > 5;
+
+  const modePart = needsArchitect ? ' --mode architect' : '';
+  const cmd = `ratchet torque --focus-category ${category}${modePart} -n 5`;
+
+  const scoreRange = `${top.currentScore}/${top.maxScore}`;
+  const fileCount = top.files.length;
+  const fileLabel = fileCount > 0 ? `across ${fileCount} file${fileCount !== 1 ? 's' : ''}` : '';
+
+  return [
+    '',
+    `  💡 Next best move:`,
+    `     ${top.subcategory} (${scoreRange}) has ${top.pointsAvailable} recoverable point${top.pointsAvailable !== 1 ? 's' : ''} ${fileLabel}`.trimEnd(),
+    `     → ${chalk_green(cmd)}`,
+    '',
+  ].join('\n');
+}
+
+// Minimal chalk-free green escape for the recommendation output.
+// We avoid importing chalk here to keep score-optimizer a pure logic module.
+function chalk_green(s: string): string {
+  return `\x1b[32m${s}\x1b[0m`;
+}
+
+/**
  * Generate a human-readable plan showing the optimal path to max score.
  */
 export function generateScorePlan(scan: ScanResult): string {

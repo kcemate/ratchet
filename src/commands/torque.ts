@@ -22,7 +22,7 @@ import { writePDF } from '../core/pdf-report.js';
 import { generateScoreCard, generatePRDescription } from '../core/pr-comment.js';
 import { runScan } from './scan.js';
 import type { ScanResult } from './scan.js';
-import { analyzeScoreGaps } from '../core/score-optimizer.js';
+import { analyzeScoreGaps, generateNextMoveRecommendation } from '../core/score-optimizer.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import { parseScopeArg, resolveScope, formatScopeForDisplay } from '../core/scope.js';
 import type { Click, RatchetRun, Target } from '../types.js';
@@ -1178,6 +1178,11 @@ export function torqueCommand(): Command {
         // Print report summary
         const report = generateReport({ run, cwd, scoreBefore, scoreAfter });
         process.stdout.write('\n' + report + '\n');
+
+        // Print next-move recommendation
+        if (scoreAfter) {
+          process.stdout.write(generateNextMoveRecommendation(scoreAfter));
+        }
 
         // Exit codes: 0 = all passed, 1 = partial, 2 = all failed
         if (run.clicks.length > 0 && passedClicks === 0) {
