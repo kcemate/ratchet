@@ -1,0 +1,1646 @@
+{
+  "model": "/Users/giovanni/Projects/ratchet/training-data/ratchet-fix-fused-v2",
+  "test_file": "training-data/mlx-split/test.jsonl",
+  "num_examples": 115,
+  "overall_score": 0.81,
+  "overall_passing": 101,
+  "category_summary": {
+    "console-to-logging": {
+      "avg": 0.929,
+      "count": 32,
+      "passing": 32
+    },
+    "empty-catch": {
+      "avg": 0.884,
+      "count": 23,
+      "passing": 23
+    },
+    "mixed": {
+      "avg": 0.875,
+      "count": 20,
+      "passing": 19
+    },
+    "n-plus-one": {
+      "avg": 0.785,
+      "count": 18,
+      "passing": 15
+    },
+    "route-decomposition": {
+      "avg": 0.519,
+      "count": 22,
+      "passing": 12
+    }
+  },
+  "results": [
+    {
+      "index": 0,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.11,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.689
+      },
+      "elapsed": 5.52,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning server/routes/sync.ts...\n\nIssues found:\n- [QUAL-001] Function on line 22 is 155 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 5/15\n\n### PRIORITIZE\nHig"
+    },
+    {
+      "index": 1,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.64,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning server/routes/auth.ts...\n\nIssues found:\n- [QUAL-001] Function on line 11 is 115 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 5/15\n\n### PRIORITIZE\nHig"
+    },
+    {
+      "index": 2,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.35,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 0.5,
+        "overall": 0.723
+      },
+      "elapsed": 1.09,
+      "generated_preview": "```typescript\nexport function hashCode(s: string): number {\n * If yes, advance the streak. If a day was missed, reset first.\n */\nexport async function recalculateStreak(groupId: string): Promise<void> {\n  // Fallback for test environments where db.transaction is not available\n  if (!('db' in this.in"
+    },
+    {
+      "index": 3,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.62,
+      "generated_preview": "```typescript\nexport function buildFeatureClickPrompt(step: FeatureStep, plan: FeaturePlan, cw\n    // Get graph context for the files this step will touch\n    const filePaths = step.files.length > 0 ? step.files : ['.'];\n    graphIntel = filePaths.map(f => {\n      try { return buildIntelligenceBrief"
+    },
+    {
+      "index": 4,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.67,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.884
+      },
+      "elapsed": 0.97,
+      "generated_preview": "```typescript\nexport class IncrementalScanner {\n        this._needsFullScan = age > CACHE_MAX_AGE_MS;\n        return this._needsFullScan;\n      }\n    } catch (err) {\n      logger.debug({ err }, 'Failed to read cache entry');\n      this._needsFullScan = true;\n      return true;\n    }\n  }\n```"
+    },
+    {
+      "index": 5,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 1.16,
+      "generated_preview": "```typescript\nexport function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {\n        const { currentStreak } = streakMap.get(groupId) ?? { currentStreak: 0 };\n        if (currentStreak > maxStreak) maxStreak = currentStreak;\n        if (STREAK_MILESTONES.includes(currentStreak)) {\n     "
+    },
+    {
+      "index": 6,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.71,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.898
+      },
+      "elapsed": 3.89,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nAnalysis of api/src/worker.ts:\n\nDetected 5 console.* calls in production code.\n- 4 console.log (unstructured, no levels)\n- 1 console.error (no error context)\nEstimated score impact: -3 points in Performance category.\n\nCurrent score: 4/10 Performance\n\n### PRIORITIZE\nHighes"
+    },
+    {
+      "index": 7,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.09,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.381
+      },
+      "elapsed": 3.88,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nAnalysis of server/routes/sync.ts:\n\nDetected 7 console.* calls in production code.\n- 5 console.log (unstructured, no levels)\n- 2 console.error (no error context)\nEstimated score impact: -4 points in Performance category.\n\nCurrent score: 5/10 Performance\n\n### PRIORITIZE\nHi"
+    },
+    {
+      "index": 8,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 1.17,
+      "generated_preview": "```typescript\nexport async function registerRoutes(app: Express): Promise<Server> {\n\n    ws.on('close', () => {\n      incWsCounter('gracefulDisconnects');\n      for (const groupId of authWs.subscribedGroups) {\n        const conns = groupConnections.get(groupId);\n        if (conns) {\n          conns."
+    },
+    {
+      "index": 9,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 1.27,
+      "generated_preview": "```typescript\nexport function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {\n      const bulkEntryId = entries[0]?.id ?? '';\n      try {\n        const activeMatches = await storage.getUserActiveMatches(userId);\n        const activeOnly = activeMatches.filter((m: BattleMatch) => m.status"
+    },
+    {
+      "index": 10,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 1.27,
+      "generated_preview": "```typescript\nexport function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {\n      const bulkEntryId = entries[0]?.id ?? '';\n      try {\n        const activeMatches = await storage.getUserActiveMatches(userId);\n        const activeOnly = activeMatches.filter((m: BattleMatch) => m.status"
+    },
+    {
+      "index": 11,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.61,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning server/routes/analytics.ts...\n\nIssues found:\n- [QUAL-001] Function on line 12 is 115 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 4/15\n\n### PRIORITIZ"
+    },
+    {
+      "index": 12,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.88,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.958
+      },
+      "elapsed": 0.83,
+      "generated_preview": "```typescript\nexport function torqueCommand(): Command {\n              ...findIncompleteTargets(rawYml),\n            ];\n            for (const w of warnings) {\n              logger.warn(w);\n            }\n            if (warnings.length > 0) process.stdout.write('\\n');\n          } catch {\n```"
+    },
+    {
+      "index": 13,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.8,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.93
+      },
+      "elapsed": 1.32,
+      "generated_preview": "```typescript\nimport { ShellAgent } from '../core/agents/shell.js';\nimport { buildSwarmConfig } from '../core/swarm.js';\nimport { isValidSpecialization } from '../core/agents/specialized.js';\nimport { RatchetLogger } from '../core/logger.js';\nimport { logger } from '../core/logger.js';\nimport { gene"
+    },
+    {
+      "index": 14,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 2.61,
+      "generated_preview": "```typescript\nexport function stopCommand(): Command {\n      try {\n        pidRaw = await readFile(pidPath, 'utf-8');\n      } catch (err) {\n        logger.error('Failed to read pid file:', err);\n        process.exit(1);\n      }\n\n      const pid = parseInt(pidRaw.trim(), 10);\n      if (isNaN(pid)) {\n"
+    },
+    {
+      "index": 15,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.42,
+      "generated_preview": "```typescript\nconst memStore = vi.hoisted(() => {\n        (m) => m.userId === userId && m.groupId === groupId,\n      );\n    },\n    async isUserInGroups(userId: string, groupIds: string[]) {\n      return new Set(groupIds.filter((gid) => _members.some((m) => m.userId === userId && m.groupId === gid)))"
+    },
+    {
+      "index": 16,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.68,
+      "generated_preview": "```typescript\nfunction scoreSecurity(files: string[], contents: Map<string, string>): Category\n    if (!content) continue;\n    const lines = content.split('\\n');\n    for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {\n      const match = lines[lineIdx]!.match(/app\\.use\\s*\\(\\s*(['\"`]\\/api\\/[a-"
+    },
+    {
+      "index": 17,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.35
+      },
+      "elapsed": 4.75,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning src/core/engine.ts...\n\nIssues found:\n- [QUAL-001] Function on line 19 is 155 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 4/15\n\n### PRIORITIZE\nHighes"
+    },
+    {
+      "index": 18,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.66,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning src/commands/torque.ts...\n\nIssues found:\n- [QUAL-001] Function on line 12 is 115 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 5/15\n\n### PRIORITIZE\nHi"
+    },
+    {
+      "index": 19,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.94,
+      "generated_preview": "```typescript\nfunction parseJsonField<T>(val: unknown, fallback: T): T {\n  if (typeof val === 'string') {\n    try {\n      return JSON.parse(val) as T;\n    } catch (err) {\n      logger.debug({ err }, 'Failed to parse JSON field');\n      return fallback;\n    }\n  }\n```"
+    },
+    {
+      "index": 20,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.89,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.962
+      },
+      "elapsed": 1.04,
+      "generated_preview": "```typescript\nexport async function runTierEngine(options: TierEngineOptions): Promise<Ratchet\n    const tierTargets = planTierTargets(currentScan, clicks);\n\n    if (tierTargets.length === 0) {\n      logger.info({ clickNumber: clicks }, 'No tier crossings available');\n      run.status = 'completed';"
+    },
+    {
+      "index": 21,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.02,
+      "generated_preview": "```typescript\nexport function Reactions({ entryId, maxVisible = 4 }: ReactionsProps) {\n    onSuccess: () => {\n      queryClient.invalidateQueries({ queryKey: ['/api/entries', entryId, 'reactions'] });\n    },\n    errorMessage: \"Failed to remove reaction\",\n  });\n\n  const handleEmojiClick = (emoji: str"
+    },
+    {
+      "index": 22,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.47,
+      "generated_preview": "```typescript\nexport default function BattleMatch() {\n  const { data, isLoading, error, refetch } = useQuery<MatchData>({\n    queryKey: [\"/api/battle/match\", matchId],\n    queryFn: async () => {\n      const res = await apiRequest<MatchData>(`/api/battle/match/${matchId}`);\n      if (!res.ok) throw n"
+    },
+    {
+      "index": 23,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.59,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning src/core/click.ts...\n\nIssues found:\n- [QUAL-001] Function on line 11 is 106 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 5/15\n\n### PRIORITIZE\nHighest"
+    },
+    {
+      "index": 24,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.73,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.605
+      },
+      "elapsed": 1.22,
+      "generated_preview": "```typescript\nexport function createGroupsRouter(): Router {\n    res.json(ranked);\n  }));\n\n  // Weekly Throne Report \u2014 group-level shareable summary card\n  router.get('/api/groups/:groupId/weekly-report',\n    isAuthenticated, requireGroupMember(), requiresGroupLead(), asyncRoute(\"Failed to fetch gro"
+    },
+    {
+      "index": 25,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.43,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.5
+      },
+      "elapsed": 0.97,
+      "generated_preview": "```typescript\nasync function getAuthorizedEntry(entryId: string, userId: string, res: Response\nexport function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {\n  const router = Router();\n\n  router.post('/api/locations', isAuthenticated, async (req, res) => {\n    try {\n      const userId ="
+    },
+    {
+      "index": 26,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.5,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.825
+      },
+      "elapsed": 3.81,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nAnalysis of src/core/click.ts:\n\nDetected 9 console.* calls in production code.\n- 4 console.log (unstructured, no levels)\n- 5 console.error (no error context)\nEstimated score impact: -4 points in Performance category.\n\nCurrent score: 3/10 Performance\n\n### PRIORITIZE\nHighes"
+    },
+    {
+      "index": 27,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.15,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 0.5,
+        "overall": 0.352
+      },
+      "elapsed": 0.81,
+      "generated_preview": "```typescript\nexport function createGroupsRouter(): Router {\n      doc.end();\n  }));\n\n  // Rich invite preview (public -- no auth, enhanced for OG)\n  router.get('/api/groups/invite-preview/:inviteCode',\n    asyncRoute(\"Failed to fetch invite preview\",\n```"
+    },
+    {
+      "index": 28,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.86,
+      "generated_preview": "```typescript\nexport function improveCommand(): Command {\n        }\n      } catch (err) {\n        if (spinner) (spinner as ReturnType<typeof ora>).fail();\n        pinoLogger.err({ err }, 'Fatal err');\n        releaseLock(cwd);\n        process.exit(1);\n      }\n```"
+    },
+    {
+      "index": 29,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.11,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.388
+      },
+      "elapsed": 3.83,
+      "generated_preview": "## Iteration 2\n\n### ANALYZE\nAnalysis of src/core/engine.ts:\n\nDetected 12 console.* calls in production code.\n- 10 console.log (unstructured, no levels)\n- 2 console.error (no error context)\nEstimated score impact: -4 points in Performance category.\n\nCurrent score: 7/10 Performance\n\n### PRIORITIZE\nHig"
+    },
+    {
+      "index": 30,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.33,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.465
+      },
+      "elapsed": 0.82,
+      "generated_preview": "```typescript\nexport function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {\n      }\n\n      // Recalculate streaks for all affected groups\n      const streaks = await recalculateStreaksForGroups(targetGroupIds);\n      const maxStreak = streaks.max;\n```"
+    },
+    {
+      "index": 31,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.35
+      },
+      "elapsed": 4.61,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning src/core/engine.ts...\n\nIssues found:\n- [QUAL-001] Function on line 158 is 122 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 4/15\n\n### PRIORITIZE\nHighe"
+    },
+    {
+      "index": 32,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.04,
+      "generated_preview": "```typescript\nimport type { RatchetRun, Target, PlanResult } from '../types.js';\nimport type { Agent } from './agents/base.js';\nimport type { ScanResult } from '../commands/scan.js';\nimport { buildPlanPrompt } from './agents/shell.js';\nimport { logger } from '../lib/logger.js';\n\n/**\n * Run the read-"
+    },
+    {
+      "index": 33,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 1.03,
+      "generated_preview": "```typescript\nexport function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {\n    try {\n      const userId = req.member.id;\n      const { entryId } = req.params;\n      const parsed = deleteReactionSchema.safeParse(req.body);\n      if (!parsed.success) {\n        return res.status(400).jso"
+    },
+    {
+      "index": 34,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.1,
+      "generated_preview": "```typescript\nimport { runScan } from '../commands/scan.js';\nimport { clearCache as clearGitNexusCache } from './gitnexus.js';\nimport { resolveGuards } from './engine-guards.js';\nimport type { EngineRunOptions, ClickPhase } from './engine.js';\nimport { logger } from '../lib/logger.js';\n\n/**\n * Archi"
+    },
+    {
+      "index": 35,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.25,
+      "generated_preview": "```typescript\nexport function BattleChallengeModal({ open, onOpenChange }: BattleChallengeModa\n  const { data: groupDetail, isLoading: loadingMembers } = useQuery<GroupDetail>({\n    queryKey: [\"/api/groups\", selectedGroupId],\n    queryFn: async () => {\n      const res = await apiRequest<GroupDetail>"
+    },
+    {
+      "index": 36,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.83,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.64
+      },
+      "elapsed": 1.57,
+      "generated_preview": "```typescript\nexport function createPremiumRouter(): Router {\n\n      await storage.applyReferral(userId, referrer.id);\n\n      // Auto-grant 1 month premium to referrer after reaching 3 referrals\n      const isPremiumActive = await storage.getUserDailyReferralCount(userId) >= 3;\n      if (!isPremiumA"
+    },
+    {
+      "index": 37,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.75,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.912
+      },
+      "elapsed": 1.21,
+      "generated_preview": "```typescript\nimport { useAuth } from \"@/hooks/useAuth\";\nimport { useToast } from \"@/hooks/use-toast\";\nimport { SignInButton, SignUpButton, useAuth as useClerkAuth } from \"@clerk/clerk-react\";\n\n// Hardcoded true \u2014 useAuth.ts does the same. The env var isn't available\n// inside useAuth, so reading im"
+    },
+    {
+      "index": 38,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 1.43,
+      "generated_preview": "```typescript\nexport function createDeucesRouter(broadcastToGroup: BroadcastFn): Router {\n        return res.status(400).json({ message: \"At least one group must be selected\" });\n      }\n\n      // Check if user is in all selected groups (batch)\n      const memberGroupIds = await storage.isUserInGrou"
+    },
+    {
+      "index": 39,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.35
+      },
+      "elapsed": 4.82,
+      "generated_preview": "```typescript\nimport express, { type Express, type Request, type Response } from \"express\";\nimport logger from \"./lib/logger\";\nimport { createServer, type Server, type IncomingMessage } from \"http\";\nimport { WebSocketServer, WebSocket } from \"ws\";\nimport { z, ZodError } from \"zod\";\nimport { timingSa"
+    },
+    {
+      "index": 40,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 0.86,
+      "generated_preview": "```typescript\nexport async function registerRoutes(app: Express): Promise<Server> {\n      let userId: string | null = null;\n\n      if (clerkEnabled) {\n        const token = url.searchParams.get('token');\n        if (!token) {\n          incWsCounter('failedAuthentications');\n```"
+    },
+    {
+      "index": 41,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.99,
+      "generated_preview": "```typescript\nexport function EditUsernameModal({ open, onOpenChange, currentUsername }: EditU\n      onOpenChange(false);\n      form.reset();\n    },\n    errorMessage: (e) => e.message?.includes(\"Username already taken\") ? \"Username already taken\" : \"Failed to update username\",\n  });\n\n  const handleS"
+    },
+    {
+      "index": 42,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.75,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.912
+      },
+      "elapsed": 0.78,
+      "generated_preview": "```typescript\nconst logger = {\n  error: (...args: unknown[]) => console.error(...args),\n  warn: (...args: unknown[]) => console.warn(...args),\n  info: (...args: unknown[]) => console.log(...args),\n};\n\nexport default logger;\n```"
+    },
+    {
+      "index": 43,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.62,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.867
+      },
+      "elapsed": 1.72,
+      "generated_preview": "```typescript\nexport async function runTierEngine(options: TierEngineOptions): Promise<Ratchet\n    }\n\n    // Log plan\n    logger.info({ t: tierTargets.length }, 'Tier engine plan');\n    for (const t of tierTargets) {\n      const mode = t.atomic ? '\u26a1 ATOMIC' : `batched\u00d7${t.clickBudget}`;\n      logger"
+    },
+    {
+      "index": 44,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.55,
+      "generated_preview": "```typescript\nconst memStore = vi.hoisted(() => {\n    async isUserInGroup(userId: string, groupId: string) {\n      return _members.some((m) => m.userId === userId && m.groupId === groupId);\n    },\n    async isUserInGroups(userId: string, groupIds: string[]) {\n      return new Set(groupIds.filter((gi"
+    },
+    {
+      "index": 45,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 1.13,
+      "generated_preview": "```typescript\nexport async function registerRoutes(app: Express): Promise<Server> {\n          }\n          const conns = groupConnections.get(groupId);\n          if (conns) {\n            conns.delete(authWs);\n            if (conns.size === 0) groupConnections.delete(groupId);\n          }\n          au"
+    },
+    {
+      "index": 46,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.65,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning server/routes/battle.ts...\n\nIssues found:\n- [QUAL-001] Function on line 25 is 105 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 3/15\n\n### PRIORITIZE\nH"
+    },
+    {
+      "index": 47,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.51,
+      "generated_preview": "```typescript\nexport async function runArchitectEngine(params: EngineRunOptions): Promise<Rat\n        const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);\n\n        if (rolled_back) {\n          logger.error({ click: clickNumber, elapsedSec }, 'architect click ROLLED BACK');\n        } e"
+    },
+    {
+      "index": 48,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.04,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 0.0,
+        "overall": 0.264
+      },
+      "elapsed": 0.51,
+      "generated_preview": "```typescript\nexport function createAuthRouter(uploadsDir: string): Router {\n    }\n  });\n\n  return router;\n}\n```"
+    },
+    {
+      "index": 49,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.72,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning server/routes/auth.ts...\n\nIssues found:\n- [QUAL-001] Function on line 13 is 165 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 5/15\n\n### PRIORITIZE\nHig"
+    },
+    {
+      "index": 50,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.83,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.94
+      },
+      "elapsed": 2.15,
+      "generated_preview": "```typescript\nasync function processClickOutcome(\n        state.currentGuards = next.guards;\n        state.currentGuardProfileName = next.name;\n        state.consecutiveGuardRejections = 0;\n        logger.info({\n          guard: { name: prevName, current: next.name, rejections: state.consecutiveGuar"
+    },
+    {
+      "index": 51,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.81,
+      "generated_preview": "```typescript\nexport function buildCommand(): Command {\n\n        process.stdout.write(chalk.green('\\n  \u2713 Binary rebuilt and linked successfully.\\n'));\n      } catch (err) {\n        logger.error({ err }, 'Build failed');\n        process.exit(1);\n      }\n    });\n```"
+    },
+    {
+      "index": 52,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.35,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 0.5,
+        "overall": 0.723
+      },
+      "elapsed": 1.09,
+      "generated_preview": "```typescript\nexport function hashCode(s: string): number {\n * If yes, advance the streak. If a day was missed, reset first.\n */\nexport async function recalculateStreak(groupId: string): Promise<void> {\n  // Fallback for test environments where db.transaction is not available\n  if (!('db' in typeof "
+    },
+    {
+      "index": 53,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.9,
+      "generated_preview": "```typescript\nexport async function validateProjectEnv(cwd: string): Promise<ReturnType<typeof\n */\nexport async function assertIsRepo(cwd: string): Promise<void> {\n  if (!(await isRepo(cwd))) {\n    logger.error('Not a git repository');\n    process.exit(1);\n  }\n}\n```"
+    },
+    {
+      "index": 54,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.91,
+      "generated_preview": "```typescript\nexport function ProfilePictureUpload({\n        headers,\n        credentials: \"include\",\n      });\n\n      if (!response.ok) {\n        const err = await response.text();\n        throw new Error(`${response.status}: ${err}`);\n      }\n\n      return await response.json();\n    },\n    onSucce"
+    },
+    {
+      "index": 55,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.79,
+      "generated_preview": "```typescript\nexport default function Referral() {\n      });\n      setApplyCode(\"\");\n    },\n    errorMessage: (e) => e.message || \"Something went wrong.\",\n    errorTitle: \"Couldn't apply code\",\n  });\n\n  const getShareText = () => {\n```"
+    },
+    {
+      "index": 56,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.88,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.958
+      },
+      "elapsed": 0.89,
+      "generated_preview": "```typescript\nexport function torqueCommand(): Command {\n          });\n        } catch (err) {\n          if (spinner) (spinner as ReturnType<typeof ora>).fail();\n          logger.error({ err }, 'Fatal error');\n          process.exit(1);\n        } finally {\n          process.removeListener('SIGINT', "
+    },
+    {
+      "index": 57,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.84,
+      "generated_preview": "```typescript\nexport function StreakInsuranceButton() {\n        description: payload.message,\n      });\n    },\n    errorMessage: (error) => error.message || \"Couldn't activate streak insurance.\",\n    errorTitle: \"Insurance Failed\",\n  });\n\n  if (!isPremium) {\n```"
+    },
+    {
+      "index": 58,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.65,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning src/commands/scan.ts...\n\nIssues found:\n- [QUAL-001] Function on line 10 is 152 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 3/15\n\n### PRIORITIZE\nHigh"
+    },
+    {
+      "index": 59,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.68,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning src/server.ts...\n\nIssues found:\n- [QUAL-001] Function on line 126 is 135 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 5/15\n\n### PRIORITIZE\nHighest im"
+    },
+    {
+      "index": 60,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.75,
+      "generated_preview": "## Iteration 2\n\n### ANALYZE\nScanning server/lib/helpers.ts...\n\nIssues found:\n- [QUAL-001] Function on line 12 is 125 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 4/15\n\n### PRIORITIZE\nHig"
+    },
+    {
+      "index": 61,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.33,
+      "generated_preview": "```typescript\nfunction scorePerformance(files: string[], contents: Map<string, string>): Categ\n  const srcFiles = files.filter(f => !isTestFile(f));\n  const appFiles = srcFiles.filter(f => !f.replace(/\\\\/g, '/').includes('/scripts/'));\n\n  const { count: consoleLogCount, matchedFiles: consoleLogFiles"
+    },
+    {
+      "index": 62,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 0.9,
+      "generated_preview": "```typescript\nexport async function registerRoutes(app: Express): Promise<Server> {\n        return;\n      }\n      client.missedPongs = (client.missedPongs ?? 0) + 1;\n      if (ws.readyState === WebSocket.OPEN) ws.ping();\n    });\n  }, PING_INTERVAL_MS);\n\n```"
+    },
+    {
+      "index": 63,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.88,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.958
+      },
+      "elapsed": 1.41,
+      "generated_preview": "```typescript\nexport function loginCommand(): Command {\n\n      saveLicense(response.license!);\n      spinner.succeed(chalk.green('License activated!'));\n      logger.info({ plan: response.license!.tier }, 'License activated');\n      logger.info({ email: response.license!.email }, 'License email');\n "
+    },
+    {
+      "index": 64,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.57,
+      "generated_preview": "```typescript\nconst memStore = vi.hoisted(() => {\n    async isUserInGroup(userId: string, groupId: string) {\n      return _members.some((m) => m.userId === userId && m.groupId === groupId);\n    },\n    async isUserInGroups(userId: string, groupIds: string[]) {\n      return new Set(groupIds.filter((gi"
+    },
+    {
+      "index": 65,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.35
+      },
+      "elapsed": 4.86,
+      "generated_preview": "```typescript\nimport express, { type Express, type Request, type Response } from \"express\";\nimport logger from \"./lib/logger\";\nimport { createServer, type Server, type IncomingMessage } from \"http\";\nimport { WebSocketServer, WebSocket } from \"ws\";\nimport { z, ZodError } from \"zod\";\nimport { timingSa"
+    },
+    {
+      "index": 66,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.6,
+      "generated_preview": "```typescript\nconst memStore = vi.hoisted(() => {\n    async isUserInGroup(userId: string, groupId: string) {\n      return _members.some((m) => m.userId === userId && m.groupId === groupId);\n    },\n    async isUserInGroups(userId: string, groupIds: string[]) {\n      return new Set(groupIds.filter((gi"
+    },
+    {
+      "index": 67,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.82,
+      "generated_preview": "```typescript\nimport { Command } from 'commander';\nimport chalk from 'chalk';\nimport { execSync } from 'child_process';\nimport { logger } from '../lib/logger.js';\nimport { dirname, join } from 'path';\nimport { fileURLToPath } from 'url';\n\n```"
+    },
+    {
+      "index": 68,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.71,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.898
+      },
+      "elapsed": 1.21,
+      "generated_preview": "```typescript\nexport function validateLicense(commandName: string): LicenseData {\n  if (license.expiresAt) {\n    const exp = new Date(license.expiresAt);\n    if (exp < new Date()) {\n      logger.error('License expired');\n      logger.error('Your license expired on', chalk.yellow(exp.toLocaleDateStri"
+    },
+    {
+      "index": 69,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.98,
+      "generated_preview": "```typescript\nexport function Reactions({ entryId, maxVisible = 4 }: ReactionsProps) {\n    onSuccess: () => {\n      queryClient.invalidateQueries({ queryKey: ['/api/entries', entryId, 'reactions'] });\n    },\n    errorMessage: \"Failed to remove reaction\",\n  });\n\n  const handleEmojiClick = (emoji: str"
+    },
+    {
+      "index": 70,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.56,
+      "generated_preview": "```typescript\nconst memStore = vi.hoisted(() => {\n    async isUserInGroup(userId: string, groupId: string) {\n      return _members.some((m) => m.userId === userId && m.groupId === groupId);\n    },\n    async isUserInGroups(userId: string, groupIds: string[]) {\n      return new Set(groupIds.filter((gi"
+    },
+    {
+      "index": 71,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.05,
+      "generated_preview": "```typescript\nexport function loginCommand(): Command {\n    .description('Activate your Ratchet license key.')\n    .argument('<key>', 'License key from your subscription email')\n    .action(async (key: string) => {\n      logger.info('Starting license key validation');\n\n      const spinner = ora('Val"
+    },
+    {
+      "index": 72,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 1.19,
+      "generated_preview": "```typescript\nexport async function registerRoutes(app: Express): Promise<Server> {\n            return;\n          }\n          if (!groupConnections.has(groupId)) groupConnections.set(groupId, new Set());\n          groupConnections.get(groupId)?.add(ws);\n          (ws as any).subscribedGroups.add(gro"
+    },
+    {
+      "index": 73,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.67,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.884
+      },
+      "elapsed": 0.98,
+      "generated_preview": "```typescript\nexport class IncrementalScanner {\n        this._needsFullScan = age > CACHE_MAX_AGE_MS;\n        return this._needsFullScan;\n      }\n    } catch (err) {\n      logger.debug({ err }, 'Failed to scan for full age');\n      this._needsFullScan = true;\n      return true;\n    }\n  }\n```"
+    },
+    {
+      "index": 74,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.66,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning server/routes/sync.ts...\n\nIssues found:\n- [QUAL-001] Function on line 28 is 106 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 4/15\n\n### PRIORITIZE\nHig"
+    },
+    {
+      "index": 75,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.09,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.381
+      },
+      "elapsed": 3.83,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nAnalysis of api/src/worker.ts:\n\nDetected 13 console.* calls in production code.\n- 11 console.log (unstructured, no levels)\n- 2 console.error (no error context)\nEstimated score impact: -3 points in Performance category.\n\nCurrent score: 6/10 Performance\n\n### PRIORITIZE\nHigh"
+    },
+    {
+      "index": 76,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 2.29,
+      "generated_preview": "```typescript\nconst memStore = vi.hoisted(() => {\n    },\n    async getGroupMembers(groupId: string) { return _members.filter(m => m.groupId === groupId).map(m => ({ ...m, user: _users.get(m.userId) })); },\n    async isUserInGroup(userId: string, groupId: string) { return _members.some(m => m.userId "
+    },
+    {
+      "index": 77,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.92,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.672
+      },
+      "elapsed": 1.24,
+      "generated_preview": "```typescript\nexport function createGroupsRouter(): Router {\n    res.json(report);\n  }));\n\n  // Squad Spy Mode \u2014 typical log hour per member (premium)\n  router.get('/api/groups/:groupId/spy',\n    isAuthenticated, requireGroupMember(), requiresPremiumFor('squad_spy'), asyncRoute(\"Failed to fetch spy "
+    },
+    {
+      "index": 78,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.89,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.962
+      },
+      "elapsed": 2.01,
+      "generated_preview": "```typescript\nexport function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps)\n  const [showIconPicker, setShowIconPicker] = useState(false);\n  const [nameError, setNameError] = useState(\"\");\n  const [createdName, setCreatedName] = useState<string | null>(null);\n  const queryClient = "
+    },
+    {
+      "index": 79,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.14,
+      "generated_preview": "```typescript\nexport function Reactions({ entryId, maxVisible = 4 }: ReactionsProps) {\n    setTimeout(() => setFloaters(prev => prev.filter(f => f.id !== id)), 800);\n  };\n\n  const addReactionMutation = useMutationWithToast({\n    mutationFn: async (emoji: string) => {\n      return await apiRequest(`/"
+    },
+    {
+      "index": 80,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.82,
+      "generated_preview": "```typescript\nfunction scoreErrorHandling(files: string[], contents: Map<string, string>): Cat\n  const srcFiles = files.filter(f => !isTestFile(f));\n\n  const tryCatchTotal = countMatches(srcFiles, contents, /\\btry\\s*\\{/g);\n  const { count: emptyCatchTotal, matchedFiles: emptyCatchFiles } = countMatc"
+    },
+    {
+      "index": 81,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 1.23,
+      "generated_preview": "```typescript\nexport async function registerRoutes(app: Express): Promise<Server> {\n          }\n          const conns = groupConnections.get(groupId);\n          if (conns) {\n            conns.delete(authWs);\n            if (conns.size === 0) groupConnections.delete(groupId);\n          }\n          au"
+    },
+    {
+      "index": 82,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.53,
+      "generated_preview": "```typescript\nfunction scoreTypes(files: string[], cwd: string, contents: Map<string, string>)\n      max: 15,\n      summary: 'JavaScript only \u2014 no static types',\n      subcategories: [\n        {\n          name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only',\n          issuesFound: 1, "
+    },
+    {
+      "index": 83,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 2.25,
+      "generated_preview": "```typescript\nfunction scorePerformance(files: string[], contents: Map<string, string>): Categ\n    max: 10,\n    summary: [asyncSummary, consoleSummary].filter(Boolean).join(', '),\n    subcategories: [\n      {\n        name: 'Async patterns', score: Math.min(asyncScore, 3), max: 3, summary: asyncSumma"
+    },
+    {
+      "index": 84,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.89,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.962
+      },
+      "elapsed": 1.36,
+      "generated_preview": "```typescript\nimport { useState } from \"react\";\nimport { useQuery } from \"@tanstack/react-query\";\nimport { Button } from \"@/components/ui/button\";\nimport { Avatar, AvatarImage, AvatarFallback } from \"@/components/ui/avatar\";\nimport { Badge } from \"@/components/ui/badge\";\nimport { useAuth } from \"@/h"
+    },
+    {
+      "index": 85,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.88,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.958
+      },
+      "elapsed": 1.37,
+      "generated_preview": "```typescript\nexport async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet\n      if (filtered.length > 0) {\n        sweepable = filtered;\n      } else {\n        logger.error({ category: options.category }, 'No sweepable issues found');\n      }\n    }\n\n    if (sweepable.length === "
+    },
+    {
+      "index": 86,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.74,
+      "generated_preview": "```typescript\nfunction printEconomics(economics: RunEconomics): void {\n\n  process.stdout.write('\\n' + chalk.bold('  \ud83d\udcca Run Economics') + '\\n');\n  process.stdout.write(`  Wall time:     ${formatDuration(economics.totalWallTimeMs)}\\n`);\n  process.stdout.write(`  Effective:     ${formatDuration(economic"
+    },
+    {
+      "index": 87,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.56,
+      "generated_preview": "```typescript\nconst memStore = vi.hoisted(() => {\n    async isUserInGroup(userId: string, groupId: string) {\n      return _members.some((m) => m.userId === userId && m.groupId === groupId);\n    },\n    async isUserInGroups(userId: string, groupIds: string[]) {\n      return new Set(groupIds.filter((gi"
+    },
+    {
+      "index": 88,
+      "category": "mixed",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.7,
+      "generated_preview": "```typescript\nexport function BattleChallengeModal({ open, onOpenChange }: BattleChallengeModa\n      }),\n    onSuccess: (record) => {\n      queryClient.invalidateQueries({ queryKey: [\"/api/battle/matches\"] });\n      toast({ title: \"Challenge sent! \u2694\ufe0f\", description: \"Your opponent has been challenged"
+    },
+    {
+      "index": 89,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.68,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning server/routes/sync.ts...\n\nIssues found:\n- [QUAL-001] Function on line 17 is 105 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 3/15\n\n### PRIORITIZE\nHig"
+    },
+    {
+      "index": 90,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 0.97,
+      "generated_preview": "```typescript\nexport function torqueCommand(): Command {\n              chalk.dim(' Run ' + chalk.cyan('ratchet init') + ' to create a config.\\n') + '\\n',\n          );\n          if (config._noTestCommand) {\n            pinoLogger.warn('No test command detected \u2014 harden mode auto-enabled');\n          "
+    },
+    {
+      "index": 91,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 2.44,
+      "generated_preview": "```typescript\nfunction scoreErrorHandling(files: string[], contents: Map<string, string>): Cat\n    max: 20,\n    summary: [coverageSummary, emptyCatchSummary].filter(Boolean).join(', '),\n    subcategories: [\n      {\n        name: 'Coverage', score: coverageScore, max: 8, summary: coverageSummary,\n   "
+    },
+    {
+      "index": 92,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.56,
+      "generated_preview": "```typescript\nconst memStore = vi.hoisted(() => {\n    async isUserInGroup(userId: string, groupId: string) {\n      return _members.some((m) => m.userId === userId && m.groupId === groupId);\n    },\n    async isUserInGroups(userId: string, groupIds: string[]) {\n      return new Set(groupIds.filter((gi"
+    },
+    {
+      "index": 93,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.62,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning server/lib/helpers.ts...\n\nIssues found:\n- [QUAL-001] Function on line 12 is 115 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 3/15\n\n### PRIORITIZE\nHig"
+    },
+    {
+      "index": 94,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.62,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.867
+      },
+      "elapsed": 1.99,
+      "generated_preview": "```typescript\nexport async function runTierEngine(options: TierEngineOptions): Promise<Ratchet\n    }\n\n    // Log plan\n    logger.info({ t: tierTargets.length, clicks }, 'Tier engine plan');\n    for (const t of tierTargets) {\n      const mode = t.atomic ? '\u26a1 ATOMIC' : `batched\u00d7${t.clickBudget}`;\n    "
+    },
+    {
+      "index": 95,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.61,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning src/commands/scan.ts...\n\nIssues found:\n- [QUAL-001] Function on line 10 is 142 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 6/15\n\n### PRIORITIZE\nHigh"
+    },
+    {
+      "index": 96,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.09,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.381
+      },
+      "elapsed": 3.74,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nAnalysis of server/routes.ts:\n\nDetected 12 console.* calls in production code.\n- 10 console.log (unstructured, no levels)\n- 2 console.error (no error context)\nEstimated score impact: -4 points in Performance category.\n\nCurrent score: 3/10 Performance\n\n### PRIORITIZE\nHighe"
+    },
+    {
+      "index": 97,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.03,
+      "generated_preview": "```typescript\nexport async function progressiveGates(\n  // All new failures are unrelated to our changes\n  if (allowUnrelated && unrelatedFailures.length > 0) {\n    const warningMessage = `Landed with unrelated test failures (${unrelatedFailures.join(', ')})`;\n    logger.warn(warningMessage);\n    re"
+    },
+    {
+      "index": 98,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.04,
+      "generated_preview": "```typescript\nexport async function progressiveGates(\n  // All new failures are unrelated to our changes\n  if (allowUnrelated && unrelatedFailures.length > 0) {\n    const warningMessage = `Landed with unrelated test failures (${unrelatedFailures.join(', ')})`;\n    logger.warn(warningMessage);\n    re"
+    },
+    {
+      "index": 99,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.09,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.381
+      },
+      "elapsed": 3.99,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nAnalysis of api/src/worker.ts:\n\nDetected 4 console.* calls in production code.\n- 2 console.log (unstructured, no levels)\n- 2 console.error (no error context)\nEstimated score impact: -4 points in Performance category.\n\nCurrent score: 3/10 Performance\n\n### PRIORITIZE\nHighes"
+    },
+    {
+      "index": 100,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.7
+      },
+      "elapsed": 0.91,
+      "generated_preview": "```typescript\nexport async function registerRoutes(app: Express): Promise<Server> {\n        return;\n      }\n      client.missedPongs = (client.missedPongs ?? 0) + 1;\n      if (ws.readyState === WebSocket.OPEN) ws.ping();\n    });\n  }, PING_INTERVAL_MS);\n\n```"
+    },
+    {
+      "index": 101,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.89,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.962
+      },
+      "elapsed": 1.09,
+      "generated_preview": "```typescript\nexport async function runTierEngine(options: TierEngineOptions): Promise<Ratchet\n    const tierTargets = planTierTargets(currentScan, clicks);\n\n    if (tierTargets.length === 0) {\n      logger.info({ clickNumber: clicks }, 'No tier crossings available');\n      run.status = 'completed';"
+    },
+    {
+      "index": 102,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.45,
+      "generated_preview": "```typescript\nfunction scoreTypes(files: string[], cwd: string, contents: Map<string, string>)\n      max: 15,\n      summary: 'JavaScript only \u2014 no static types',\n      subcategories: [\n        { name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only', issuesFound: 1, issuesDescription: '"
+    },
+    {
+      "index": 103,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.83,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.94
+      },
+      "elapsed": 1.13,
+      "generated_preview": "```typescript\nexport async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet\n\n    // 4. Take top priority sweepable task\n    const task = sweepable[0]!;\n    logger.info({ sweepTarget: task.description }, 'sweep');\n\n    // Group files by dependency cluster (tightly-coupled files tog"
+    },
+    {
+      "index": 104,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.35
+      },
+      "elapsed": 4.8,
+      "generated_preview": "```typescript\nconst rateLimit = {\n  windowMs: 15 * 60 * 1000,\n  max: 100,\n  standardHeaders: {\n    \"Content-Type\": \"application/json\",\n    \"Access-Control-Allow-Origin\": \"*\",\n    \"Access-Control-Allow-Methods\": \"GET, POST, PUT, DELETE, OPTIONS\",\n    \"Access-Control-Allow-Headers\": \"Content-Type\",\n  "
+    },
+    {
+      "index": 105,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.65
+      },
+      "elapsed": 4.78,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nScanning src/core/engine.ts...\n\nIssues found:\n- [QUAL-001] Function on line 122 is 122 lines (threshold: 50) (score: -2)\n- [QUAL-002] Route handler mixes validation, business logic, and response formatting (score: -2)\n\nCurrent CodeQuality score: 7/15\n\n### PRIORITIZE\nHighe"
+    },
+    {
+      "index": 106,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 2.36,
+      "generated_preview": "```typescript\nfunction scoreTests(files: string[], contents: Map<string, string>, cwd: string)\n    max: 25,\n    summary: [coverageSummary, edgeCaseSummary].filter(Boolean).join(', '),\n    subcategories: [\n      {\n        name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary,"
+    },
+    {
+      "index": 107,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.27,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.744
+      },
+      "elapsed": 4.98,
+      "generated_preview": "## Iteration 1\n\n### ANALYZE\nAnalysis of server/routes/auth.ts:\n\nDetected 4 console.* calls in production code.\n- 2 console.log (unstructured, no levels)\n- 2 console.error (no error context)\nEstimated score impact: -3 points in Performance category.\n\nCurrent score: 4/10 Performance\n\n### PRIORITIZE\nHi"
+    },
+    {
+      "index": 108,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 3.05,
+      "generated_preview": "```typescript\nfunction scoreCodeQuality(files: string[], contents: Map<string, string>): Categ\n    max: 15,\n    summary: [fnLenSummary, lineLenSummary].filter(Boolean).join(', '),\n    subcategories: [\n      {\n        name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSumm"
+    },
+    {
+      "index": 109,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.32,
+      "generated_preview": "```typescript\nfunction detectTestFramework(cwd: string): string {\n      if (pkg.devDependencies?.vitest) return 'vitest';\n      if (pkg.devDependencies?.jest || pkg.devDependencies?.['@jest/core']) return 'jest';\n      if (pkg.devDependencies?.mocha) return 'mocha';\n    } catch (err) {\n      logger."
+    },
+    {
+      "index": 110,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.89,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.962
+      },
+      "elapsed": 1.88,
+      "generated_preview": "```typescript\nexport async function runTierEngine(options: TierEngineOptions): Promise<Ratchet\n          }\n\n          if (rolled_back) {\n            logger.err({ category: 'click_dismissed', gapped: elapsedSec, subcategory: gap.subcategory }, '\u2717 click #{globalClickNum} ROLLED BACK ({elapsedSec}s) \u2014 "
+    },
+    {
+      "index": 111,
+      "category": "route-decomposition",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.04,
+        "addresses_issue": 0.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 0.0,
+        "overall": 0.264
+      },
+      "elapsed": 0.53,
+      "generated_preview": "```typescript\nexport function createAuthRouter(uploadsDir: string): Router {\n    }\n  });\n\n  return router;\n}\n```"
+    },
+    {
+      "index": 112,
+      "category": "n-plus-one",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 1.0,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 1.0
+      },
+      "elapsed": 1.62,
+      "generated_preview": "```typescript\nconst memStore = vi.hoisted(() => {\n    async isUserInGroup(userId: string, groupId: string) {\n      return _members.some((m) => m.userId === userId && m.groupId === groupId);\n    },\n    async isUserInGroups(userId: string, groupIds: string[]) {\n      return new Set(groupIds.filter((gi"
+    },
+    {
+      "index": 113,
+      "category": "console-to-logging",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.86,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.951
+      },
+      "elapsed": 0.96,
+      "generated_preview": "```typescript\nexport function requireLicense(commandName: string): LicenseData {\n  if (license.expiresAt) {\n    const exp = new Date(license.expiresAt);\n    if (exp < new Date()) {\n      logger.error({ err: 'License expired' }, 'Error');\n      process.exit(1);\n    }\n  }\n```"
+    },
+    {
+      "index": 114,
+      "category": "empty-catch",
+      "scores": {
+        "has_code_block": 1.0,
+        "pattern_match": 0.83,
+        "addresses_issue": 1.0,
+        "no_hallucination": 1.0,
+        "length_ratio": 1.0,
+        "overall": 0.94
+      },
+      "elapsed": 1.31,
+      "generated_preview": "```typescript\nimport { parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt, build\nimport type { IssueTask } from '../issue-backlog.js';\nimport { formatIssuesForPrompt } from '../issue-backlog.js';\nimport { buildIntelligenceBriefing, queryFlowsTargeted } from '../gitnexus.js';\nimport { b"
+    }
+  ]
+}

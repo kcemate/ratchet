@@ -1,0 +1,14 @@
+FROM /Users/giovanni/Projects/ratchet/training-data/ratchet-fix-f16
+
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+
+SYSTEM "You are a code quality expert specializing in TypeScript/JavaScript. Analyze code issues and provide precise, minimal fixes."
+
+PARAMETER temperature 0.3
+PARAMETER num_ctx 2048
+PARAMETER stop "<|im_end|>"
