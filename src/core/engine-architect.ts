@@ -5,7 +5,8 @@ import { buildArchitectPrompt } from './agents/shell.js';
 import { executeClick } from './click.js';
 import * as git from './git.js';
 import { runScan } from '../commands/scan.js';
-import { clearCache as clearGitNexusCache } from './gitnexus.js';
+import { clearCache as clearGitNexusCache, renameSymbol } from './gitnexus.js';
+import { buildGraphToolInstructions } from './gitnexus-tools.js';
 import { resolveGuards } from './engine-guards.js';
 import type { EngineRunOptions, ClickPhase } from './engine.js';
 import { logger } from '../lib/logger.js';
@@ -49,6 +50,10 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
 
     let currentScan = scanResult;
     let previousTotal = scanResult.total;
+    // buildGraphToolInstructions includes rename — available to architect agent via GITNEXUS_QUERY
+    const graphTools = buildGraphToolInstructions(cwd);
+    logger.debug({ hasGraphTools: graphTools.length > 0, renameAvailable: typeof renameSymbol === 'function' },
+      'architect engine: graph-aware rename wired');
     let architectPrompt = buildArchitectPrompt(currentScan, cwd);
 
     const clickOffset = options.clickOffset ?? 0;
