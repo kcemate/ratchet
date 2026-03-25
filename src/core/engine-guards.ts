@@ -54,7 +54,7 @@ export function resolveGuards(
   // Auto-elevate to refactor (12 files / 280 lines) for testing — test creation is cross-cutting
   if (focusCategory === 'testing') return GUARD_PROFILES.refactor;
   // Mode defaults
-  if (mode === 'architect') return GUARD_PROFILES.broad;
+  if (mode === 'architect') return GUARD_PROFILES.refactor;
   if (mode === 'sweep') return GUARD_PROFILES.refactor;
   return GUARD_PROFILES.tight;
 }
