@@ -174,7 +174,7 @@ describe('scoring regression: mixed-quality', () => {
     expect(cat.score).toBe(7);
     expect(getSub(result, 'Type Safety', 'Strict config').score).toBe(7);
     expect(getSub(result, 'Type Safety', 'Any type count').score).toBe(0);
-    expect(getSub(result, 'Type Safety', 'Any type count').issuesFound).toBe(7);
+    expect(getSub(result, 'Type Safety', 'Any type count').issuesFound).toBe(8);
   });
 
   it('Error Handling — empty catches present', () => {
@@ -194,6 +194,6 @@ describe('scoring regression: mixed-quality', () => {
   });
 
   it('issue counts', () => {
-    expect(result.totalIssuesFound).toBe(23);
+    expect(result.totalIssuesFound).toBe(24);
   });
 });
