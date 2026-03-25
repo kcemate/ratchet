@@ -1,5 +1,5 @@
 import type { ScanResult } from '../commands/scan.js';
-import { assessFileRisk, getDependencyClusters, getCypherClusters } from './gitnexus.js';
+import { assessFileRisk, getDependencyClusters, getCypherClusters, getEntryPointScore } from './gitnexus.js';
 import { SEVERITY_WEIGHT } from './taxonomy.js';
 
 export interface IssueTask {
@@ -11,6 +11,7 @@ export interface IssueTask {
   priority: number; // computed: severity_weight * count * gap_ratio
   sweepFiles?: string[];
   riskScore?: number; // 0–1 blast radius risk from GitNexus
+  entryPointScore?: number; // 0–1 entry-point score: 1=user-facing entry point, 0=deep shared utility
   /** If set, this task carries a pre-built architect prompt to use verbatim */
   architectPrompt?: string;
 }
@@ -132,6 +133,35 @@ export function enrichBacklogWithRisk(tasks: IssueTask[], cwd: string): IssueTas
   }
 
   // Re-sort after risk adjustment
+  tasks.sort((a, b) => b.priority - a.priority);
+  return tasks;
+}
+
+/**
+ * Enrich backlog tasks with entry-point scores from GitNexus.
+ * High entry-point score means the file is user-facing (CLI command, public handler) with few importers.
+ * Entry-point files fix = higher user impact, so priority gets a boost.
+ * Gracefully no-ops if GitNexus is not indexed.
+ */
+export function enrichBacklogWithEntryPoints(tasks: IssueTask[], cwd: string): IssueTask[] {
+  for (const task of tasks) {
+    if (!task.sweepFiles || task.sweepFiles.length === 0) continue;
+
+    // Average entry-point score across sweep files (sample first 5 to avoid slowness)
+    const sample = task.sweepFiles.slice(0, 5);
+    let totalScore = 0;
+    for (const file of sample) {
+      totalScore += getEntryPointScore(file, cwd);
+    }
+    const avgScore = sample.length > 0 ? totalScore / sample.length : 0.5;
+    task.entryPointScore = avgScore;
+
+    // High entry-point score = more user-facing = higher priority multiplier
+    // Score of 1.0 (pure entry point) doubles the priority; 0.5 (neutral) adds 50%; 0 = no boost
+    task.priority *= (1 + avgScore);
+  }
+
+  // Re-sort after entry-point adjustment
   tasks.sort((a, b) => b.priority - a.priority);
   return tasks;
 }
