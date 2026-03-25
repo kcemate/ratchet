@@ -1805,8 +1805,8 @@
     <div class="container">
         <div class="section-header fade-in">
             <p class="section-label">Commands</p>
-            <h2 class="section-title">Six commands. Every angle covered.</h2>
-            <p class="section-subtitle">Ratchet covers the full improvement lifecycle — from scoring where you stand, to finding your highest-impact fixes, to autonomously shipping them, to tracking progress in CI.</p>
+            <h2 class="section-title">Nine commands. Every angle covered.</h2>
+            <p class="section-subtitle">Ratchet covers the full improvement lifecycle — from scoring where you stand, to deep analysis with AI reasoning, to autonomously shipping fixes with smart model routing, to tracking progress in CI.</p>
         </div>
 
         <div class="features-grid">
@@ -1845,6 +1845,24 @@
                 <h3>CI/CD Native <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);font-weight:600;vertical-align:middle;margin-left:6px;">New</span></h3>
                 <p>GitHub Action drops your score + delta into every PR comment automatically. Use <code style="color:var(--accent);font-size:13px;">--diff main</code> to scan only changed files. Use <code style="color:var(--accent);font-size:13px;">--baseline</code> to track improvement over time. One line in your workflow.</p>
                 <span class="feature-tag">ratchet scan --diff main --baseline</span>
+            </div>
+            <div class="feature-card fade-in fade-in-d3">
+                <div class="feature-icon">🔍</div>
+                <h3>--explain-deductions <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);font-weight:600;vertical-align:middle;margin-left:6px;">New</span></h3>
+                <p>See exactly which files and lines cost you points. Every deduction mapped to a specific file, line number, and category. Know precisely where your score is bleeding before you spend a single AI credit.</p>
+                <span class="feature-tag">ratchet scan --explain-deductions</span>
+            </div>
+            <div class="feature-card fade-in fade-in-d1">
+                <div class="feature-icon">🧠</div>
+                <h3>--deep-analyze <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);font-weight:600;vertical-align:middle;margin-left:6px;">New</span></h3>
+                <p>Multi-turn ReACT analysis loop. Before fixing, the AI reasons through your code across multiple turns — reading files, checking blast radius, formulating a plan with confidence scores. Smarter fixes, fewer rollbacks.</p>
+                <span class="feature-tag">ratchet torque --deep-analyze --clicks 5</span>
+            </div>
+            <div class="feature-card fade-in fade-in-d2">
+                <div class="feature-icon">⚡</div>
+                <h3>Smart Model Routing <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);font-weight:600;vertical-align:middle;margin-left:6px;">New</span></h3>
+                <p>Ratchet automatically picks the right model for each task. Simple formatting fixes use fast, cheap models. Complex multi-file refactors use Opus-class reasoning. Same quality, 30-40% lower cost per run.</p>
+                <span class="feature-tag">Automatic — configure in .ratchet.yml</span>
             </div>
         </div>
     </div>
@@ -2218,6 +2236,30 @@
 
             <div class="faq-item fade-in fade-in-d3">
                 <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>What is smart model routing?</span>
+                    <div class="q-icon">+</div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Ratchet automatically selects the right AI model for each task. Simple formatting fixes use fast, cheap models (Haiku-class). Standard single-file fixes use Sonnet-class. Complex multi-file refactors and architect mode use Opus-class reasoning. You get the same quality at 30-40% lower cost. Configure model tiers in <code>.ratchet.yml</code> or let Ratchet pick automatically.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item fade-in fade-in-d3">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>What is --deep-analyze?</span>
+                    <div class="q-icon">+</div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        The <code>--deep-analyze</code> flag enables a multi-turn ReACT (Reason-Act-Observe) analysis loop before each fix. Instead of jumping straight to a patch, the AI reads target files, checks dependency graphs, evaluates blast radius, and formulates a plan with confidence scores. It costs more tokens but produces smarter, higher-confidence fixes — especially useful for complex codebases.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item fade-in fade-in-d3">
+                <div class="faq-question" onclick="toggleFaq(this)">
                     <span>Is my code sent to the cloud?</span>
                     <div class="q-icon">+</div>
                 </div>
@@ -2239,12 +2281,12 @@
     <div class="container">
         <div class="proof-card fade-in">
             <div class="proof-stat">
-                <span class="from">72</span><span class="arrow">→</span><span class="to">86</span>
+                <span class="from">72</span><span class="arrow">→</span><span class="to">88</span>
             </div>
             <p class="proof-desc">Ratchet's score on its own codebase. We dogfood every feature — the CLI improves itself.</p>
             <div class="proof-badges">
-                <div class="proof-badge">🧪 1,627 tests passing</div>
-                <div class="proof-badge">🔒 Security 15/15</div>
+                <div class="proof-badge">🧪 1,725 tests passing</div>
+                <div class="proof-badge">📝 Type Safety 15/15</div>
                 <div class="proof-badge">⚡ Error Handling 20/20</div>
                 <div class="proof-badge">📊 Performance 10/10</div>
             </div>
@@ -2331,7 +2373,7 @@
                     <li>Priority support</li>
                     <li>Everything in Pro</li>
                 </ul>
-                <a href="mailto:ratchet@kcemate.com" class="pricing-cta pricing-cta-outline">Get Started</a>
+                <a href="mailto:hello@ratchetcli.com" class="pricing-cta pricing-cta-outline">Get Started</a>
             </div>
 
         </div>
@@ -2384,7 +2426,7 @@
         }
         </script>
 
-        <p class="pricing-note fade-in">Need more cycles? <strong>$0.50/cycle</strong> on any paid plan. &nbsp;·&nbsp; <strong>Need more seats?</strong> <a href="mailto:ratchet@kcemate.com" style="color:var(--accent);text-decoration:none;">Contact us</a> for custom team sizing.</p>
+        <p class="pricing-note fade-in">Need more cycles? <strong>$0.50/cycle</strong> on any paid plan. &nbsp;·&nbsp; <strong>Need more seats?</strong> <a href="mailto:hello@ratchetcli.com" style="color:var(--accent);text-decoration:none;">Contact us</a> for custom team sizing.</p>
     </div>
 </section>
 
@@ -2453,7 +2495,7 @@
                 <li><a href="/sandbox" style="color:var(--accent);">Sandbox</a></li>
                 <li><a href="/docs/integrations">Integrations</a></li>
                 <li><a href="#pricing">Pricing</a></li>
-                <li><a href="mailto:ratchet@kcemate.com">Contact</a></li>
+                <li><a href="mailto:hello@ratchetcli.com">Contact</a></li>
             </ul>
             <p class="footer-copy">© 2026 Ratchet. Built for developers.</p>
         </div>
