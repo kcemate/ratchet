@@ -51,7 +51,7 @@ export function resolveGuards(
     return source;
   }
   // Mode defaults
-  if (mode === 'architect') return GUARD_PROFILES.broad;
+  if (mode === 'architect') return GUARD_PROFILES.refactor;
   if (mode === 'sweep') return GUARD_PROFILES.refactor;
   return GUARD_PROFILES.tight;
 }
