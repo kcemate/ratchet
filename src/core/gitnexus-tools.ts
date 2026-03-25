@@ -6,7 +6,7 @@
  * which are parsed and fulfilled by parseGitNexusQueries().
  */
 
-import { getImpactDetailed, runCypher, queryFlowsTargeted, getContextWithSource, isIndexed } from './gitnexus.js';
+import { getImpactDetailed, runCypher, queryFlowsTargeted, getContextWithSource, isIndexed, renameSymbol } from './gitnexus.js';
 import { logger } from '../lib/logger.js';
 
 /** The marker agents output to request GitNexus data */
@@ -29,6 +29,8 @@ To get full source + context for a symbol, output exactly:
   GITNEXUS_QUERY: context <symbol-or-file>
 To run a raw graph query, output exactly:
   GITNEXUS_QUERY: cypher <cypher-expression>
+To do a graph-aware rename (updates all callers + the knowledge graph), output exactly:
+  GITNEXUS_QUERY: rename <old-name> <new-name>
 
 The engine will intercept these markers and inject the results before your next action.
 Use impact queries before modifying any shared utility or exported function.
@@ -36,7 +38,7 @@ Use impact queries before modifying any shared utility or exported function.
 }
 
 export interface GitNexusQueryRequest {
-  type: 'impact' | 'flows' | 'context' | 'cypher';
+  type: 'impact' | 'flows' | 'context' | 'cypher' | 'rename';
   target: string;
   options: Record<string, string>;
   raw: string;
@@ -58,13 +60,19 @@ export function parseGitNexusQueries(agentOutput: string): GitNexusQueryRequest[
     const parts = rest.split(/\s+/);
     const type = parts[0]?.toLowerCase();
 
-    if (!type || !['impact', 'flows', 'context', 'cypher'].includes(type)) continue;
+    if (!type || !['impact', 'flows', 'context', 'cypher', 'rename'].includes(type)) continue;
 
     const target = parts[1] ?? '';
     const options: Record<string, string> = {};
 
-    // Parse --key value pairs
-    for (let i = 2; i < parts.length - 1; i++) {
+    // For rename: second positional arg is the new name
+    if (type === 'rename' && parts[2] && !parts[2].startsWith('--')) {
+      options['newName'] = parts[2];
+    }
+
+    // Parse --key value pairs (starting at index 2 for rename, or 2 for others)
+    const optionsStart = type === 'rename' ? 3 : 2;
+    for (let i = optionsStart; i < parts.length - 1; i++) {
       if (parts[i]?.startsWith('--')) {
         const key = parts[i]!.slice(2);
         const val = parts[i + 1] ?? '';
@@ -164,6 +172,27 @@ export async function fulfillGitNexusQueries(
           results.push(
             `GITNEXUS RESULT [cypher]:\n  ${JSON.stringify(result, null, 2).slice(0, 500)}`,
           );
+          break;
+        }
+
+        case 'rename': {
+          const oldName = query.target;
+          const newName = query.options['newName'] ?? Object.keys(query.options)[0] ?? '';
+          if (!newName) {
+            results.push(`GITNEXUS RESULT [rename ${oldName}]: missing new name`);
+            break;
+          }
+          const renameResult = await renameSymbol(oldName, newName, cwd);
+          if (renameResult.renamedFiles.length > 0) {
+            results.push(
+              `GITNEXUS RESULT [rename ${oldName} → ${newName}]:\n` +
+              `  Renamed in ${renameResult.renamedFiles.length} files: ` +
+              `${renameResult.renamedFiles.join(', ')}` +
+              (renameResult.previewDiff ? `\n  Diff preview:\n${renameResult.previewDiff.slice(0, 500)}` : ''),
+            );
+          } else {
+            results.push(`GITNEXUS RESULT [rename ${oldName} → ${newName}]: no files renamed`);
+          }
           break;
         }
       }

@@ -567,6 +567,15 @@ export function buildIntelligenceBriefing(targetPath: string, cwd: string): stri
 
   const lines: string[] = ['GITNEXUS INTELLIGENCE (knowledge graph):'];
 
+  // Leiden community / cluster membership
+  const community = getCommunityInfoSync(normalizedPath, cwd);
+  if (community) {
+    lines.push(
+      `  Community: This file belongs to the [${community.label}] cluster ` +
+      `(cohesion: ${community.cohesion.toFixed(2)})`,
+    );
+  }
+
   // Dependencies this file imports
   const imports = ctx.outgoing['imports'] ?? [];
   if (imports.length > 0) {
@@ -620,6 +629,137 @@ export function assessFileRisk(filePath: string, cwd: string): number {
   if (!impact) return 0;
   const dependentCount = impact.directCallers.length + impact.affectedFiles.length;
   return Math.min(1, dependentCount / 10);
+}
+
+export interface GitNexusCommunityInfo {
+  /** Human-readable cluster label (e.g. "Auth", "API", "Database") */
+  label: string;
+  /** Cohesion score 0–1: how tightly connected the community members are */
+  cohesion: number;
+}
+
+/**
+ * Get Leiden community/cluster info for a file from the GitNexus knowledge graph.
+ * Returns { label, cohesion } or null if GitNexus is unavailable or the file is unclustered.
+ */
+export async function getCommunityInfo(
+  filePath: string,
+  cwd: string,
+): Promise<GitNexusCommunityInfo | null> {
+  if (!isIndexed(cwd)) return null;
+
+  try {
+    const normalized = filePath.replace(/^\.\//, '');
+    const args = ['community', basename(normalized), '--repo', getRepoName(cwd)];
+    if (normalized.includes('/')) args.push('--file', normalized);
+
+    const raw = await runGitNexusAsync(args, cwd);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (parsed.error) return null;
+
+    const label = parsed.label ?? parsed.community ?? parsed.cluster ?? parsed.community_label;
+    if (!label) return null;
+
+    const cohesion = typeof parsed.cohesion === 'number'
+      ? parsed.cohesion
+      : (typeof parsed.cohesion_score === 'number' ? parsed.cohesion_score : 0.5);
+
+    return { label: String(label), cohesion };
+  } catch (err) {
+    logger.debug({ err, filePath }, 'getCommunityInfo failed');
+    return null;
+  }
+}
+
+/**
+ * Synchronous community info lookup — used inside buildIntelligenceBriefing.
+ * Falls back to null on any error.
+ */
+function getCommunityInfoSync(filePath: string, cwd: string): GitNexusCommunityInfo | null {
+  if (!isIndexed(cwd)) return null;
+
+  try {
+    const normalized = filePath.replace(/^\.\//, '');
+    const args = ['community', basename(normalized), '--repo', getRepoName(cwd)];
+    if (normalized.includes('/')) args.push('--file', normalized);
+
+    const raw = runGitNexus(args, cwd);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (parsed.error) return null;
+
+    const label = parsed.label ?? parsed.community ?? parsed.cluster ?? parsed.community_label;
+    if (!label) return null;
+
+    const cohesion = typeof parsed.cohesion === 'number'
+      ? parsed.cohesion
+      : (typeof parsed.cohesion_score === 'number' ? parsed.cohesion_score : 0.5);
+
+    return { label: String(label), cohesion };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Compute an entry-point score for a file.
+ * Entry points are user-facing files with few/no importers (CLI commands, main handlers).
+ * Score = 1 / (1 + total_incoming_refs): 1.0 = pure entry point, approaches 0 for shared utilities.
+ * Returns 0.5 (neutral) when GitNexus is unavailable.
+ */
+export function getEntryPointScore(filePath: string, cwd: string): number {
+  if (!isIndexed(cwd)) return 0.5;
+
+  const normalized = filePath.replace(/^\.\//, '');
+  const ctx = getContext(normalized, cwd);
+  if (!ctx) return 0.5;
+
+  const importedBy = ctx.incoming['imports'] ?? [];
+  const callers = ctx.incoming['calls'] ?? [];
+  const totalIncoming = importedBy.length + callers.length;
+
+  // Files with 0 importers are pure entry points (score=1.0)
+  // Shared utilities with many importers score closer to 0
+  return 1 / (1 + totalIncoming);
+}
+
+export interface GitNexusRenameResult {
+  renamedFiles: string[];
+  previewDiff: string;
+}
+
+/**
+ * Run `gitnexus rename <oldName> <newName> --repo <repo>` for graph-aware symbol renaming.
+ * Updates all callers, importers, and the knowledge graph in one operation.
+ * Returns renamedFiles (paths touched) and previewDiff (unified diff preview).
+ * Gracefully returns empty result if GitNexus is unavailable.
+ */
+export async function renameSymbol(
+  oldName: string,
+  newName: string,
+  cwd: string,
+): Promise<GitNexusRenameResult> {
+  if (!isIndexed(cwd)) return { renamedFiles: [], previewDiff: '' };
+
+  try {
+    const args = ['rename', oldName, newName, '--repo', getRepoName(cwd)];
+    const raw = await runGitNexusAsync(args, cwd, 20_000);
+    if (!raw) return { renamedFiles: [], previewDiff: '' };
+
+    const parsed = JSON.parse(raw);
+    if (parsed.error) return { renamedFiles: [], previewDiff: '' };
+
+    return {
+      renamedFiles: parsed.renamed_files ?? parsed.renamedFiles ?? [],
+      previewDiff: parsed.preview_diff ?? parsed.previewDiff ?? parsed.diff ?? '',
+    };
+  } catch (err) {
+    logger.debug({ err, oldName, newName }, 'renameSymbol failed');
+    return { renamedFiles: [], previewDiff: '' };
+  }
 }
 
 /**
