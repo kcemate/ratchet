@@ -9,7 +9,7 @@ import {
 } from './api.js';
 import type { IssueTask } from '../issue-backlog.js';
 import { formatIssuesForPrompt } from '../issue-backlog.js';
-import { buildIntelligenceBriefing, queryFlowsTargeted } from '../gitnexus.js';
+import { buildIntelligenceBriefing, queryFlowsTargeted, getApiImpact } from '../gitnexus.js';
 import { logger } from '../../lib/logger.js';
 import { buildGraphToolInstructions } from '../gitnexus-tools.js';
 import type { FeaturePlan, FeatureStep } from '../../types.js';
@@ -50,7 +50,7 @@ export class ShellAgent implements Agent {
     // Shell agent collapses analyze+propose+build into a single call for issue-driven clicks
     if (issues && issues.length > 0) {
       this._issueDrivenClick = true;
-      return buildIssuePlanPrompt(context, issues, this.gitnexusCwd ?? this._cwd, this.strategyContext);
+      return await buildIssuePlanPrompt(context, issues, this.gitnexusCwd ?? this._cwd, this.strategyContext);
     }
     this._issueDrivenClick = false;
     let prompt: string;
@@ -219,7 +219,18 @@ function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
  * When GitNexus is available, injects dependency/caller intelligence so the
  * agent knows the blast radius before editing.
  */
-function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string, strategyContext?: string): string {
+/** Returns true if the file path looks like an API route file. */
+function isApiRouteFile(filePath: string): boolean {
+  return /\/(routes?|api|endpoints?|handlers?|controllers?)\//i.test(filePath) ||
+    /\.(route|api|endpoint|handler|controller)\.[jt]sx?$/.test(filePath);
+}
+
+async function buildIssuePlanPrompt(
+  context: string,
+  issues: IssueTask[],
+  cwd?: string,
+  strategyContext?: string,
+): Promise<string> {
   // Architect mode: if the first issue carries a pre-built prompt, use it verbatim
   if (issues[0]?.architectPrompt) {
     return issues[0].architectPrompt;
@@ -243,9 +254,34 @@ function buildIssuePlanPrompt(context: string, issues: IssueTask[], cwd?: string
     // Sync path keeps backward compat — flows added when cwd not provided
   }
 
+  // API impact: inject route/handler context when working on API files
+  let apiIntel = '';
+  if (cwd && targetPath && isApiRouteFile(targetPath)) {
+    try {
+      const apiImpact = await getApiImpact(targetPath, cwd);
+      if (apiImpact) {
+        const lines: string[] = ['API IMPACT (affected routes):'];
+        for (const r of apiImpact.routes.slice(0, 8)) {
+          lines.push(`  ${r.methods.join(',')} ${r.path} → ${r.handler}`);
+        }
+        if (apiImpact.shapeIssues.length > 0) {
+          lines.push('  Shape issues:');
+          for (const s of apiImpact.shapeIssues.slice(0, 4)) {
+            lines.push(`    ${s.route}: expected ${s.expected}, got ${s.actual}`);
+          }
+        }
+        lines.push(`  Risk: ${apiImpact.risk}`);
+        apiIntel = lines.join('\n');
+      }
+    } catch (err) {
+      logger.debug({ err }, 'API impact briefing failed (non-fatal)');
+    }
+  }
+
   return (
     `You are a code improvement assistant. Fix the top issue in ${targetPath}.\n\n` +
     (graphIntel ? `${graphIntel}\n\n` : '') +
+    (apiIntel ? `${apiIntel}\n\n` : '') +
     (strategyContext ? `${strategyContext}\n\n` : '') +
     `ISSUES FOUND:\n${issueList}\n\n` +
     `HARD CONSTRAINTS (violating these will cause rollback):\n` +
