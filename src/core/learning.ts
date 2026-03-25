@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import type { Specialization } from './agents/specialized.js';
+import type { AsyncWriter } from './async-writer.js';
 
 // ── Types
 export interface IssueTypeRecord {
@@ -89,11 +90,21 @@ function issueFileKey(issueType: string, filePath: string): string {
 export class LearningStore {
   private data: LearningData;
   private readonly filePath: string;
+  private readonly relPath: string;
+  private readonly cwd: string;
   private loaded = false;
+  private asyncWriter: AsyncWriter | null = null;
 
   constructor(cwd: string) {
+    this.cwd = cwd;
+    this.relPath = LEARNING_FILE;
     this.filePath = join(cwd, LEARNING_FILE);
     this.data = emptyLearningData();
+  }
+
+  /** Attach an AsyncWriter to batch disk writes instead of writing synchronously. */
+  setAsyncWriter(writer: AsyncWriter): void {
+    this.asyncWriter = writer;
   }
 
   /** Load learning data from disk. Creates empty data if file doesn't exist. */
@@ -237,7 +248,11 @@ export class LearningStore {
       ifRec.lastFailedAt = new Date().toISOString();
     }
 
-    await this.save();
+    if (this.asyncWriter) {
+      this.asyncWriter.enqueue(this.relPath, this.data);
+    } else {
+      await this.save();
+    }
   }
 
   // ── Query Functions
