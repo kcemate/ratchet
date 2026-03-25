@@ -36,13 +36,14 @@ export function isGuardRejection(reason?: string): boolean {
 
 /**
  * Resolve click guards for a run.
- * Priority: config.guards (set by CLI) > target.guards > mode defaults.
+ * Priority: config.guards (set by CLI) > target.guards > focusCategory auto-elevate > mode defaults.
  * Returns null for atomic (no limits).
  */
 export function resolveGuards(
   target: Target,
   config: RatchetConfig,
   mode: 'normal' | 'sweep' | 'architect',
+  focusCategory?: string,
 ): ClickGuards | null {
   // config.guards is set by CLI (highest priority)
   const source = config.guards ?? target.guards;
@@ -50,6 +51,8 @@ export function resolveGuards(
     if (typeof source === 'string') return GUARD_PROFILES[source];
     return source;
   }
+  // Auto-elevate to refactor (12 files / 280 lines) for testing — test creation is cross-cutting
+  if (focusCategory === 'testing') return GUARD_PROFILES.refactor;
   // Mode defaults
   if (mode === 'architect') return GUARD_PROFILES.broad;
   if (mode === 'sweep') return GUARD_PROFILES.refactor;

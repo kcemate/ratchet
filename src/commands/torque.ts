@@ -105,6 +105,10 @@ export function torqueCommand(): Command {
     .option('--swarm', 'Enable swarm mode — N agents compete per click, best change wins', false)
     .option('--agents <number>', 'Number of competing agents in swarm mode (default: 3)')
     .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
+    .option(
+      '--focus-category <category>',
+      'Force torque to target a specific score category: testing, security, type-safety, error-handling, performance, code-quality',
+    )
     .option('--debate', 'Enable debate round in swarm mode — judge picks winner (default: true)', true)
     .option('--no-debate', 'Disable debate round — pick winner by score only')
     .option('--personalities <names>', 'Comma-separated personality names for swarm agents (e.g. the-surgeon,the-hawk)')
@@ -169,6 +173,7 @@ export function torqueCommand(): Command {
         swarm: boolean;
         agents?: string;
         focus?: string;
+        focusCategory?: string;
         debate: boolean;
         personalities?: string;
         adversarial: boolean;
@@ -325,6 +330,17 @@ export function torqueCommand(): Command {
 
         // Resolve harden mode: explicit --mode flag takes precedence, then config default
         const hardenMode = options.mode === 'harden' || config.defaults.hardenMode === true;
+
+        // Validate --focus-category
+        const VALID_FOCUS_CATEGORIES = [
+          'testing', 'security', 'type-safety', 'error-handling', 'performance', 'code-quality',
+        ];
+        if (options.focusCategory && !VALID_FOCUS_CATEGORIES.includes(options.focusCategory)) {
+          exitWithError(
+            `  Invalid --focus-category: ${options.focusCategory}\n` +
+            `  Valid categories: ${VALID_FOCUS_CATEGORIES.join(', ')}`,
+          );
+        }
 
         // Validate feature mode requirements
         const featureMode = options.mode === 'feature';
@@ -782,6 +798,7 @@ export function torqueCommand(): Command {
             budgetUsd: options.budget ? parseFloat(options.budget) : undefined,
             stopOnRegression: options.stopOnRegression,
             noStrategy: (options as Record<string, unknown>)['strategy'] === false,
+            focusCategory: options.focusCategory,
             scope: scopeFiles,
             scopeArg: options.scope,
             callbacks: {
