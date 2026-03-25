@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseFeaturePlan, getReadySteps, isPlanComplete, renderFeaturePlanMarkdown, resolveSpec } from '../../src/core/engine-feature.js';
+import {
+  parseFeaturePlan, getReadySteps, isPlanComplete, renderFeaturePlanMarkdown, resolveSpec,
+} from '../../src/core/engine-feature.js';
 import { buildFeaturePlanPrompt, buildFeatureClickPrompt } from '../../src/core/agents/shell.js';
 import type { FeaturePlan, FeatureStep } from '../../src/types.js';
 import { writeFile, mkdtemp, rm } from 'fs/promises';
@@ -13,8 +15,10 @@ describe('parseFeaturePlan', () => {
     const json = JSON.stringify({
       spec: 'Add JWT authentication',
       steps: [
-        { id: 1, description: 'Create JWT utility', files: ['src/auth/jwt.ts'], dependencies: [], status: 'pending' },
-        { id: 2, description: 'Add auth middleware', files: ['src/middleware/auth.ts'], dependencies: [1], status: 'pending' },
+        { id: 1, description: 'Create JWT utility', files: ['src/auth/jwt.ts'],
+          dependencies: [], status: 'pending' },
+        { id: 2, description: 'Add auth middleware', files: ['src/middleware/auth.ts'],
+          dependencies: [1], status: 'pending' },
       ],
       completedSteps: [],
       filesCreated: [],
@@ -52,7 +56,8 @@ describe('parseFeaturePlan', () => {
   });
 
   it('extracts JSON from mixed output (prose + JSON)', () => {
-    const output = `Here is the plan:\n\n{"spec":"Auth","steps":[],"completedSteps":[],"filesCreated":[],"filesModified":[]}`;
+    const output = `Here is the plan:\n\n` +
+      `{"spec":"Auth","steps":[],"completedSteps":[],"filesCreated":[],"filesModified":[]}`;
     const plan = parseFeaturePlan(output);
     expect(plan).not.toBeNull();
     expect(plan!.spec).toBe('Auth');
@@ -80,7 +85,9 @@ describe('parseFeaturePlan', () => {
   });
 
   it('handles an empty steps array', () => {
-    const plan = parseFeaturePlan('{"spec":"Minimal","steps":[],"completedSteps":[],"filesCreated":[],"filesModified":[]}');
+    const plan = parseFeaturePlan(
+      '{"spec":"Minimal","steps":[],"completedSteps":[],"filesCreated":[],"filesModified":[]}',
+    );
     expect(plan).not.toBeNull();
     expect(plan!.steps).toHaveLength(0);
   });
@@ -390,8 +397,10 @@ describe('buildFeatureClickPrompt', () => {
     spec: 'Add authentication system',
     steps: [
       { id: 1, description: 'Create JWT utility', files: ['src/auth/jwt.ts'], dependencies: [], status: 'completed' },
-      { id: 2, description: 'Add auth middleware', files: ['src/middleware/auth.ts'], dependencies: [1], status: 'pending' },
-      { id: 3, description: 'Update routes', files: ['src/routes.ts'], dependencies: [2], status: 'pending' },
+      { id: 2, description: 'Add auth middleware', files: ['src/middleware/auth.ts'],
+        dependencies: [1], status: 'pending' },
+      { id: 3, description: 'Update routes', files: ['src/routes.ts'],
+        dependencies: [2], status: 'pending' },
     ],
     completedSteps: [1],
     filesCreated: ['src/auth/jwt.ts'],

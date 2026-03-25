@@ -9,7 +9,10 @@ import type { ClickEconomics, Click, RatchetRun } from '../types.js';
 
 
 
-const makeScanCategory = (name: string, score: number, max: number, subcategories: Array<{ name: string; issuesFound: number; locations?: string[] }>) => ({
+const makeScanCategory = (
+  name: string, score: number, max: number,
+  subcategories: Array<{ name: string; issuesFound: number; locations?: string[] }>,
+) => ({
   name,
   score,
   max,
@@ -23,7 +26,9 @@ const makeScanCategory = (name: string, score: number, max: number, subcategorie
   })),
 });
 
-const makeScanResult = (categories: ReturnType<typeof makeScanCategory>[], total: number, totalIssuesFound: number) => ({
+const makeScanResult = (
+  categories: ReturnType<typeof makeScanCategory>[], total: number, totalIssuesFound: number,
+) => ({
   categories,
   total,
   totalIssuesFound,
@@ -108,8 +113,10 @@ describe('diffCategories', () => {
 });
 
 describe('generateRecommendations', () => {
-  const click = (outcome: ClickEconomics['outcome'], scoreDelta: number, wallTimeMs = 1000): ClickEconomics =>
-    ({ clickIndex: 0, wallTimeMs, agentTimeMs: 500, testTimeMs: 400, estimatedCost: 0.01, outcome, rollbackReason: undefined, issuesFixed: 0, scoreDelta });
+  const click = (outcome: ClickEconomics['outcome'], scoreDelta: number, wallTimeMs = 1000): ClickEconomics => ({
+    clickIndex: 0, wallTimeMs, agentTimeMs: 500, testTimeMs: 400,
+    estimatedCost: 0.01, outcome, rollbackReason: undefined, issuesFixed: 0, scoreDelta,
+  });
 
   it('returns empty array for no clicks', () => {
     expect(generateRecommendations([])).toHaveLength(0);
@@ -170,8 +177,13 @@ describe('generateRecommendations', () => {
 });
 
 describe('computeRunEconomics', () => {
-  const click = (outcome: ClickEconomics['outcome'], wallTimeMs: number, cost: number, scoreDelta: number, issuesFixed: number): ClickEconomics =>
-    ({ clickIndex: 0, wallTimeMs, agentTimeMs: wallTimeMs / 2, testTimeMs: wallTimeMs / 4, estimatedCost: cost, outcome, rollbackReason: undefined, issuesFixed, scoreDelta });
+  const click = (
+    outcome: ClickEconomics['outcome'], wallTimeMs: number,
+    cost: number, scoreDelta: number, issuesFixed: number,
+  ): ClickEconomics => ({
+    clickIndex: 0, wallTimeMs, agentTimeMs: wallTimeMs / 2, testTimeMs: wallTimeMs / 4,
+    estimatedCost: cost, outcome, rollbackReason: undefined, issuesFixed, scoreDelta,
+  });
 
   it('computes total wall time correctly', () => {
     const clicks: ClickEconomics[] = [

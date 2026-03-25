@@ -57,13 +57,16 @@ function evaluateGates(
     return { ...ct, score: cat.score };
   });
   for (const ct of resolved) {
-    if (ct.score < ct.threshold) failedCategories.push({ name: ct.categoryName, score: ct.score, threshold: ct.threshold });
+    if (ct.score < ct.threshold)
+      failedCategories.push({ name: ct.categoryName, score: ct.score, threshold: ct.threshold });
   }
-  return { passed: (totalThreshold === null || result.total >= totalThreshold) && failedCategories.length === 0, failedCategories };
+  const totalPassed = totalThreshold === null || result.total >= totalThreshold;
+  return { passed: totalPassed && failedCategories.length === 0, failedCategories };
 }
 
 describe('overall score gates', () => {
-  it('passes with no thresholds', () => expect(evaluateGates(mockScanResult({ total: 50 }), null, []).passed).toBe(true));
+  it('passes with no thresholds', () =>
+    expect(evaluateGates(mockScanResult({ total: 50 }), null, []).passed).toBe(true));
   it('passes at exact threshold', () => expect(evaluateGates(mockScanResult({ total: 80 }), 80, []).passed).toBe(true));
   it('passes above threshold', () => expect(evaluateGates(mockScanResult({ total: 90 }), 80, []).passed).toBe(true));
   it('fails below threshold', () => expect(evaluateGates(mockScanResult({ total: 75 }), 80, []).passed).toBe(false));
@@ -72,10 +75,14 @@ describe('overall score gates', () => {
 
 describe('category gates', () => {
   it('passes when category meets threshold', () => {
-    expect(evaluateGates(mockScanResult(), null, [{ categoryName: 'Security', threshold: 10, max: 15 }]).passed).toBe(true);
+    expect(evaluateGates(
+      mockScanResult(), null, [{ categoryName: 'Security', threshold: 10, max: 15 }],
+    ).passed).toBe(true);
   });
   it('fails when category below threshold', () => {
-    const r = evaluateGates(mockScanResult(), null, [{ categoryName: 'Security', threshold: 12, max: 15 }]);
+    const r = evaluateGates(
+      mockScanResult(), null, [{ categoryName: 'Security', threshold: 12, max: 15 }],
+    );
     expect(r.passed).toBe(false);
     expect(r.failedCategories).toContainEqual({ name: 'Security', score: 10, threshold: 12 });
   });
@@ -87,22 +94,32 @@ describe('category gates', () => {
     expect(r.failedCategories).toHaveLength(2);
   });
   it('is case-insensitive', () => {
-    expect(evaluateGates(mockScanResult(), null, [{ categoryName: 'security', threshold: 12, max: 15 }]).passed).toBe(false);
+    expect(evaluateGates(
+      mockScanResult(), null, [{ categoryName: 'security', threshold: 12, max: 15 }],
+    ).passed).toBe(false);
   });
   it('throws for unknown category', () => {
-    expect(() => evaluateGates(mockScanResult(), null, [{ categoryName: 'Nonexistent', threshold: 5, max: 10 }])).toThrow('not found');
+    expect(() =>
+      evaluateGates(mockScanResult(), null, [{ categoryName: 'Nonexistent', threshold: 5, max: 10 }]),
+    ).toThrow('not found');
   });
   it('passes when category at max', () => {
-    expect(evaluateGates(mockScanResult(), null, [{ categoryName: 'Type Safety', threshold: 15, max: 15 }]).passed).toBe(true);
+    expect(evaluateGates(
+      mockScanResult(), null, [{ categoryName: 'Type Safety', threshold: 15, max: 15 }],
+    ).passed).toBe(true);
   });
 });
 
 describe('combined gates', () => {
   it('fails when total fails but category passes', () => {
-    expect(evaluateGates(mockScanResult({ total: 70 }), 80, [{ categoryName: 'Type Safety', threshold: 15, max: 15 }]).passed).toBe(false);
+    expect(evaluateGates(
+      mockScanResult({ total: 70 }), 80, [{ categoryName: 'Type Safety', threshold: 15, max: 15 }],
+    ).passed).toBe(false);
   });
   it('fails when category fails but total passes', () => {
-    expect(evaluateGates(mockScanResult({ total: 90 }), 80, [{ categoryName: 'Security', threshold: 12, max: 15 }]).passed).toBe(false);
+    expect(evaluateGates(
+      mockScanResult({ total: 90 }), 80, [{ categoryName: 'Security', threshold: 12, max: 15 }],
+    ).passed).toBe(false);
   });
 });
 
@@ -133,8 +150,10 @@ describe('explanations', () => {
 
 describe('scanCommand options', () => {
   it('registers --fail-on', () => expect(scanCommand().options.find((o) => o.long === '--fail-on')).toBeDefined());
-  it('registers --fail-on-category', () => expect(scanCommand().options.find((o) => o.long === '--fail-on-category')).toBeDefined());
-  it('registers --output-json', () => expect(scanCommand().options.find((o) => o.long === '--output-json')).toBeDefined());
+  it('registers --fail-on-category', () =>
+    expect(scanCommand().options.find((o) => o.long === '--fail-on-category')).toBeDefined());
+  it('registers --output-json', () =>
+    expect(scanCommand().options.find((o) => o.long === '--output-json')).toBeDefined());
   it('registers --explain', () => expect(scanCommand().options.find((o) => o.long === '--explain')).toBeDefined());
   it('is named scan', () => expect(scanCommand().name()).toBe('scan'));
 });
