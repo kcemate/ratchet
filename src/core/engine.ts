@@ -25,6 +25,8 @@ import { validateScope } from './scope.js';
 import { captureBaseline } from './test-isolation.js';
 import { runPlanFirst } from './engine-plan.js';
 import { runArchitectEngine } from './engine-architect.js';
+import { runDeepAnalyze } from './analyze-react.js';
+import type { ReactAnalysis } from './analyze-react.js';
 import { countTestFiles } from './detect.js';
 import { logger } from '../lib/logger.js';
 import { prevalidateIssues } from './issue-prevalidation.js';
@@ -214,6 +216,12 @@ export interface EngineRunOptions {
   noStrategy?: boolean;
   /** Force torque to target only subcategories within this score category */
   focusCategory?: string;
+  /**
+   * Run a multi-turn ReACT analysis loop before the first click.
+   * Reads files, queries GitNexus for blast radius, and produces a structured
+   * analysis with confidence scores and risk assessment.
+   */
+  deepAnalyze?: boolean;
 }
 
 export interface RunSummary {
@@ -754,6 +762,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
     scope: scopeFiles = [],
     noStrategy = false,
     focusCategory,
+    deepAnalyze = false,
   } = options;
 
   const { run, state, incrementalScanner, baselineFailures } = await initializeRun(options);
@@ -794,6 +803,21 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
       onPlanStart: callbacks.onPlanStart,
       onPlanComplete: callbacks.onPlanComplete,
     });
+  }
+
+  // --- Deep analysis (ReACT loop): multi-turn pre-click investigation ---
+  let reactAnalysis: ReactAnalysis | undefined;
+  if (deepAnalyze && state.currentScan) {
+    try {
+      reactAnalysis = await runDeepAnalyze(state.currentScan, state.target, cwd);
+      run.reactAnalysis = reactAnalysis;
+      logger.info(
+        { confidence: reactAnalysis.confidence, risk: reactAnalysis.riskLevel },
+        '[react] Deep analysis complete',
+      );
+    } catch (err) {
+      logger.warn({ err }, '[react] Deep analysis failed — continuing without it');
+    }
   }
 
   try {
