@@ -422,7 +422,10 @@ function scoreTypes(files: string[], cwd: string, contents: Map<string, string>)
 
   // --- Any type count /8 ---
   const srcTsFiles = tsFiles.filter(f => !isTestFile(f) && !f.endsWith('.d.ts'));
-  const { count: anyCountRegex, matchedFiles: anyTypeFiles } = countMatchesWithFiles(
+  const { count: anyCountRegex } = countMatchesWithFiles(
+    srcTsFiles, contents, /:\s*any\b|<any>|\bas\s+any\b/g,
+  );
+  const { locations: anyTypeFiles } = countMatchesWithLocations(
     srcTsFiles, contents, /:\s*any\b|<any>|\bas\s+any\b/g,
   );
   // AST-confirm: count actual 'any' type keywords (not in strings/comments)
