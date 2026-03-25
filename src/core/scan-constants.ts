@@ -20,7 +20,7 @@ export const IGNORE_DIRS = new Set([
  */
 export const NON_PROD_DIRS = new Set([
   'scripts', 'migrations', 'seed', 'seeds', 'fixtures', 'examples',
-  'docs', '__fixtures__', '__mocks__',
+  'docs', '__fixtures__', '__mocks__', 'test-utils', '.storybook',
 ]);
 export const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.go', '.rs']);
 export const TEST_PATTERNS = ['.test.', '.spec.', '_test.', '_spec.', '/test/', '/tests/', '/spec/'];
