@@ -252,8 +252,11 @@ function scoreTests(files: string[], contents: Map<string, string>, cwd: string)
   const { score: coverageScore, summary: coverageSummary, issues: coverageIssues } =
     scoreCoverageRatio(testFiles.length, sourceFiles.length, hasTestScript);
 
-  const edgePatterns =
-    /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
+  const edgeKeywords = 'error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed';
+  const edgePatterns = new RegExp(
+    `\\b(?:it|test)\\s*[.(]['"\`][^'"\`]*(?:${edgeKeywords})[^'"\`]*['"\`]`,
+    'gi',
+  );
   // contextAware=false: this pattern intentionally matches inside test description strings
   const edgeCaseCount = countMatches(testFiles, contents, edgePatterns, false);
   const { score: edgeCaseScore, summary: edgeCaseSummary } = scoreEdgeCases(edgeCaseCount);
@@ -313,8 +316,9 @@ function scoreSecurity(files: string[], contents: Map<string, string>): Category
     const hasZodJoi =
       /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content);
     const hasUuidValidation = /\buuid\b.*\bvalidate\b|\bvalidate.*uuid\b|isUUID|uuidv[1-5]/i.test(content);
-    const hasParamValidation =
-      /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(content);
+    const paramPattern =
+      /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i;
+    const hasParamValidation = paramPattern.test(content);
     const isRouteFile = /(?:router\.|app\.(?:get|post|put|patch|delete)|@(?:Get|Post|Put|Patch|Delete))/i.test(content);
     if (isRouteFile) routeFileCount++;
     if (hasZodJoi || hasUuidValidation || hasParamValidation) validationFileCount++;
@@ -464,7 +468,9 @@ function scoreErrorHandling(files: string[], prodFiles: string[], contents: Map<
   );
   const consoleErrorAst = astConfirmedCount(consoleErrorFiles, contents, 'console-usage');
   const consoleErrorCount = consoleErrorAst >= 0 ? consoleErrorAst : consoleErrorRegex;
-  const structuredLogCount = countMatches(prodAppFilesForLogging, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g);
+  const structuredLogCount = countMatches(
+    prodAppFilesForLogging, contents, /\b(?:logger|winston|pino|bunyan|log4js)\./g,
+  );
 
   let asyncTotal = 0;
   const asyncNoHandlerFiles: string[] = [];
@@ -741,9 +747,12 @@ function renderScan(result: ScanResult, opts?: { explain?: boolean; baseline?: B
   if (baseline !== null) {
     const scoreDiff = result.total - baseline.score;
     const issuesDiff = result.totalIssuesFound - baseline.issues;
-    const issuesDiffStr = issuesDiff === 0 ? chalk.dim('—') : issuesDiff > 0 ? chalk.red(`+${issuesDiff} issues`) : chalk.green(`-${Math.abs(issuesDiff)} issues`);
+    const issuesDiffStr = issuesDiff === 0 ? chalk.dim('—')
+      : issuesDiff > 0 ? chalk.red(`+${issuesDiff} issues`)
+      : chalk.green(`-${Math.abs(issuesDiff)} issues`);
     process.stdout.write(
-      `Baseline: ${chalk.dim(`${baseline.score}/${result.maxTotal}`)}  |  Δ ${deltaStr(scoreDiff)} pts  |  ${issuesDiffStr}\n`,
+      `Baseline: ${chalk.dim(`${baseline.score}/${result.maxTotal}`)}` +
+      `  |  Δ ${deltaStr(scoreDiff)} pts  |  ${issuesDiffStr}\n`,
     );
   }
 
@@ -837,7 +846,8 @@ const NON_TSJS_WARNING = (lang: string) =>
 function detectLanguage(cwd: string): { language: 'ts' | 'js' | 'python' | 'go' | 'rust'; detected: boolean } {
   if (existsSync(join(cwd, 'tsconfig.json'))) return { language: 'ts', detected: true };
   if (existsSync(join(cwd, 'package.json'))) return { language: 'js', detected: true };
-  if (existsSync(join(cwd, 'pyproject.toml')) || existsSync(join(cwd, 'setup.py'))) return { language: 'python', detected: true };
+  if (existsSync(join(cwd, 'pyproject.toml')) || existsSync(join(cwd, 'setup.py')))
+    return { language: 'python', detected: true };
   if (existsSync(join(cwd, 'go.mod'))) return { language: 'go', detected: true };
   if (existsSync(join(cwd, 'Cargo.toml'))) return { language: 'rust', detected: true };
   return { language: 'ts', detected: false };
@@ -910,7 +920,9 @@ export function scanCommand(): Command {
       const langOpt = (options['language'] as Language | undefined) ?? 'auto';
       const validLanguages: Language[] = ['ts', 'js', 'python', 'go', 'rust', 'auto'];
       if (!validLanguages.includes(langOpt)) {
-        process.stderr.write(chalk.red(`Invalid --language value: "${langOpt}". Valid values: ts, js, python, go, rust, auto.\n`));
+        process.stderr.write(
+          chalk.red(`Invalid --language value: "${langOpt}". Valid values: ts, js, python, go, rust, auto.\n`),
+        );
         process.exit(1);
       }
 
@@ -981,7 +993,9 @@ export function scanCommand(): Command {
 
       if (saveAsBaseline) {
         saveBaseline(cwd, result);
-        process.stdout.write(chalk.green(`  ✔ Baseline saved: ${result.total}/${result.maxTotal} (${result.totalIssuesFound} issues)\n\n`));
+        process.stdout.write(
+          chalk.green(`  ✔ Baseline saved: ${result.total}/${result.maxTotal} (${result.totalIssuesFound} issues)\n\n`),
+        );
       }
 
       const failOn = options['failOn'] as number | undefined;

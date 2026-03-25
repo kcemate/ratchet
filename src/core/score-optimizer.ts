@@ -477,7 +477,10 @@ export function generateNextMoveRecommendation(scan: ScanResult): string {
   const actionableGaps = gaps.filter(g => g.pointsAvailable > 2);
 
   if (actionableGaps.length === 0) {
-    return `\n  💡 Next best move:\n     Only small gaps remain — run ${chalk_green('ratchet improve')} for incremental polish.\n`;
+    return (
+      `\n  💡 Next best move:\n` +
+      `     Only small gaps remain — run ${chalk_green('ratchet improve')} for incremental polish.\n`
+    );
   }
 
   const top = actionableGaps[0]!;
@@ -506,7 +509,8 @@ export function generateNextMoveRecommendation(scan: ScanResult): string {
   return [
     '',
     `  💡 Next best move:`,
-    `     ${top.subcategory} (${scoreRange}) has ${top.pointsAvailable} recoverable point${top.pointsAvailable !== 1 ? 's' : ''} ${fileLabel}`.trimEnd(),
+    (`     ${top.subcategory} (${scoreRange}) has ${top.pointsAvailable}` +
+      ` recoverable point${top.pointsAvailable !== 1 ? 's' : ''} ${fileLabel}`).trimEnd(),
     `     → ${chalk_green(cmd)}`,
     '',
   ].join('\n');

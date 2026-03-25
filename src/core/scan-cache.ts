@@ -266,8 +266,11 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
   }
 
   if (isTest) {
-    const edgePatterns =
-      /\b(?:it|test)\s*[.(]['"`][^'"`]*(?:error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed)[^'"`]*['"`]/gi;
+    const edgeKeywords = 'error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed';
+    const edgePatterns = new RegExp(
+      `\\b(?:it|test)\\s*[.(]['"\`][^'"\`]*(?:${edgeKeywords})[^'"\`]*['"\`]`,
+      'gi',
+    );
     edgeCaseTestCount = (content.match(edgePatterns) ?? []).length;
     testCaseCount = (content.match(/\b(?:it|test)\s*[.(]/g) ?? []).length;
     assertCount = (content.match(/\b(?:expect|assert)\s*[.(]/g) ?? []).length;
@@ -284,10 +287,13 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
     hasValidation =
       /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content)
       || /\buuid\b.*\bvalidate\b|\bvalidate.*uuid\b|isUUID|uuidv[1-5]/i.test(content)
-      || /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(content);
+      || /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i
+        .test(content);
     isRouteFile = /(?:router\.|app\.(?:get|post|put|patch|delete)|@(?:Get|Post|Put|Patch|Delete))/i.test(content);
-    hasAuthMiddleware =
-      /\b(?:authenticate|authorize|isAuthenticated|requireAuth|authMiddleware|verifyToken|passport\.authenticate|jwt\.verify|bearer|middleware.*auth)\b/i.test(content);
+    const authTerms = 'authenticate|authorize|isAuthenticated|requireAuth|authMiddleware' +
+      '|verifyToken|passport\\.authenticate|jwt\\.verify|bearer|middleware.*auth';
+    const authPattern = new RegExp(`\\b(?:${authTerms})\\b`, 'i');
+    hasAuthMiddleware = authPattern.test(content);
     hasRateLimit = /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i.test(content);
     hasCors = /\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i.test(content);
 
@@ -605,7 +611,9 @@ export function rebuildScanFromMetrics(
     ],
   };
 
-  const categories = [testingCategory, securityCategory, typeCategory, errorHandlingCategory, perfCategory, codeQualityCategory];
+  const categories = [
+    testingCategory, securityCategory, typeCategory, errorHandlingCategory, perfCategory, codeQualityCategory,
+  ];
   const total = categories.reduce((sum, c) => sum + c.score, 0);
   const maxTotal = categories.reduce((sum, c) => sum + c.max, 0);
   const { totalIssuesFound, issuesByType } = aggregateAndSortIssues(categories);

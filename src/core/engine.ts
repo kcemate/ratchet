@@ -299,7 +299,9 @@ async function initializeRun(options: EngineRunOptions): Promise<{
   incrementalScanner: IncrementalScanner;
   baselineFailures: string[];
 }> {
-  const { config, cwd, createBranch = true, scoreOptimized = true, scope: scopeFiles = [], scopeArg, focusCategory } = options;
+  const {
+    config, cwd, createBranch = true, scoreOptimized = true, scope: scopeFiles = [], scopeArg, focusCategory,
+  } = options;
   const callbacks = options.callbacks ?? {};
 
   const run: RatchetRun = {
@@ -979,7 +981,8 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         let regressionDetected: boolean;
         ({ rolled_back, regressionDetected } = await postClickRescan(
-          i, click, rolled_back, clickEconomics, state, scoreOptimized, cwd, incrementalScanner, callbacks, focusCategory,
+          i, click, rolled_back, clickEconomics, state,
+          scoreOptimized, cwd, incrementalScanner, callbacks, focusCategory,
         ));
 
         await checkStallAndEscalate(i, clicks, state, hardenMode, escalateEnabled, callbacks, focusCategory);
