@@ -231,7 +231,10 @@ describe('commit', () => {
       (_cmd: string, _args: string[], _opts: unknown, cb: Function) => {
         step++;
         if (step === 1) cb(null, { stdout: '', stderr: '' }); // add
-        else cb(Object.assign(new Error('nothing'), { stderr: 'nothing to commit' }), { stdout: '', stderr: 'nothing to commit' });
+        else cb(
+          Object.assign(new Error('nothing'), { stderr: 'nothing to commit' }),
+          { stdout: '', stderr: 'nothing to commit' },
+        );
         return Promise.resolve({ stdout: '', stderr: '' });
       },
     );

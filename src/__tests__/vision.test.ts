@@ -242,7 +242,10 @@ describe('generateVisionHTML', () => {
     const graph = makeGraph({
       nodes: [
         { id: '/a.ts', label: 'a.ts', score: 90, issueCount: 0, issuesByCategory: {}, blastRadius: 0, directory: '.' },
-        { id: '/b.ts', label: 'b.ts', score: 45, issueCount: 2, issuesByCategory: { 'Security': 2 }, blastRadius: 1, directory: '.' },
+        {
+          id: '/b.ts', label: 'b.ts', score: 45, issueCount: 2,
+          issuesByCategory: { 'Security': 2 }, blastRadius: 1, directory: '.',
+        },
       ],
       totalNodes: 2,
     });

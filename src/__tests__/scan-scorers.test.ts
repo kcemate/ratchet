@@ -506,7 +506,10 @@ describe('scoreDeadCode', () => {
 });
 
 describe('aggregateAndSortIssues', () => {
-  const makeCategory = (name: string, subcategories: Array<{ name: string; found: number; desc: string; locations?: string[] }>): CategoryResult => ({
+  const makeCategory = (
+    name: string,
+    subcategories: Array<{ name: string; found: number; desc: string; locations?: string[] }>,
+  ): CategoryResult => ({
     name,
     score: 0,
     max: 10,
@@ -558,7 +561,9 @@ describe('aggregateAndSortIssues', () => {
   });
 
   it('extracts locations from issue records', () => {
-    const cats = [makeCategory('Testing', [{ name: 'Coverage', found: 2, desc: 'low', locations: ['src/a.ts', 'src/b.ts'] }])];
+    const cats = [makeCategory('Testing', [
+      { name: 'Coverage', found: 2, desc: 'low', locations: ['src/a.ts', 'src/b.ts'] },
+    ])];
     const result = aggregateAndSortIssues(cats);
     expect(result.issuesByType[0].locations).toContain('src/a.ts');
   });
