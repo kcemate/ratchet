@@ -339,6 +339,8 @@ export function buildArchitectPrompt(scanResult: ScanResult, cwd: string): strin
     logger.debug({ err }, 'GitNexus briefing unavailable for architect prompt');
   }
 
+  const graphTools = buildGraphToolInstructions(cwd);
+
   const topIssues = scanResult.issuesByType
     .filter(i => i.count > 0)
     .sort((a, b) => b.count - a.count)
@@ -353,6 +355,7 @@ export function buildArchitectPrompt(scanResult: ScanResult, cwd: string): strin
     `You are an expert software architect. Make ONE high-leverage structural improvement ` +
     `that eliminates as many issues as possible at once.\n\n` +
     (intel ? `CODEBASE INTELLIGENCE:\n${intel}\n\n` : '') +
+    (graphTools ? `GRAPH QUERY TOOLS (use rename for graph-aware symbol renaming):\n${graphTools}\n\n` : '') +
     `TOP ISSUES BY VOLUME (score: ${scanResult.total}/100, ${scanResult.totalIssuesFound} total issues):\n` +
     `${issuesList}\n\n` +
     `ARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n` +
