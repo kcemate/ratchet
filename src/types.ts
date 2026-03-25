@@ -161,6 +161,8 @@ export interface Click {
   swarmSpecialization?: string; // which swarm agent won (e.g. 'security', 'quality')
   rollbackReason?: string; // short summary of why this click was rolled back
   categoryDeltas?: CategoryDelta[]; // per-category score changes for this click
+  /** Lines added minus lines removed for this click (negative = net reduction) */
+  locDelta?: number;
   /** High-risk symbols detected by GitNexus confidence gating before commit */
   highRiskChanges?: HighRiskChange[];
   adversarialResult?: {
