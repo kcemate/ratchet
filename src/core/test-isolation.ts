@@ -4,6 +4,7 @@ import { join, resolve } from 'path';
 import { runTests } from './runner.js';
 import type { RatchetConfig } from '../types.js';
 import { logger } from '../lib/logger.js';
+import chalk from 'chalk';
 
 export interface TestGateResult {
   passed: boolean;
@@ -24,6 +25,43 @@ export interface BaselineResult {
 }
 
 /**
+ * Validate a test command and auto-fix watch-mode invocations.
+ * Returns the (possibly corrected) command and any warnings to surface to the user.
+ */
+export function validateTestCommand(command: string): { command: string; warnings: string[] } {
+  const warnings: string[] = [];
+  let cmd = command;
+
+  // vitest without --run or the `run` sub-command launches interactive watch mode
+  const isVitest = /(?:^|\s)(?:npx\s+)?vitest\b/.test(cmd);
+  const hasRunFlag = /\bvitest\s+--run\b/.test(cmd) || /\bvitest\s+run\b/.test(cmd);
+  if (isVitest && !hasRunFlag) {
+    cmd = cmd + ' --run';
+    warnings.push(
+      `vitest watch mode detected — appended --run to prevent hanging. ` +
+      `Update your ratchet config's testCommand to silence this warning.`,
+    );
+  }
+
+  // jest --watch blocks; warn but don't auto-fix (removing --watch might change semantics)
+  if (/\bjest\b.*--watch\b/.test(cmd)) {
+    warnings.push(
+      `jest --watch detected — this will launch interactive watch mode and block ratchet. ` +
+      `Remove --watch from your testCommand.`,
+    );
+  }
+
+  // karma start without --single-run launches a persistent server
+  if (/\bkarma\s+start\b/.test(cmd) && !cmd.includes('--single-run')) {
+    warnings.push(
+      `karma start may launch in watch mode. Consider adding --single-run to your testCommand.`,
+    );
+  }
+
+  return { command: cmd, warnings };
+}
+
+/**
  * Run progressive validation gates: lint → related tests → full suite.
  *
  * If testIsolation is disabled, falls back to a single full-suite run.
@@ -39,7 +77,10 @@ export async function progressiveGates(
   const { defaults } = config;
   const testIsolation = defaults.testIsolation ?? false;
   const useProgressiveGates = defaults.progressiveGates ?? false;
-  const testCmd = defaults.testCommand;
+  const { command: testCmd, warnings: testCmdWarnings } = validateTestCommand(defaults.testCommand);
+  for (const warning of testCmdWarnings) {
+    console.warn(chalk.yellow(`⚠  ratchet: ${warning}`));
+  }
 
   // Test isolation disabled — plain full-suite run
   if (!testIsolation) {
