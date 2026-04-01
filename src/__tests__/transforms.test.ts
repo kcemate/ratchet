@@ -1,12 +1,16 @@
 /**
  * AST Transform Foundation — unit tests
  * Phase 1: wrap-async, replace-console, add-catch-handler, registry, applyTransforms
+ * Phase 2: remove-unused-imports, add-type-annotations, remove-dead-code
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { wrapAsyncTransform } from '../core/transforms/wrap-async.js';
 import { replaceConsoleTransform } from '../core/transforms/replace-console.js';
 import { addCatchHandlerTransform } from '../core/transforms/add-catch-handler.js';
+import { removeUnusedImportsTransform } from '../core/transforms/remove-unused-imports.js';
+import { addTypeAnnotationsTransform } from '../core/transforms/add-type-annotations.js';
+import { removeDeadCodeTransform } from '../core/transforms/remove-dead-code.js';
 import {
   getTransform,
   registerTransform,
@@ -513,5 +517,272 @@ describe('base helpers', () => {
 
   it('isSupportedLanguage returns false for .py', () => {
     expect(isSupportedLanguage('src/app.py')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// remove-unused-imports tests
+// ---------------------------------------------------------------------------
+
+describe('remove-unused-imports transform', () => {
+  const ctx = makeContext({ filePath: 'src/service.ts' });
+  const finding = makeFinding({ file: 'src/service.ts', subcategory: 'unused import' });
+
+  it('removes a fully unused named import', () => {
+    const source = `import { foo } from './foo';\nconst x = 1;\n`;
+    const result = removeUnusedImportsTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).not.toContain("import { foo }");
+    expect(result).toContain('const x = 1');
+  });
+
+  it('keeps a used named import', () => {
+    const source = `import { foo } from './foo';\nconst x = foo();\n`;
+    const result = removeUnusedImportsTransform.apply(source, finding, ctx);
+    expect(result).toBeNull(); // no change
+  });
+
+  it('removes an unused default import', () => {
+    const source = `import MyClass from './myclass';\nconst x = 1;\n`;
+    const result = removeUnusedImportsTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).not.toContain('import MyClass');
+  });
+
+  it('removes an unused namespace import', () => {
+    const source = `import * as utils from './utils';\nconst x = 1;\n`;
+    const result = removeUnusedImportsTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).not.toContain('import * as utils');
+  });
+
+  it('keeps a used namespace import', () => {
+    const source = `import * as utils from './utils';\nutils.doSomething();\n`;
+    const result = removeUnusedImportsTransform.apply(source, finding, ctx);
+    expect(result).toBeNull();
+  });
+
+  it('preserves side-effect-only imports', () => {
+    const source = `import './side-effect';\nconst x = 1;\n`;
+    const result = removeUnusedImportsTransform.apply(source, finding, ctx);
+    expect(result).toBeNull();
+  });
+
+  it('returns null when no imports are present', () => {
+    const source = `const x = 1;\nconsole.log(x);\n`;
+    const result = removeUnusedImportsTransform.apply(source, finding, ctx);
+    expect(result).toBeNull();
+  });
+
+  it('removes multiple unused imports in one pass', () => {
+    const source = [
+      `import { alpha } from './alpha';`,
+      `import { beta } from './beta';`,
+      `import { gamma } from './gamma';`,
+      `const x = gamma();`,
+    ].join('\n') + '\n';
+    const result = removeUnusedImportsTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).not.toContain("import { alpha }");
+    expect(result).not.toContain("import { beta }");
+    expect(result).toContain("import { gamma }");
+  });
+
+  it('returns null for test files', () => {
+    const testFinding = makeFinding({ file: 'src/__tests__/foo.test.ts', subcategory: 'unused import' });
+    const testCtx = makeContext({ filePath: 'src/__tests__/foo.test.ts' });
+    const source = `import { foo } from './foo';\nconst x = 1;\n`;
+    expect(removeUnusedImportsTransform.apply(source, testFinding, testCtx)).toBeNull();
+  });
+
+  it('is idempotent', () => {
+    const source = `import { foo } from './foo';\nconst x = 1;\n`;
+    const first = removeUnusedImportsTransform.apply(source, finding, ctx);
+    if (first !== null) {
+      const second = removeUnusedImportsTransform.apply(first, finding, ctx);
+      expect(second).toBeNull(); // no further changes
+    }
+  });
+
+  it('canApply returns false for test files', () => {
+    const testFinding = makeFinding({ file: 'src/__tests__/foo.test.ts' });
+    expect(removeUnusedImportsTransform.canApply('import { x } from "./x";', testFinding)).toBe(false);
+  });
+
+  it('canApply returns true when file has imports', () => {
+    expect(removeUnusedImportsTransform.canApply('import { x } from "./x";', finding)).toBe(true);
+  });
+
+  it('canApply returns false when no imports present', () => {
+    expect(removeUnusedImportsTransform.canApply('const x = 1;', finding)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// add-type-annotations tests
+// ---------------------------------------------------------------------------
+
+describe('add-type-annotations transform', () => {
+  const ctx = makeContext({ filePath: 'src/service.ts' });
+  const finding = makeFinding({ file: 'src/service.ts', subcategory: 'missing return type' });
+
+  it('adds string return type for string literal return', () => {
+    const source = `function greet() {\n  return 'hello';\n}\n`;
+    const result = addTypeAnnotationsTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).toContain(': string');
+  });
+
+  it('adds number return type for number literal return', () => {
+    const source = `function getCount() {\n  return 42;\n}\n`;
+    const result = addTypeAnnotationsTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).toContain(': number');
+  });
+
+  it('adds boolean return type for boolean literal return', () => {
+    const source = `function isEnabled() {\n  return true;\n}\n`;
+    const result = addTypeAnnotationsTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).toContain(': boolean');
+  });
+
+  it('does not annotate functions with multiple statements', () => {
+    const source = `function compute() {\n  const x = 1;\n  return x;\n}\n`;
+    const result = addTypeAnnotationsTransform.apply(source, finding, ctx);
+    expect(result).toBeNull();
+  });
+
+  it('does not modify already-annotated functions', () => {
+    const source = `function greet(): string {\n  return 'hello';\n}\n`;
+    const result = addTypeAnnotationsTransform.apply(source, finding, ctx);
+    expect(result).toBeNull();
+  });
+
+  it('annotates arrow functions with concise bodies', () => {
+    const source = `const fn = () => 'hello';\n`;
+    const result = addTypeAnnotationsTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).toContain(': string');
+  });
+
+  it('returns null for test files', () => {
+    const testFinding = makeFinding({ file: 'src/__tests__/foo.test.ts', subcategory: 'missing return type' });
+    const testCtx = makeContext({ filePath: 'src/__tests__/foo.test.ts' });
+    const source = `function greet() {\n  return 'hello';\n}\n`;
+    expect(addTypeAnnotationsTransform.apply(source, testFinding, testCtx)).toBeNull();
+  });
+
+  it('returns null for .js files (TypeScript-only transform)', () => {
+    const jsCtx = makeContext({ filePath: 'src/service.js' });
+    const source = `function greet() {\n  return 'hello';\n}\n`;
+    const result = addTypeAnnotationsTransform.apply(source, finding, jsCtx);
+    expect(result).toBeNull();
+  });
+
+  it('adds unknown[] for array literal return', () => {
+    const source = `function getItems() {\n  return [];\n}\n`;
+    const result = addTypeAnnotationsTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).toContain('unknown[]');
+  });
+
+  it('is idempotent', () => {
+    const source = `function greet() {\n  return 'hello';\n}\n`;
+    const first = addTypeAnnotationsTransform.apply(source, finding, ctx);
+    if (first !== null) {
+      const second = addTypeAnnotationsTransform.apply(first, finding, ctx);
+      expect(second).toBeNull();
+    }
+  });
+
+  it('canApply returns false for test files', () => {
+    const testFinding = makeFinding({ file: 'src/__tests__/foo.test.ts' });
+    expect(addTypeAnnotationsTransform.canApply('function greet() {}', testFinding)).toBe(false);
+  });
+
+  it('canApply returns true for files with function declarations', () => {
+    expect(addTypeAnnotationsTransform.canApply('function greet() {}', finding)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// remove-dead-code tests
+// ---------------------------------------------------------------------------
+
+describe('remove-dead-code transform', () => {
+  const ctx = makeContext({ filePath: 'src/service.ts' });
+  const finding = makeFinding({ file: 'src/service.ts', subcategory: 'unreachable code' });
+
+  it('removes code after return statement', () => {
+    const source = `function fn() {\n  return 1;\n  console.log('dead');\n}\n`;
+    const result = removeDeadCodeTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).not.toContain("console.log('dead')");
+    expect(result).toContain('return 1');
+  });
+
+  it('removes code after throw statement', () => {
+    const source = `function fn() {\n  throw new Error('fail');\n  return 42;\n}\n`;
+    const result = removeDeadCodeTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).not.toContain('return 42');
+    expect(result).toContain("throw new Error('fail')");
+  });
+
+  it('does not modify reachable code', () => {
+    const source = `function fn() {\n  const x = 1;\n  return x;\n}\n`;
+    const result = removeDeadCodeTransform.apply(source, finding, ctx);
+    expect(result).toBeNull();
+  });
+
+  it('does not remove code in a different block', () => {
+    const source = `function fn() {\n  if (x) {\n    return 1;\n  }\n  return 2;\n}\n`;
+    const result = removeDeadCodeTransform.apply(source, finding, ctx);
+    expect(result).toBeNull();
+  });
+
+  it('removes multiple dead statements after return', () => {
+    const source = `function fn() {\n  return 1;\n  const a = 2;\n  const b = 3;\n}\n`;
+    const result = removeDeadCodeTransform.apply(source, finding, ctx);
+    expect(result).not.toBeNull();
+    expect(result).not.toContain('const a = 2');
+    expect(result).not.toContain('const b = 3');
+  });
+
+  it('returns null for test files', () => {
+    const testFinding = makeFinding({ file: 'src/__tests__/foo.test.ts', subcategory: 'unreachable code' });
+    const testCtx = makeContext({ filePath: 'src/__tests__/foo.test.ts' });
+    const source = `function fn() {\n  return 1;\n  console.log('dead');\n}\n`;
+    expect(removeDeadCodeTransform.apply(source, testFinding, testCtx)).toBeNull();
+  });
+
+  it('is idempotent', () => {
+    const source = `function fn() {\n  return 1;\n  console.log('dead');\n}\n`;
+    const first = removeDeadCodeTransform.apply(source, finding, ctx);
+    if (first !== null) {
+      const second = removeDeadCodeTransform.apply(first, finding, ctx);
+      expect(second).toBeNull();
+    }
+  });
+
+  it('canApply returns false for test files', () => {
+    const testFinding = makeFinding({ file: 'src/__tests__/foo.test.ts' });
+    expect(removeDeadCodeTransform.canApply('function fn() { return 1; }', testFinding)).toBe(false);
+  });
+
+  it('canApply returns true when file has return statement', () => {
+    expect(removeDeadCodeTransform.canApply('function fn() { return 1; }', finding)).toBe(true);
+  });
+
+  it('canApply returns false when no control flow terminators present', () => {
+    expect(removeDeadCodeTransform.canApply('const x = 1;', finding)).toBe(false);
+  });
+
+  // Registry registration
+  it('is registered in the transform registry', () => {
+    expect(getTransform('remove-unused-imports')).toBeTruthy();
+    expect(getTransform('add-type-annotations')).toBeTruthy();
+    expect(getTransform('remove-dead-code')).toBeTruthy();
   });
 });

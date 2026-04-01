@@ -11,6 +11,9 @@ import type { Finding } from '../normalize.js';
 import { wrapAsyncTransform } from './wrap-async.js';
 import { replaceConsoleTransform } from './replace-console.js';
 import { addCatchHandlerTransform } from './add-catch-handler.js';
+import { removeUnusedImportsTransform } from './remove-unused-imports.js';
+import { addTypeAnnotationsTransform } from './add-type-annotations.js';
+import { removeDeadCodeTransform } from './remove-dead-code.js';
 
 // ---------------------------------------------------------------------------
 // Registry
@@ -38,6 +41,9 @@ export function listTransforms(): ASTTransform[] {
 registerTransform(wrapAsyncTransform);
 registerTransform(replaceConsoleTransform);
 registerTransform(addCatchHandlerTransform);
+registerTransform(removeUnusedImportsTransform);
+registerTransform(addTypeAnnotationsTransform);
+registerTransform(removeDeadCodeTransform);
 
 // ---------------------------------------------------------------------------
 // Finding tagging — run at scan time to mark findings that can be auto-fixed
