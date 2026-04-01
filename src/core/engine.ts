@@ -11,6 +11,7 @@ import {
   filterBacklogByMode,
 } from './issue-backlog.js';
 import { buildScoreOptimizedBacklog, isSweepable } from './score-optimizer.js';
+import { routeIssues } from './issue-router.js';
 import { executeClick } from './click.js';
 import { SwarmExecutor } from './swarm.js';
 import * as git from './git.js';
@@ -463,11 +464,14 @@ async function initializeRun(options: EngineRunOptions): Promise<{
   if (currentScan) {
     await callbacks.onScanComplete?.(currentScan);
     previousTotal = currentScan.total;
-    const backlog = scoreOptimized
+    const rawBacklog = scoreOptimized
       ? buildScoreOptimizedBacklog(currentScan, focusCategory)
       : buildBacklog(currentScan);
     // Enrich backlog with blast-radius risk scores from GitNexus
-    enrichBacklogWithRisk(backlog, cwd);
+    enrichBacklogWithRisk(rawBacklog, cwd);
+    // Route issues based on agent capability — APIAgent only receives torque/trivial issues
+    const agentType: 'api' | 'shell' = 'clickGuards' in options.agent ? 'api' : 'shell';
+    const backlog = routeIssues(rawBacklog, agentType);
     backlogGroups = groupBacklogBySubcategory(backlog);
   }
 
@@ -707,9 +711,11 @@ async function postClickRescan(
       // Update backlog from fresh scan
       state.previousTotal = newTotal;
       state.currentScan = newScan;
-      const newBacklog = scoreOptimized
+      const rawNewBacklog = scoreOptimized
         ? buildScoreOptimizedBacklog(newScan, focusCategory)
         : buildBacklog(newScan);
+      const agentTypeForUpdate: 'api' | 'shell' = 'clickGuards' in agent ? 'api' : 'shell';
+      const newBacklog = routeIssues(rawNewBacklog, agentTypeForUpdate);
       state.backlogGroups = groupBacklogBySubcategory(newBacklog);
     }
   } catch {

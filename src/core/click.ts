@@ -22,6 +22,9 @@ import { selectModel } from '../lib/model-router.js';
 import { applyTransforms } from './transforms/base.js';
 import { transformRegistry, tagFindingsWithTransforms } from './transforms/registry.js';
 import type { Finding } from './normalize.js';
+import { generateIntentPlan } from './intent-planner.js';
+import { validatePlan } from './plan-first.js';
+import { applyIntentPlan } from './smart-applier.js';
 
 export interface ClickContext {
   clickNumber: number;
@@ -291,6 +294,81 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
         }
       } catch (err) {
         logger.debug({ err }, '[ratchet] AST transform pass error — falling through to LLM');
+      }
+    }
+
+    // 1.5. Intent Planner + Plan-First validation pass (Layer 1.5)
+    // For unhandled findings with file locations, generate an IntentPlan, validate it,
+    // and apply it deterministically — without invoking the LLM agent.
+    // Falls through gracefully on any error.
+    if (!astIsAstOnlyClick && ctx.scanResult && issues && issues.length > 0) {
+      try {
+        // Build unhandled synthetic findings: those not already covered by AST transforms
+        const unhandledFindings: Finding[] = [];
+        for (const issue of issues) {
+          if (astHandledIssueKeys.has(`${issue.category}::${issue.subcategory}`)) continue;
+          const issueType = ctx.scanResult.issuesByType.find(
+            it => it.category === issue.category && it.subcategory === issue.subcategory,
+          );
+          const locations = issueType?.locations ?? [];
+          for (const loc of locations.slice(0, 1)) { // one file per issue to stay atomic
+            unhandledFindings.push({
+              category: issue.category,
+              subcategory: issue.subcategory,
+              severity: issue.severity,
+              message: issue.description,
+              confidence: 0.8,
+              source: 'classic',
+              file: loc,
+            });
+          }
+        }
+
+        let intentAppliedCount = 0;
+        for (const finding of unhandledFindings.slice(0, 3)) { // cap to keep clicks fast
+          if (!finding.file) continue;
+          const absFilePath = resolve(cwd, finding.file);
+          let source: string;
+          try {
+            source = await readFile(absFilePath, 'utf8');
+          } catch {
+            continue;
+          }
+
+          const plan = await generateIntentPlan(finding, source);
+          if (!plan) continue;
+
+          const validation = await validatePlan(plan, cwd, finding.file);
+          if (!validation.valid) {
+            logger.debug(
+              `[ratchet] ⚠ Plan validation failed for ${finding.file}: ${validation.errors.join('; ')}`,
+            );
+            continue;
+          }
+
+          const applyResult = await applyIntentPlan(absFilePath, plan);
+          if (applyResult.success && applyResult.modifiedSource !== null) {
+            await writeFile(absFilePath, applyResult.modifiedSource, 'utf8');
+            astHandledIssueKeys.add(`${finding.category}::${finding.subcategory}`);
+            intentAppliedCount++;
+          }
+        }
+
+        if (intentAppliedCount > 0) {
+          logger.info(`[ratchet] 🎯 Intent plans validated and applied to ${intentAppliedCount} finding(s)`);
+          const allHandled = issues.every(
+            iss => astHandledIssueKeys.has(`${iss.category}::${iss.subcategory}`),
+          );
+          if (allHandled) {
+            astIsAstOnlyClick = true;
+            analysis = 'Intent plans applied (no LLM required)';
+            proposal = `intent: validated and applied ${intentAppliedCount} plan(s)`;
+            buildResult = { success: true, output: 'intent plans', filesModified: [] };
+            agentEndMs = Date.now();
+          }
+        }
+      } catch (err) {
+        logger.debug({ err }, '[ratchet] Intent planner pass error — falling through to LLM');
       }
     }
 
