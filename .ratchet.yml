@@ -1,0 +1,28 @@
+# .ratchet.yml — Ratchet configuration
+# Run 'ratchet improve --target src' to start the click loop.
+# Docs: https://github.com/ratchet-run/ratchet
+
+agent: claude-code
+model: claude-sonnet-4-6
+
+defaults:
+  clicks: 7
+  test_command: npm test
+  auto_commit: true
+
+targets:
+  - name: src
+    path: src/
+    description: "Iteratively improve code quality in src/"
+
+# Boundaries protect critical paths from agent modification.
+# boundaries:
+#   - path: src/auth/
+#     rule: no-modify
+#     reason: "Auth logic is security-sensitive — do not touch"
+#   - path: "**/*.test.ts"
+#     rule: preserve-pattern
+#     reason: "Test structure follows team convention"
+#   - path: migrations/
+#     rule: no-delete
+#     reason: "Migration files are append-only"

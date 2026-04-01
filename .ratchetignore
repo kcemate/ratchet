@@ -1,0 +1,19 @@
+# Separate projects — scored independently
+worker/
+site/
+action/
+action-torque/
+api/
+
+# Root-level scripts (not part of src)
+analyze-dup.mjs
+
+# Training data generation scripts (not production code)
+training-data/
+
+# Generated / vendored
+dist/
+node_modules/
+.ratchet/
+.claude/
+docs/landing/

@@ -1,0 +1,80 @@
+{
+  "name": "ratchet-run",
+  "version": "1.2.0",
+  "description": "Autonomous code quality CLI — scan, score, and fix your codebase",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "ratchet": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./core/*": "./dist/core/*.js",
+    "./commands/*": "./dist/commands/*.js",
+    "./lib/*": "./dist/lib/*.js",
+    "./types": "./dist/types.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "cli",
+    "ai",
+    "code-quality",
+    "scanner",
+    "automation",
+    "ratchet"
+  ],
+  "author": "Ratchet Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kcemate/ratchet.git"
+  },
+  "homepage": "https://ratchetcli.com",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
+    "@types/pdfkit": "^0.17.5",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "ora": "^9.3.0",
+    "pdfkit": "^0.17.2",
+    "pino": "^10.3.1",
+    "puppeteer": "^24.39.1",
+    "ts-morph": "^27.0.2",
+    "yaml": "^2.8.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

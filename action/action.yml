@@ -1,0 +1,76 @@
+name: 'Ratchet'
+description: 'Autonomously improve your codebase with AI-powered iterative refinement'
+author: 'Ratchet'
+
+branding:
+  icon: 'zap'
+  color: 'purple'
+
+inputs:
+  target:
+    description: 'Target directory to improve (uses auto-detect if not set)'
+    required: false
+    default: ''
+  clicks:
+    description: 'Number of improvement iterations to run'
+    required: false
+    default: '7'
+  mode:
+    description: 'Improvement mode: normal or harden'
+    required: false
+    default: 'normal'
+  api-key:
+    description: 'OpenRouter, Anthropic, or OpenAI API key'
+    required: true
+  license-key:
+    description: 'Ratchet Pro license key'
+    required: false
+    default: ''
+  create-pr:
+    description: 'Open a pull request with the improvements'
+    required: false
+    default: 'true'
+  pr-title:
+    description: 'Title for the pull request'
+    required: false
+    default: ''
+
+outputs:
+  pr-url:
+    description: 'URL of the created pull request (empty if create-pr is false)'
+    value: ${{ steps.ratchet.outputs.pr-url }}
+  score-before:
+    description: 'Production Readiness Score before improvements'
+    value: ${{ steps.ratchet.outputs.score-before }}
+  score-after:
+    description: 'Production Readiness Score after improvements'
+    value: ${{ steps.ratchet.outputs.score-after }}
+  clicks-landed:
+    description: 'Number of improvement clicks that landed'
+    value: ${{ steps.ratchet.outputs.clicks-landed }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install Ratchet CLI
+      shell: bash
+      run: npm install -g ratchet
+
+    - name: Run Ratchet
+      id: ratchet
+      shell: bash
+      env:
+        RATCHET_TARGET: ${{ inputs.target }}
+        RATCHET_CLICKS: ${{ inputs.clicks }}
+        RATCHET_MODE: ${{ inputs.mode }}
+        RATCHET_API_KEY: ${{ inputs.api-key }}
+        RATCHET_LICENSE_KEY: ${{ inputs.license-key }}
+        RATCHET_CREATE_PR: ${{ inputs.create-pr }}
+        RATCHET_PR_TITLE: ${{ inputs.pr-title }}
+        GH_TOKEN: ${{ github.token }}
+      run: ${{ github.action_path }}/entrypoint.sh

@@ -1,0 +1,51 @@
+name: Nightly Quality Scan
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 02:00 UTC every night
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nightly-scan:
+    name: Ratchet Nightly Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ratchet Code Quality Scan
+        id: ratchet
+        uses: giovanni-labs/ratchet@v1
+        with:
+          explain: 'true'
+
+      - name: Post results to Slack
+        if: always()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SCORE: ${{ steps.ratchet.outputs.score }}
+          BADGE: ${{ steps.ratchet.outputs.badge-url }}
+          REPO: ${{ github.repository }}
+        run: |
+          STATUS="✅ Passed"
+          if [ "$SCORE" -lt 70 ] 2>/dev/null; then STATUS="⚠️ Needs attention"; fi
+          curl -s -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \"${STATUS} — Ratchet nightly scan for *${REPO}*\",
+              \"blocks\": [
+                {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\",
+                  \"text\": \"*Ratchet Nightly Scan* — ${REPO}\n*Score:* ${SCORE}/100\n<${BADGE}|View badge>\"}
+                }
+              ]
+            }"
+
+      - name: Upload scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ratchet-scan-report
+          path: ratchet-scan.json
+          retention-days: 30
