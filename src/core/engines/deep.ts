@@ -39,6 +39,11 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   'opus':    { input: 15,   output: 75   },
 };
 
+/** Models/providers with zero or near-zero marginal cost (flat-rate subscriptions). */
+const FREE_MODEL_PATTERNS = [
+  'mistral', 'kimi', 'glm', 'nemotron', 'qwen', 'deepseek', 'devstral', 'gpt-oss',
+];
+
 /** High-risk file patterns — routes, auth, controllers, core services. */
 const HIGH_RISK_PATTERNS = [
   /routes?\//i,
@@ -61,6 +66,10 @@ const HIGH_RISK_PATTERNS = [
 function getPricing(modelHint?: string): { input: number; output: number } {
   if (modelHint) {
     const lower = modelHint.toLowerCase();
+    // Check for free/subscription models first
+    if (FREE_MODEL_PATTERNS.some(p => lower.includes(p))) {
+      return { input: 0, output: 0 };
+    }
     for (const [key, pricing] of Object.entries(MODEL_PRICING)) {
       if (lower.includes(key)) return pricing;
     }
@@ -140,7 +149,7 @@ export class DeepEngine implements ScanEngine {
     const batches = this.createBatches(selectedFiles);
 
     // 4. Analyse each batch with category-specific prompts.
-    const pricing = getPricing();
+    const pricing = getPricing(this.activeProvider?.name);
     let budgetUsed = 0;
     const budget = options.budget ?? Infinity;
     const deepFindings: Finding[] = [];
