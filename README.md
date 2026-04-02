@@ -1,23 +1,37 @@
 # Ratchet
 
-[![npm version](https://img.shields.io/npm/v/ratchet-run)](https://npmjs.com/package/ratchet-run) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/node/v/ratchet-run)](https://nodejs.org)
+[![npm version](https://img.shields.io/npm/v/ratchet-run)](https://npmjs.com/package/ratchet-run) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/node/v/ratchet-run)](https://nodejs.org) [![tests](https://img.shields.io/badge/tests-3%2C277%20passing-brightgreen)](https://github.com/kcemate/ratchet)
 
-> AI-powered CLI that scores your codebase and autonomously improves it. Each "click" is one full cycle: analyze → propose → build → test → commit. Only improvements that pass tests are kept. The score can only go up.
+> **Security scanner for AI-generated code.** AI coding tools ship fast but introduce security gaps, empty catches, unvalidated inputs, and missing error handling. Ratchet scans, scores, and auto-fixes what AI gets wrong — only changes that pass tests get committed.
 
 ```
 $ ratchet scan
 
-  Production Readiness Score: 72/100
+  🔒 Security Score: 42/100
 
-  Testing          ████████████████████   18/25
-  Security         ██████████████         10/15
-  Type Safety      ████████████████████   15/15
-  Error Handling   ████████████████       12/20
-  Performance      ████████████           7/10
-  Code Quality     ██████████████         10/15
+  Security         ██████████             10/15   ← 12 critical issues
+  Testing          ████████████████████   0/25    ← zero test files
+  Error Handling   ████████████████       15/20
+  Type Safety      ████████████████████   9/15
+  Performance      ██████                 3/10    ← 106 console.logs
+  Code Quality     ████████               5/15    ← 11K duplicated lines
 ```
 
-A ratchet wrench only turns one way. So does Ratchet — every change it makes is tested and committed. No rollback risk. No breaking builds. Just steady, one-direction improvement.
+We ran this on [Claude Code's source](https://ratchetcli.com/audit/claude-code/) — Anthropic's own AI coding tool scored 42/100. If the team building AI coding assistants ships 20,483 issues, your codebase probably has some too.
+
+---
+
+## Why Ratchet?
+
+AI coding tools (Cursor, Copilot, Claude Code) generate code 10x faster — but they also generate:
+
+- **Empty catch blocks** that silently swallow errors
+- **Hardcoded secrets** in config files
+- **Missing input validation** on API endpoints
+- **No auth middleware** on sensitive routes
+- **Console.log calls** left in production code
+
+Ratchet catches all of this automatically, scores it objectively, and fixes what it can — without breaking your build.
 
 ---
 
@@ -34,218 +48,113 @@ Requires Node.js >= 18 and git.
 ## Quick Start
 
 ```bash
-# Initialize in your project
-ratchet init
-
-# Score your codebase
+# Scan your codebase for security issues
 ratchet scan
 
-# Let AI autonomously improve it
-ratchet improve --target error-handling --clicks 7
+# See exactly which files and lines cost you points
+ratchet scan --explain-deductions
 
-# Check progress
-ratchet report --status
+# Auto-fix the highest-impact issues (Pro)
+ratchet improve --clicks 7
+
+# Generate an interactive dependency map
+ratchet map
 ```
+
+---
+
+## What It Scans
+
+Ratchet scores your codebase 0-100 across six categories, with security front and center:
+
+| Category | What It Catches |
+|----------|----------------|
+| 🔒 **Security** | Hardcoded secrets, missing auth, unvalidated inputs, rate limiting gaps |
+| 🧪 **Testing** | Coverage gaps, missing edge case tests, weak assertions |
+| 📝 **Type Safety** | `any` types, missing strict config, type escape hatches |
+| ⚠️ **Error Handling** | Empty catches, missing try/catch, no structured logging |
+| ⚡ **Performance** | await-in-loop, console.log in production, import bloat |
+| 📖 **Code Quality** | Duplicated code, long functions, dead code, TODOs |
+
+### Deep Scan (Pro)
+
+Add `--deep` to enable LLM-powered semantic analysis that finds issues regex can't:
+
+- SQL injection through multi-hop data flow
+- Auth bypass paths
+- N+1 query patterns hidden in ORM abstractions
+- Dead code that appears reachable to static analysis
 
 ---
 
 ## How It Works
 
-Every click runs one full cycle:
+A ratchet wrench only turns one way. So does Ratchet:
 
-1. **Analyze** — Read your code, identify the highest-impact issue
-2. **Propose** — Plan a focused, single-concern fix
-3. **Build** — Write the code change
-4. **Test** — Run your test suite
-5. **Commit** — Only committed if all tests pass. Otherwise, rolled back.
+1. **Scan** — Score your codebase across all 6 categories
+2. **Fix** — AI identifies the highest-impact issue and writes a fix
+3. **Test** — Runs your full test suite before committing
+4. **Commit** — Only improvements that pass tests get kept
+5. **Repeat** — Each "click" moves the score up. Failed fixes are silently reverted.
 
-The Pawl is the anti-rollback mechanism: if tests fail, the change is reverted automatically. Your score can never go down.
-
----
-
-## Scoring System
-
-Ratchet scores your codebase 0–100 across six categories:
-
-| Category | Max | What it measures |
-|---|---|---|
-| **Testing** | 25 | Coverage ratio, edge case depth, test quality |
-| **Security** | 15 | Secrets & env vars, input validation, auth & rate limiting |
-| **Type Safety** | 15 | Strict config, any type count, coverage |
-| **Error Handling** | 20 | Empty catches, structured logging, async patterns |
-| **Performance** | 10 | Console cleanup, import hygiene |
-| **Code Quality** | 15 | Function length, line length, dead code, duplication |
-
-Use `ratchet scan --explain` to see why each subcategory scored the way it did and how to fix it.
-
----
-
-## Features
-
-### Guard Profiles
-
-Control how aggressive Ratchet is with `--guards`:
-
-| Profile | Files | Lines | Use case |
-|---|---|---|---|
-| `tight` | 3 | 40 | Conservative, low-risk fixes |
-| `refactor` | 5 | 80 | Rename, extract, restructure |
-| `broad` | 10 | 120 | Cross-file improvements |
-| `atomic` | 1 | 20 | One concept per commit |
-
-Smart guard escalation: if Ratchet gets stuck (2+ consecutive rollbacks), it auto-escalates from tight → refactor → broad.
-
-### Scope Locking
-
-Lock Ratchet to specific files with `--scope`:
-
-```bash
-ratchet improve --scope diff           # Only uncommitted changes
-ratchet improve --scope branch         # Only files changed vs main
-ratchet improve --scope staged         # Only staged files
-ratchet improve --scope "src/**/*.ts"  # Glob pattern
-ratchet improve --scope file:src/api/routes.ts,src/api/auth.ts
 ```
+$ ratchet improve --clicks 7
 
-### Planning Mode
+  ✓ Click 1 — removed hardcoded API key     [a3f9b21] — Score: 68 → 72 (+4)
+  ✗ Click 2 — tests failed · rolled back
+  ✓ Click 3 — added input validation        [7bc1d44] — Score: 72 → 76 (+4)
+  ✓ Click 4 — replaced empty catch          [2e8f053] — Score: 76 → 79 (+3)
+  ✗ Click 5 — tests failed · rolled back
+  ✓ Click 6 — structured error logging      [9da3c17] — Score: 79 → 81 (+2)
+  ✓ Click 7 — added rate limiting           [f81b44a] — Score: 81 → 82 (+1)
 
-```bash
-ratchet improve --plan-first
+  Done. 5 landed · 2 rolled back · Score: 68 → 82/100 (+14)
 ```
-
-Read-only click 0 generates a structured plan before making changes.
-
-### Interactive Dependency Graph
-
-```bash
-ratchet map
-```
-
-Generates a self-contained HTML with a Cytoscape.js graph. Nodes colored by score, sized by blast radius. Filterable, searchable, dark cyberpunk theme.
 
 ---
 
 ## Commands
 
-| Command | Description | Tier |
-|---|---|---|
-| `scan [dir]` | Score the codebase (0-100) | Free |
-| `init [dir]` | Initialize .ratchet.yml | Free |
-| `report` | Status, logs, badges, and reports | Free |
-| `map` | Interactive dependency graph | Free |
-| `auth` | Login / logout license key | Free |
-| `improve` | Autonomous click loop (scan → fix → commit) | Builder+ |
-| `ship` | Finalize run, create PR | Free |
+| Command | Description |
+|---------|-------------|
+| `ratchet scan` | Score your codebase (free) |
+| `ratchet scan --deep` | LLM-powered deep security analysis (Pro) |
+| `ratchet scan --explain-deductions` | See exact files/lines costing points |
+| `ratchet improve --clicks N` | Auto-fix N issues (Pro) |
+| `ratchet map` | Interactive dependency graph |
+| `ratchet report` | Generate PDF/HTML report |
+| `ratchet init` | Initialize config |
 
 ---
 
-## CI/CD Integration
+## Privacy & Security
 
-```yaml
-# .github/workflows/ratchet.yml
-name: Ratchet Quality Gate
-
-on:
-  pull_request:
-    branches: [main]
-
-jobs:
-  quality:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm install -g ratchet-run
-      - run: ratchet scan --fail-on 80
-      - run: ratchet scan --fail-on-category Security=12 --fail-on-category Testing=20
-      - run: ratchet scan --output-json > ratchet-scan.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ratchet-scan
-          path: ratchet-scan.json
-```
-
-`--fail-on <score>` exits with code 1 if the total score is below the threshold. `--fail-on-category` does the same per category.
-
----
-
-## Configuration
-
-```yaml
-# .ratchet.yml
-agent: claude-code
-model: claude-sonnet-4-6
-
-defaults:
-  clicks: 7
-  test_command: npm test
-  auto_commit: true
-
-targets:
-  - name: error-handling
-    path: src/api/
-    description: "Fix error handling in the API layer"
-
-boundaries:
-  - path: src/auth/
-    rule: no-modify
-    reason: "Auth logic is security-sensitive"
-  - path: "**/*.test.ts"
-    rule: preserve-pattern
-    reason: "Test structure follows team convention"
-  - path: migrations/
-    rule: no-delete
-    reason: "Migration files are append-only"
-```
-
----
-
-## .ratchetignore
-
-Create a `.ratchetignore` file in your project root to exclude paths from `ratchet scan` and `ratchet improve`.
-
-**Format:** one path per line; `#` starts a comment; trailing `/` on directories is optional.
-
-```
-# Ignore generated and vendor code
-generated/
-vendor/
-
-# Ignore a specific file
-src/legacy/old-api.ts
-
-# Ignore a subdirectory
-packages/internal-tools/
-```
-
-**Default exclusions** (always ignored, no `.ratchetignore` needed):
-- `node_modules/`
-- `dist/`
-- `.git/`
+- **Local-first**: All scanning runs on your machine. Your code never leaves your filesystem.
+- **BYOK**: Bring your own API key for AI features. Ratchet never sees or stores your credentials.
+- **Open source core**: MIT licensed. Audit the source at [github.com/kcemate/ratchet](https://github.com/kcemate/ratchet).
+- **3,277 tests**: We run Ratchet on Ratchet. We eat our own dogfood.
 
 ---
 
 ## Pricing
 
-| Plan | Price | Cycles | Includes |
-|---|---|---|---|
-| **Free** | $0 | — | scan, report, map, auth |
-| **Builder** | $9/mo or $86/yr | 30 | + improve |
-| **Pro** | $19/mo or $182/yr | 150 | + improve (unlimited) |
-| **Team** | $49/mo or $470/yr | 500 | Priority support |
-| **Enterprise** | Custom | Unlimited | SSO, SLA, custom profiles |
+| | Free | Pro ($19/mo) |
+|---|---|---|
+| `ratchet scan` | ✅ | ✅ |
+| AST autofix | ✅ (deterministic) | ✅ |
+| AI-powered fixes | — | ✅ |
+| Deep scan | — | ✅ |
+| `ratchet improve` | — | ✅ |
+| GitHub Action | ✅ (scan only) | ✅ (scan + fix) |
+
+[Get started →](https://ratchetcli.com)
 
 ---
 
 ## Links
 
-- **Website:** [ratchetcli.com](https://ratchetcli.com)
-- **NPM:** [npmjs.com/package/ratchet-run](https://npmjs.com/package/ratchet-run)
-
----
-
-## License
-
-MIT
+- **Website**: [ratchetcli.com](https://ratchetcli.com)
+- **Claude Code Audit**: [ratchetcli.com/audit/claude-code](https://ratchetcli.com/audit/claude-code/)
+- **npm**: [ratchet-run](https://www.npmjs.com/package/ratchet-run)
+- **GitHub**: [kcemate/ratchet](https://github.com/kcemate/ratchet)
+- **License**: MIT
