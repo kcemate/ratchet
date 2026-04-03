@@ -4,7 +4,7 @@ import { join } from 'path';
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 import chalk from 'chalk';
 
-function parseCategoryThreshold(raw: string): CategoryThreshold {
+export function parseCategoryThreshold(raw: string): CategoryThreshold {
   const eqIndex = raw.indexOf('=');
   if (eqIndex === -1) {
     throw new Error(
@@ -22,7 +22,7 @@ function parseCategoryThreshold(raw: string): CategoryThreshold {
   return { categoryName: name, threshold: score, max: 0 };
 }
 
-function evaluateGates(
+export function evaluateGates(
   result: ScanResult,
   totalThreshold: number | null,
   categoryThresholds: CategoryThreshold[],
@@ -57,7 +57,7 @@ function evaluateGates(
   };
 }
 
-function exitWithGateFailure(gate: GateResult): never {
+export function exitWithGateFailure(gate: GateResult): never {
   process.stdout.write('\n');
   process.stdout.write(chalk.red.bold('❌ Quality Gate Failed\n\n'));
 
@@ -81,7 +81,7 @@ function exitWithGateFailure(gate: GateResult): never {
   process.exit(1);
 }
 
-function loadBaseline(cwd: string): Baseline | null {
+export function loadBaseline(cwd: string): Baseline | null {
   const baselinePath = join(cwd, '.ratchet', 'baseline.json');
   if (!existsSync(baselinePath)) return null;
   try {
@@ -91,7 +91,7 @@ function loadBaseline(cwd: string): Baseline | null {
   }
 }
 
-function saveBaseline(cwd: string, result: ScanResult): void {
+export function saveBaseline(cwd: string, result: ScanResult): void {
   const ratchetDir = join(cwd, '.ratchet');
   mkdirSync(ratchetDir, { recursive: true });
   const baseline: Baseline = {
@@ -104,7 +104,7 @@ function saveBaseline(cwd: string, result: ScanResult): void {
   writeFileSync(join(ratchetDir, 'baseline.json'), JSON.stringify(baseline, null, 2) + '\n');
 }
 
-function deltaStr(diff: number): string {
+export function deltaStr(diff: number): string {
   if (diff > 0) return chalk.green(`+${diff}`);
   if (diff < 0) return chalk.red(String(diff));
   return chalk.dim('—');

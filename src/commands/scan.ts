@@ -13,6 +13,7 @@ import { ClassicEngine } from '../core/engines/classic.js';
 import { createEngine } from '../core/engine-router.js';
 
 import { CategoryThreshold, GateResult, parseCategoryThreshold, evaluateGates, exitWithGateFailure, Baseline, loadBaseline, saveBaseline, deltaStr, runScan, RunScanOptions, ScanResult } from '../core/scanner';
+export { runScan } from '../core/scanner';
 
 export function scanCommand(): Command {
   const cmd = new Command('scan');
@@ -251,13 +252,12 @@ export function scanCommand(): Command {
       if (options['registry'] !== false && process.env['RATCHET_REGISTRY_KEY']) {
         let ratchetVersion = 'unknown';
         try {
-          import { readFileSync } from 'fs';
           const pkgPath = new URL('../../package.json', import.meta.url).pathname;
           const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { version?: string };
           ratchetVersion = pkg.version ?? 'unknown';
         } catch { /* use default */ }
 
-        import { submitToRegistry } from '../registry/client.js';
+        const { submitToRegistry } = await import('../registry/client.js');
         const submitResult = await submitToRegistry(result, cwd, resolvedLang, ratchetVersion);
         if (submitResult.ok) {
           process.stdout.write(chalk.dim(`  ↑ Score submitted to registry (#${submitResult.submission_id})\n\n`));
