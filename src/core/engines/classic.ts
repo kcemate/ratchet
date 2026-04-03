@@ -73,12 +73,8 @@ import { logger } from '../../lib/logger.js';
 import { detectProjectLanguage } from '../detect-language.js';
 import { detectFrameworks } from '../framework-detector.js';
 import { adjustScoreForFrameworks, Framework } from '../framework-profiles.js';
-import { detectFrameworks } from '../framework-detector.js';
-import { adjustScoreForFrameworks, Framework } from '../framework-profiles.js';
 
 type ScoringCategory = 'Testing' | 'Security' | 'Type Safety' | 'Error Handling' | 'Performance' | 'Code Quality';
-import { detectFrameworks } from '../framework-detector.js';
-import { adjustScoreForFrameworks, Framework } from '../framework-profiles.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
