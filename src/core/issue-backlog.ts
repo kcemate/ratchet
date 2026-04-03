@@ -1,4 +1,4 @@
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from './scanner/index.js';
 import { assessFileRisk, getDependencyClusters, getCypherClusters, getEntryPointScore } from './gitnexus.js';
 import { SEVERITY_WEIGHT } from './taxonomy.js';
 import { SUBCATEGORY_TIERS } from './score-optimizer.js';

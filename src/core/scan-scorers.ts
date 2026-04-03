@@ -7,7 +7,7 @@
  */
 
 import { scoreByThresholds, SEVERITY_MAP } from './scan-constants.js';
-import type { CategoryResult, IssueType } from '../commands/scan.js';
+import type { CategoryResult, IssueType } from './scanner/index.js';
 
 // ── Testing
 export function scoreCoverageRatio(

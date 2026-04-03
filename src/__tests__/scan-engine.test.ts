@@ -13,7 +13,7 @@ import { ClassicEngine } from '../core/engines/classic.js';
 import { DeepEngine } from '../core/engines/deep.js';
 import { createEngine } from '../core/engine-router.js';
 import { normalizeFindings, mergeScores, type Finding } from '../core/normalize.js';
-import { runScan } from '../commands/scan.js';
+import { runScan } from '../core/scanner/index.js';
 
 // ---------------------------------------------------------------------------
 // ClassicEngine

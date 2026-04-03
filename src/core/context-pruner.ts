@@ -1,4 +1,4 @@
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from './scanner/index.js';
 import type { IssueTask } from './issue-backlog.js';
 
 export interface ClickContext {

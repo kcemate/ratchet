@@ -7,7 +7,7 @@
  * the architect tier (Opus).
  */
 
-import type { IssueType } from '../commands/scan.js';
+import type { IssueType } from './scanner/index.js';
 import type { Provider } from './providers/base.js';
 import { routeTask } from './providers/router.js';
 

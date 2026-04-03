@@ -11,7 +11,7 @@ import { existsSync, readFileSync, mkdirSync, writeFileSync, readdirSync } from 
 import { join, dirname } from 'path';
 import { execSync } from 'child_process';
 import type { RepoProfile } from './repo-probe.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from './scanner/index.js';
 import { logger } from '../lib/logger.js';
 
 // ---------------------------------------------------------------------------
