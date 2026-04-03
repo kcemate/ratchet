@@ -1,0 +1,275 @@
+◇ injecting env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injecting env (2) from ../../../Users/giovanni/Projects/ratchet/.env // tip: ◈ secrets for agents [www.dotenvx.com]
+{
+  "projectName": "express",
+  "total": 63,
+  "maxTotal": 100,
+  "categories": [
+    {
+      "name": "Testing",
+      "emoji": "🧪",
+      "score": 21,
+      "max": 25,
+      "summary": "91 test files, 1300% ratio, 164 edge/error test cases",
+      "subcategories": [
+        {
+          "name": "Coverage ratio",
+          "score": 8,
+          "max": 8,
+          "summary": "91 test files, 1300% ratio",
+          "issuesFound": 0,
+          "issuesDescription": "source files without tests",
+          "locations": []
+        },
+        {
+          "name": "Edge case depth",
+          "score": 9,
+          "max": 9,
+          "summary": "164 edge/error test cases",
+          "issuesFound": 0,
+          "issuesDescription": "no edge case tests"
+        },
+        {
+          "name": "Test quality",
+          "score": 4,
+          "max": 8,
+          "summary": "1.1 assertions per test",
+          "issuesFound": 0
+        }
+      ]
+    },
+    {
+      "name": "Security",
+      "emoji": "🔒",
+      "score": 3,
+      "max": 15,
+      "summary": "no hardcoded secrets, uses env vars, no input validation detected",
+      "subcategories": [
+        {
+          "name": "Secrets & env vars",
+          "score": 3,
+          "max": 3,
+          "summary": "no hardcoded secrets, uses env vars",
+          "issuesFound": 0,
+          "issuesDescription": "hardcoded secrets"
+        },
+        {
+          "name": "Input validation",
+          "score": 0,
+          "max": 6,
+          "summary": "no input validation detected",
+          "issuesFound": 4,
+          "issuesDescription": "route files without validation"
+        },
+        {
+          "name": "Auth & rate limiting",
+          "score": 0,
+          "max": 6,
+          "summary": "no auth/rate-limit/CORS detected",
+          "issuesFound": 3,
+          "issuesDescription": "missing auth/security controls"
+        }
+      ]
+    },
+    {
+      "name": "Type Safety",
+      "emoji": "📝",
+      "score": 0,
+      "max": 15,
+      "summary": "JavaScript only — no static types",
+      "subcategories": [
+        {
+          "name": "Strict config",
+          "score": 0,
+          "max": 7,
+          "summary": "JavaScript only",
+          "issuesFound": 1,
+          "issuesDescription": "no TypeScript"
+        },
+        {
+          "name": "Any type count",
+          "score": 0,
+          "max": 8,
+          "summary": "JavaScript only",
+          "issuesFound": 0
+        }
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "emoji": "⚠️ ",
+      "score": 14,
+      "max": 20,
+      "summary": "2 try/catch blocks, no empty catch blocks",
+      "subcategories": [
+        {
+          "name": "Coverage",
+          "score": 8,
+          "max": 8,
+          "summary": "2 try/catch blocks",
+          "issuesFound": 0,
+          "issuesDescription": "async functions without error handling",
+          "locations": []
+        },
+        {
+          "name": "Empty catches",
+          "score": 5,
+          "max": 5,
+          "summary": "no empty catch blocks",
+          "issuesFound": 0,
+          "issuesDescription": "empty catch blocks",
+          "locations": []
+        },
+        {
+          "name": "Structured logging",
+          "score": 1,
+          "max": 7,
+          "summary": "1 console.error/warn calls (no structured logger)",
+          "issuesFound": 1,
+          "issuesDescription": "no structured logger"
+        }
+      ]
+    },
+    {
+      "name": "Performance",
+      "emoji": "⚡",
+      "score": 10,
+      "max": 10,
+      "summary": "no await-in-loop, no console.log in src",
+      "subcategories": [
+        {
+          "name": "Async patterns",
+          "score": 3,
+          "max": 3,
+          "summary": "no await-in-loop",
+          "issuesFound": 0,
+          "issuesDescription": "await-in-loop patterns"
+        },
+        {
+          "name": "Console cleanup",
+          "score": 5,
+          "max": 5,
+          "summary": "no console.log in src",
+          "issuesFound": 0,
+          "issuesDescription": "console.log call",
+          "locations": []
+        },
+        {
+          "name": "Import hygiene",
+          "score": 2,
+          "max": 2,
+          "summary": "clean imports",
+          "issuesFound": 0,
+          "issuesDescription": "import issues"
+        }
+      ]
+    },
+    {
+      "name": "Code Quality",
+      "emoji": "📖",
+      "score": 15,
+      "max": 15,
+      "summary": "short functions, 1 long line",
+      "subcategories": [
+        {
+          "name": "Function length",
+          "score": 4,
+          "max": 4,
+          "summary": "short functions",
+          "issuesFound": 6,
+          "issuesDescription": "functions >50 lines or high complexity",
+          "locations": [
+            "/private/tmp/ratchet-scan-express/lib/application.js",
+            "/private/tmp/ratchet-scan-express/lib/response.js"
+          ]
+        },
+        {
+          "name": "Line length",
+          "score": 4,
+          "max": 4,
+          "summary": "1 long line",
+          "issuesFound": 1,
+          "issuesDescription": "line >120 chars",
+          "locations": [
+            "/private/tmp/ratchet-scan-express/lib/response.js:71"
+          ]
+        },
+        {
+          "name": "Dead code",
+          "score": 4,
+          "max": 4,
+          "summary": "no dead code detected",
+          "issuesFound": 0,
+          "issuesDescription": "dead code indicators (TODO, commented code)"
+        },
+        {
+          "name": "Duplication",
+          "score": 3,
+          "max": 3,
+          "summary": "18 repeated lines",
+          "issuesFound": 18,
+          "issuesDescription": "repeated code lines"
+        }
+      ]
+    }
+  ],
+  "totalIssuesFound": 34,
+  "issuesByType": [
+    {
+      "category": "Security",
+      "subcategory": "Input validation",
+      "count": 4,
+      "description": "route files without validation",
+      "severity": "high"
+    },
+    {
+      "category": "Code Quality",
+      "subcategory": "Duplication",
+      "count": 18,
+      "description": "repeated code lines",
+      "severity": "medium"
+    },
+    {
+      "category": "Code Quality",
+      "subcategory": "Function length",
+      "count": 6,
+      "description": "functions >50 lines or high complexity",
+      "severity": "medium",
+      "locations": [
+        "/private/tmp/ratchet-scan-express/lib/application.js",
+        "/private/tmp/ratchet-scan-express/lib/response.js"
+      ]
+    },
+    {
+      "category": "Security",
+      "subcategory": "Auth & rate limiting",
+      "count": 3,
+      "description": "missing auth/security controls",
+      "severity": "medium"
+    },
+    {
+      "category": "Type Safety",
+      "subcategory": "Strict config",
+      "count": 1,
+      "description": "no TypeScript",
+      "severity": "medium"
+    },
+    {
+      "category": "Error Handling",
+      "subcategory": "Structured logging",
+      "count": 1,
+      "description": "no structured logger",
+      "severity": "low"
+    },
+    {
+      "category": "Code Quality",
+      "subcategory": "Line length",
+      "count": 1,
+      "description": "line >120 chars",
+      "severity": "low",
+      "locations": [
+        "/private/tmp/ratchet-scan-express/lib/response.js:71"
+      ]
+    }
+  ]
+}
