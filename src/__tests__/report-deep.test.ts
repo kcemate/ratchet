@@ -17,7 +17,7 @@ import {
   type DeepAnalysis,
   type ReportOptions,
 } from '../core/report.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 import type { RatchetRun } from '../types.js';
 
 // ---------------------------------------------------------------------------

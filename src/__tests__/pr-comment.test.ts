@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateScoreCard, generateCommitSuffix, generatePRDescription } from '../../src/core/pr-comment.js';
-import type { ScanResult } from '../../src/commands/scan.js';
+import type { ScanResult } from '../../src/core/scanner';
 
 // --- Helpers ---
 

@@ -4,7 +4,7 @@ import {
   summarizeClassifications,
   type IssueClassification,
 } from '../core/cross-cutting.js';
-import type { ScanResult, IssueType } from '../commands/scan.js';
+import type { ScanResult, IssueType } from '../core/scanner';
 import type { ClickGuards } from '../types.js';
 
 const defaultGuards: ClickGuards = {

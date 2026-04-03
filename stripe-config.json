@@ -1,0 +1,28 @@
+{
+  "products": {
+    "builder": {
+      "productId": "prod_UBBX2rx0cgA2PZ",
+      "monthlyPriceId": "price_1TCpAjIRcKFcvl8uLg6Vx32W",
+      "annualPriceId": "price_1TCpAjIRcKFcvl8uvAmCwhdF"
+    },
+    "pro": {
+      "productId": "prod_UBBXLmzJ7AqvDg",
+      "monthlyPriceId": "price_1TCpAkIRcKFcvl8uD6TtV9g8",
+      "annualPriceId": "price_1TCpAkIRcKFcvl8u47wXO6GU"
+    },
+    "team": {
+      "productId": "prod_UBBXWiLPwNn7HU",
+      "monthlyPriceId": "price_1TCpAkIRcKFcvl8uJ8qZmb4P",
+      "annualPriceId": "price_1TCpAlIRcKFcvl8ut2584C39"
+    }
+  },
+  "paymentLinks": {
+    "builder_monthly": "https://buy.stripe.com/test_8x29AU2d4cvBdcT70P9bO00",
+    "builder_annual": "https://buy.stripe.com/test_28E8wQcRIfHN2yfgBp9bO01",
+    "pro_monthly": "https://buy.stripe.com/test_6oU4gAg3U3Z51ubfxl9bO02",
+    "pro_annual": "https://buy.stripe.com/test_bJecN67xo8fl3Cj70P9bO03",
+    "team_monthly": "https://buy.stripe.com/test_28E4gA9Fw1QX5Krdpd9bO04",
+    "team_annual": "https://buy.stripe.com/test_fZu7sM7xobrx4Gncl99bO05"
+  },
+  "createdAt": "2026-03-19T22:36:33.159Z"
+}

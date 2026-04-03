@@ -22,14 +22,14 @@
 
 import type { RatchetRun, Target, RatchetConfig, Click } from '../types.js';
 import type { Agent } from './agents/base.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 import type { LearningStore } from './learning.js';
 import type { ClickPhase, EngineCallbacks } from './engine.js';
 import { createInitialRun, requireNamedBranch } from './engine-utils.js';
 import type { TierGap } from './score-optimizer.js';
 import { analyzeScoreGaps } from './score-optimizer.js';
 import { executeClick } from './click.js';
-import { runScan } from '../commands/scan.js';
+import { runScan } from '../core/scanner';
 import * as git from './git.js';
 import { validateScope } from './scope.js';
 import { logger } from '../lib/logger.js';

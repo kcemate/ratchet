@@ -18,7 +18,7 @@ import {
   scoreDeadCode,
   aggregateAndSortIssues,
 } from '../core/scan-scorers.js';
-import type { CategoryResult, IssueType } from '../commands/scan.js';
+import type { CategoryResult, IssueType } from '../core/scanner';
 
 describe('scoreCoverageRatio', () => {
   it('returns 0 when no test files and no test script', () => {

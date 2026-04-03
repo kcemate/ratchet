@@ -6,7 +6,7 @@
  *   RATCHET_REGISTRY_KEY  — API key; submission is skipped when absent
  */
 
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 
 export interface RegistrySubmission {
   repo_owner: string;

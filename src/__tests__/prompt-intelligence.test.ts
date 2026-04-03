@@ -3,7 +3,7 @@ import { buildConstraints, buildScoreContext } from '../core/agents/shell.js';
 import { buildBacklog } from '../core/issue-backlog.js';
 import { SUBCATEGORY_TIERS } from '../core/score-optimizer.js';
 import type { IssueTask } from '../core/issue-backlog.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 
 // ─── buildConstraints ────────────────────────────────────────────────────────
 

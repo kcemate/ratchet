@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
 import type { Target, BuildResult, HardenPhase } from '../../types.js';
-import type { ScanResult } from '../../commands/scan.js';
+import type { ScanResult } from '../../core/scanner';
 import type { Agent, AgentOptions } from './base.js';
 import { createAgentContext } from './base.js';
 import {
@@ -371,12 +371,6 @@ export async function buildIssuePlanPrompt(
     `- Do NOT rename variables, extract helpers, or "improve" unrelated code\n` +
     `- Do NOT add new dependencies or change public function signatures\n` +
     `- Do NOT change formatting, whitespace, or style in untouched lines\n\n` +
-    `INSTRUCTIONS:\n` +
-    `1. Read the target file to understand the code\n` +
-    `2. Fix ONLY the single highest-severity issue\n` +
-    `3. Make the smallest possible change that fixes it\n` +
-    (issues[0]?.count <= 10 ? `4. If the fix would require changing more than 30 lines, pick a smaller sub-issue instead\n\n` : '\n') +
-    `After making changes, output each modified file on its own line:\n` +
     `MODIFIED: <filepath>`
   );
 }

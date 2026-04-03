@@ -12,7 +12,7 @@ import { join } from 'path';
 import { readFileSync } from 'fs';
 
 import { initCommand } from './commands/init.js';
-import { scanCommand } from './commands/scan.js';
+import { scanCommand } from './core/scanner';
 import { reportCommand } from './commands/report.js';
 import { visionCommand } from './commands/vision.js';
 import { badgeCommand } from './commands/badge.js';
@@ -23,6 +23,7 @@ import { stopCommand } from './commands/stop.js';
 import { pushCommand } from './commands/push.js';
 import { quickFixCommand } from './commands/quick-fix.js';
 import { registerGraphCommand } from './commands/graph.js';
+import { torqueCommand } from './commands/torque.js';
 
 // Read version from package.json
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,6 +59,11 @@ program.addCommand(statusCommand());
 program.addCommand(logCommand());
 program.addCommand(stopCommand());
 program.addCommand(pushCommand());
+program.addCommand(torqueCommand());
+const torqueAlias = torqueCommand();
+torqueAlias.name('torque');
+(torqueAlias as unknown as { _hidden: boolean })._hidden = true;
+program.addCommand(torqueAlias);
 program.addCommand(quickFixCommand());
 registerGraphCommand(program);
 

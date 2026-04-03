@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { classifyFinding, routeDeepFix, MECHANICAL_SUBCATEGORIES } from '../core/deep-fix-router.js';
 import type { Provider } from '../core/providers/base.js';
 import { AnthropicProvider } from '../core/providers/anthropic.js';
-import type { IssueType } from '../commands/scan.js';
+import type { IssueType } from '../core/scanner';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildClickContext } from '../core/context-pruner.js';
 import { diffScans, getIncrementalIssues } from '../core/scan-diff.js';
-import type { ScanResult, IssueType } from '../commands/scan.js';
+import type { ScanResult, IssueType } from '../core/scanner';
 import type { IssueTask } from '../core/issue-backlog.js';
 
 // Minimal ScanResult factory for tests

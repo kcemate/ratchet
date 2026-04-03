@@ -14,7 +14,7 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 import { logger } from '../lib/logger.js';
 
 // Stub badge URL helpers (full implementation in ratchet-pro via credentials)

@@ -7,7 +7,7 @@
  */
 
 import type { SupportedLanguage } from './language-rules.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 
 export type { ScanResult };
 

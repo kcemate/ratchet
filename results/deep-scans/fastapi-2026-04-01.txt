@@ -1,0 +1,61 @@
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.3.1] injecting env (2) from ../../../Users/giovanni/Projects/ratchet/.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+🔧 Ratchet Scan — Production Readiness
+
+Your app: deep-scan-tmp
+Score:    68/100  |  Issues: 2529 found
+
+  🧪 Testing             19/25
+     Coverage ratio           8/8     587 test files, 118% ratio
+     Edge case depth          9/9     274 edge/error test cases
+     Test quality             2/8     2137 test cases, low assertion density
+  🔒 Security            8/15
+     Secrets & env vars       0/3     4 potential secrets
+     Input validation         4/6     Zod/validation on 126 files
+     Auth & rate limiting     4/6     auth middleware, rate limiting
+  📝 Type Safety         9/15
+     Strict config            7/7     mypy in pyproject.toml
+     Any type count           2/8     501 any types (high)
+  ⚠️  Error Handling     13/20
+     Coverage                 1/8     46 try/catch (9% async coverage)
+     Empty catches            5/5     no empty catch blocks
+     Structured logging       7/7     structured logger only (1 calls)
+  ⚡ Performance          10/10
+     Async patterns           3/3     no await-in-loop
+     Console cleanup          5/5     no console.log in src
+     Import hygiene           2/2     clean imports
+  📖 Code Quality        9/15
+     Function length          4/4     short functions
+     Line length              1/4     355 long lines
+     Dead code                2/4     0 commented-out lines, 15 TODOs
+     Duplication              0/3     992 repeated lines (excessive)
+
+  📋 Issues Found: 2529
+     447 async functions without error handling (high)
+     213 route files without validation (high)
+     4 hardcoded secrets (high)
+     992 repeated code lines (medium)
+     501 Any type usage (medium)
+     1 missing auth/security controls (medium)
+     1 functions >50 lines or high complexity (medium)
+     355 line >120 chars (low)
+     ... and 1 more issue type
+
+  ⚠ Cross-cutting issues detected:
+     Coverage (447 hits across 291 files) — needs --guards refactor or --architect
+     Any type count (501 hits across 24 files) — needs --guards refactor or --architect
+     Line length (355 hits across 16 files) — needs --guards refactor or --architect
+
+  ✅ Single-file issues (fixable with normal torque):
+     Input validation (213 in individual files)
+     Secrets & env vars (4 in individual files)
+     Duplication (992 in individual files)
+     Auth & rate limiting (1 in individual files)
+     Function length (1 in individual files)
+     Dead code (15 in individual files)
+
+  💡 Recommended: ratchet torque --plan-first --guards refactor -c 5
+
+Run 'npx ratchet fix' to improve your score.
+

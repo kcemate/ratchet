@@ -11,7 +11,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { ScanEngine, ScanEngineOptions } from '../scan-engine.js';
-import type { ScanResult, CategoryResult } from '../../commands/scan.js';
+import type { ScanResult, CategoryResult } from '../../core/scanner';
 import type { Finding } from '../normalize.js';
 import { getRuleBySubcategory } from '../finding-rules.js';
 import {
@@ -71,6 +71,14 @@ import {
 } from '../scan-scorers.js';
 import { logger } from '../../lib/logger.js';
 import { detectProjectLanguage } from '../detect-language.js';
+import { detectFrameworks } from '../framework-detector.js';
+import { adjustScoreForFrameworks, Framework } from '../framework-profiles.js';
+import { detectFrameworks } from '../framework-detector.js';
+import { adjustScoreForFrameworks, Framework } from '../framework-profiles.js';
+
+type ScoringCategory = 'Testing' | 'Security' | 'Type Safety' | 'Error Handling' | 'Performance' | 'Code Quality';
+import { detectFrameworks } from '../framework-detector.js';
+import { adjustScoreForFrameworks, Framework } from '../framework-profiles.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -952,6 +960,8 @@ export class ClassicEngine implements ScanEngine {
     const prodFiles = filterByClass(scoringFiles, fileClassifications, 'production');
 
     const lang: SupportedLanguage = options.lang ?? detectProjectLanguage(cwd);
+    const detectedFrameworks: Framework[] = detectFrameworks(cwd);
+    console.log(`Detected frameworks: ${detectedFrameworks.map(f => f.name).join(', ') || 'none'}`);
 
     const categories: CategoryResult[] = [
       scoreTests(allFiles, contents, cwd, lang),
@@ -962,11 +972,29 @@ export class ClassicEngine implements ScanEngine {
       scoreCodeQuality(scoringFiles, contents),
     ];
 
-    const total = categories.reduce((sum, c) => sum + c.score, 0);
-    const maxTotal = categories.reduce((sum, c) => sum + c.max, 0);
-    const { totalIssuesFound, issuesByType } = aggregateAndSortIssues(categories);
+    // Apply framework-aware scoring adjustments
+    const adjustedCategories: CategoryResult[] = categories.map(cat => {
+      let adjustedScore = cat.score;
+      
+      // Adjust score based on detected frameworks
+      if (detectedFrameworks.length > 0) {
+        adjustedScore = adjustScoreForFrameworks(detectedFrameworks, cat.name as ScoringCategory, cat.score);
+      }
+      
+      // If no adjustment, keep original score
+      return {
+        ...cat,
+        score: Math.round(adjustedScore),
+        summary: [
+          cat.summary,
+          detectedFrameworks.length > 0
+            ? `(Framework adjustment: ${detectedFrameworks.map(f => f.name).join(', ')})`
+            : undefined,
+        ].filter(Boolean).join(', '),
+      };
+    });
 
-    return { projectName, total, maxTotal, categories, totalIssuesFound, issuesByType };
+    return { projectName, total: adjustedCategories.reduce((sum, c) => sum + c.score, 0), maxTotal: adjustedCategories.reduce((sum, c) => sum + c.max, 0), categories: adjustedCategories, totalIssuesFound: adjustedCategories.reduce((sum, c) => sum + c.issuesFound, 0), issuesByType };
   }
 
   /**

@@ -1,4 +1,4 @@
-import type { ScanResult, IssueType } from '../commands/scan.js';
+import type { ScanResult, IssueType } from '../core/scanner';
 
 export interface ScanDiff {
   /** Issues that are new in the after scan (not in before) */

@@ -6,7 +6,7 @@
  * conversion, plus score-merging logic for hybrid classic+deep runs.
  */
 
-import type { ScanResult, CategoryResult, SubCategory, IssueType } from '../commands/scan.js';
+import type { ScanResult, CategoryResult, SubCategory, IssueType } from '../core/scanner';
 import { RULE_REGISTRY, getRuleBySubcategory } from './finding-rules.js';
 
 // ---------------------------------------------------------------------------

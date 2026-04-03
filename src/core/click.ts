@@ -22,9 +22,8 @@ import { selectModel } from '../lib/model-router.js';
 import { applyTransforms } from './transforms/base.js';
 import { transformRegistry, tagFindingsWithTransforms } from './transforms/registry.js';
 import type { Finding } from './normalize.js';
-import { generateIntentPlan } from './intent-planner.js';
 import { validatePlan } from './plan-first.js';
-import { applyIntentPlan } from './smart-applier.js';
+import type { IntentPlan } from './smart-applier.js';
 
 export interface ClickContext {
   clickNumber: number;
@@ -60,6 +59,10 @@ export interface ClickContext {
   contextPruning?: boolean;
   /** Scan result for context pruning — required when contextPruning is true */
   scanResult?: import('../commands/scan.js').ScanResult;
+  /**
+   * AST-only mode (free tier): skip LLM path entirely, only apply deterministic transforms.
+   */
+  astOnlyMode?: boolean;
   onPhase?: (phase: ClickPhase) => void | Promise<void>;
 }
 
@@ -103,6 +106,25 @@ export function classifyRollbackReason(reason?: string): RollbackReason | undefi
 }
 
 /** Determine the ClickEconomics outcome from rolled_back state and reason. */
+/**
+ * Sort AST-transformable findings by file density (most issues per file first),
+ * then limit to the top N files to maximise score impact per click.
+ */
+function rankFilesByDensity(findings: Finding[], topN = 3): Finding[] {
+  if (findings.length === 0) return findings;
+  const fileCounts = new Map<string, number>();
+  for (const f of findings) {
+    if (f.file) fileCounts.set(f.file, (fileCounts.get(f.file) ?? 0) + 1);
+  }
+  const topFiles = new Set(
+    [...fileCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, topN)
+      .map(([file]) => file),
+  );
+  return findings.filter(f => f.file && topFiles.has(f.file));
+}
+
 export function determineOutcome(rolledBack: boolean, rollbackReason?: string): ClickEconomics['outcome'] {
   if (!rolledBack) return 'landed';
   if (!rollbackReason) return 'rolled-back';
@@ -230,8 +252,8 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
 
         tagFindingsWithTransforms(syntheticFindings);
 
-        const transformableFindings = syntheticFindings.filter(
-          f => f.fixStrategy === 'ast' && f.file,
+        const transformableFindings = rankFilesByDensity(
+          syntheticFindings.filter(f => f.fixStrategy === 'ast' && f.file),
         );
 
         if (transformableFindings.length > 0) {
@@ -297,78 +319,19 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       }
     }
 
-    // 1.5. Intent Planner + Plan-First validation pass (Layer 1.5)
-    // For unhandled findings with file locations, generate an IntentPlan, validate it,
-    // and apply it deterministically — without invoking the LLM agent.
-    // Falls through gracefully on any error.
-    if (!astIsAstOnlyClick && ctx.scanResult && issues && issues.length > 0) {
-      try {
-        // Build unhandled synthetic findings: those not already covered by AST transforms
-        const unhandledFindings: Finding[] = [];
-        for (const issue of issues) {
-          if (astHandledIssueKeys.has(`${issue.category}::${issue.subcategory}`)) continue;
-          const issueType = ctx.scanResult.issuesByType.find(
-            it => it.category === issue.category && it.subcategory === issue.subcategory,
-          );
-          const locations = issueType?.locations ?? [];
-          for (const loc of locations.slice(0, 1)) { // one file per issue to stay atomic
-            unhandledFindings.push({
-              category: issue.category,
-              subcategory: issue.subcategory,
-              severity: issue.severity,
-              message: issue.description,
-              confidence: 0.8,
-              source: 'classic',
-              file: loc,
-            });
-          }
-        }
-
-        let intentAppliedCount = 0;
-        for (const finding of unhandledFindings.slice(0, 3)) { // cap to keep clicks fast
-          if (!finding.file) continue;
-          const absFilePath = resolve(cwd, finding.file);
-          let source: string;
-          try {
-            source = await readFile(absFilePath, 'utf8');
-          } catch {
-            continue;
-          }
-
-          const plan = await generateIntentPlan(finding, source);
-          if (!plan) continue;
-
-          const validation = await validatePlan(plan, cwd, finding.file);
-          if (!validation.valid) {
-            logger.debug(
-              `[ratchet] ⚠ Plan validation failed for ${finding.file}: ${validation.errors.join('; ')}`,
-            );
-            continue;
-          }
-
-          const applyResult = await applyIntentPlan(absFilePath, plan);
-          if (applyResult.success && applyResult.modifiedSource !== null) {
-            await writeFile(absFilePath, applyResult.modifiedSource, 'utf8');
-            astHandledIssueKeys.add(`${finding.category}::${finding.subcategory}`);
-            intentAppliedCount++;
-          }
-        }
-
-        if (intentAppliedCount > 0) {
-          logger.info(`[ratchet] 🎯 Intent plans validated and applied to ${intentAppliedCount} finding(s)`);
-          const allHandled = issues.every(
-            iss => astHandledIssueKeys.has(`${iss.category}::${iss.subcategory}`),
-          );
-          if (allHandled) {
-            astIsAstOnlyClick = true;
-            analysis = 'Intent plans applied (no LLM required)';
-            proposal = `intent: validated and applied ${intentAppliedCount} plan(s)`;
-            buildResult = { success: true, output: 'intent plans', filesModified: [] };
-            agentEndMs = Date.now();
-          }
-        }
-      } catch (err) {
-        logger.debug({ err }, '[ratchet] Intent planner pass error — falling through to LLM');
+    // AST-only mode (free tier): skip LLM path if AST couldn't handle everything.
+    // Detect APIAgent by checking for clickGuards property (free engine marker).
+    const isAstOnlyMode = ctx.astOnlyMode ?? ('clickGuards' in ctx.agent);
+    if (!astIsAstOnlyClick && isAstOnlyMode) {
+      if (astHandledIssueKeys.size > 0) {
+        astIsAstOnlyClick = true;
+        analysis = 'AST transforms applied (partial — astOnlyMode skipped LLM for remaining issues)';
+      } else {
+        analysis = 'AST-only mode: no applicable transforms for remaining issues';
+        proposal = 'ast-only: no transforms matched';
+        buildResult = { success: true, output: 'no-op', filesModified: [] };
+        agentEndMs = Date.now();
+        astIsAstOnlyClick = true;
       }
     }
 
@@ -457,6 +420,32 @@ export async function executeClick(ctx: ClickContext): Promise<ClickOutcome> {
       }
     }
     } // end LLM agent path (else branch of astIsAstOnlyClick)
+
+    // Plan-first validation: verify that all files the agent claims to have modified
+    // actually exist on disk. Guards against agents that report phantom file changes.
+    if (!rolledBack && buildResult.success && buildResult.filesModified.length > 0) {
+      const minPlan: IntentPlan = {
+        action: 'replace',
+        targetLines: [1, 1],
+        description: '',
+        pattern: '',
+        replacement_intent: '',
+        imports_needed: [],
+        confidence: 1.0,
+      };
+      for (const fp of buildResult.filesModified) {
+        const validation = await validatePlan(minPlan, cwd, fp);
+        if (!validation.valid) {
+          logger.warn(
+            `[ratchet] ⚠ Plan-first: modified file not found on disk: ${fp} — rolling back`,
+          );
+          rollbackReason = 'plan-first: file not found';
+          await rollback(cwd, clickNumber, stashCreated);
+          rolledBack = true;
+          break;
+        }
+      }
+    }
 
     if (!rolledBack && buildResult.success && !testsPassed) {
       // Click guards: reject over-aggressive changes before running tests

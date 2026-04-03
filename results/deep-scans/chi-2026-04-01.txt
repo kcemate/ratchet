@@ -1,0 +1,61 @@
+◇ injecting env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+◇ injecting env (2) from ../../../Users/giovanni/Projects/ratchet/.env // tip: ⌘ enable debugging { debug: true }
+
+🔧 Ratchet Scan — Production Readiness
+
+Your app: deep-scan-tmp
+Score:    71/100  |  Issues: 219 found
+
+  🧪 Testing             18.5/25
+     Coverage ratio           7.5/8   21 test files, 40% ratio
+     Edge case depth          3/9     5 edge/error test cases
+     Test quality             8/8     3.4 assertions per test
+  🔒 Security            4/15
+     Secrets & env vars       2/3     no hardcoded secrets
+     Input validation         0/6     no input validation detected
+     Auth & rate limiting     2/6     rate limiting only
+  📝 Type Safety         13/15
+     Strict config            7/7     Go compiler enforces types
+     Any type count           6/8     15 any types (low density)
+  ⚠️  Error Handling     10.5/20
+     Coverage                 1/8     6 try/catch (9% async coverage)
+     Empty catches            4.5/5   1 empty catch
+     Structured logging       5/7     structured logger + 2 console calls
+  ⚡ Performance          10/10
+     Async patterns           3/3     no await-in-loop
+     Console cleanup          5/5     no console.log in src
+     Import hygiene           2/2     clean imports
+  📖 Code Quality        15/15
+     Function length          4/4     no functions detected
+     Line length              4/4     5 long lines
+     Dead code                2/4     7 commented-out lines, 2 TODOs
+     Duplication              3/3     66 repeated lines
+
+  📋 Issues Found: 219
+     62 exported functions without if err != nil checks (high)
+     32 source files without tests (high)
+     27 route files without validation (high)
+     1 ignored errors (_ = func()) (high)
+     66 repeated code lines (medium)
+     15 interface{} or any usage (medium)
+     2 missing auth/security controls (medium)
+     9 dead code indicators (TODO, commented code) (low)
+     ... and 1 more issue type
+
+  ⚠ Cross-cutting issues detected:
+     Coverage ratio (32 hits across 53 files) — needs --guards refactor or --architect
+     Any type count (15 hits across 10 files) — needs --guards refactor or --architect
+     Line length (5 hits across 4 files) — needs --guards refactor or --architect
+
+  ✅ Single-file issues (fixable with normal torque):
+     Coverage (62 in individual files)
+     Input validation (27 in individual files)
+     Empty catches (1 in individual files)
+     Duplication (66 in individual files)
+     Auth & rate limiting (2 in individual files)
+     Dead code (9 in individual files)
+
+  💡 Recommended: ratchet torque --plan-first --guards refactor -c 5
+
+Run 'npx ratchet fix' to improve your score.
+

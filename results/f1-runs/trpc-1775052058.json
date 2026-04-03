@@ -1,0 +1,12 @@
+{
+  "repo": "https://github.com/trpc/trpc.git",
+  "name": "trpc",
+  "scoreBefore": 58,
+  "scoreAfter": 58,
+  "delta": 0,
+  "commitsLanded": 1,
+  "torqueExit": 0,
+  "status": "no-delta",
+  "timestamp": "2026-04-01T14:01:45.762994Z",
+  "workerVersion": "f1-v2"
+}

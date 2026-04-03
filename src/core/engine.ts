@@ -11,12 +11,12 @@ import {
   filterBacklogByMode,
 } from './issue-backlog.js';
 import { buildScoreOptimizedBacklog, isSweepable } from './score-optimizer.js';
-import { routeIssues } from './issue-router.js';
+import { routeIssues, hasASTTransformMatch } from './issue-router.js';
 import { executeClick } from './click.js';
 import { SwarmExecutor } from './swarm.js';
 import * as git from './git.js';
-import type { ScanResult } from '../commands/scan.js';
-import { runScan } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
+import { runScan } from '../core/scanner';
 import type { LearningStore } from './learning.js';
 import { clearCache as clearGitNexusCache, detectChanges, reindex } from './gitnexus.js';
 import { mergeResults, removeResolvedFindings } from './normalize.js';
@@ -464,14 +464,11 @@ async function initializeRun(options: EngineRunOptions): Promise<{
   if (currentScan) {
     await callbacks.onScanComplete?.(currentScan);
     previousTotal = currentScan.total;
-    const rawBacklog = scoreOptimized
+    const backlog = scoreOptimized
       ? buildScoreOptimizedBacklog(currentScan, focusCategory)
       : buildBacklog(currentScan);
     // Enrich backlog with blast-radius risk scores from GitNexus
-    enrichBacklogWithRisk(rawBacklog, cwd);
-    // Route issues based on agent capability — APIAgent only receives torque/trivial issues
-    const agentType: 'api' | 'shell' = 'clickGuards' in options.agent ? 'api' : 'shell';
-    const backlog = routeIssues(rawBacklog, agentType);
+    enrichBacklogWithRisk(backlog, cwd);
     backlogGroups = groupBacklogBySubcategory(backlog);
   }
 
@@ -708,14 +705,23 @@ async function postClickRescan(
 
       await callbacks.onClickScoreUpdate?.(clickNumber, state.previousTotal, newTotal, delta);
 
+      // Free-tier reframe: when score delta is 0 but AST transforms ran, surface concrete fixes
+      if (delta === 0 && click.proposal?.startsWith('ast:') && click.filesModified.length > 0) {
+        const astMatch = click.proposal.match(/applied (\d+) deterministic fixes to (\d+) file/);
+        const fixCount = astMatch ? parseInt(astMatch[1]!, 10) : click.filesModified.length;
+        logger.info(
+          `[ratchet] Score: ${state.previousTotal} \u2192 ${newTotal} | ` +
+          `\ud83d\udd27 Applied ${fixCount} deterministic fix${fixCount !== 1 ? 'es' : ''} ` +
+          `(${click.filesModified.length} file${click.filesModified.length !== 1 ? 's' : ''} modified)`,
+        );
+      }
+
       // Update backlog from fresh scan
       state.previousTotal = newTotal;
       state.currentScan = newScan;
-      const rawNewBacklog = scoreOptimized
+      const newBacklog = scoreOptimized
         ? buildScoreOptimizedBacklog(newScan, focusCategory)
         : buildBacklog(newScan);
-      const agentTypeForUpdate: 'api' | 'shell' = 'clickGuards' in agent ? 'api' : 'shell';
-      const newBacklog = routeIssues(rawNewBacklog, agentTypeForUpdate);
       state.backlogGroups = groupBacklogBySubcategory(newBacklog);
     }
   } catch {
@@ -1222,6 +1228,21 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
   const { run, state, incrementalScanner, baselineFailures } = await initializeRun(options);
 
+  // Feasibility gate: for APIAgent, filter the initial backlog to only issues it can handle.
+  // APIAgent budget: 1 file, 20 lines per click — skip anything larger.
+  const isAPIAgent = 'clickGuards' in agent;
+  if (isAPIAgent && state.backlogGroups.length > 0) {
+    const flatBacklog = state.backlogGroups.flat();
+    const feasibility = routeIssues(flatBacklog, 'api');
+    if (feasibility.skipped.length > 0) {
+      logger.info(
+        `[ratchet] 🚦 Feasibility gate: ${feasibility.eligible.length} eligible, ` +
+        `${feasibility.skipped.length} skipped (exceed APIAgent budget)`,
+      );
+    }
+    state.backlogGroups = groupBacklogBySubcategory(feasibility.eligible);
+  }
+
   // Expose the live run object to the caller (e.g. for signal handler checkpointing)
   callbacks.onRunInit?.(run);
 
@@ -1359,6 +1380,20 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             continue;
           }
           clickIssues = prevalidation.validIssues;
+        }
+      }
+
+      // Zero-delta gate (APIAgent / free tier): if none of the issues have a registered
+      // AST transform, the free engine can't do anything useful — skip without spending a click.
+      if (isAPIAgent && clickIssues && clickIssues.length > 0) {
+        const hasAnyAst = clickIssues.some(issue => hasASTTransformMatch(issue));
+        if (!hasAnyAst) {
+          run.skippedClicks = (run.skippedClicks ?? 0) + 1;
+          logger.info(
+            `[ratchet] ⏭ Zero-delta gate: skipping click — no scoreable AST transforms available for free engine`,
+          );
+          i--;
+          continue;
         }
       }
 
@@ -1516,6 +1551,19 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         // APIAgent (non-Anthropic) can only do tight/atomic edits — never escalate to sweep/architect
         const isAPIAgent = 'clickGuards' in agent;
         await checkStallAndEscalate(i, clicks, state, hardenMode, escalateEnabled && !isAPIAgent, callbacks, focusCategory);
+
+        // Re-apply feasibility gate after backlog refresh so APIAgent never sees over-budget issues
+        if (isAPIAgent && state.backlogGroups.length > 0) {
+          const flatBacklog = state.backlogGroups.flat();
+          const feasibility = routeIssues(flatBacklog, 'api');
+          if (feasibility.skipped.length > 0) {
+            logger.info(
+              `[ratchet] 🚦 Feasibility gate (post-rescan): ${feasibility.eligible.length} eligible, ` +
+              `${feasibility.skipped.length} skipped`,
+            );
+          }
+          state.backlogGroups = groupBacklogBySubcategory(feasibility.eligible);
+        }
 
         // Post-click async reindex: keep GitNexus graph fresh for subsequent clicks
         if (!rolled_back && click.testsPassed) {

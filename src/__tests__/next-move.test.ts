@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateNextMoveRecommendation } from '../core/score-optimizer.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 
 function makeScan(overrides: Partial<ScanResult> & { total: number }): ScanResult {
   return {

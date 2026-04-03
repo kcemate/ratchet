@@ -2,8 +2,8 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 import { logger } from '../lib/logger.js';
-import type { ScanResult } from '../commands/scan.js';
-import { runScan } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
+import { runScan } from '../core/scanner';
 import {
   TEST_PATTERNS,
   LOOP_DB_API_PATTERN,

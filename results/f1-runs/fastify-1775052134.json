@@ -1,0 +1,12 @@
+{
+  "repo": "https://github.com/fastify/fastify.git",
+  "name": "fastify",
+  "scoreBefore": 73,
+  "scoreAfter": 73,
+  "delta": 0,
+  "commitsLanded": 1,
+  "torqueExit": 0,
+  "status": "no-delta",
+  "timestamp": "2026-04-01T14:02:40.775736Z",
+  "workerVersion": "f1-v2"
+}

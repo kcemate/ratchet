@@ -22,7 +22,7 @@ import {
 } from '../core/normalize.js';
 import { RULE_REGISTRY, getRuleBySubcategory } from '../core/finding-rules.js';
 import { ClassicEngine } from '../core/engines/classic.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 
 // ---------------------------------------------------------------------------
 // Fixtures

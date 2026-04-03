@@ -4,9 +4,9 @@
  */
 import { readFileSync } from 'fs';
 import { join, relative, basename, dirname } from 'path';
-import { runScan } from '../commands/scan.js';
+import { runScan } from '../core/scanner';
 import { findSourceFiles } from './scan-constants.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 import type { Provider } from './providers/base.js';
 
 // ── Types

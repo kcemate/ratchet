@@ -1,0 +1,53 @@
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+[dotenv@17.3.1] injecting env (2) from ../../../Users/giovanni/Projects/ratchet/.env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+🔧 Ratchet Scan — Production Readiness
+
+Your app: deep-scan-tmp
+Score:    77/100  |  Issues: 304 found
+
+  🧪 Testing             19/25
+     Coverage ratio           8/8     37 test files, 161% ratio
+     Edge case depth          9/9     56 edge/error test cases
+     Test quality             2/8     539 test cases, low assertion density
+  🔒 Security            2/15
+     Secrets & env vars       0/3     1 potential secret
+     Input validation         0/6     no input validation detected
+     Auth & rate limiting     2/6     auth middleware only
+  📝 Type Safety         11/15
+     Strict config            7/7     mypy in pyproject.toml
+     Any type count           4/8     69 any types (moderate-high)
+  ⚠️  Error Handling     20/20
+     Coverage                 8/8     55 try/catch blocks
+     Empty catches            5/5     no empty catch blocks
+     Structured logging       7/7     structured logger only (1 calls)
+  ⚡ Performance          10/10
+     Async patterns           3/3     no await-in-loop
+     Console cleanup          5/5     no console.log in src
+     Import hygiene           2/2     clean imports
+  📖 Code Quality        15/15
+     Function length          4/4     no functions detected
+     Line length              4/4     no long lines
+     Dead code                4/4     1 TODO
+     Duplication              2/3     231 repeated lines
+
+  📋 Issues Found: 304
+     1 hardcoded secrets (high)
+     231 repeated code lines (medium)
+     69 Any type usage (medium)
+     2 missing auth/security controls (medium)
+     1 dead code indicators (TODO, commented code) (low)
+
+  ⚠ Cross-cutting issues detected:
+     Any type count (69 hits across 10 files) — needs --guards refactor or --architect
+
+  ✅ Single-file issues (fixable with normal torque):
+     Secrets & env vars (1 in individual files)
+     Duplication (231 in individual files)
+     Auth & rate limiting (2 in individual files)
+     Dead code (1 in individual files)
+
+  💡 Recommended: ratchet torque --plan-first --guards refactor -c 5
+
+Run 'npx ratchet fix' to improve your score.
+

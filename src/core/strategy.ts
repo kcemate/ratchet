@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import { logger } from '../lib/logger.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 import type { RatchetRun, Click } from '../types.js';
 import type { AsyncWriter } from './async-writer.js';
 

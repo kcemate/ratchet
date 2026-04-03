@@ -13,7 +13,7 @@
  */
 
 import type { ScanEngine, ScanEngineOptions } from '../scan-engine.js';
-import type { ScanResult } from '../../commands/scan.js';
+import type { ScanResult } from '../../core/scanner';
 import type { Provider } from '../providers/base.js';
 import type { Finding } from '../normalize.js';
 import { normalizeFindings, mergeResults } from '../normalize.js';

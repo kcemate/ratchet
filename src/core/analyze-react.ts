@@ -3,7 +3,7 @@ import { existsSync } from 'fs';
 import { join, relative } from 'path';
 import { logger } from '../lib/logger.js';
 import { getImpact, getContext, queryFlows, isIndexed } from './gitnexus.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 import type { Target } from '../types.js';
 
 // ── Types

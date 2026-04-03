@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile, readdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import type { RatchetRun } from '../types.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 
 export const RUNS_DIR = '.ratchet/runs';
 

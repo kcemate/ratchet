@@ -1,0 +1,65 @@
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.3.1] injecting env (2) from ../../../Users/giovanni/Projects/ratchet/.env -- tip: ⚙️  override existing env vars with { override: true }
+
+🔧 Ratchet Scan — Production Readiness
+
+Your app: drizzle-root
+Score:    59/100  |  Issues: 11367 found
+
+  🧪 Testing             24.5/25
+     Coverage ratio           7.5/8   257 test files, 37% ratio
+     Edge case depth          9/9     153 edge/error test cases
+     Test quality             8/8     2.5 assertions per test
+  🔒 Security            11/15
+     Secrets & env vars       3/3     no hardcoded secrets, uses env vars
+     Input validation         6/6     validation on 65 files
+     Auth & rate limiting     2/6     auth middleware only
+  📝 Type Safety         5/15
+     Strict config            1/7     TypeScript (tsconfig parse error)
+     Any type count           4/8     2405 any types (moderate-high)
+  ⚠️  Error Handling     10.5/20
+     Coverage                 3/8     130 try/catch (34% async coverage)
+     Empty catches            4.5/5   1 empty catch
+     Structured logging       3/7     logger (83) + console (326)
+  ⚡ Performance          1/10
+     Async patterns           1/3     146 await-in-loop patterns
+     Console cleanup          0/5     315 console.log calls (excessive)
+     Import hygiene           0/2     18 import issues detected
+  📖 Code Quality        7/15
+     Function length          4/4     short functions
+     Line length              1/4     407 long lines
+     Dead code                0/4     461 commented-out lines, 84 TODOs
+     Duplication              0/3     6702 repeated lines (excessive)
+
+  📋 Issues Found: 11367
+     440 source files without tests (high)
+     247 async functions without error handling (high)
+     1 empty catch blocks (high)
+     6702 repeated code lines (medium)
+     2405 any types (medium)
+     146 await-in-loop patterns (medium)
+     138 functions >50 lines or high complexity (medium)
+     2 missing auth/security controls (medium)
+     ... and 5 more issue types
+
+  ⚠ Cross-cutting issues detected:
+     Coverage ratio (440 hits across 698 files) — needs --guards refactor or --architect
+     Coverage (247 hits across 74 files) — needs --guards refactor or --architect
+     Any type count (2405 hits across 235 files) — needs --guards refactor or --architect
+     Function length (138 hits across 24 files) — needs --guards refactor or --architect
+     Line length (407 hits across 104 files) — needs --guards refactor or --architect
+     Console cleanup (315 hits across 36 files) — needs --guards refactor or --architect
+
+  ✅ Single-file issues (fixable with normal torque):
+     Empty catches (1 in individual files)
+     Duplication (6702 in individual files)
+     Async patterns (146 in individual files)
+     Auth & rate limiting (2 in individual files)
+     Strict config (1 in individual files)
+     Dead code (545 in individual files)
+     Import hygiene (18 in individual files)
+
+  💡 Recommended: ratchet torque --plan-first --guards refactor -c 5
+
+Run 'npx ratchet fix' to improve your score.
+

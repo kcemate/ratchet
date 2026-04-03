@@ -4,7 +4,7 @@ import { enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog
 import { executeClick } from './click.js';
 import { SwarmExecutor } from './swarm.js';
 import * as git from './git.js';
-import { runScan } from '../commands/scan.js';
+import { runScan } from '../core/scanner';
 import { clearCache as clearGitNexusCache } from './gitnexus.js';
 import { resolveGuards } from './engine-guards.js';
 import type { EngineRunOptions, ClickPhase } from './engine.js';

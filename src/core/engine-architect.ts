@@ -3,7 +3,7 @@ import type { IssueTask } from './issue-backlog.js';
 import { buildArchitectPrompt } from './agents/shell.js';
 import { executeClick } from './click.js';
 import * as git from './git.js';
-import { runScan } from '../commands/scan.js';
+import { runScan } from '../core/scanner';
 import { clearCache as clearGitNexusCache, renameSymbol } from './gitnexus.js';
 import { buildGraphToolInstructions } from './gitnexus-tools.js';
 import { resolveGuards } from './engine-guards.js';

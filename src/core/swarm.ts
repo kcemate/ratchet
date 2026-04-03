@@ -26,8 +26,8 @@ import {
   recommendPersonalities,
 } from './swarm-memory.js';
 import { runTests } from './runner.js';
-import type { ScanResult } from '../commands/scan.js';
-import { runScan } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
+import { runScan } from '../core/scanner';
 import { logger } from '../lib/logger.js';
 
 const execFileAsync = promisify(execFile);

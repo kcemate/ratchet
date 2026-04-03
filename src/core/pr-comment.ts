@@ -1,4 +1,4 @@
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 
 // --- Emoji indicators ---
 

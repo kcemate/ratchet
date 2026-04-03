@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildSweepPrompt } from '../../src/core/agents/shell.js';
 import { chunk } from '../../src/core/engine.js';
 import { buildBacklog } from '../../src/core/issue-backlog.js';
-import type { ScanResult } from '../../src/commands/scan.js';
+import type { ScanResult } from '../../src/core/scanner';
 
 // --- buildSweepPrompt ---
 

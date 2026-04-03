@@ -1,0 +1,12 @@
+{
+  "repo": "https://github.com/sindresorhus/got.git",
+  "name": "got",
+  "scoreBefore": 64,
+  "scoreAfter": 64,
+  "delta": 0,
+  "commitsLanded": 1,
+  "torqueExit": 2,
+  "status": "no-delta",
+  "timestamp": "2026-04-01T22:05:45.795906Z",
+  "workerVersion": "f1-v2"
+}

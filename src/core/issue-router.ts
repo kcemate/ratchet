@@ -6,6 +6,7 @@
  *   - effort ≤ 2 (trivial/easy)
  *   - issues with specific file locations (not project-wide)
  *   - never coverage/test-related issues
+ *   - estimated work fits within budget (≤ APIAGENT_MAX_FILES files, ≤ APIAGENT_MAX_LINES lines)
  *
  * ShellAgent (pro tier) handles everything.
  */
@@ -13,6 +14,25 @@
 import type { IssueTask } from './issue-backlog.js';
 import { SUBCATEGORY_TIERS } from './score-optimizer.js';
 import { transformRegistry } from './transforms/registry.js';
+
+// ---------------------------------------------------------------------------
+// Budget constants
+// ---------------------------------------------------------------------------
+
+/** APIAgent maximum files per click */
+const APIAGENT_MAX_FILES = 1;
+/** APIAgent maximum lines per click */
+const APIAGENT_MAX_LINES = 20;
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface FeasibilityResult {
+  eligible: IssueTask[];
+  skipped: IssueTask[];
+  reasons: Map<string, string>;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -34,6 +54,19 @@ function isTestRelated(issue: IssueTask): boolean {
 function getEffortPerFix(issue: IssueTask): number {
   const tier = SUBCATEGORY_TIERS.find(t => t.name === issue.subcategory);
   return tier?.effortPerFix ?? 3;
+}
+
+/**
+ * Estimate the total work for this issue.
+ * linesNeeded  ≈ effortPerFix × count  (each occurrence takes ~effortPerFix lines)
+ * filesNeeded  ≈ number of distinct files (sweepFiles.length, min 1)
+ */
+export function estimateEffort(issue: IssueTask): { filesNeeded: number; linesNeeded: number } {
+  const effortPerFix = getEffortPerFix(issue);
+  const count = issue.count ?? 1;
+  const filesNeeded = Math.max(issue.sweepFiles?.length ?? 1, 1);
+  const linesNeeded = effortPerFix * count;
+  return { filesNeeded, linesNeeded };
 }
 
 /** Returns true if any registered AST transform matches this issue's subcategory or message. */
@@ -77,14 +110,52 @@ export function canFixWithAgent(issue: IssueTask, agentType: 'api' | 'shell'): b
 /**
  * Filter and sort the backlog for the given agent type.
  *
- * - For 'shell': returns the full backlog unchanged.
- * - For 'api': removes ineligible issues and sorts AST-matchable issues first
- *   (those have guaranteed fixes without requiring the LLM).
+ * - For 'shell': returns all issues as eligible, none skipped.
+ * - For 'api': removes ineligible issues, estimates effort, marks as SKIP_FREE if
+ *   estimated work exceeds the APIAgent budget (APIAGENT_MAX_FILES files, APIAGENT_MAX_LINES lines),
+ *   and sorts AST-matchable issues first (deterministic, guaranteed to land).
+ *
+ * Returns a FeasibilityResult with eligible, skipped, and per-issue skip reasons.
  */
-export function routeIssues(backlog: IssueTask[], agentType: 'api' | 'shell'): IssueTask[] {
-  if (agentType === 'shell') return backlog;
+export function routeIssues(backlog: IssueTask[], agentType: 'api' | 'shell'): FeasibilityResult {
+  if (agentType === 'shell') {
+    return { eligible: [...backlog], skipped: [], reasons: new Map() };
+  }
 
-  const eligible = backlog.filter(issue => canFixWithAgent(issue, agentType));
+  const eligible: IssueTask[] = [];
+  const skipped: IssueTask[] = [];
+  const reasons = new Map<string, string>();
+
+  const issueKey = (issue: IssueTask) => `${issue.category}::${issue.subcategory}`;
+
+  for (const issue of backlog) {
+    // Hard capability filter
+    if (!canFixWithAgent(issue, agentType)) {
+      skipped.push(issue);
+      const reason = isTestRelated(issue)
+        ? 'test-related issue'
+        : issue.fixMode !== 'torque'
+          ? `fixMode=${issue.fixMode} requires shell agent`
+          : (issue.sweepFiles?.length ?? 0) === 0
+            ? 'no file locations'
+            : 'effort too high';
+      reasons.set(issueKey(issue), `SKIP_FREE: ${reason}`);
+      continue;
+    }
+
+    // Effort estimation gate: skip if estimated work exceeds APIAgent budget
+    const { filesNeeded, linesNeeded } = estimateEffort(issue);
+    if (filesNeeded > APIAGENT_MAX_FILES || linesNeeded > APIAGENT_MAX_LINES) {
+      skipped.push(issue);
+      reasons.set(
+        issueKey(issue),
+        `SKIP_FREE: estimated effort too large (${filesNeeded} files, ${linesNeeded} lines > budget ${APIAGENT_MAX_FILES}/${APIAGENT_MAX_LINES})`,
+      );
+      continue;
+    }
+
+    eligible.push(issue);
+  }
 
   // Sort: AST-transform-matchable issues first (guaranteed fix), then by priority
   eligible.sort((a, b) => {
@@ -94,5 +165,5 @@ export function routeIssues(backlog: IssueTask[], agentType: 'api' | 'shell'): I
     return b.priority - a.priority;
   });
 
-  return eligible;
+  return { eligible, skipped, reasons };
 }

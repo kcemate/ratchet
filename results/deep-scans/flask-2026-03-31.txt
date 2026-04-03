@@ -1,0 +1,53 @@
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+[dotenv@17.3.1] injecting env (2) from ../../../Users/giovanni/Projects/ratchet/.env -- tip: 🛡️ auth for agents: https://vestauth.com
+
+🔧 Ratchet Scan — Production Readiness
+
+Your app: deep-scan-tmp
+Score:    71.5/100  |  Issues: 461 found
+
+  🧪 Testing             17/25
+     Coverage ratio           8/8     41 test files, 171% ratio
+     Edge case depth          7/9     39 edge/error test cases
+     Test quality             2/8     380 test cases, low assertion density
+  🔒 Security            3/15
+     Secrets & env vars       3/3     no hardcoded secrets, uses env vars
+     Input validation         0/6     no input validation detected
+     Auth & rate limiting     0/6     no auth/rate-limit/CORS detected
+  📝 Type Safety         7/15
+     Strict config            7/7     pyright in pyproject.toml
+     Any type count           0/8     250 any types (very high density)
+  ⚠️  Error Handling     19.5/20
+     Coverage                 8/8     45 try/catch blocks
+     Empty catches            4.5/5   1 empty catch
+     Structured logging       7/7     structured logger only (1 calls)
+  ⚡ Performance          10/10
+     Async patterns           3/3     no await-in-loop
+     Console cleanup          5/5     no console.log in src
+     Import hygiene           2/2     clean imports
+  📖 Code Quality        15/15
+     Function length          4/4     no functions detected
+     Line length              4/4     no long lines
+     Dead code                4/4     no dead code detected
+     Duplication              2/3     202 repeated lines
+
+  📋 Issues Found: 461
+     5 route files without validation (high)
+     1 bare except clauses (high)
+     250 Any type usage (medium)
+     202 repeated code lines (medium)
+     3 missing auth/security controls (medium)
+
+  ⚠ Cross-cutting issues detected:
+     Any type count (250 hits across 19 files) — needs --guards refactor or --architect
+
+  ✅ Single-file issues (fixable with normal torque):
+     Input validation (5 in individual files)
+     Empty catches (1 in individual files)
+     Duplication (202 in individual files)
+     Auth & rate limiting (3 in individual files)
+
+  💡 Recommended: ratchet torque --plan-first --guards refactor -c 5
+
+Run 'npx ratchet fix' to improve your score.
+

@@ -10,7 +10,7 @@ import { createRegistryRouter } from '../registry/routes.js';
 import { getDb, resetDb } from '../registry/db.js';
 import { createApiKey } from '../registry/api-keys.js';
 import { buildSubmission } from '../registry/client.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 
 // ── Test fixtures ──────────────────────────────────────────────────────────
 

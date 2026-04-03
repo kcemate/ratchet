@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'fs/promises';
 import { dirname, join } from 'path';
 import type { RatchetRun, Click } from '../types.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 import { formatDuration } from './utils.js';
 
 // ---------------------------------------------------------------------------

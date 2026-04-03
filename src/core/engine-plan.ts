@@ -2,7 +2,7 @@ import { join } from 'path';
 import { mkdir, writeFile } from 'fs/promises';
 import type { RatchetRun, Target, PlanResult } from '../types.js';
 import type { Agent } from './agents/base.js';
-import type { ScanResult } from '../commands/scan.js';
+import type { ScanResult } from '../core/scanner';
 import { buildPlanPrompt } from './agents/shell.js';
 import { logger } from '../lib/logger.js';
 

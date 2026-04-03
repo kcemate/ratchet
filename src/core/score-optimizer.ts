@@ -10,7 +10,7 @@
  * hard the fix is. Then it ranks by points_available / estimated_effort.
  */
 
-import type { ScanResult, CategoryResult } from '../commands/scan.js';
+import type { ScanResult, CategoryResult } from '../core/scanner';
 import type { IssueTask } from './issue-backlog.js';
 
 // ─── Tier Definitions
