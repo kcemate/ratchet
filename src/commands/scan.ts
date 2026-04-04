@@ -172,19 +172,13 @@ export function scanCommand(): Command {
       // Load scan config from .ratchet.yml if present
       let includeNonProduction = false;
       let cfgEngineMode: 'classic' | 'deep' | 'auto' = 'classic';
+      let ratchetConfig;
       try {
         const { loadConfig } = await import('../core/config.js');
-        const cfg = loadConfig(cwd);
-        includeNonProduction = cfg.scan?.includeNonProduction ?? false;
-        cfgEngineMode = (cfg.scan?.engine as 'classic' | 'deep' | 'auto' | undefined) ?? 'classic';
+        ratchetConfig = loadConfig(cwd);
+        includeNonProduction = ratchetConfig.scan?.includeNonProduction ?? false;
+        cfgEngineMode = (ratchetConfig.scan?.engine as 'classic' | 'deep' | 'auto' | undefined) ?? 'classic';
       } catch { /* use default */ }
-
-      // Resolve engine mode: --deep flag overrides --engine, which overrides config
-      const deepFlag = options['deep'] as boolean | undefined;
-      const engineOpt = options['engine'] as string | undefined;
-      const engineMode: 'classic' | 'deep' | 'auto' = deepFlag
-        ? 'deep'
-        : (engineOpt as 'classic' | 'deep' | 'auto' | undefined) ?? cfgEngineMode;
 
       // Resolve category filter
       const categoriesOpt = options['categories'] as string | undefined;
@@ -193,12 +187,12 @@ export function scanCommand(): Command {
       const budget = options['budget'] as number | undefined;
       const scanModel = options['scanModel'] as string | undefined;
 
-      // Load config for engine router
-      let ratchetConfig;
-      try {
-        const { loadConfig } = await import('../core/config.js');
-        ratchetConfig = loadConfig(cwd);
-      } catch { /* use default */ }
+      // Resolve engine mode: --deep flag overrides --engine, which overrides config
+      const deepFlag = options['deep'] as boolean | undefined;
+      const engineOpt = options['engine'] as string | undefined;
+      const engineMode: 'classic' | 'deep' | 'auto' = deepFlag
+        ? 'deep'
+        : (engineOpt as 'classic' | 'deep' | 'auto' | undefined) ?? cfgEngineMode;
 
       const engine = createEngine(engineMode, ratchetConfig, { scanModel });
 
