@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { scanCommand, type ScanResult, type CategoryThreshold } from '../core/scanner';
+import { scanCommand } from '../commands/scan.js';
+import { type ScanResult, type CategoryThreshold } from '../core/scanner';
 import { getExplanation, EXPLANATIONS } from '../core/explanations.js';
 
 function mockScanResult(overrides: Partial<ScanResult> = {}): ScanResult {

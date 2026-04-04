@@ -20,13 +20,13 @@ vi.mock('child_process', () => ({
   execSync: vi.fn(),
 }));
 
-vi.mock('../src/commands/scan.js', () => ({
+vi.mock('../src/core/scanner/runner.js', () => ({
   runScan: vi.fn(),
 }));
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { execSync } from 'child_process';
-import { runScan } from '../src/commands/scan.js';
+import { runScan } from '../src/core/scanner/runner.js';
 import { IncrementalScanner, analyzeFile, rebuildScanFromMetrics } from '../src/core/scan-cache.js';
 import type { PerFileMetrics } from '../src/core/scan-cache.js';
 

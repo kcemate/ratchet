@@ -37,9 +37,12 @@ describe('ModelRegistry.getModel', () => {
     expect(modelRegistry.getModel('scan', 'OpenAI')).toBe('kimi-k2:1t');
   });
 
-  it('tier override beats provider default', () => {
+  it('tier override beats provider default when no provider specified', () => {
     modelRegistry.setDefault('cheap', 'my-cheap-model');
-    expect(modelRegistry.getModel('sweep', 'OpenAI')).toBe('my-cheap-model');
+    // With provider specified, provider-specific model takes priority
+    expect(modelRegistry.getModel('sweep', 'OpenAI')).toBe('gpt-4o-mini');
+    // Without provider, tier override wins
+    expect(modelRegistry.getModel('sweep')).toBe('my-cheap-model');
   });
 
   it('per-task override beats tier override', () => {

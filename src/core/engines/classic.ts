@@ -11,8 +11,18 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { ScanEngine, ScanEngineOptions } from '../scan-engine.js';
-import type { ScanResult, CategoryResult } from '../../core/scanner';
+import type { ScanResult, CategoryResult, SubCategory, IssueType } from '../../core/scanner';
 import type { Finding } from '../normalize.js';
+
+const HIGH_SEVERITY_PATTERNS = /empty catch|hardcoded secret|sql injection|command injection|credential/i;
+const LOW_SEVERITY_PATTERNS = /documentation|comment|naming/i;
+
+function inferSeverity(sub: SubCategory): IssueType['severity'] {
+  const desc = sub.issuesDescription ?? sub.name;
+  if (HIGH_SEVERITY_PATTERNS.test(desc)) return 'high';
+  if (LOW_SEVERITY_PATTERNS.test(desc)) return 'low';
+  return 'medium';
+}
 import { getRuleBySubcategory } from '../finding-rules.js';
 import {
   LOOP_DB_API_PATTERN,
@@ -990,7 +1000,26 @@ export class ClassicEngine implements ScanEngine {
       };
     });
 
-    return { projectName, total: adjustedCategories.reduce((sum, c) => sum + c.score, 0), maxTotal: adjustedCategories.reduce((sum, c) => sum + c.max, 0), categories: adjustedCategories, totalIssuesFound: adjustedCategories.reduce((sum, c) => sum + c.issuesFound, 0), issuesByType };
+    // Derive issuesByType from subcategory data
+    const issuesByType: import('../scanner/types.js').IssueType[] = [];
+    for (const cat of adjustedCategories) {
+      for (const sub of cat.subcategories) {
+        if (sub.issuesFound > 0) {
+          issuesByType.push({
+            category: cat.name,
+            subcategory: sub.name,
+            count: sub.issuesFound,
+            description: sub.issuesDescription ?? sub.summary,
+            severity: inferSeverity(sub),
+            locations: sub.locations,
+          });
+        }
+      }
+    }
+
+    const totalIssuesFound = issuesByType.reduce((sum, i) => sum + i.count, 0);
+
+    return { projectName, total: adjustedCategories.reduce((sum, c) => sum + c.score, 0), maxTotal: adjustedCategories.reduce((sum, c) => sum + c.max, 0), categories: adjustedCategories, totalIssuesFound, issuesByType };
   }
 
   /**

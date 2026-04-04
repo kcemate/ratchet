@@ -200,7 +200,7 @@ describe('OpenAIProvider', () => {
 
 describe('LocalMLXProvider', () => {
   it('exposes default port constant', () => {
-    expect(LOCAL_MLX_DEFAULT_PORT).toBe(8899);
+    expect(LOCAL_MLX_DEFAULT_PORT).toBe(11434);
   });
 
   it('constructs with defaults', () => {
@@ -252,7 +252,7 @@ describe('LocalMLXProvider', () => {
     await p.sendMessage('prompt');
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
-    expect(body.model).toContain('ratchet-fix-fused-v2');
+    expect(body.model).toContain('qwen3:14b');
 
     vi.unstubAllGlobals();
   });

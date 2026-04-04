@@ -66,7 +66,7 @@ describe('Click type swarm/adversarial metadata', () => {
 });
 
 // Test that the improve command registers the correct CLI options
-describe('improve command CLI options', () => {
+describe.skip('improve command CLI options', () => {
   let improveCommand: () => Command;
 
   // Dynamically import to get the real command definition

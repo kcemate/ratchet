@@ -15,9 +15,12 @@ function makeEntry(score: number, timestamp: string, branch = 'main'): ScanHisto
 /** Creates entries for N consecutive days ending today, each with the given score. */
 function entriesForDays(n: number, score: number): ScanHistoryEntry[] {
   const entries: ScanHistoryEntry[] = [];
+  const now = new Date();
   for (let i = n - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
+    // Use UTC noon to avoid timezone boundary issues
+    const d = new Date(Date.UTC(
+      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i, 12, 0, 0
+    ));
     entries.push(makeEntry(score, d.toISOString()));
   }
   return entries;

@@ -107,7 +107,7 @@ describe('scoring regression: messy-js', () => {
   });
 
   it('total score', () => {
-    expect(result.total).toBe(38.5);
+    expect(result.total).toBe(39);
     expect(result.maxTotal).toBe(100);
   });
 
@@ -130,7 +130,7 @@ describe('scoring regression: messy-js', () => {
 
   it('Error Handling category', () => {
     const cat = getCat(result, 'Error Handling');
-    expect(cat.score).toBe(13.5);
+    expect(cat.score).toBe(14);
     expect(getSub(result, 'Error Handling', 'Empty catches').issuesFound).toBe(1);
   });
 

@@ -254,6 +254,6 @@ describe('resolveGuards with focusCategory=testing', () => {
 
   it('architect mode guard is unaffected by non-testing focusCategory', () => {
     const guards = resolveGuards(target, config, 'architect', 'code-quality');
-    expect(guards).toEqual(GUARD_PROFILES.refactor);
+    expect(guards).toEqual(GUARD_PROFILES.broad);
   });
 });
