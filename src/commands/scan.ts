@@ -13,7 +13,182 @@ import { ClassicEngine } from '../core/engines/classic.js';
 import { createEngine } from '../core/engine-router.js';
 
 import { CategoryThreshold, GateResult, parseCategoryThreshold, evaluateGates, exitWithGateFailure, Baseline, loadBaseline, saveBaseline, deltaStr, runScan, RunScanOptions, ScanResult } from '../core/scanner';
-export { runScan } from '../core/scanner';
+export { runScan, ScanResult } from '../core/scanner';
+
+// --- Language detection ---
+
+type Language = 'ts' | 'js' | 'python' | 'go' | 'rust' | 'auto';
+
+const NON_TSJS_WARNING = (lang: string) =>
+  `Note: Ratchet scoring is optimized for TypeScript/JavaScript projects. ` +
+  `Some rules (console.log, any types, tsconfig) may not apply to ${lang} projects. ` +
+  `Language-specific scoring is coming soon.`;
+
+function detectLanguage(cwd: string): { language: 'ts' | 'js' | 'python' | 'go' | 'rust'; detected: boolean } {
+  if (existsSync(join(cwd, 'tsconfig.json'))) return { language: 'ts', detected: true };
+  if (existsSync(join(cwd, 'package.json'))) return { language: 'js', detected: true };
+  if (existsSync(join(cwd, 'pyproject.toml')) || existsSync(join(cwd, 'setup.py')))
+    return { language: 'python', detected: true };
+  if (existsSync(join(cwd, 'go.mod'))) return { language: 'go', detected: true };
+  if (existsSync(join(cwd, 'Cargo.toml'))) return { language: 'rust', detected: true };
+  return { language: 'ts', detected: false };
+}
+
+// --- Scan output renderers ---
+
+function renderDeductions(result: ScanResult, cwd: string): void {
+  printHeader('📋 Score Deductions');
+
+  let hasAnyDeductions = false;
+
+  for (const cat of result.categories) {
+    const catDeduction = cat.max - cat.score;
+    if (catDeduction <= 0) continue;
+
+    hasAnyDeductions = true;
+    process.stdout.write(
+      `\n  ${cat.emoji} ${chalk.bold(cat.name)}` +
+      `  ${chalk.dim(`${cat.score}/${cat.max} pts`)}` +
+      `  ${chalk.red(`(−${catDeduction} pts)`)}\n`,
+    );
+
+    for (const sub of cat.subcategories) {
+      if (sub.issuesFound === 0) continue;
+      const subDeduction = sub.max - sub.score;
+      const locations = sub.locations ?? [];
+      const desc = sub.issuesDescription ?? 'issue';
+
+      if (locations.length > 0) {
+        process.stdout.write(
+          `    ${chalk.dim(sub.name)}` +
+          (subDeduction > 0 ? `  ${chalk.red(`−${subDeduction} pts`)}` : '') +
+          `:\n`,
+        );
+        const shown = locations.slice(0, 12);
+        for (const loc of shown) {
+          const rel = loc.replace(cwd + '/', '').replace(cwd + '\\', '');
+          process.stdout.write(`      ${chalk.cyan(rel)} — ${chalk.dim(desc)}\n`);
+        }
+        if (locations.length > 12) {
+          process.stdout.write(chalk.dim(`      ... and ${locations.length - 12} more\n`));
+        }
+      } else {
+        process.stdout.write(
+          `    ${chalk.dim(sub.name)}` +
+          (subDeduction > 0 ? `  ${chalk.red(`−${subDeduction} pts`)}` : '') +
+          `:  ${chalk.dim(sub.summary)}\n`,
+        );
+      }
+    }
+  }
+
+  if (!hasAnyDeductions) {
+    process.stdout.write(chalk.green('\n  ✔ No deductions — perfect score!\n'));
+  }
+
+  process.stdout.write('\n');
+}
+
+function renderScan(result: ScanResult, opts?: { explain?: boolean; baseline?: Baseline | null }): void {
+  const showExplain = opts?.explain ?? false;
+  const baseline = opts?.baseline ?? null;
+  printHeader('🔧 Ratchet Scan — Production Readiness');
+  process.stdout.write(`Your app: ${chalk.cyan(result.projectName)}\n`);
+
+  const totalColor = scoreColor(result.total, result.maxTotal);
+  const issuesStr = result.totalIssuesFound > 0
+    ? chalk.dim(`  |  Issues: ${result.totalIssuesFound} found`)
+    : '';
+  process.stdout.write(`Score:    ${totalColor.bold(`${result.total}/${result.maxTotal}`)}${issuesStr}\n`);
+
+  if (baseline !== null) {
+    const scoreDiff = result.total - baseline.score;
+    const issuesDiff = result.totalIssuesFound - baseline.issues;
+    const issuesDiffStr = issuesDiff === 0 ? chalk.dim('—')
+      : issuesDiff > 0 ? chalk.red(`+${issuesDiff} issues`)
+      : chalk.green(`-${Math.abs(issuesDiff)} issues`);
+    process.stdout.write(
+      `Baseline: ${chalk.dim(`${baseline.score}/${result.maxTotal}`)}` +
+      `  |  Δ ${deltaStr(scoreDiff)} pts  |  ${issuesDiffStr}\n`,
+    );
+  }
+
+  process.stdout.write('\n');
+
+  for (const cat of result.categories) {
+    const color = scoreColor(cat.score, cat.max);
+    const label = `${cat.emoji} ${cat.name}`.padEnd(22);
+    const catDelta = baseline !== null && baseline.categories[cat.name] !== undefined
+      ? `  (${deltaStr(cat.score - baseline.categories[cat.name]!)})`
+      : '';
+    process.stdout.write(`  ${label} ${color.bold(`${cat.score}/${cat.max}`)}${catDelta}\n`);
+
+    for (const sub of cat.subcategories) {
+      const subColor = scoreColor(sub.score, sub.max);
+      const subLabel = sub.name.padEnd(24);
+      const subScore = `${sub.score}/${sub.max}`.padEnd(6);
+      process.stdout.write(`     ${chalk.dim(subLabel)} ${subColor(`${subScore}`)}  ${chalk.dim(sub.summary)}\n`);
+
+      if (showExplain) {
+        const explanation = getExplanation(sub.name);
+        if (explanation) {
+          process.stdout.write(`       ${chalk.cyan('Why?')} ${explanation.why}\n`);
+          process.stdout.write(`       ${chalk.green('Fix:')} ${explanation.fix}\n`);
+          if (explanation.example) {
+            for (const line of explanation.example.split('\n')) {
+              process.stdout.write(`       ${chalk.dim(line)}\n`);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (result.issuesByType.length > 0) {
+    process.stdout.write('\n');
+    process.stdout.write(`  ${chalk.bold(`📋 Issues Found: ${result.totalIssuesFound}`)}\n`);
+    const topIssues = result.issuesByType.slice(0, 8);
+    for (const issue of topIssues) {
+      const sevColor = severityColor(issue.severity);
+      process.stdout.write(`     ${issue.count} ${issue.description} ${sevColor(`(${issue.severity})`)}\n`);
+    }
+    if (result.issuesByType.length > 8) {
+      const remaining = result.issuesByType.length - 8;
+      process.stdout.write(chalk.dim(`     ... and ${remaining} more issue type${remaining !== 1 ? 's' : ''}`) + '\n');
+    }
+  }
+
+  const defaultGuards: ClickGuards = { maxFilesChanged: 3, maxLinesChanged: 40 };
+  const classifications = classifyIssues(result, defaultGuards);
+  if (classifications.length > 0) {
+    const summary = summarizeClassifications(classifications);
+    const crossAndArch = [...summary.crossCutting, ...summary.architectural];
+    if (crossAndArch.length > 0) {
+      process.stdout.write('\n');
+      process.stdout.write(chalk.yellow('  ⚠ Cross-cutting issues detected:') + '\n');
+      for (const c of crossAndArch) {
+        const hits = `${c.hitCount} hits across ${c.fileCount} file${c.fileCount !== 1 ? 's' : ''}`;
+        const rec = c.recommendation ? ` — ${c.recommendation}` : '';
+        process.stdout.write(`     ${c.subcategory} (${hits})${rec}\n`);
+      }
+    }
+    if (summary.singleFile.length > 0) {
+      process.stdout.write('\n');
+      process.stdout.write(chalk.green('  ✅ Single-file issues (fixable with normal torque):') + '\n');
+      for (const c of summary.singleFile) {
+        process.stdout.write(`     ${c.subcategory} (${c.hitCount} in individual files)\n`);
+      }
+    }
+    if (summary.hasAnyCrossCutting) {
+      process.stdout.write('\n');
+      process.stdout.write(chalk.cyan(`  💡 Recommended: ${summary.recommendedCommand}`) + '\n');
+    }
+  }
+
+  process.stdout.write('\n');
+  process.stdout.write(chalk.dim("Run 'npx ratchet fix' to improve your score.") + '\n');
+  process.stdout.write('\n');
+}
 
 export function scanCommand(): Command {
   const cmd = new Command('scan');
@@ -178,7 +353,9 @@ export function scanCommand(): Command {
         ratchetConfig = loadConfig(cwd);
         includeNonProduction = ratchetConfig.scan?.includeNonProduction ?? false;
         cfgEngineMode = (ratchetConfig.scan?.engine as 'classic' | 'deep' | 'auto' | undefined) ?? 'classic';
-      } catch { /* use default */ }
+      } catch (err) {
+        logger.warn({ err }, 'Failed to load .ratchet.yml config — using defaults');
+      }
 
       // Resolve category filter
       const categoriesOpt = options['categories'] as string | undefined;
