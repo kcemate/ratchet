@@ -38,6 +38,15 @@ import { probeRepo } from './repo-probe.js';
 import { runTests } from './runner.js';
 import { scanForProtectedPaths, logSafetyEvent } from './safety.js';
 
+/** Circuit breaker tracks consecutive / total failures and current strategy. */
+export interface CircuitBreakerState {
+  consecutiveFailures: number;
+  currentStrategy: 'standard' | 'architect' | 'sweep';
+  strategiesExhausted: string[];
+  totalFailures: number;
+  maxTotalFailures: number;
+}
+
 // Re-export public API from sub-modules
 export { nextGuardProfile, isGuardRejection } from './engine-guards.js';
 export { runArchitectEngine } from './engine-architect.js';
@@ -310,7 +319,7 @@ interface RunState {
   totalRolled: number;
   scoreAtMidpoint: number | undefined;
   escalated: boolean;
-  currentGuards: ClickGuards;
+  currentGuards: ClickGuards | null;
   currentGuardProfileName: string;
   allEconomics: ClickEconomics[];
   target: Target;

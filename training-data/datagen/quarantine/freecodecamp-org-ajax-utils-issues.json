@@ -1,0 +1,92 @@
+[
+  {
+    "file": "client/src/utils/ajax.ts",
+    "line": "10-14",
+    "category": "security",
+    "severity": "high",
+    "description": "Direct DOM manipulation with innerHTML can lead to XSS vulnerabilities when error messages contain user-controlled data.",
+    "suggested_fix": "Use textContent instead of innerHTML or properly sanitize the error message before insertion.",
+    "confidence": "high"
+  },
+  {
+    "file": "client/src/utils/ajax.ts",
+    "line": "20",
+    "category": "pattern",
+    "severity": "medium",
+    "description": "Inconsistent naming between 'ajax' export (which is actually getUrl) and the actual HTTP methods (get, post, etc.).",
+    "suggested_fix": "Rename 'ajax' export to 'getUrl' to match its actual implementation or document this unusual naming.",
+    "confidence": "high"
+  },
+  {
+    "file": "client/src/utils/ajax.ts",
+    "line": "40-60",
+    "category": "code-quality",
+    "severity": "medium",
+    "description": "Duplicated error handling pattern across all HTTP methods (get, post, patch, etc.).",
+    "suggested_fix": "Create a higher-order function to wrap HTTP methods with consistent error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "client/src/utils/ajax.ts",
+    "line": "40-60",
+    "category": "error-handling",
+    "severity": "medium",
+    "description": "Error re-throwing after handling might lead to double error handling in calling code.",
+    "suggested_fix": "Either handle the error completely here or let the caller handle it, but not both.",
+    "confidence": "medium"
+  },
+  {
+    "file": "client/src/utils/is-super-admin.ts",
+    "line": "5-8",
+    "category": "security",
+    "severity": "critical",
+    "description": "Unsafe JSON.parse on localStorage data without validation can lead to prototype pollution or injection attacks.",
+    "suggested_fix": "Use JSON.parse with try-catch and validate the structure of the parsed data.",
+    "confidence": "high"
+  },
+  {
+    "file": "client/src/path-parsers.ts",
+    "line": "10-15",
+    "category": "code-quality",
+    "severity": "medium",
+    "description": "Hardcoded base URLs in getUrl function makes it difficult to maintain and test different environments.",
+    "suggested_fix": "Move base URLs to configuration files or environment variables.",
+    "confidence": "high"
+  },
+  {
+    "file": "client/src/path-parsers.ts",
+    "line": "20-25",
+    "category": "security",
+    "severity": "medium",
+    "description": "Direct use of localStorage without validation in getAPIRequestMeta can expose sensitive headers.",
+    "suggested_fix": "Validate and sanitize user data before using it in headers.",
+    "confidence": "medium"
+  },
+  {
+    "file": "client/src/utils/error-messages.ts",
+    "line": "3-20",
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Hardcoded error messages might not be internationalized or customizable.",
+    "suggested_fix": "Consider moving error messages to a configuration or i18n system.",
+    "confidence": "medium"
+  },
+  {
+    "file": "client/src/utils/ajax.ts",
+    "line": "10-14",
+    "category": "error-handling",
+    "severity": "medium",
+    "description": "handleUnauthorized function doesn't properly handle the error case when isTesting is true.",
+    "suggested_fix": "Add proper error handling even in test mode, perhaps logging to console.",
+    "confidence": "medium"
+  },
+  {
+    "file": "client/src/utils/ajax.ts",
+    "line": "17-20",
+    "category": "pattern",
+    "severity": "low",
+    "description": "Inconsistent parameter naming between handleAxiosResponseError (displayIfDom) and handleAjaxErrorOnDom (no similar parameter).",
+    "suggested_fix": "Standardize parameter names across related functions.",
+    "confidence": "medium"
+  }
+]

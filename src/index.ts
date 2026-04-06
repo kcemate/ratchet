@@ -12,7 +12,7 @@ import { join } from 'path';
 import { readFileSync } from 'fs';
 
 import { initCommand } from './commands/init.js';
-import { scanCommand } from './core/scanner';
+import { scanCommand } from './commands/scan.js';
 import { reportCommand } from './commands/report.js';
 import { visionCommand } from './commands/vision.js';
 import { badgeCommand } from './commands/badge.js';

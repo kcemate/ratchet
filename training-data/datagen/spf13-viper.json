@@ -1,0 +1,83 @@
+[
+  {
+    "file": "viper.go",
+    "line": 283,
+    "category": "Production readiness",
+    "severity": "Critical",
+    "description": "The library code calls os.Exit(1) inside the WatchConfig goroutine when watcher creation fails. This terminates the entire application without allowing the caller to handle the error gracefully.",
+    "suggested_fix": "Instead of os.Exit(1), return the error via a channel to the caller or use a dedicated error handler callback function provided during initialization.",
+    "confidence": "High"
+  },
+  {
+    "file": "viper.go",
+    "line": 53,
+    "category": "Architecture",
+    "severity": "Medium",
+    "description": "The Viper struct is a 'God Object' containing configuration for file handling, environment variables, flags, key/value stores, encoding, logging, and watching. This violates the Single Responsibility Principle and makes the codebase difficult to test and maintain.",
+    "suggested_fix": "Refactor Viper into smaller, focused components (e.g., FileLoader, EnvLoader, FlagLoader, Merger) and have Viper act as a facade or coordinator.",
+    "confidence": "High"
+  },
+  {
+    "file": "remote.go",
+    "line": 119,
+    "category": "Performance",
+    "severity": "High",
+    "description": "WatchRemoteConfigOnChannel launches a goroutine with an infinite loop (for {}) that processes remote updates. There is no mechanism to stop this goroutine, leading to a goroutine leak.",
+    "suggested_fix": "Accept a context.Context parameter or return a cancellation function (e.g., func() error) to allow the caller to stop the watcher and release resources.",
+    "confidence": "High"
+  },
+  {
+    "file": "util.go",
+    "line": 1439,
+    "category": "Error handling",
+    "severity": "Medium",
+    "description": "In the deepSearch function, if an intermediate key exists but is not a map (e.g., a string value), the code silently overwrites that value with an empty map to continue the search. This results in silent data loss.",
+    "suggested_fix": "Check if the existing value is a map. If not, return an error or stop processing that path to avoid destroying existing configuration values.",
+    "confidence": "High"
+  },
+  {
+    "file": "viper.go",
+    "line": 880,
+    "category": "Error handling",
+    "severity": "Low",
+    "description": "In stringToIntConv, parsing errors from strconv.Atoi are swallowed and result in a nil value being returned in the map for that key. This makes debugging configuration parsing issues difficult.",
+    "suggested_fix": "Log a warning when parsing fails, or return an error so the caller knows the configuration format was invalid.",
+    "confidence": "Medium"
+  },
+  {
+    "file": "viper.go",
+    "line": 54,
+    "category": "Production readiness",
+    "severity": "Medium",
+    "description": "The documentation explicitly states Vipers are not safe for concurrent Get() and Set() operations. While documented, this is a significant limitation for a configuration registry often used in concurrent server environments.",
+    "suggested_fix": "Implement internal locking (sync.RWMutex) to protect access to the internal configuration maps, ensuring thread safety for reads and writes.",
+    "confidence": "High"
+  },
+  {
+    "file": "viper.go",
+    "line": 36,
+    "category": "Architecture",
+    "severity": "Low",
+    "description": "The package relies on a global singleton instance 'v' initialized in init(). This makes testing difficult as tests can interfere with each other by modifying the global state.",
+    "suggested_fix": "Encourage dependency injection by passing *Viper instances to components that need it, rather than relying on the global singleton accessors.",
+    "confidence": "High"
+  },
+  {
+    "file": "util.go",
+    "line": 1358,
+    "category": "Architecture",
+    "severity": "Low",
+    "description": "The insensitiviseMap function modifies the map keys while iterating over it. While safe in Go, this logic is complex and modifies the underlying data structure in-place, risking side effects if the map is shared.",
+    "suggested_fix": "Consider creating a new map for the lowercased keys to avoid modifying the input map in-place, ensuring the input data remains immutable.",
+    "confidence": "Medium"
+  },
+  {
+    "file": "viper.go",
+    "line": 1179,
+    "category": "Error handling",
+    "severity": "Low",
+    "description": "In mergeMaps, if type assertion fails (e.g., expecting a map but finding a scalar), the error is logged but processing continues. This results in a partial merge where valid data might be ignored.",
+    "suggested_fix": "Depending on strictness requirements, either return an error to indicate the merge failed or clearly document that invalid sub-trees are skipped.",
+    "confidence": "Medium"
+  }
+]

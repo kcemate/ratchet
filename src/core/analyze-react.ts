@@ -65,7 +65,7 @@ function topIssueFiles(scan: ScanResult, limit: number): string[] {
 
   for (const issue of scan.issuesByType) {
     for (const loc of (issue.locations ?? [])) {
-      const f = typeof loc === 'string' ? loc : loc.file;
+      const f = loc;
       if (f && !seen.has(f)) {
         seen.add(f);
         files.push(f);
@@ -115,7 +115,7 @@ function deriveRiskLevel(blastConcerns: string[], maxDirectCallers: number): Rea
  * Turn 1 — Read: examine target files and reason about top issues.
  * Max 3 file reads.
  */
-async function runReadTurn(
+export async function runReadTurn(
   scan: ScanResult,
   target: Target,
   cwd: string,
@@ -264,7 +264,7 @@ function runPlanTurn(
   const issuesByFile = new Map<string, string[]>();
   for (const issue of scan.issuesByType.slice(0, 6)) {
     for (const loc of (issue.locations ?? [])) {
-      const f = typeof loc === 'string' ? loc : loc.file;
+      const f = loc;
       if (!f) continue;
       if (!issuesByFile.has(f)) issuesByFile.set(f, []);
       issuesByFile.get(f)!.push(issue.subcategory);

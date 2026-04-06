@@ -1,0 +1,37 @@
+{
+  "file": "/tmp/datagen-scan-123456/packages/react/src/ReactLazy.js",
+  "issues": [
+    {
+      "line": 1,
+      "category": "architecture",
+      "severity": "low",
+      "description": "The file imports from shared/ReactTypes and shared/ReactSymbols, creating tight coupling to shared modules. While necessary, this means changes to these symbols could affect lazy loading functionality.",
+      "suggested_fix": "Consider abstracting symbol definitions behind an API if they need frequent changes, though this may be over-engineering for this module.",
+      "confidence": "medium"
+    },
+    {
+      "line": 45,
+      "category": "architecture",
+      "severity": "medium",
+      "description": "The lazyInitializer function is quite complex and handles multiple states (Uninitialized, Pending, Resolved, Rejected). This complexity could be better encapsulated in a separate class or module to improve maintainability.",
+      "suggested_fix": "Refactor the state machine logic into a dedicated LazyState class that handles transitions and error states more cleanly.",
+      "confidence": "medium"
+    },
+    {
+      "line": 120,
+      "category": "error_handling",
+      "severity": "low",
+      "description": "The error messages for invalid lazy imports contain a typo: 'imp' is cut off in 'dynamic imp' instead of 'dynamic import'.",
+      "suggested_fix": "Correct the error message to say 'dynamic import' instead of 'dynamic imp'.",
+      "confidence": "high"
+    },
+    {
+      "line": 1,
+      "category": "production_readiness",
+      "severity": "low",
+      "description": "The enableAsyncDebugInfo flag controls debug features. While this is appropriate, the flag is imported from shared/ReactFeatureFlags, creating an additional dependency.",
+      "suggested_fix": "Consider making this flag configurable at build time rather than runtime to reduce dependencies.",
+      "confidence": "low"
+    }
+  ]
+}

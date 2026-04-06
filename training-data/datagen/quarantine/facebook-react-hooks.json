@@ -1,0 +1,45 @@
+{
+  "file": "/tmp/datagen-scan-123456/packages/react/src/ReactHooks.js",
+  "issues": [
+    {
+      "line": 1,
+      "category": "architecture",
+      "severity": "medium",
+      "description": "The file acts as a hub for all hook functions, with each hook following the same repetitive pattern of calling resolveDispatcher() and then the dispatcher method. This creates tight coupling and makes the file a central point of maintenance.",
+      "suggested_fix": "Consider using a higher-order function or code generation to reduce repetition, or split the hooks into smaller, more focused modules.",
+      "confidence": "high"
+    },
+    {
+      "line": 15,
+      "category": "architecture",
+      "severity": "low",
+      "description": "The resolveDispatcher() function accesses ReactSharedInternals.H directly, creating tight coupling to the internal structure of React's shared internals.",
+      "suggested_fix": "Consider abstracting the dispatcher resolution behind an API to reduce coupling and make the code more resilient to internal changes.",
+      "confidence": "medium"
+    },
+    {
+      "line": 22,
+      "category": "error_handling",
+      "severity": "low",
+      "description": "The error message for invalid hook call is only logged in dev mode. In production, this error is silently ignored, which could make debugging harder.",
+      "suggested_fix": "Consider providing a way to surface this error in production as well, or at least ensure proper logging is in place.",
+      "confidence": "medium"
+    },
+    {
+      "line": 45,
+      "category": "production_readiness",
+      "severity": "low",
+      "description": "Some hooks (useMemoCache, useEffectEvent) are marked as unstable and use FlowFixMe comments. While this is appropriate for experimental features, it indicates that these APIs are not yet stable and may change.",
+      "suggested_fix": "Clearly document these as unstable APIs and consider providing migration paths when they stabilize.",
+      "confidence": "high"
+    },
+    {
+      "line": 1,
+      "category": "architecture",
+      "severity": "low",
+      "description": "The file imports many types from various modules, creating a complex dependency graph. This makes the file harder to test and maintain in isolation.",
+      "suggested_fix": "Consider consolidating type definitions or using a more modular approach to reduce coupling between modules.",
+      "confidence": "medium"
+    }
+  ]
+}

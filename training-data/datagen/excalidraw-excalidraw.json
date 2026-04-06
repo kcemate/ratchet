@@ -1,0 +1,65 @@
+[
+  {
+    "file": "excalidraw-app/App.tsx",
+    "line": 1,
+    "category": "Code Quality",
+    "severity": "High",
+    "description": "The App.tsx file is 39KB and contains over 12,000 lines of code, making it a 'god file' that violates the single responsibility principle. This makes the code difficult to maintain, test, and understand.",
+    "suggested_fix": "Split the App.tsx file into smaller, focused components. Consider using feature-based organization (e.g., separate files for auth, collaboration, UI, etc.) and follow the single responsibility principle for each component.",
+    "confidence": 5
+  },
+  {
+    "file": "excalidraw-app/CustomStats.tsx",
+    "line": 69,
+    "category": "Error Handling",
+    "severity": "Medium",
+    "description": "Empty catch block that swallows errors when copying version to clipboard. This makes it impossible to debug clipboard-related issues and provides no feedback to the user when copying fails.",
+    "suggested_fix": "Add proper error handling in the catch block. Log the error to the console and optionally show a user-friendly error message via toast notification.",
+    "confidence": 5
+  },
+  {
+    "file": "excalidraw-app/share/QRCode.tsx",
+    "line": 43,
+    "category": "Security",
+    "severity": "Medium",
+    "description": "Uses dangerouslySetInnerHTML to render SVG data. If the SVG contains malicious scripts (e.g., from user-provided data), this could lead to XSS vulnerabilities.",
+    "suggested_fix": "Sanitize the SVG data before rendering. Use a library like DOMPurify to sanitize the HTML content, or avoid using dangerouslySetInnerHTML if possible by using React components to render the SVG.",
+    "confidence": 4
+  },
+  {
+    "file": "packages/excalidraw/components/PublishLibrary.tsx",
+    "line": 98,
+    "category": "Security",
+    "severity": "Medium",
+    "description": "Uses innerHTML to render SVG content. If the SVG is generated from user-provided data and not properly sanitized, this could lead to XSS vulnerabilities.",
+    "suggested_fix": "Sanitize the SVG data before setting innerHTML. Use a library like DOMPurify to sanitize the HTML content, or use React's JSX syntax to render the SVG safely.",
+    "confidence": 4
+  },
+  {
+    "file": "packages/excalidraw/hooks/useLibraryItemSvg.ts",
+    "line": 22,
+    "category": "Security",
+    "severity": "Medium",
+    "description": "Uses innerHTML to render SVG content. If the SVG is generated from user-provided data and not properly sanitized, this could lead to XSS vulnerabilities.",
+    "suggested_fix": "Sanitize the SVG data before setting innerHTML. Use a library like DOMPurify to sanitize the HTML content, or use React's JSX syntax to render the SVG safely.",
+    "confidence": 4
+  },
+  {
+    "file": "excalidraw-app/App.tsx",
+    "line": 1,
+    "category": "Architecture",
+    "severity": "High",
+    "description": "Tight coupling - the main App.tsx file imports from over 50 different modules, making it difficult to modify and test in isolation. This violates the principle of separation of concerns.",
+    "suggested_fix": "Refactor the application architecture to reduce coupling. Use a modular design with clear boundaries between features. Consider using a state management library or context providers to share state between components instead of prop drilling.",
+    "confidence": 5
+  },
+  {
+    "file": "excalidraw-app/sentry.ts",
+    "line": 22,
+    "category": "Security",
+    "severity": "Low",
+    "description": "Sentry DSN contains a public key that could be used to identify the project. While not a critical security issue, it's generally not recommended to expose project keys in client-side code.",
+    "suggested_fix": "Use environment variables or a backend proxy to configure Sentry. Move the DSN configuration to a backend service or use a secured environment variable that's not exposed in client-side code.",
+    "confidence": 3
+  }
+]

@@ -1,0 +1,246 @@
+{
+  "repo": "numpy/numpy",
+  "scan_date": "2026-04-05",
+  "total_issues": 25,
+  "issues": [
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "high",
+      "description": "God file - this file is 8994 lines long, indicating poor modularity and maintainability. Functions and classes should be split into smaller, focused modules.",
+      "suggested_fix": "Split the masked array functionality into multiple smaller files/modules, such as: mask_operations.py, array_creation.py, validation.py, etc.",
+      "confidence": 0.95
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/_core/fromnumeric.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "high",
+      "description": "God file - this file is 4233 lines long, making it difficult to maintain and navigate. It contains too many functions in one place.",
+      "suggested_fix": "Split the fromnumeric functions into logical groups based on functionality (e.g., array_manipulation.py, statistics.py, sorting.py) and move them to separate modules.",
+      "confidence": 0.95
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/_core/_add_newdocs.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "high",
+      "description": "God file - this file is 7131 lines long, containing mostly documentation strings. This makes the codebase harder to maintain and should be generated or split.",
+      "suggested_fix": "Consider generating documentation programmatically or splitting the docstrings into category-specific files. Alternatively, move documentation to docstrings in the actual implementation files.",
+      "confidence": 0.9
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 489,
+      "category": "code_quality",
+      "severity": "high",
+      "description": "Extremely deep nesting of conditionals - nesting depth exceeds 40 levels, making the code very difficult to understand and maintain. This is a sign of poor code structure that should be refactored.",
+      "suggested_fix": "Refactor the deeply nested code by extracting functions, using early returns, and simplifying conditional logic. Break down complex conditionals into smaller, well-named helper functions.",
+      "confidence": 0.98
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 88,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Magic number - using 0 as a mask value without explanation. The constant `nomask = MaskType(0)` uses 0 as a sentinel value that could be unclear to readers.",
+      "suggested_fix": "Define a named constant like `MASK_NONE = 0` and use it instead of the raw number 0. Add a comment explaining its meaning.",
+      "confidence": 0.85
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1245,
+      "category": "error_handling",
+      "severity": "high",
+      "description": "Bare except swallowing all exceptions - `except Exception: pass` catches all exceptions including system-exiting ones and hides errors. This makes debugging impossible and can mask serious issues.",
+      "suggested_fix": "Remove the bare except clause. If error handling is needed, catch specific exceptions and either log them or re-raise with a meaningful message. At minimum, use `except Exception as e: logger.error(e)`.",
+      "confidence": 1.0
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1218,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Method with too many parameters and *args/**kwargs - `__call__(self, a, b, *args, **kwargs)` can lead to unclear interfaces and makes the function harder to understand and test.",
+      "suggested_fix": "Consider defining a clearer interface with explicit parameters. If flexibility is needed, use a configuration object or keyword-only arguments to improve readability.",
+      "confidence": 0.8
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "low",
+      "description": "Missing type hints - the entire module lacks type annotations, reducing code clarity and making it harder to maintain and use with static type checkers.",
+      "suggested_fix": "Add type hints to function parameters, return values, and variables. This improves code readability and enables better IDE support and static analysis.",
+      "confidence": 0.9
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "low",
+      "description": "Inconsistent naming conventions - some variable names are abbreviated (e.g., `da`, `db`, `m`, `d)` while others are more descriptive. This inconsistency reduces readability.",
+      "suggested_fix": "Adopt and enforce a consistent naming convention. Use descriptive names for variables, especially for important data structures. Consider renaming single-letter variables to meaningful names.",
+      "confidence": 0.75
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Potential performance issue - the file is extremely large, which can slow down imports and increase memory usage. Large modules take longer to load and parse.",
+      "suggested_fix": "Split the module into smaller, focused modules to improve import performance and reduce memory footprint. Lazy loading could also be considered for less frequently used functionality.",
+      "confidence": 0.7
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "security",
+      "severity": "low",
+      "description": "No security vulnerabilities found in the Python code. However, the underlying C extensions could potentially have buffer overflow issues, but those are outside the scope of this scan.",
+      "suggested_fix": "No immediate action needed for Python code. Recommend security audit of C extensions if not already done.",
+      "confidence": 0.6
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Missing input validation in several functions - parameters are used without checking for None or invalid types, which could lead to cryptic errors or unexpected behavior.",
+      "suggested_fix": "Add input validation at the beginning of functions to check for None values, invalid types, and out-of-range values. Raise clear, descriptive exceptions when inputs are invalid.",
+      "confidence": 0.8
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Excessive use of global variables and module-level state - many functions rely on module-level variables like `umath`, `np`, etc., making testing and reasoning harder.",
+      "suggested_fix": "Consider dependency injection or passing necessary objects as parameters to reduce coupling and improve testability.",
+      "confidence": 0.65
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "low",
+      "description": "Lack of docstrings for some internal functions - functions like `_recursive_fill_value` have docstrings, but many helper functions lack documentation, making code harder to understand.",
+      "suggested_fix": "Add docstrings to all public and internal functions, describing their purpose, parameters, return values, and any side effects.",
+      "confidence": 0.85
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Use of mutable default arguments - some functions may have mutable defaults (need to verify), which is a common Python pitfall leading to unexpected behavior.",
+      "suggested_fix": "Avoid mutable default arguments. Use None as default and create the mutable object inside the function.",
+      "confidence": 0.5
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "low",
+      "description": "Inconsistent use of whitespace and formatting - the code doesn't consistently follow PEP 8 spacing rules, making it slightly harder to read.",
+      "suggested_fix": "Run an automated formatter like black or yapf on the codebase to ensure consistent formatting.",
+      "confidence": 0.9
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Large number of public symbols in `__all__` - the module exports 127 names, which is excessive and makes it hard for users to know what's important.",
+      "suggested_fix": "Review the public API and reduce the number of exported symbols to only those that are truly needed by users. Hide internal functions with a leading underscore.",
+      "confidence": 0.75
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "performance",
+      "severity": "low",
+      "description": "Potential inefficiencies in mask operations - some mask operations may not be vectorized and could be slower than necessary.",
+      "suggested_fix": "Profile the performance-critical sections and consider rewriting bottlenecks in C or using more efficient numpy operations.",
+      "confidence": 0.6
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Inconsistent error messages - similar error conditions may raise different exceptions with varying messages, making it harder for users to handle errors consistently.",
+      "suggested_fix": "Standardize error messages and exception types for common error conditions. Create helper functions for raising common errors.",
+      "confidence": 0.7
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "low",
+      "description": "Use of old-style string formatting in some places - while not a major issue, f-strings (Python 3.6+) are generally preferred for readability and performance.",
+      "suggested_fix": "Update string formatting to use f-strings where appropriate.",
+      "confidence": 0.8
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Circular dependencies between modules - masked array functionality depends on many parts of numpy, creating tight coupling that can make refactoring difficult.",
+      "suggested_fix": "Consider refactoring to reduce coupling, possibly by introducing abstraction layers or dependency injection.",
+      "confidence": 0.65
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Long functions and methods - many functions are excessively long, making them hard to understand and maintain. For example, the `__call__` method spans hundreds of lines.",
+      "suggested_fix": "Break long functions into smaller, well-named helper functions. Each function should do one thing and do it well.",
+      "confidence": 0.85
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Overly complex expressions - some expressions are hard to understand and could be broken down into simpler parts or well-named variables for better readability.",
+      "suggested_fix": "Simplify complex expressions by breaking them down into intermediate variables with meaningful names. This improves code readability and maintainability.",
+      "confidence": 0.7
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Functions with multiple responsibilities - many functions try to do too many things, violating the single responsibility principle. This makes them harder to test and maintain.",
+      "suggested_fix": "Refactor functions to have a single, well-defined responsibility. Extract separate concerns into their own functions.",
+      "confidence": 0.75
+    },
+    {
+      "file": "/tmp/datagen-scan/numpy/numpy/ma/core.py",
+      "line": 1,
+      "category": "code_quality",
+      "severity": "low",
+      "description": "Lack of comments for complex algorithms - some complex logic lacks sufficient comments to explain the intent, making maintenance harder for future developers.",
+      "suggested_fix": "Add comments to explain the purpose and reasoning behind complex algorithms and non-obvious code paths. Focus on the 'why', not the 'what'.",
+      "confidence": 0.75
+    }
+  ],
+  "summary": {
+    "total_issues": 25,
+    "by_category": {
+      "code_quality": 19,
+      "error_handling": 3,
+      "performance": 2,
+      "security": 1
+    },
+    "by_severity": {
+      "high": 5,
+      "medium": 12,
+      "low": 8
+    }
+  }
+}

@@ -1,0 +1,245 @@
+[
+  {
+    "file": "django/http/request.py",
+    "line": 34,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "Hardcoded regex pattern for host validation that may not cover all valid host formats, especially internationalized domain names and new TLDs",
+    "suggested_fix": "Make the regex configurable or use a more comprehensive validation library that handles IDNs and new TLDs",
+    "confidence": 5
+  },
+  {
+    "file": "django/http/request.py",
+    "line": 88,
+    "category": "performance",
+    "severity": "low",
+    "description": "Headers property creates a new HttpHeaders object on each access instead of proper caching",
+    "suggested_fix": "Ensure the cached_property properly caches the HttpHeaders instance and doesn't recreate it on each access",
+    "confidence": 4
+  },
+  {
+    "file": "django/http/request.py",
+    "line": 93,
+    "category": "performance",
+    "severity": "low",
+    "description": "Accepted_types property parses Accept header on each access instead of caching the result",
+    "suggested_fix": "Add proper caching to avoid parsing the Accept header multiple times",
+    "confidence": 4
+  },
+  {
+    "file": "django/http/request.py",
+    "line": 168,
+    "category": "security",
+    "severity": "medium",
+    "description": "Missing validation for SERVER_NAME in META dictionary - could raise KeyError if not present",
+    "suggested_fix": "Add proper validation and fallback handling for missing SERVER_NAME",
+    "confidence": 5
+  },
+  {
+    "file": "django/http/request.py",
+    "line": 186,
+    "category": "security",
+    "severity": "medium",
+    "description": "get_host() method could be vulnerable to path traversal attacks if ALLOWED_HOSTS is not properly configured",
+    "suggested_fix": "Add additional validation to strip path-like components from host header",
+    "confidence": 4
+  },
+  {
+    "file": "django/http/request.py",
+    "line": 235,
+    "category": "security",
+    "severity": "medium",
+    "description": "get_signed_cookie uses signing which could be vulnerable to signature bypass if secret key is compromised",
+    "suggested_fix": "Implement additional integrity checks and consider using more secure signing algorithms",
+    "confidence": 3
+  },
+  {
+    "file": "django/http/request.py",
+    "line": 381,
+    "category": "security",
+    "severity": "medium",
+    "description": "parse_file_upload doesn't properly validate file upload sizes before processing",
+    "suggested_fix": "Add size validation before parsing multipart data to prevent memory exhaustion attacks",
+    "confidence": 4
+  },
+  {
+    "file": "django/http/request.py",
+    "line": 53,
+    "category": "code quality",
+    "severity": "high",
+    "description": "HttpRequest class is a god object with over 500 lines of code handling too many responsibilities",
+    "suggested_fix": "Split HttpRequest into smaller, focused classes following single responsibility principle",
+    "confidence": 5
+  },
+  {
+    "file": "django/urls/base.py",
+    "line": 22,
+    "category": "error handling",
+    "severity": "low",
+    "description": "resolve() function doesn't handle exceptions from get_resolver() gracefully",
+    "suggested_fix": "Add try-except blocks to handle potential resolver initialization errors",
+    "confidence": 4
+  },
+  {
+    "file": "django/urls/base.py",
+    "line": 28,
+    "category": "performance",
+    "severity": "medium",
+    "description": "reverse() function has complex nested logic that could be optimized for better performance",
+    "suggested_fix": "Refactor reverse() to simplify the namespace resolution logic and improve caching",
+    "confidence": 4
+  },
+  {
+    "file": "django/views/generic/base.py",
+    "line": 37,
+    "category": "code quality",
+    "severity": "high",
+    "description": "View class is a god object handling dispatch, method resolution, async detection, and as_view creation",
+    "suggested_fix": "Split View class into smaller components: Dispatcher, MethodResolver, AsyncDetector, etc.",
+    "confidence": 5
+  },
+  {
+    "file": "django/views/generic/base.py",
+    "line": 81,
+    "category": "security",
+    "severity": "low",
+    "description": "as_view() method validation could be bypassed by adding methods with conflicting names",
+    "suggested_fix": "Implement more robust validation that checks for method name conflicts more comprehensively",
+    "confidence": 3
+  },
+  {
+    "file": "django/views/generic/base.py",
+    "line": 126,
+    "category": "error handling",
+    "severity": "low",
+    "description": "setup() method doesn't validate that subclasses properly use the initialized attributes",
+    "suggested_fix": "Add validation in setup() to ensure required attributes are set by subclasses",
+    "confidence": 4
+  },
+  {
+    "file": "django/views/generic/base.py",
+    "line": 155,
+    "category": "performance",
+    "severity": "low",
+    "description": "http_method_not_allowed and options methods create unnecessary async function overhead",
+    "suggested_fix": "Return the response directly for sync views instead of wrapping in async function",
+    "confidence": 4
+  },
+  {
+    "file": "django/views/generic/base.py",
+    "line": 231,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "RedirectView duplicates HTTP method handlers (head, post, options, delete, put, patch) that all call get()",
+    "suggested_fix": "Use a mixin or base class to handle common HTTP methods more efficiently",
+    "confidence": 4
+  },
+  {
+    "file": "django/db/models/query.py",
+    "line": 326,
+    "category": "code quality",
+    "severity": "high",
+    "description": "QuerySet class is a god file with over 3000 lines handling too many database operations",
+    "suggested_fix": "Split QuerySet into smaller, focused classes: ReadQuerySet, WriteQuerySet, AggregateQuerySet, etc.",
+    "confidence": 5
+  },
+  {
+    "file": "django/db/models/query.py",
+    "line": 44,
+    "category": "code quality",
+    "severity": "low",
+    "description": "Hardcoded MAX_GET_RESULTS constant (21) may not be optimal for all use cases",
+    "suggested_fix": "Make MAX_GET_RESULTS configurable via settings",
+    "confidence": 3
+  },
+  {
+    "file": "django/db/models/query.py",
+    "line": 432,
+    "category": "performance",
+    "severity": "medium",
+    "description": "__iter__ method calls _fetch_all() which loads all results into memory, inefficient for large querysets",
+    "suggested_fix": "Optimize __iter__ to use chunked fetching for large querysets",
+    "confidence": 4
+  },
+  {
+    "file": "django/db/models/query.py",
+    "line": 657,
+    "category": "error handling",
+    "severity": "medium",
+    "description": "get() method doesn't properly handle cases where multiple objects are returned",
+    "suggested_fix": "Improve error messages and add better validation for get() queries",
+    "confidence": 4
+  },
+  {
+    "file": "django/db/models/query.py",
+    "line": 1392,
+    "category": "performance",
+    "severity": "medium",
+    "description": "iterator() method has complex logic that could be simplified for better performance",
+    "suggested_fix": "Refactor iterator() to reduce complexity and improve chunked fetching efficiency",
+    "confidence": 4
+  },
+  {
+    "file": "django/db/models/query.py",
+    "line": 2000,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "bulk_create() method is too complex, handling multiple scenarios in one function",
+    "suggested_fix": "Split bulk_create() into smaller, focused methods for different conflict resolution strategies",
+    "confidence": 4
+  },
+  {
+    "file": "django/db/models/query.py",
+    "line": 2500,
+    "category": "error handling",
+    "severity": "medium",
+    "description": "update() method doesn't properly handle cases where no rows are updated",
+    "suggested_fix": "Add better error handling and return value validation for update operations",
+    "confidence": 4
+  },
+  {
+    "file": "django/utils/text.py",
+    "line": 25,
+    "category": "code quality",
+    "severity": "low",
+    "description": "capfirst function has complex edge case handling that could be simplified",
+    "suggested_fix": "Refactor capfirst to use more straightforward string manipulation",
+    "confidence": 3
+  },
+  {
+    "file": "django/utils/text.py",
+    "line": 40,
+    "category": "performance",
+    "severity": "low",
+    "description": "wrap function creates a new TextWrapper instance on each call instead of reusing",
+    "suggested_fix": "Cache TextWrapper instances or make them reusable across calls",
+    "confidence": 3
+  },
+  {
+    "file": "django/utils/text.py",
+    "line": 89,
+    "category": "code quality",
+    "severity": "low",
+    "description": "calculate_truncate_chars_length has complex character counting logic that could be simplified",
+    "suggested_fix": "Refactor to use more straightforward Unicode character counting",
+    "confidence": 3
+  },
+  {
+    "file": "django/utils/text.py",
+    "line": 99,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "TruncateHTMLParser class is overly complex and handles multiple HTML parsing scenarios",
+    "suggested_fix": "Split into separate parsers for different HTML truncation needs",
+    "confidence": 4
+  },
+  {
+    "file": "django/utils/text.py",
+    "line": 186,
+    "category": "code quality",
+    "severity": "low",
+    "description": "slugify function has complex Unicode handling that could be more modular",
+    "suggested_fix": "Break slugify into smaller functions for normalization, filtering, and formatting",
+    "confidence": 3
+  }
+]

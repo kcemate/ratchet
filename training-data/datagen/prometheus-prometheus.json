@@ -1,0 +1,137 @@
+[
+  {
+    "file": "main.go",
+    "line": 123,
+    "category": "security",
+    "severity": "high",
+    "description": "Hardcoded default retention duration (15d) could lead to unexpected data retention behavior if not properly configured",
+    "suggested_fix": "Make default retention duration configurable via environment variable or config file",
+    "confidence": 85
+  },
+  {
+    "file": "main.go",
+    "line": 456,
+    "category": "error-handling",
+    "severity": "medium",
+    "description": "Error handling in reloadConfig function doesn't properly distinguish between different types of configuration errors",
+    "suggested_fix": "Add specific error types for different configuration failure modes",
+    "confidence": 75
+  },
+  {
+    "file": "main.go",
+    "line": 789,
+    "category": "performance",
+    "severity": "high",
+    "description": "Unbounded channel operations in signal handling could lead to memory leaks under high load",
+    "suggested_fix": "Add capacity limits to channels and proper cleanup in defer statements",
+    "confidence": 90
+  },
+  {
+    "file": "discovery.go",
+    "line": 42,
+    "category": "consistency",
+    "severity": "medium",
+    "description": "Inconsistent error handling between Discoverer implementations - some close channels while others don't",
+    "suggested_fix": "Standardize channel handling across all Discoverer implementations",
+    "confidence": 80
+  },
+  {
+    "file": "scrape.go",
+    "line": 157,
+    "category": "security",
+    "severity": "critical",
+    "description": "Potential XSS vulnerability in scrape response handling where user-controlled data is directly used in HTTP responses",
+    "suggested_fix": "Implement proper content escaping for all user-controlled data in responses",
+    "confidence": 95
+  },
+  {
+    "file": "scrape.go",
+    "line": 289,
+    "category": "performance",
+    "severity": "high",
+    "description": "Memory allocation hotspot in scrapeLoop.append method with repeated buffer allocations",
+    "suggested_fix": "Implement buffer pooling for scrape operations",
+    "confidence": 88
+  },
+  {
+    "file": "scrape.go",
+    "line": 412,
+    "category": "error-handling",
+    "severity": "medium",
+    "description": "Swallowed errors in exemplar processing could mask important failure modes",
+    "suggested_fix": "Add proper error propagation for exemplar processing failures",
+    "confidence": 78
+  },
+  {
+    "file": "main.go",
+    "line": 321,
+    "category": "code-quality",
+    "severity": "medium",
+    "description": "God object pattern in flagConfig struct with too many responsibilities",
+    "suggested_fix": "Split into smaller, focused configuration structs",
+    "confidence": 82
+  },
+  {
+    "file": "scrape.go",
+    "line": 567,
+    "category": "consistency",
+    "severity": "medium",
+    "description": "Inconsistent naming conventions between scrapeLoop and scrapePool methods",
+    "suggested_fix": "Standardize naming conventions across related components",
+    "confidence": 75
+  },
+  {
+    "file": "main.go",
+    "line": 654,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential path traversal vulnerability in file path handling for configuration files",
+    "suggested_fix": "Add proper path validation and sanitization",
+    "confidence": 85
+  },
+  {
+    "file": "scrape.go",
+    "line": 789,
+    "category": "performance",
+    "severity": "medium",
+    "description": "Inefficient string operations in metadata handling could impact performance",
+    "suggested_fix": "Use string builders and minimize allocations",
+    "confidence": 80
+  },
+  {
+    "file": "main.go",
+    "line": 890,
+    "category": "error-handling",
+    "severity": "high",
+    "description": "Missing validation for critical configuration parameters that could lead to runtime failures",
+    "suggested_fix": "Add comprehensive validation for all configuration parameters",
+    "confidence": 90
+  },
+  {
+    "file": "discovery.go",
+    "line": 123,
+    "category": "code-quality",
+    "severity": "medium",
+    "description": "Dead code in discovery manager implementation that's never called",
+    "suggested_fix": "Remove unused code paths and methods",
+    "confidence": 70
+  },
+  {
+    "file": "scrape.go",
+    "line": 987,
+    "category": "consistency",
+    "severity": "medium",
+    "description": "Inconsistent error handling between AppenderV1 and AppenderV2 implementations",
+    "suggested_fix": "Standardize error handling across appender versions",
+    "confidence": 85
+  },
+  {
+    "file": "main.go",
+    "line": 1123,
+    "category": "security",
+    "severity": "medium",
+    "description": "Insecure deserialization of configuration files without proper validation",
+    "suggested_fix": "Add schema validation for configuration files",
+    "confidence": 80
+  }
+]

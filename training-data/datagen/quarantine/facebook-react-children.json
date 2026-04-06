@@ -1,0 +1,37 @@
+{
+  "file": "/tmp/datagen-scan-123456/packages/react/src/ReactChildren.js",
+  "issues": [
+    {
+      "line": 1,
+      "category": "architecture",
+      "severity": "low",
+      "description": "The file imports from many shared modules (ReactTypes, ReactSymbols, ReactFeatureFlags, CheckStringCoercion, jsx/ReactJSXElement), creating tight coupling to shared infrastructure. While necessary, this makes the file harder to test and maintain in isolation.",
+      "suggested_fix": "Consider consolidating common utilities or using dependency injection to reduce coupling between modules.",
+      "confidence": "medium"
+    },
+    {
+      "line": 45,
+      "category": "architecture",
+      "severity": "medium",
+      "description": "The mapIntoArray function is very complex and handles many edge cases (arrays, iterators, thenables, lazy components). This complexity could be better encapsulated in separate helper functions or classes to improve readability and maintainability.",
+      "suggested_fix": "Refactor mapIntoArray into smaller, focused functions that handle specific child types (arrays, iterators, promises, elements) separately.",
+      "confidence": "high"
+    },
+    {
+      "line": 120,
+      "category": "production_readiness",
+      "severity": "low",
+      "description": "The global variable didWarnAboutMaps is used to track whether a warning about Maps as children has been shown. Global state like this can cause issues in concurrent rendering or server-side rendering where multiple renders might be happening simultaneously.",
+      "suggested_fix": "Replace the global variable with a per-render or per-context warning mechanism to avoid potential race conditions.",
+      "confidence": "medium"
+    },
+    {
+      "line": 200,
+      "category": "error_handling",
+      "severity": "low",
+      "description": "The error message for invalid children objects is good, but it could be more specific about what types of objects are allowed (React elements, arrays, iterables, primitives).",
+      "suggested_fix": "Enhance the error message to explicitly list the allowed types for better developer experience.",
+      "confidence": "low"
+    }
+  ]
+}

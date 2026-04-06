@@ -1,0 +1,92 @@
+[
+  {
+    "file": "lib/adapters/http.js",
+    "line": 331,
+    "category": "code quality",
+    "severity": "high",
+    "description": "The httpAdapter function is 570 lines long, violating the single responsibility principle. Large functions are harder to maintain, test, and understand.",
+    "suggested_fix": "Break down the httpAdapter function into smaller, focused functions. Each function should have a single responsibility, such as handling request setup, managing redirects, processing responses, and error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "lib/adapters/http.js",
+    "line": 29,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "Magic number DEFAULT_CHUNK_SIZE = 64 * 1024 is used without explanation. Magic numbers reduce code readability and maintainability.",
+    "suggested_fix": "Define DEFAULT_CHUNK_SIZE as a named constant with a descriptive comment explaining why 64KB was chosen (e.g., typical buffer size for stream operations).",
+    "confidence": "high"
+  },
+  {
+    "file": "lib/utils.js",
+    "line": 165,
+    "category": "error handling",
+    "severity": "low",
+    "description": "Empty catch block in isEmptyObject function silently swallows errors. This could hide unexpected issues during runtime.",
+    "suggested_fix": "At minimum, log the error using a debugging utility. Better yet, rethrow the error or handle it explicitly since Object.keys() should not throw for plain objects.",
+    "confidence": "medium"
+  },
+  {
+    "file": "lib/adapters/http.js",
+    "line": 372,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "Deeply nested code with multiple levels of if/else statements and callbacks. This reduces readability and increases cognitive load.",
+    "suggested_fix": "Refactor the nested code using guard clauses, early returns, or extract functions. Consider using a more linear control flow to improve readability.",
+    "confidence": "medium"
+  },
+  {
+    "file": "lib/utils.js",
+    "line": 13,
+    "category": "code quality",
+    "severity": "low",
+    "description": "Magic number 8 and -1 used in string slicing without explanation. These numbers are not self-documenting.",
+    "suggested_fix": "Extract these numbers as named constants with descriptive names, or add comments explaining what they represent (e.g., removing '[Object ' prefix and ']' suffix).",
+    "confidence": "high"
+  },
+  {
+    "file": "lib/adapters/http.js",
+    "line": 598,
+    "category": "performance",
+    "severity": "low",
+    "description": "wrapAsync function adds an extra layer of function wrapping around async functions. This introduces minimal overhead and complexity.",
+    "suggested_fix": "Evaluate if wrapAsync is necessary. If it's only used for error handling, consider using native async/await error handling instead.",
+    "confidence": "low"
+  },
+  {
+    "file": "lib/core/AxiosHeaders.js",
+    "line": 86,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "Large class with many methods. The AxiosHeaders class has grown too large and could benefit from separation of concerns.",
+    "suggested_fix": "Consider splitting the AxiosHeaders class into smaller classes or modules, such as HeaderNormalizer, HeaderAccessor, and HeaderValidator.",
+    "confidence": "medium"
+  },
+  {
+    "file": "lib/helpers/buildURL.js",
+    "line": 1,
+    "category": "security",
+    "severity": "low",
+    "description": "URL construction functions could be vulnerable to injection if not properly sanitized. While the current implementation seems safe, URL handling is always a potential security risk.",
+    "suggested_fix": "Add input validation and sanitization for URL parameters. Consider using the WHATWG URL API for safer URL manipulation.",
+    "confidence": "low"
+  },
+  {
+    "file": "lib/utils.js",
+    "line": 404,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "The merge function is complex and handles many edge cases. It's 40+ lines and could be difficult to understand and maintain.",
+    "suggested_fix": "Break the merge function into smaller helper functions for handling different merge scenarios (objects, arrays, primitives). Add comprehensive JSDoc documentation.",
+    "confidence": "high"
+  },
+  {
+    "file": "lib/adapters/fetch.js",
+    "line": 150,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "The fetch adapter function is large and complex, handling many different scenarios and edge cases.",
+    "suggested_fix": "Break the fetch adapter into smaller functions for request preparation, response processing, error handling, and progress tracking.",
+    "confidence": "medium"
+  }
+]

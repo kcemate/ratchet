@@ -1,0 +1,29 @@
+[
+  {
+    "file": "/tmp/datagen-scan-1775372583/n8n/packages/core/src/encryption/cipher.ts",
+    "line": 34,
+    "category": "security",
+    "severity": "high",
+    "description": "Use of MD5 for key derivation in Cipher.getKeyAndIv method. MD5 is cryptographically broken and unsuitable for cryptographic purposes due to collision vulnerabilities. This could allow attackers to potentially derive the encryption key.",
+    "suggested_fix": "Replace MD5 with a secure key derivation function such as PBKDF2, bcrypt, or scrypt. At minimum, use SHA-256 or SHA-512 for key derivation.",
+    "confidence": 5
+  },
+  {
+    "file": "/tmp/datagen-scan-1775372583/n8n/packages/core/src/execution-engine/execution-context.service.ts",
+    "line": 27,
+    "category": "code quality",
+    "severity": "low",
+    "description": "Unnecessary initialization of credentials variable to undefined. TypeScript can infer the type as undefined, or the variable could be declared without initialization.",
+    "suggested_fix": "Change 'let credentials = undefined;' to 'let credentials;' or 'let credentials: Credentials | undefined;' if explicit typing is needed.",
+    "confidence": 5
+  },
+  {
+    "file": "/tmp/datagen-scan-1775372583/n8n/packages/core/src/execution-engine/execution-context.service.ts",
+    "line": 103,
+    "category": "code quality",
+    "severity": "low",
+    "description": "Hook parameters are used directly without validation. If hookParameters contain unexpected structure, it could cause runtime errors when accessing nested properties like contextEstablishmentHooks.hooks.",
+    "suggested_fix": "Add validation to ensure hookParameters has the expected structure before using it in the loop. Consider using a runtime type check or a validation library.",
+    "confidence": 4
+  }
+]

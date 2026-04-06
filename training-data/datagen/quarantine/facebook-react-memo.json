@@ -1,0 +1,29 @@
+{
+  "file": "/tmp/datagen-scan-123456/packages/react/src/ReactMemo.js",
+  "issues": [
+    {
+      "line": 1,
+      "category": "architecture",
+      "severity": "low",
+      "description": "The file imports from shared/ReactSymbols, creating a dependency on shared modules. While necessary, this tight coupling means changes to these symbols could affect memo functionality.",
+      "suggested_fix": "Consider abstracting symbol definitions behind an API if they need frequent changes, though this may be over-engineering for this module.",
+      "confidence": "medium"
+    },
+    {
+      "line": 3,
+      "category": "production_readiness",
+      "severity": "low",
+      "description": "The file has a @noflow comment, which disables Flow type checking. This could lead to type-related bugs slipping into production.",
+      "suggested_fix": "Remove the @noflow comment and ensure the file is properly typed with Flow for better type safety.",
+      "confidence": "medium"
+    },
+    {
+      "line": 11,
+      "category": "error_handling",
+      "severity": "low",
+      "description": "The error message for null component type is good, but there's no validation for whether the type is actually a valid React component (e.g., checking for render method).",
+      "suggested_fix": "Add additional validation to ensure the type is a valid React component, not just non-null.",
+      "confidence": "low"
+    }
+  ]
+}

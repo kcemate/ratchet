@@ -1,0 +1,56 @@
+[
+  {
+    "file": "fastapi/routing.py",
+    "line": 1,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "File is excessively large (4956 lines) with too many responsibilities, making it difficult to maintain and understand. Should be split into smaller, focused modules.",
+    "suggested_fix": "Split routing.py into smaller files: one for route registration, one for request handling, one for response serialization, one for dependency resolution, etc.",
+    "confidence": 95
+  },
+  {
+    "file": "fastapi/applications.py",
+    "line": 1,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "File is excessively large (4749 lines) and acts as a god class, handling too many responsibilities. This violates the Single Responsibility Principle and makes the code harder to test and maintain.",
+    "suggested_fix": "Refactor FastAPI class into smaller classes with single responsibilities. Extract OpenAPI handling, middleware setup, and route registration into separate classes or modules.",
+    "confidence": 95
+  },
+  {
+    "file": "fastapi/security/oauth2.py",
+    "line": 1,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "File is extremely large (24178 lines) and complex. This makes it difficult to audit for security vulnerabilities and maintain code quality.",
+    "suggested_fix": "Split oauth2.py into smaller modules: one for OAuth2 password request forms, one for OAuth2 flow implementations, one for token handling, etc.",
+    "confidence": 90
+  },
+  {
+    "file": "fastapi/security/http.py",
+    "line": 1,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "File is very large (13410 lines) and handles multiple HTTP security schemes. Could benefit from separation of concerns.",
+    "suggested_fix": "Split http.py into separate modules for each authentication scheme (e.g., BasicAuth, DigestAuth, etc.).",
+    "confidence": 85
+  },
+  {
+    "file": "fastapi/applications.py",
+    "line": 85,
+    "category": "coupling",
+    "severity": "medium",
+    "description": "High coupling: imports from 18 different internal modules and external libraries, making the class tightly coupled and harder to test in isolation.",
+    "suggested_fix": "Reduce coupling by extracting dependencies and using dependency injection where possible. Group related imports into separate modules.",
+    "confidence": 80
+  },
+  {
+    "file": "fastapi/applications.py",
+    "line": 4614,
+    "category": "dead_code",
+    "severity": "low",
+    "description": "The `ai_vibes` method appears to be defined but may not be used anywhere in the codebase. Unused code increases maintenance burden and can cause confusion.",
+    "suggested_fix": "Remove the `ai_vibes` method if it's not part of the public API or planned for future use. If it's a new feature, ensure it's properly integrated and used.",
+    "confidence": 70
+  }
+]

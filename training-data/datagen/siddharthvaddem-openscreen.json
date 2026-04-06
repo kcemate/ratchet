@@ -1,0 +1,74 @@
+[
+	{
+		"file": "electron/windows.ts",
+		"line": 78,
+		"category": "security",
+		"severity": "critical",
+		"description": "The createEditorWindow function sets webSecurity: false, which disables Electron's webSecurity feature. This is a critical security vulnerability as it allows potential XSS attacks to access local resources and the Node environment.",
+		"suggested_fix": "Set webSecurity: true (or remove the line entirely as true is the default). This will enable XSS protection and prevent malicious scripts from accessing Node APIs.",
+		"confidence": 95
+	},
+	{
+		"file": "electron/main.ts",
+		"line": 38,
+		"category": "code-quality",
+		"severity": "medium",
+		"description": "The ensureRecordingsDir function logs the full RECORDINGS_DIR path to the console. This could expose sensitive user data paths in production environments, which is an information disclosure vulnerability.",
+		"suggested_fix": "Remove or sanitize the console.log statement. In production, avoid logging absolute paths to user data directories.",
+		"confidence": 85
+	},
+	{
+		"file": "electron/main.ts",
+		"line": 33,
+		"category": "error-handling",
+		"severity": "medium",
+		"description": "The ensureRecordingsDir function catches errors when creating the recordings directory but only logs them. It doesn't handle the error or prevent the app from continuing in an invalid state where recordings cannot be saved.",
+		"suggested_fix": "Add proper error handling: either show an error message to the user, disable recording features, or implement a fallback directory. Consider using a more robust error handling strategy.",
+		"confidence": 80
+	},
+	{
+		"file": "src/App.tsx",
+		"line": 26,
+		"category": "error-handling",
+		"severity": "medium",
+		"description": "The loadAllCustomFonts function is called in a useEffect and errors are caught but only logged to console. If font loading fails, there's no fallback UI or user notification, which could lead to a poor user experience or broken UI.",
+		"suggested_fix": "Implement a fallback font loading strategy or show a user-friendly error message. Consider setting a state for font loading status and display a loading indicator or error UI.",
+		"confidence": 75
+	},
+	{
+		"file": "electron/main.ts",
+		"line": 120,
+		"category": "code-quality",
+		"severity": "medium",
+		"description": "The forceCloseEditorWindow function has complex logic with try/finally and immediate execution. This could lead to race conditions or unexpected behavior when closing windows with unsaved changes.",
+		"suggested_fix": "Simplify the window closing logic. Consider using a more straightforward approach with proper state management for unsaved changes. Refactor to avoid immediate execution and potential race conditions.",
+		"confidence": 70
+	},
+	{
+		"file": "electron/main.ts",
+		"line": 66,
+		"category": "code-quality",
+		"severity": "low",
+		"description": "Global variables (mainWindow, sourceSelectorWindow, tray) are used to track window references. This creates tight coupling and makes the code harder to test and maintain. It also increases the risk of memory leaks if not properly cleaned up.",
+		"suggested_fix": "Encapsulate window management in a class or use a state management system. Consider using dependency injection or a more structured approach to window lifecycle management.",
+		"confidence": 80
+	},
+	{
+		"file": "electron/windows.ts",
+		"line": 33,
+		"category": "code-quality",
+		"severity": "low",
+		"description": "The createHudOverlayWindow function uses preload.mjs as the preload path, but the project uses TypeScript and likely compiles to .js files. This may cause the preload script to fail to load in production builds.",
+		"suggested_fix": "Change preload.mjs to preload.js to match the compiled output, or configure the build system to output .mjs files consistently.",
+		"confidence": 65
+	},
+	{
+		"file": "src/utils/platformUtils.ts",
+		"line": 10,
+		"category": "code-quality",
+		"severity": "low",
+		"description": "The cachedPlatform variable is initialized to null and may be accessed before it's set in the getPlatform function. While the function checks if cachedPlatform exists, there's a potential race condition if multiple components call getPlatform simultaneously before the cache is populated.",
+		"suggested_fix": "Use a proper caching mechanism with initialization or implement a mutex/locking pattern to prevent concurrent cache misses. Alternatively, use a more robust state management approach.",
+		"confidence": 60
+	}
+]

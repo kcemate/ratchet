@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "lastOptimized": "2026-04-05T23:34:00Z",
+  "rotationOrder": [
+    "wiki",
+    "qa",
+    "linter",
+    "dogfood",
+    "testgen"
+  ],
+  "rotationIndex": 4,
+  "models": {
+    "generator": "gemma4:e4b",
+    "judge": "gemma4:e4b",
+    "generatorCmd": "ollama run gemma4:e4b",
+    "judgeCmd": "ollama run gemma4:e4b"
+  },
+  "prompts": {
+    "wiki": {
+      "iterations": 1,
+      "bestScore": null,
+      "currentPromptFile": "wiki/current/prompt.md",
+      "cronJobId": "037829b7-7c4e-4a05-b3e7-b5b7a7d1c2fb"
+    },
+    "qa": {
+      "iterations": 1,
+      "bestScore": null,
+      "currentPromptFile": "qa/current/prompt.md",
+      "cronJobId": "53abfe17-b8ee-40b9-8c28-e009415c09c1"
+    },
+    "linter": {
+      "iterations": 1,
+      "bestScore": null,
+      "currentPromptFile": "linter/current/prompt.md",
+      "cronJobId": "60e0c498-ee09-4878-a9dd-21a2540722da"
+    },
+    "dogfood": {
+      "iterations": 1,
+      "bestScore": null,
+      "currentPromptFile": "dogfood/current/prompt.md",
+      "cronJobId": "29ff4d50-7380-48c9-b81f-5a05b9c7911d"
+    },
+    "testgen": {
+      "iterations": 0,
+      "bestScore": null,
+      "currentPromptFile": "testgen/current/prompt.md",
+      "cronJobId": "e0f1a194-6bbb-449d-b4d5-21a819e12a73"
+    }
+  }
+}

@@ -58,7 +58,7 @@ export interface ClickContext {
   /** When true, use context pruning to build a focused prompt instead of full codebase analysis */
   contextPruning?: boolean;
   /** Scan result for context pruning — required when contextPruning is true */
-  scanResult?: import('../commands/scan.js').ScanResult;
+  scanResult?: import('../core/scanner').ScanResult;
   /**
    * AST-only mode (free tier): skip LLM path entirely, only apply deterministic transforms.
    */

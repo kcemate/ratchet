@@ -1,0 +1,29 @@
+{
+  "file": "/tmp/datagen-scan-123456/packages/react/src/ReactContext.js",
+  "issues": [
+    {
+      "line": 1,
+      "category": "architecture",
+      "severity": "low",
+      "description": "The context object creates circular references by setting Provider and Consumer to point back to the context object itself. While this is a deliberate design pattern in React, it can cause issues with garbage collection and serialization in some environments.",
+      "suggested_fix": "Consider using a WeakMap or separate provider/consumer objects that don't create strong circular references, though this would require significant refactoring.",
+      "confidence": "medium"
+    },
+    {
+      "line": 22,
+      "category": "production_readiness",
+      "severity": "low",
+      "description": "_currentRenderer and _currentRenderer2 fields are only set in dev mode. While this is appropriate for production, the conditional assignment could be extracted to a separate dev-only module to improve code clarity.",
+      "suggested_fix": "Move dev-only fields and logic to a separate module or use a build-time code removal tool to keep production code clean.",
+      "confidence": "medium"
+    },
+    {
+      "line": 1,
+      "category": "architecture",
+      "severity": "low",
+      "description": "The file imports from shared/ReactSymbols and shared/ReactTypes, creating dependencies on shared modules. While necessary, this tight coupling means changes to these symbols could affect all context usage.",
+      "suggested_fix": "Consider abstracting symbol definitions behind an API if they need to be changed frequently, though this may be over-engineering for this module.",
+      "confidence": "low"
+    }
+  ]
+}

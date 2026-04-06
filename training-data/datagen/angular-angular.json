@@ -1,0 +1,345 @@
+[
+  {
+    "file": "packages/core/src/error_handler.ts",
+    "issues": [
+      {
+        "line": 23,
+        "category": "security",
+        "severity": "medium",
+        "description": "Missing error sanitization before logging - could expose sensitive data in production logs",
+        "suggested_fix": "Implement error sanitization that redacts sensitive information (PII, tokens, passwords) before logging",
+        "confidence": 4
+      },
+      {
+        "line": 28,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Hardcoded console reference - makes testing difficult and couples to global console object",
+        "suggested_fix": "Accept Console instance via constructor injection or use inject(Console) for better testability",
+        "confidence": 5
+      },
+      {
+        "line": 48,
+        "category": "error handling",
+        "severity": "medium",
+        "description": "Potential unhandled promise rejection when injector.destroyed is true and userErrorHandler is not yet initialized",
+        "suggested_fix": "Add proper error handling with setTimeout and rethrow or log appropriately when userErrorHandler is not available",
+        "confidence": 3
+      },
+      {
+        "line": 71,
+        "category": "performance",
+        "severity": "low",
+        "description": "Event listeners are added on every DestroyRef destruction, could lead to memory leaks if not properly cleaned up",
+        "suggested_fix": "Ensure proper cleanup of event listeners and consider using WeakMap or other memory-efficient patterns",
+        "confidence": 3
+      }
+    ]
+  },
+  {
+    "file": "packages/core/src/di/injector.ts",
+    "issues": [
+      {
+        "line": 33,
+        "category": "code quality",
+        "severity": "medium",
+        "description": "Abstract class with multiple abstract get() overloads but no implementation - could cause confusion for implementers",
+        "suggested_fix": "Provide clearer documentation or split into more specific interfaces",
+        "confidence": 4
+      },
+      {
+        "line": 60,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Static create method with confusing overload signatures that accept both array and object forms",
+        "suggested_fix": "Simplify API by having separate named methods or clearer type discrimination",
+        "confidence": 4
+      },
+      {
+        "line": 75,
+        "category": "error handling",
+        "severity": "low",
+        "description": "No validation of providers array - could lead to runtime errors if invalid providers are passed",
+        "suggested_fix": "Add validation of provider types and throw meaningful errors early",
+        "confidence": 4
+      },
+      {
+        "line": 81,
+        "category": "security",
+        "severity": "low",
+        "description": "Static ɵprov property uses /* @__PURE__ */ comment but could still be treeshaken incorrectly in some bundlers",
+        "suggested_fix": "Ensure proper tree-shaking annotations and consider using ES6 import/export for better dead code elimination",
+        "confidence": 3
+      }
+    ]
+  },
+  {
+    "file": "packages/core/src/metadata.ts",
+    "issues": [
+      {
+        "line": 1,
+        "category": "code quality",
+        "severity": "low",
+        "description": "File serves mainly as re-exports - could be consolidated to reduce bundle size",
+        "suggested_fix": "Consider consolidating re-exports into more specific files or using barrel files only where necessary",
+        "confidence": 4
+      },
+      {
+        "line": 10,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Circular dependency risk between metadata files - each exports from others",
+        "suggested_fix": "Review and potentially refactor to reduce circular dependencies",
+        "confidence": 3
+      }
+    ]
+  },
+  {
+    "file": "packages/core/src/change_detection/change_detector_ref.ts",
+    "issues": [
+      {
+        "line": 20,
+        "category": "code quality",
+        "severity": "medium",
+        "description": "Abstract class with many methods but no clear separation of concerns - could be split into smaller interfaces",
+        "suggested_fix": "Consider splitting into ViewRef, ChangeDetectionRef, and other specific interfaces",
+        "confidence": 4
+      },
+      {
+        "line": 45,
+        "category": "performance",
+        "severity": "medium",
+        "description": "markForCheck() is abstract - implementations may have performance implications if not optimized",
+        "suggested_fix": "Ensure implementations use efficient dirty checking and avoid unnecessary change detection cycles",
+        "confidence": 3
+      },
+      {
+        "line": 78,
+        "category": "code quality",
+        "severity": "low",
+        "description": "injectChangeDetectorRef function uses non-null assertion (!) on getCurrentTNode() - could throw if called at wrong time",
+        "suggested_fix": "Add proper null checks or document when this can be called safely",
+        "confidence": 4
+      },
+      {
+        "line": 95,
+        "category": "error handling",
+        "severity": "low",
+        "description": "createViewRef returns null! (non-null assertion) but could return null in some cases - type safety issue",
+        "suggested_fix": "Handle null case properly or adjust return type to be nullable",
+        "confidence": 5
+      }
+    ]
+  },
+  {
+    "file": "packages/compiler/src/compiler.ts",
+    "issues": [
+      {
+        "line": 13,
+        "category": "code quality",
+        "severity": "high",
+        "description": "Large file with many exports (over 100) - violates single responsibility principle and makes maintenance difficult",
+        "suggested_fix": "Split into multiple files based on functionality (e.g., template parsing, code generation, error handling)",
+        "confidence": 5
+      },
+      {
+        "line": 22,
+        "category": "security",
+        "severity": "medium",
+        "description": "Comment indicates all compiler APIs are experimental and private, but they're still exported - could be misused",
+        "suggested_fix": "Keep APIs truly private (underscore naming) or provide stable public APIs with proper versioning",
+        "confidence": 4
+      },
+      {
+        "line": 28,
+        "category": "performance",
+        "severity": "medium",
+        "description": "Global side effect at the bottom (publishFacade(global)) - could cause unexpected behavior in module systems",
+        "suggested_fix": "Move side effects into explicit initialization functions that must be called",
+        "confidence": 4
+      },
+      {
+        "line": 35,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Massive import * as core from './core' - could lead to tree shaking issues and unclear dependencies",
+        "suggested_fix": "Import only specific needed exports to improve tree shaking and code clarity",
+        "confidence": 4
+      }
+    ]
+  },
+  {
+    "file": "packages/platform-browser/src/platform-browser.ts",
+    "issues": [
+      {
+        "line": 1,
+        "category": "code quality",
+        "severity": "low",
+        "description": "File is mainly a barrel re-export - could be optimized to only export what's needed",
+        "suggested_fix": "Consider using more targeted exports or dynamic imports for tree shaking",
+        "confidence": 3
+      },
+      {
+        "line": 9,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Exports private symbols from './private_export' - could leak internal APIs",
+        "suggested_fix": "Review and remove any unintended private API exports",
+        "confidence": 4
+      }
+    ]
+  },
+  {
+    "file": "packages/platform-browser/src/browser/browser_adapter.ts",
+    "issues": [
+      {
+        "line": 14,
+        "category": "security",
+        "severity": "high",
+        "description": "BrowserDomAdapter directly manipulates DOM and warns about XSS risks but lacks proper sanitization methods",
+        "suggested_fix": "Add built-in XSS protection and sanitization for common operations like setAttribute, setInnerHTML",
+        "confidence": 5
+      },
+      {
+        "line": 22,
+        "category": "error handling",
+        "severity": "medium",
+        "description": "onAndCancel method doesn't handle errors from event listeners - uncaught exceptions could occur",
+        "suggested_fix": "Wrap listener calls in try-catch and provide error reporting mechanism",
+        "confidence": 4
+      },
+      {
+        "line": 38,
+        "category": "performance",
+        "severity": "low",
+        "description": "getDefaultDocument() returns global document - could cause issues in SSR environments where document is not available",
+        "suggested_fix": "Make document injection optional or provide SSR-safe fallback",
+        "confidence": 4
+      },
+      {
+        "line": 61,
+        "category": "code quality",
+        "severity": "low",
+        "description": "getGlobalEventTarget method is deprecated but still present - should be removed to avoid misuse",
+        "suggested_fix": "Remove deprecated method entirely or provide migration path",
+        "confidence": 5
+      }
+    ]
+  },
+  {
+    "file": "packages/router/src/router.ts",
+    "issues": [
+      {
+        "line": 1,
+        "category": "code quality",
+        "severity": "high",
+        "description": "Extremely large class (over 800 lines) - violates single responsibility and makes maintenance very difficult",
+        "suggested_fix": "Split Router into smaller focused classes (NavigationManager, UrlSerializer, etc.)",
+        "confidence": 5
+      },
+      {
+        "line": 45,
+        "category": "performance",
+        "severity": "medium",
+        "description": "Multiple private Subject/EventEmitter instances that could cause memory leaks if not properly unsubscribed",
+        "suggested_fix": "Use async operators and ensure proper cleanup in ngOnDestroy",
+        "confidence": 4
+      },
+      {
+        "line": 78,
+        "category": "error handling",
+        "severity": "medium",
+        "description": "scheduleNavigation catches errors but only logs to INTERNAL_APPLICATION_ERROR_HANDLER - could miss critical failures",
+        "suggested_fix": "Add more robust error handling with retry logic and better error reporting",
+        "confidence": 3
+      },
+      {
+        "line": 120,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Many deprecated properties still present (routeReuseStrategy, onSameUrlNavigation) - clutters API",
+        "suggested_fix": "Mark as deprecated with clear migration paths and plan removal in next major version",
+        "confidence": 4
+      }
+    ]
+  },
+  {
+    "file": "packages/common/src/common_module.ts",
+    "issues": [
+      {
+        "line": 1,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Simple NgModule that only exports other modules - could be replaced with a more flexible composition pattern",
+        "suggested_fix": "Consider using feature flags or dynamic module loading instead of static exports",
+        "confidence": 3
+      }
+    ]
+  },
+  {
+    "file": "packages/common/src/common.ts",
+    "issues": [
+      {
+        "line": 1,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Barrel file with many exports - could be split into smaller, more focused entry points",
+        "suggested_fix": "Use smaller barrel files or direct imports to improve tree shaking",
+        "confidence": 3
+      },
+      {
+        "line": 12,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Backwards compatibility re-export of DOCUMENT from '@angular/core' at the bottom - confusing placement",
+        "suggested_fix": "Move all exports to the top and remove redundant re-exports",
+        "confidence": 4
+      }
+    ]
+  },
+  {
+    "file": "packages/common/src/directives/ng_for_of.ts",
+    "issues": [
+      {
+        "line": 1,
+        "category": "code quality",
+        "severity": "high",
+        "description": "Deprecated directive (deprecated 20.0) still present in codebase - should be removed to avoid confusion",
+        "suggested_fix": "Remove NgForOf and replace with @for block implementation entirely",
+        "confidence": 5
+      },
+      {
+        "line": 45,
+        "category": "performance",
+        "severity": "medium",
+        "description": "NgForOfContext class creates new objects on each iteration - could cause GC pressure for large lists",
+        "suggested_fix": "Consider object pooling or more efficient context management",
+        "confidence": 3
+      },
+      {
+        "line": 78,
+        "category": "error handling",
+        "severity": "medium",
+        "description": "ngDoCheck tries to create differ but catches errors only in dev mode - production errors could be silent",
+        "suggested_fix": "Add proper error handling in production mode as well",
+        "confidence": 4
+      },
+      {
+        "line": 95,
+        "category": "performance",
+        "severity": "medium",
+        "description": "forEachOperation called on every change detection cycle - could be expensive for large lists",
+        "suggested_fix": "Optimize change detection algorithm or add memoization for stable lists",
+        "confidence": 3
+      },
+      {
+        "line": 120,
+        "category": "code quality",
+        "severity": "low",
+        "description": "Static ngTemplateContextGuard method always returns true - could be simplified or made more type-safe",
+        "suggested_fix": "Review type guard implementation and ensure it provides real type safety",
+        "confidence": 4
+      }
+    ]
+  }
+]

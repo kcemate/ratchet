@@ -1,0 +1,131 @@
+# Gemma 4 Q&A Pair Generator — High-Quality Training Data
+
+**Mission:** Generate authoritative, detailed, and production-ready Q&A training pairs from code scan data. These pairs will be used to fine-tune Gemma 4 for code review and quality analysis.
+
+## Core Principles
+
+1. **Depth over breadth:** Provide comprehensive analysis, not superficial checklists
+2. **Actionable insights:** Every finding should include concrete fixes, not just identification
+3. **Contextual awareness:** Consider language idioms, framework conventions, and real-world constraints
+4. **Pedagogical value:** Explain the "why" behind recommendations, not just the "what"
+
+## Output Standards
+
+### Format Requirements
+- **JSONL format** with one object per line
+- **No trailing commas** or invalid JSON
+- **Proper escaping** of quotes and special characters
+- **Consistent indentation** (2 spaces for readability)
+- **Language-specific terminology** (use correct terms for JavaScript, Go, Python, etc.)
+
+### Quality Benchmarks
+
+#### Security Reviews Should Include:
+- **Threat modeling** context (what could an attacker do?)
+- **CVSS scoring** or equivalent severity assessment
+- **Exploit scenarios** (how could this be triggered in production?)
+- **Defense-in-depth** recommendations (multiple layers of protection)
+- **Code examples** showing both vulnerable and secure patterns
+- **Reference standards** (OWASP Top 10, CWE, etc.)
+
+#### Production Readiness Analysis Should Include:
+- **Root cause analysis** (why is this a problem?)
+- **Impact assessment** (what happens if it fails?)
+- **Monitoring implications** (how would you detect issues?)
+- **Performance considerations** (any hidden costs?)
+- **Scalability limits** (when does it break?)
+- **Testing gaps** (what tests would catch this?)
+
+#### Fix Recommendations Should Include:
+- **Step-by-step implementation** (exactly what to change)
+- **Alternative approaches** with trade-offs
+- **Backward compatibility** considerations
+- **Testing strategy** (how to verify the fix?)
+- **Performance impact** analysis
+- **Migration path** if breaking changes
+
+## Generation Process
+
+### Step 1: Scan Analysis
+For each issue in the scan JSON:
+- **Categorize** by type (security, performance, maintainability, etc.)
+- **Prioritize** by impact and likelihood
+- **Contextualize** within the codebase and framework
+- **Research** any unfamiliar patterns or libraries
+
+### Step 2: Question Formulation
+Generate 2-3 distinct question types:
+
+**Type A: Security Deep Dive**
+```
+"instruction": "Analyze this [language] code for security vulnerabilities. Consider: authentication, authorization, input validation, cryptography, error handling, and dependency risks. Provide CVSS scores where applicable and explain exploit scenarios."
+```
+
+**Type B: Production Architecture Review**
+```
+"instruction": "Evaluate this [language] code for production readiness. Focus on: error handling, logging, monitoring, scalability, performance, maintainability, and testing coverage. What would break first in production?"
+```
+
+**Type C: Targeted Fix Strategy**
+```
+"instruction": "Provide a comprehensive fix for [specific issue] in this [language] code. Include: root cause analysis, multiple solution approaches with trade-offs, implementation steps, testing strategy, and backward compatibility considerations."
+```
+
+### Step 3: Answer Generation
+Each answer must be:
+
+**Length:** 150-500 words (substantial but focused)
+**Structure:**
+1. **Summary** (1-2 sentences)
+2. **Detailed analysis** (break down the problem)
+3. **Impact assessment** (what happens if not fixed?)
+4. **Multiple solution options** (pros/cons)
+5. **Implementation guidance** (code examples, configuration changes)
+6. **Testing/validation** (how to verify the fix)
+7. **References** (standards, documentation, best practices)
+
+**Tone:** Authoritative, educational, collaborative
+**Language:** Professional but accessible (avoid unnecessary jargon)
+
+## Examples of Excellence
+
+### Good Security Analysis:
+```json
+{
+  "instruction": "Review this Node.js code for authentication vulnerabilities.",
+  "output": "This code has a critical security flaw: it uses `jwt-simple` with a hardcoded secret key. **Severity: Critical (CVSS 9.0)**. Attackers who gain access to the source code can immediately forge valid JWT tokens. **Exploit scenario:** An insider threat or code leak would allow complete account takeover. **Fix:** Use environment variables for secrets, implement key rotation, add token blacklisting, and consider using a more secure library like `jsonwebtoken` with RS256 algorithm. **Code example:** ```javascript // BAD const jwt = require('jwt-simple'); const secret = 'supersecretkey'; // Should come from env // GOOD const jwt = require('jsonwebtoken'); const secret = process.env.JWT_SECRET; ```"
+}
+```
+
+### Good Production Analysis:
+```json
+{
+  "instruction": "What production-readiness problems exist in this Go microservice?",
+  "output": "This service lacks proper graceful shutdown handling. **Impact:** During deployments or crashes, in-flight requests will fail, causing data corruption or inconsistent state. **Root cause:** The HTTP server is started without context cancellation. **Fix:** Implement signal handling with context timeouts. **Code:** ```go func main() { ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM); defer stop(); server := &http.Server{Addr: ':8080', Handler: routes}; go func() { <-ctx.Done(); ctx, cancel := context.WithTimeout(ctx, 5*time.Second); defer cancel(); server.Shutdown(ctx); }(); server.ListenAndServe(); } ``` **Testing:** Use `docker stop` to verify graceful shutdown."
+}
+```
+
+## Common Pitfalls to Avoid
+
+- ❌ Vague statements ("this is insecure" without explanation)
+- ❌ Missing code examples (show, don't just tell)
+- ❌ No severity assessment (critical vs minor)
+- ❌ One-size-fits-all solutions (consider context)
+- ❌ Ignoring framework conventions (Go's error handling, JS async patterns)
+- ❌ Forgetting testing/validation steps
+- ❌ Overly long answers (>500 words) without clear structure
+
+## Final Checklist
+
+Before saving each Q&A pair, verify:
+- [ ] Clear, specific question
+- [ ] Comprehensive analysis with depth
+- [ ] Actionable recommendations with code
+- [ ] Proper formatting and JSON validity
+- [ ] Appropriate length (150-500 words)
+- [ ] Language-specific best practices
+- [ ] No placeholder text or templates
+
+**Remember:** You're not just answering questions—you're teaching Gemma 4 how to think like an expert code reviewer. Quality matters more than quantity.
+
+Use `{GENERATOR_CMD}` for generation — it's local, free, no API key needed. Process up to 5 repos per run to stay within timeout.

@@ -24,7 +24,7 @@ import { generateReport, writeReport } from '../core/report.js';
 import { writePDF } from '../core/pdf-report.js';
 import { generateScoreCard, generatePRDescription } from '../core/pr-comment.js';
 import { runScan } from './scan.js';
-import type { ScanResult } from './scan.js';
+import type { ScanResult } from '../core/scanner';
 import { analyzeScoreGaps, generateNextMoveRecommendation } from '../core/score-optimizer.js';
 import { acquireLock, releaseLock } from '../core/lock.js';
 import { parseScopeArg, resolveScope, formatScopeForDisplay } from '../core/scope.js';
@@ -382,7 +382,7 @@ export function torqueCommand(): Command {
         trackEvent('torque');
 
         // License gate — torque requires Pro or higher
-        requireLicense('torque');
+        requireLicense();
 
         // Validate git repo, warn about dirty worktree, and load config
         const config = await validateProjectEnv(cwd);
@@ -1132,7 +1132,7 @@ export function torqueCommand(): Command {
                   if (structuralDominant && nonSweepableGaps.length > 0) {
                     const details = nonSweepableGaps
                       .slice(0, 3)
-                      .map(g => `${g.subcategory}: ${g.currentIssueCount} issues (+${g.pointsAvailable}pts)`)
+                      .map(g => `${g.subcategory}: ${g.currentCount} issues (+${g.pointsAvailable}pts)`)
                       .join(', ');
                     const architectHint = chalk.bold('--architect');
                     process.stdout.write(

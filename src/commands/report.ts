@@ -11,7 +11,7 @@ import type { DeepAnalysis } from '../core/report.js';
 import { generatePDF } from '../core/pdf-report.js';
 import { runScan } from './scan.js';
 import type { RatchetRun } from '../types.js';
-import type { ScanResult } from './scan.js';
+import type { ScanResult } from '../core/scanner';
 import { printHeader, exitWithError, printFields, tryOrAsync } from '../lib/cli.js';
 import { DeepEngine } from '../core/engines/deep.js';
 import { ClassicEngine } from '../core/engines/classic.js';

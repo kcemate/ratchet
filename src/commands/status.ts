@@ -48,6 +48,8 @@ function colorStatus(status: RatchetRun['status'], stale = false): string {
       return chalk.green('completed ✓');
     case 'failed':
       return chalk.red('failed ✗');
+    default:
+      return chalk.dim(String(status));
   }
 }
 

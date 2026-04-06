@@ -1289,10 +1289,10 @@ async function exportPng(htmlContent: string, outputPath: string): Promise<void>
     await page.goto(`file://${tmpHtml}`, { waitUntil: 'networkidle2', timeout: 30_000 });
 
     // Wait for Cytoscape to finish layout
-    await page.waitForFunction(() => {
-      const win = window as Window & { cytoscape?: unknown };
-      return typeof win.cytoscape !== 'undefined';
-    }, { timeout: 10_000 }).catch(() => {/* proceed anyway */});
+    await page.waitForFunction(
+      'typeof window.cytoscape !== "undefined"',
+      { timeout: 10_000 },
+    ).catch(() => {/* proceed anyway */});
 
     await new Promise(res => setTimeout(res, 2000));
 

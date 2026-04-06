@@ -99,7 +99,7 @@ function scoreRingSVG(score: number, max: number, size: number, label?: string):
   const center = size / 2;
 
   // Color based on percentage
-  let strokeColor = COLORS.error;
+  let strokeColor: string = COLORS.error;
   if (pct >= 0.9) strokeColor = COLORS.success;
   else if (pct >= 0.7) strokeColor = COLORS.accent;
   else if (pct >= 0.5) strokeColor = COLORS.warning;

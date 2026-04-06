@@ -96,14 +96,14 @@ export function quickFixCommand(): Command {
 
       // Header
       process.stdout.write(
-        `  Current score: ${scoreColor(result.total)(`${result.total}/${result.maxTotal}`)}\n\n`,
+        `  Current score: ${scoreColor(result.total, result.maxTotal)(`${result.total}/${result.maxTotal}`)}\n\n`,
       );
       process.stdout.write(chalk.bold('  Top 3 improvements:\n\n'));
 
       // Render each item
       for (const item of top3) {
         const headroomStr = chalk.green(`+${item.headroom} pt${item.headroom !== 1 ? 's' : ''}`);
-        const projectedStr = scoreColor(item.projectedTotal)(
+        const projectedStr = scoreColor(item.projectedTotal, result.maxTotal)(
           `~${item.projectedTotal}/${result.maxTotal}`,
         );
 

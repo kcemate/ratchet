@@ -1,0 +1,560 @@
+[
+  {
+    "file": "pandas/core/algorithms.py",
+    "line": 481,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 4641,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 5634,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 8957,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 8960,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 9019,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 9022,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 9084,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 9085,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 9098,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 9102,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 9110,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 14066,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 14325,
+    "category": "error-handling",
+    "severity": "low",
+    "description": "Try, Except, Pass detected.",
+    "suggested_fix": "Replace 'except Exception: pass' with proper error handling: log the exception, re-raise, or handle specifically.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 14463,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 15642,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/frame.py",
+    "line": 15665,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 10,
+    "category": "security",
+    "severity": "low",
+    "description": "Consider possible security implications associated with pickle module.",
+    "suggested_fix": "Avoid using pickle for untrusted data. Consider safer serialization formats like JSON, msgpack, or use pickle only with trusted data and proper safeguards.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 519,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 4338,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 5682,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 6018,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 6201,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 10702,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 10733,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 11844,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/generic.py",
+    "line": 11948,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/indexing.py",
+    "line": 974,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/indexing.py",
+    "line": 983,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/indexing.py",
+    "line": 984,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/indexing.py",
+    "line": 1124,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/indexing.py",
+    "line": 2557,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/core/indexing.py",
+    "line": 3254,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+    "suggested_fix": "Remove the assert statement and replace with proper runtime validation or error handling.",
+    "confidence": "high"
+  },
+  {
+    "file": "pandas/io/pytables.py",
+    "line": 1345,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: # delete from the table",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/pytables.py",
+    "line": 4541,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: select coordinates (row numbers) from a table; return the",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 313,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: List of column names to select from SQL table.",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 594,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: List of column names to select from SQL table (only used when reading",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 652,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: >>> pd.read_sql(\"SELECT int_column, date_column FROM test_data\", conn)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 675,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: ...     \"SELECT int_column, date_column FROM test_data\",",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 689,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: ...     pd.read_sql(\"SELECT int_column FROM test_data\", conn)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 1014,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: result = self.pd_sql.execute(self.table.insert(), data)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 1031,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: result = self.pd_sql.execute(stmt)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 1186,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: result = self.pd_sql.execute(sql_select)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 1718,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: List of column names to select from SQL table.",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 1857,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: result = self.execute(sql, params)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2093,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: self.execute(table.delete()).close()",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2150,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: cur.execute(sql, *args)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2194,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: List of column names to select from SQL table.",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2240,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: stmt = f\"SELECT {select_list} FROM {schema}.{table_name}\"",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2242,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: stmt = f\"SELECT {select_list} FROM {table_name}\"",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2402,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: self.execute(sql_statement).close()",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2448,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: self.execute(f\"DELETE FROM {table_name}\").close()",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2546,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: cur.execute(stmt)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2563,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: f\"INSERT INTO {escape(self.name)} ({col_names}) VALUES {wildcards}\"",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2572,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: conn.executemany(self.insert_statement(num_rows=1), data_list)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2580,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: conn.execute(self.insert_statement(num_rows=len(data_list)), flattened_data)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2703,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: cur.execute(sql, *args)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2767,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: cursor = self.execute(sql, params)",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2895,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: return len(self.execute(query, [name]).fetchall()) > 0",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2902,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: self.execute(drop_sql).close()",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2905,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: delete_sql = f\"DELETE FROM {_get_valid_sqlite_name(name)}\"",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "pandas/io/sql.py",
+    "line": 2907,
+    "category": "security",
+    "severity": "medium",
+    "description": "Potential SQL query construction found: self.execute(delete_sql).close()",
+    "suggested_fix": "Use parameterized queries with placeholders (?) or (:name) instead of string concatenation.",
+    "confidence": "medium"
+  }
+]

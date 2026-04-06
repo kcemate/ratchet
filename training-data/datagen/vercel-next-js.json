@@ -1,0 +1,101 @@
+[
+  {
+    "file": "src/server/app-render/app-render.tsx",
+    "line": "619-788",
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Function generateDynamicRSCPayload is 170 lines long, making it difficult to understand, test, and maintain. It handles complex RSC payload generation with many branches and edge cases.",
+    "suggested_fix": "Break down the function into smaller, focused functions. Consider extracting the logic for handling different payload types, managing cache, and processing route trees into separate helper functions.",
+    "confidence": 80
+  },
+  {
+    "file": "src/server/app-render/app-render.tsx",
+    "line": "1407-1555",
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Function prospectiveRuntimeServerPrerender is 149 lines long. It manages complex prerender logic with multiple abort controllers, cache signals, and error handling, making it a maintenance burden.",
+    "suggested_fix": "Refactor into smaller functions. Separate the setup of controllers/signals, the main prerender logic, and error handling into distinct units.",
+    "confidence": 80
+  },
+  {
+    "file": "src/server/app-render/app-render.tsx",
+    "line": "1570-1720",
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Function finalRuntimeServerPrerender is 151 lines long. It handles final prerender execution with complex stream operations and error recovery, reducing code readability.",
+    "suggested_fix": "Decompose into smaller functions focusing on specific responsibilities like stream handling, error recovery, and result generation.",
+    "confidence": 80
+  },
+  {
+    "file": "src/server/app-render/app-render.tsx",
+    "line": "1052-1080",
+    "category": "error_handling",
+    "severity": "high",
+    "description": "In spawnRuntimePrefetchWithFilledCaches, errors are caught but not rethrown or logged. This silently swallows failures that could lead to incomplete or incorrect responses being sent to clients.",
+    "suggested_fix": "Add proper error logging and consider whether errors should be rethrown to trigger appropriate fallback behavior. At minimum, log the error with context before closing the stream.",
+    "confidence": 70
+  },
+  {
+    "file": "src/server/app-render/app-render.tsx",
+    "line": "1527-1555",
+    "category": "error_handling",
+    "severity": "high",
+    "description": "In prospectiveRuntimeServerPrerender, errors are caught and null is returned in certain cases. This can cause null reference exceptions downstream or result in missing responses without clear error indication.",
+    "suggested_fix": "Re-throw critical errors after logging, or return a proper error result that can be handled appropriately by the caller. Avoid silent failures.",
+    "confidence": 70
+  },
+  {
+    "file": "src/server/next-server.ts",
+    "line": "entire file",
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "NextNodeServer class spans 2,173 lines, making it a god class. It handles too many responsibilities including request routing, rendering, API handling, middleware, and more, which reduces maintainability.",
+    "suggested_fix": "Break the class into smaller, focused classes. For example, separate routing logic, rendering logic, API handling, and middleware support into distinct components with clear interfaces.",
+    "confidence": 90
+  },
+  {
+    "file": "src/server/next-server.ts",
+    "line": "462",
+    "category": "performance",
+    "severity": "low",
+    "description": "getHasStaticDir uses fs.existsSync which is a synchronous file operation. While likely used only during initialization, synchronous I/O can block the event loop if called frequently.",
+    "suggested_fix": "Replace with asynchronous fs.promises.access or fs.promises.stat with proper error handling. However, since this appears to be initialization code, the impact is minimal.",
+    "confidence": 60
+  },
+  {
+    "file": "src/server/next-server.ts",
+    "line": "511-519",
+    "category": "performance",
+    "severity": "low",
+    "description": "readFileSync is used to read the build ID file during server startup. This is a synchronous blocking operation, but it's only performed once during initialization so impact is negligible.",
+    "suggested_fix": "Use asynchronous fs.promises.readFile instead to avoid blocking the event loop, though the practical benefit is minimal for a one-time operation.",
+    "confidence": 60
+  },
+  {
+    "file": "src/server/config.ts",
+    "line": "671-681",
+    "category": "performance",
+    "severity": "low",
+    "description": "existsSync is used to check for the existence of an images.loaderFile during config loading. This is a synchronous operation but occurs during startup, not request handling.",
+    "suggested_fix": "Replace with asynchronous check if this code path is performance-critical, though the impact is likely minimal.",
+    "confidence": 60
+  },
+  {
+    "file": "src/server/config.ts",
+    "line": "1310-1318",
+    "category": "performance",
+    "severity": "low",
+    "description": "existsSync is used to validate cache handler paths during config loading. This synchronous check happens at startup, not in the request path.",
+    "suggested_fix": "Consider asynchronous alternative if config loading performance is critical, but generally acceptable as is.",
+    "confidence": 60
+  },
+  {
+    "file": "src/build/webpack-config.ts",
+    "line": "108-110",
+    "category": "performance",
+    "severity": "low",
+    "description": "readFileSync is used to read server-external-packages.json during webpack config generation. This is a build-time operation, not runtime, so performance impact is acceptable.",
+    "suggested_fix": "No immediate fix needed as this is build-time code. If build performance becomes an issue, consider asynchronous loading, though Node.js typically loads JSON synchronously for simplicity.",
+    "confidence": 60
+  }
+]

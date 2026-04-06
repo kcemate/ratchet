@@ -1,0 +1,182 @@
+[
+  {
+    "file": "singleton/src/main/java/com/iluwatar/singleton/IvoryTower.java",
+    "line": 26,
+    "category": "Code Quality",
+    "severity": "Medium",
+    "description": "The comment 'Static to class instance of the class.' is grammatically awkward and unclear. It should be written more clearly.",
+    "suggested_fix": "Change to 'Static instance of the class, eagerly initialized for thread safety.'",
+    "confidence": 90
+  },
+  {
+    "file": "singleton/src/main/java/com/iluwatar/singleton/IvoryTower.java",
+    "line": 21,
+    "category": "Performance",
+    "severity": "Low",
+    "description": "Eager initialization may cause unnecessary resource consumption if the singleton is never used or used late in the application lifecycle.",
+    "suggested_fix": "Consider lazy initialization if resource usage is a concern.",
+    "confidence": 85
+  },
+  {
+    "file": "singleton/src/main/java/com/iluwatar/singleton/BillPughImplementation.java",
+    "line": 33,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "The field name 'instance' is not very descriptive. It could be more explicitly named to indicate it's a singleton instance.",
+    "suggested_fix": "Rename to 'INSTANCE' or 'SINGLETON_INSTANCE' for consistency with other implementations.",
+    "confidence": 80
+  },
+  {
+    "file": "singleton/src/main/java/com/iluwatar/singleton/BillPughImplementation.java",
+    "line": 20,
+    "category": "Error Handling",
+    "severity": "Medium",
+    "description": "The reflection check throws IllegalStateException but doesn't provide a clear message about what went wrong. The message 'Already initialized.' is vague.",
+    "suggested_fix": "Provide a more descriptive error message like 'Singleton instance already created via reflection attack prevention.'",
+    "confidence": 85
+  },
+  {
+    "file": "singleton/src/main/java/com/iluwatar/singleton/App.java",
+    "line": 59,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "Variable names 'dcl1' and 'dcl2' are abbreviations that are not immediately clear. They should be more descriptive.",
+    "suggested_fix": "Rename to 'doubleCheckedLockingInstance1' and 'doubleCheckedLockingInstance2'.",
+    "confidence": 90
+  },
+  {
+    "file": "factory-method/src/main/java/com/iluwatar/factory/method/OrcBlacksmith.java",
+    "line": 27,
+    "category": "Performance",
+    "severity": "Low",
+    "description": "The static block creates all weapon types upfront, which could be wasteful if only a subset are ever requested.",
+    "suggested_fix": "Use lazy initialization or create weapons on demand instead of pre-creating all types.",
+    "confidence": 80
+  },
+  {
+    "file": "factory-method/src/main/java/com/iluwatar/factory/method/OrcBlacksmith.java",
+    "line": 27,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "The map name 'ORCARSENAL' is misspelled (should be 'ORC_ARSENAL' or 'ORC_ARMORY').",
+    "suggested_fix": "Correct spelling to 'ORC_ARMORY' or similar.",
+    "confidence": 95
+  },
+  {
+    "file": "factory-method/src/main/java/com/iluwatar/factory/method/App.java",
+    "line": 32,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "The variable name 'blacksmith' is fine, but could be more specific like 'orcBlacksmith' after assignment to improve readability.",
+    "suggested_fix": "Rename to 'orcBlacksmith' for clarity.",
+    "confidence": 85
+  },
+  {
+    "file": "builder/src/main/java/com/iluwatar/builder/Hero.java",
+    "line": 33,
+    "category": "Error Handling",
+    "severity": "Medium",
+    "description": "The builder constructor only checks that profession and name are not null, but other fields like hairType, hairColor, armor, weapon could be null and may cause issues if the built Hero is used without null checks.",
+    "suggested_fix": "Add validation in the build() method to ensure required combinations are set, or document clearly which fields are optional.",
+    "confidence": 85
+  },
+  {
+    "file": "builder/src/main/java/com/iluwatar/builder/Hero.java",
+    "line": 54,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "The build() method simply creates a new Hero record without any additional validation or post-processing.",
+    "suggested_fix": "Consider adding validation logic to ensure the built object is in a consistent state.",
+    "confidence": 80
+  },
+  {
+    "file": "strategy/src/main/java/com/iluwatar/strategy/DragonSlayer.java",
+    "line": 13,
+    "category": "Error Handling",
+    "severity": "Medium",
+    "description": "The strategy field is not validated for null in the constructor. Passing null would cause a NullPointerException when goToBattle() is called.",
+    "suggested_fix": "Add null check in constructor: if (strategy == null) throw new IllegalArgumentException('Strategy must not be null');",
+    "confidence": 90
+  },
+  {
+    "file": "strategy/src/main/java/com/iluwatar/strategy/DragonSlayer.java",
+    "line": 19,
+    "category": "Error Handling",
+    "severity": "Medium",
+    "description": "The changeStrategy method doesn't validate for null, which could lead to a NullPointerException later.",
+    "suggested_fix": "Add null check: if (strategy == null) throw new IllegalArgumentException('Strategy must not be null');",
+    "confidence": 90
+  },
+  {
+    "file": "observer/src/main/java/com/iluwatar/observer/Weather.java",
+    "line": 35,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "The observers list is not thread-safe. If Weather is accessed from multiple threads, this could cause concurrency issues.",
+    "suggested_fix": "Use CopyOnWriteArrayList or synchronize access to the list.",
+    "confidence": 85
+  },
+  {
+    "file": "observer/src/main/java/com/iluwatar/observer/Weather.java",
+    "line": 44,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "The method uses ordinal() to cycle through weather types, which is fragile if the enum order changes.",
+    "suggested_fix": "Use a separate index field or a more robust cycling mechanism.",
+    "confidence": 90
+  },
+  {
+    "file": "decorator/src/main/java/com/iluwatar/decorator/ClubbedTroll.java",
+    "line": 18,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "The attack method calls decorated.attack() before logging, which means the log message appears after the decorated troll's attack output. This could lead to confusing log ordering.",
+    "suggested_fix": "Log first, then call decorated.attack() to maintain proper sequence.",
+    "confidence": 85
+  },
+  {
+    "file": "decorator/src/main/java/com/iluwatar/decorator/ClubbedTroll.java",
+    "line": 22,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "The method adds 10 to the decorated troll's attack power. This hard-coded value reduces flexibility.",
+    "suggested_fix": "Make the bonus configurable via constructor parameter.",
+    "confidence": 80
+  },
+  {
+    "file": "state/src/main/java/com/iluwatar/state/Mammoth.java",
+    "line": 21,
+    "category": "Code Quality",
+    "severity": "Medium",
+    "description": "The state transition logic uses getClass().equals() which is fragile and violates the Open/Closed principle. Adding new states requires modifying this method.",
+    "suggested_fix": "Use a state machine pattern with explicit state transitions or have each state define the next state.",
+    "confidence": 90
+  },
+  {
+    "file": "state/src/main/java/com/iluwatar/state/Mammoth.java",
+    "line": 21,
+    "category": "Error Handling",
+    "severity": "Low",
+    "description": "The method assumes only two states (Peaceful and Angry) and toggles between them. This is not extensible to more states.",
+    "suggested_fix": "Implement a more flexible state transition mechanism.",
+    "confidence": 90
+  },
+  {
+    "file": "chain-of-responsibility/src/main/java/com/iluwatar/chain/Request.java",
+    "line": 36,
+    "category": "Code Quality",
+    "severity": "Low",
+    "description": "The handled field is a boolean that can only go from false to true. However, there's no validation to prevent double-handling.",
+    "suggested_fix": "In markHandled(), check if already handled and throw an exception or log a warning.",
+    "confidence": 85
+  },
+  {
+    "file": "chain-of-responsibility/src/main/java/com/iluwatar/chain/Request.java",
+    "line": 43,
+    "category": "Error Handling",
+    "severity": "Low",
+    "description": "The constructor uses Objects.requireNonNull but doesn't provide a clear error message if null is passed.",
+    "suggested_fix": "Add descriptive messages: Objects.requireNonNull(requestType, 'requestType must not be null');",
+    "confidence": 90
+  }
+]

@@ -1,0 +1,191 @@
+[
+  {
+    "file": "ciphers/caesar_cipher.py",
+    "line": 239,
+    "category": "Error Handling",
+    "severity": "medium",
+    "description": "User input for key is directly converted to int without try-except, which can raise ValueError for non-numeric input",
+    "suggested_fix": "Wrap the int conversion in a try-except block and provide user-friendly error message",
+    "confidence": "high"
+  },
+  {
+    "file": "ciphers/caesar_cipher.py",
+    "line": 67,
+    "category": "Performance",
+    "severity": "medium",
+    "description": "String concatenation in loop using `result += character` is inefficient for large inputs",
+    "suggested_fix": "Use list to collect characters and join at the end",
+    "confidence": "high"
+  },
+  {
+    "file": "ciphers/caesar_cipher.py",
+    "line": 6,
+    "category": "Robustness",
+    "severity": "low",
+    "description": "No validation for alphabet parameter - empty or invalid alphabets can cause issues",
+    "suggested_fix": "Add validation to ensure alphabet is not empty and contains unique characters",
+    "confidence": "medium"
+  },
+  {
+    "file": "ciphers/caesar_cipher.py",
+    "line": 219,
+    "category": "Security",
+    "severity": "low",
+    "description": "Brute force function returns all possible decryptions, which could be a security risk for sensitive data",
+    "suggested_fix": "Add parameter to limit results or return only likely decryptions",
+    "confidence": "medium"
+  },
+  {
+    "file": "ciphers/caesar_cipher.py",
+    "line": 232,
+    "category": "Error Handling",
+    "severity": "low",
+    "description": "User input for menu choice not validated for non-numeric input before strip",
+    "suggested_fix": "Add validation to ensure choice is one of the expected options",
+    "confidence": "medium"
+  },
+  {
+    "file": "graphs/edmonds_karp_multiple_source_and_sink.py",
+    "line": 13,
+    "category": "Type Safety",
+    "severity": "medium",
+    "description": "Missing type hints for parameters and return types in _normalize_graph method",
+    "suggested_fix": "Add type hints: def _normalize_graph(self, sources: list[int], sinks: list[int]) -> None:",
+    "confidence": "high"
+  },
+  {
+    "file": "graphs/edmonds_karp_multiple_source_and_sink.py",
+    "line": 18,
+    "category": "Error Handling",
+    "severity": "high",
+    "description": "_normalize_graph returns None when sources or sinks are empty, but this leads to None source_index/sink_index which causes errors later",
+    "suggested_fix": "Raise ValueError instead of returning None, or set default values with proper handling",
+    "confidence": "high"
+  },
+  {
+    "file": "graphs/edmonds_karp_multiple_source_and_sink.py",
+    "line": 32,
+    "category": "Code Quality",
+    "severity": "medium",
+    "description": "The method modifies the input graph directly by inserting rows/columns, which is unexpected side effect",
+    "suggested_fix": "Create a copy of the graph before modification, or document this behavior clearly",
+    "confidence": "medium"
+  },
+  {
+    "file": "graphs/edmonds_karp_multiple_source_and_sink.py",
+    "line": 3,
+    "category": "Documentation",
+    "severity": "low",
+    "description": "Class lacks docstring explaining its purpose and usage",
+    "suggested_fix": "Add comprehensive docstring for FlowNetwork class",
+    "confidence": "medium"
+  },
+  {
+    "file": "graphs/dijkstra.py",
+    "line": 37,
+    "category": "Type Safety",
+    "severity": "medium",
+    "description": "Missing type hints for parameters and return type in dijkstra function",
+    "suggested_fix": "Add type hints: def dijkstra(graph: dict, start: str, end: str) -> int:",
+    "confidence": "high"
+  },
+  {
+    "file": "graphs/dijkstra.py",
+    "line": 62,
+    "category": "Error Handling",
+    "severity": "medium",
+    "description": "Returns -1 when no path exists, which could be confused with valid cost of -1 if negative edges were allowed",
+    "suggested_fix": "Return None or raise NoPathError instead of -1",
+    "confidence": "medium"
+  },
+  {
+    "file": "graphs/dijkstra.py",
+    "line": 37,
+    "category": "Robustness",
+    "severity": "low",
+    "description": "No validation that start and end nodes exist in the graph",
+    "suggested_fix": "Add check at beginning and raise KeyError if nodes are missing",
+    "confidence": "low"
+  },
+  {
+    "file": "graphs/dijkstra.py",
+    "line": 1,
+    "category": "Documentation",
+    "severity": "low",
+    "description": "File lacks header docstring explaining the purpose and usage",
+    "suggested_fix": "Add a module-level docstring describing the implementation",
+    "confidence": "medium"
+  },
+  {
+    "file": "data_structures/binary_tree/avl_tree.py",
+    "line": 16,
+    "category": "Code Quality",
+    "severity": "medium",
+    "description": "Unnecessary custom queue implementation (MyQueue) instead of using collections.deque",
+    "suggested_fix": "Replace MyQueue with collections.deque for better performance and readability",
+    "confidence": "high"
+  },
+  {
+    "file": "data_structures/binary_tree/avl_tree.py",
+    "line": 43,
+    "category": "Code Organization",
+    "severity": "low",
+    "description": "MyNode class is included in the same file as AVLtree, could be separated for better organization",
+    "suggested_fix": "Move MyNode to a separate file or make it an inner class of AVLtree",
+    "confidence": "low"
+  },
+  {
+    "file": "data_structures/binary_tree/avl_tree.py",
+    "line": 290,
+    "category": "Performance",
+    "severity": "medium",
+    "description": "Print tree method uses inefficient custom queue with fixed-size checks (range 100) and math.pow calculations",
+    "suggested_fix": "Simplify with standard BFS using collections.deque and proper level tracking",
+    "confidence": "medium"
+  },
+  {
+    "file": "data_structures/binary_tree/avl_tree.py",
+    "line": 200,
+    "category": "Error Handling",
+    "severity": "low",
+    "description": "Delete method does not handle case where node to delete is not found",
+    "suggested_fix": "Add check and raise ValueError or return False when node is not found",
+    "confidence": "medium"
+  },
+  {
+    "file": "data_structures/binary_tree/binary_search_tree.py",
+    "line": 1,
+    "category": "Documentation",
+    "severity": "low",
+    "description": "Class name inconsistency: class is BST but docstring refers to BinarySearchTree",
+    "suggested_fix": "Rename class to BinarySearchTree or update docstring to match",
+    "confidence": "medium"
+  },
+  {
+    "file": "data_structures/binary_tree/binary_search_tree.py",
+    "line": 33,
+    "category": "Error Handling",
+    "severity": "medium",
+    "description": "Search method raises IndexError with custom message when tree is empty, which is misleading",
+    "suggested_fix": "Raise a more appropriate exception like ValueError or create a custom TreeEmptyError",
+    "confidence": "high"
+  },
+  {
+    "file": "data_structures/binary_tree/binary_search_tree.py",
+    "line": 327,
+    "category": "Performance",
+    "severity": "medium",
+    "description": "find_kth_smallest uses O(n) extra space to store all elements, should use O(h) space with inorder traversal",
+    "suggested_fix": "Implement kth smallest using iterative inorder traversal with stack",
+    "confidence": "high"
+  },
+  {
+    "file": "data_structures/binary_tree/binary_search_tree.py",
+    "line": 100,
+    "category": "Code Quality",
+    "severity": "low",
+    "description": "Method names are inconsistent: del_node vs delete, and some methods have underscores vs not",
+    "suggested_fix": "Standardize method names to follow PEP 8 conventions",
+    "confidence": "medium"
+  }
+]

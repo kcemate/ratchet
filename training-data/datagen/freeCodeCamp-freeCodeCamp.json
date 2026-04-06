@@ -1,0 +1,137 @@
+[
+  {
+    "file": "build-curriculum.ts",
+    "line": 125,
+    "category": "error-handling",
+    "severity": "medium",
+    "description": "Error handling in validateBlocks function could be more specific about which block is missing structure file",
+    "suggested_fix": "Include the superblock name in the error message to help with debugging",
+    "confidence": 0.9
+  },
+  {
+    "file": "build-curriculum.ts",
+    "line": 140,
+    "category": "performance",
+    "severity": "medium",
+    "description": "parseCurriculumStructure reads all superblock structures upfront which could be memory intensive for large curricula",
+    "suggested_fix": "Consider lazy loading or streaming the superblock structures",
+    "confidence": 0.8
+  },
+  {
+    "file": "build-curriculum.ts",
+    "line": 200,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "buildCurriculum function has high cyclomatic complexity with multiple nested loops and conditionals",
+    "suggested_fix": "Break down into smaller, focused functions",
+    "confidence": 0.8
+  },
+  {
+    "file": "build-curriculum.ts",
+    "line": 220,
+    "category": "security",
+    "severity": "medium",
+    "description": "File path concatenation without proper sanitization could lead to path traversal vulnerabilities",
+    "suggested_fix": "Use path.resolve() consistently and validate paths",
+    "confidence": 0.7
+  },
+  {
+    "file": "build-curriculum.ts",
+    "line": 250,
+    "category": "design",
+    "severity": "medium",
+    "description": "Inconsistent error handling patterns - some functions throw errors while others return undefined/null",
+    "suggested_fix": "Standardize error handling approach across the codebase",
+    "confidence": 0.8
+  },
+  {
+    "file": "config.ts",
+    "line": 10,
+    "category": "security",
+    "severity": "high",
+    "description": "SHOW_UPCOMING_CHANGES constant could expose development features in production if not properly controlled",
+    "suggested_fix": "Ensure this is properly secured behind feature flags and environment checks",
+    "confidence": 0.9
+  },
+  {
+    "file": "config.ts",
+    "line": 15,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "curriculumFilter is a global variable that could be modified unexpectedly",
+    "suggested_fix": "Make it a constant or use proper encapsulation",
+    "confidence": 0.7
+  },
+  {
+    "file": "challenge-types.ts",
+    "line": 50,
+    "category": "design",
+    "severity": "medium",
+    "description": "Magic numbers used for challenge types instead of named constants",
+    "suggested_fix": "Use an enum or named constants for better maintainability",
+    "confidence": 0.9
+  },
+  {
+    "file": "challenge-types.ts",
+    "line": 100,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Duplicate logic in viewTypes and submitTypes objects for similar challenge types",
+    "suggested_fix": "Consider creating a shared configuration or using inheritance",
+    "confidence": 0.8
+  },
+  {
+    "file": "super-blocks.ts",
+    "line": 200,
+    "category": "design",
+    "severity": "medium",
+    "description": "superBlockStages object is very large and could be split into smaller, more manageable files",
+    "suggested_fix": "Break down into separate files by stage or category",
+    "confidence": 0.8
+  },
+  {
+    "file": "super-blocks.ts",
+    "line": 250,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "notAuditedSuperBlocks object has duplicated superblock lists across languages",
+    "suggested_fix": "Create a shared base list and extend it per language",
+    "confidence": 0.7
+  },
+  {
+    "file": "super-blocks.ts",
+    "line": 300,
+    "category": "performance",
+    "severity": "medium",
+    "description": "generateSuperBlockList creates new arrays repeatedly which could be optimized",
+    "suggested_fix": "Cache the result or use memoization",
+    "confidence": 0.7
+  },
+  {
+    "file": "file-handler.ts",
+    "line": 50,
+    "category": "security",
+    "severity": "medium",
+    "description": "File operations don't properly handle path normalization which could lead to path traversal",
+    "suggested_fix": "Use path.resolve() and validate all paths",
+    "confidence": 0.8
+  },
+  {
+    "file": "file-handler.ts",
+    "line": 80,
+    "category": "error-handling",
+    "severity": "medium",
+    "description": "Missing error handling for file system operations that could fail",
+    "suggested_fix": "Add try-catch blocks and proper error handling",
+    "confidence": 0.9
+  },
+  {
+    "file": "filter.ts",
+    "line": 30,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "applyFilters function has complex nested conditionals that could be simplified",
+    "suggested_fix": "Break down into smaller, focused functions",
+    "confidence": 0.8
+  }
+]

@@ -1,0 +1,110 @@
+[
+  {
+    "file": "gin.go",
+    "line": 102,
+    "category": "security",
+    "severity": "high",
+    "description": "Engine trusts all proxies by default with `trustedProxies: []string{\"0.0.0.0/0\", \"::/0\"}`. This allows any client to spoof their IP address when ForwardedByClientIP is enabled, leading to security vulnerabilities in production environments.",
+    "suggested_fix": "Change default to empty or minimal trusted CIDRs. Add clear warning in documentation and require explicit configuration for proxy trust.",
+    "confidence": 95
+  },
+  {
+    "file": "gin.go",
+    "line": 135,
+    "category": "security",
+    "severity": "high",
+    "description": "TrustedPlatform defaults to empty string, but AppEngine field is deprecated. This creates confusion and potential misconfiguration where security settings might not be applied correctly.",
+    "suggested_fix": "Remove deprecated AppEngine field completely and make TrustedPlatform required with proper validation.",
+    "confidence": 90
+  },
+  {
+    "file": "recovery.go",
+    "line": 72,
+    "category": "error-handling",
+    "severity": "high",
+    "description": "Broken pipe errors (EPIPE, ECONNRESET) are caught but not properly logged. The error is added to context but the response is aborted without proper cleanup, potentially leaving resources in inconsistent state.",
+    "suggested_fix": "Ensure proper error logging and resource cleanup. Consider using context cancellation and proper defer patterns.",
+    "confidence": 85
+  },
+  {
+    "file": "tree.go",
+    "line": 287,
+    "category": "code-quality",
+    "severity": "medium",
+    "description": "Multiple functions use panic for control flow (e.g., route registration conflicts). This is inappropriate for production code as it crashes the entire server instead of returning proper HTTP errors.",
+    "suggested_fix": "Replace panics with proper error returns and HTTP error responses. Use custom errors that can be handled gracefully.",
+    "confidence": 92
+  },
+  {
+    "file": "tree.go",
+    "line": 156,
+    "category": "security",
+    "severity": "medium",
+    "description": "Path parameter validation is minimal. Wildcard patterns like `:name*` and `*` are allowed but not properly validated, potentially allowing path traversal or unexpected routing behavior.",
+    "suggested_fix": "Add strict validation for path parameters. Disallow dangerous patterns and enforce naming conventions.",
+    "confidence": 88
+  },
+  {
+    "file": "logger.go",
+    "line": 144,
+    "category": "performance",
+    "severity": "medium",
+    "description": "Logger uses `fmt.Fprint` directly to output logs without any buffering or pooling. This causes excessive allocations and can become a bottleneck under high load.",
+    "suggested_fix": "Implement a buffered logger or use sync.Pool for log buffers. Consider asynchronous logging for high-traffic scenarios.",
+    "confidence": 80
+  },
+  {
+    "file": "logger.go",
+    "line": 78,
+    "category": "production-readiness",
+    "severity": "medium",
+    "description": "Logger lacks request ID correlation. Without request IDs, it's difficult to trace requests across microservices or debug complex request flows.",
+    "suggested_fix": "Add request ID support to LoggerConfig. Extract from headers or generate new UUID for each request.",
+    "confidence": 85
+  },
+  {
+    "file": "auth.go",
+    "line": 62,
+    "category": "security",
+    "severity": "medium",
+    "description": "Basic Auth uses `subtle.ConstantTimeCompare` but the comparison is done on string bytes without constant-time string comparison. This could potentially leak timing information.",
+    "suggested_fix": "Use constant-time comparison for the entire authentication process. Consider using a dedicated security library for authentication.",
+    "confidence": 75
+  },
+  {
+    "file": "routergroup.go",
+    "line": 189,
+    "category": "error-handling",
+    "severity": "medium",
+    "description": "Static file serving uses `panic` when URL parameters are detected, which crashes the server. Should return HTTP 500 error instead.",
+    "suggested_fix": "Replace panic with proper error handling and HTTP error response. Validate inputs before processing.",
+    "confidence": 90
+  },
+  {
+    "file": "context.go",
+    "line": 845,
+    "category": "security",
+    "severity": "low",
+    "description": "ClientIP method doesn't properly validate IP addresses from headers. Could be vulnerable to IP spoofing if trusted proxies aren't configured correctly.",
+    "suggested_fix": "Add IP address validation and sanitization. Ensure only trusted headers are used for client IP extraction.",
+    "confidence": 70
+  },
+  {
+    "file": "render/json.go",
+    "line": 21,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "JSON render uses `go-json` library but doesn't handle encoding errors properly. Errors during marshaling are not logged or reported.",
+    "suggested_fix": "Add proper error handling for JSON marshaling. Log errors and return appropriate HTTP responses.",
+    "confidence": 65
+  },
+  {
+    "file": "version.go",
+    "line": 1,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Deprecated fields like `AppEngine` are still present but marked as deprecated. This creates technical debt and confusion for developers.",
+    "suggested_fix": "Remove deprecated fields in next major version. Add migration guides for breaking changes.",
+    "confidence": 80
+  }
+]

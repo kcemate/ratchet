@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { printHeader } from '../lib/cli.js';
-import type { ScanResult } from './scan.js';
+import type { ScanResult } from '../core/scanner';
 import { logger } from '../lib/logger.js';
 
 export const SCAN_CACHE_FILE = '.ratchet/scan-cache.json';
