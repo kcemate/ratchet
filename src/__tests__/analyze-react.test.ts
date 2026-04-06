@@ -1,11 +1,10 @@
-import { runDeepAnalyze, runReadTurn } from '../core/analyze-react';
+import { describe, it, expect, vi } from 'vitest';
+import { runDeepAnalyze, runReadTurn, safeReadFile, computeConfidence, deriveRiskLevel } from '../core/analyze-react';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
-import { join, relative } from 'path';
 import { logger } from '../lib/logger.js';
 import { getImpact, getContext, queryFlows, isIndexed } from '../core/gitnexus';
 import type { ScanResult } from '../core/scanner';
-import type { Target } from '../types.js';
 
 // Mock dependencies
 vi.mock('fs/promises', () => ({
@@ -38,12 +37,15 @@ vi.mock('../core/gitnexus', () => ({
 
 // Mock scan data
 const mockScan: ScanResult = {
+  projectName: 'test-project',
   total: 85,
   maxTotal: 100,
+  totalIssuesFound: 18,
+  categories: [],
   issuesByType: [
-    { subcategory: 'Missing semicolons', count: 10, locations: ['src/file1.ts', 'src/file2.ts'] },
-    { subcategory: 'Unused variables', count: 5, locations: ['src/file3.ts'] },
-    { subcategory: 'Type errors', count: 3, locations: ['src/file4.ts', 'src/file5.ts'] },
+    { category: 'Code Quality', subcategory: 'Missing semicolons', count: 10, description: 'Missing semicolons', severity: 'low', locations: ['src/file1.ts', 'src/file2.ts'] },
+    { category: 'Code Quality', subcategory: 'Unused variables', count: 5, description: 'Unused variables', severity: 'medium', locations: ['src/file3.ts'] },
+    { category: 'Code Quality', subcategory: 'Type errors', count: 3, description: 'Type errors', severity: 'high', locations: ['src/file4.ts', 'src/file5.ts'] },
   ],
 };
 
@@ -57,7 +59,7 @@ describe('analyze-react.ts', () => {
   describe('safeReadFile', () => {
     it('should read file and return content when successful', async () => {
       const mockContent = 'console.log("test");';
-      vi.mocked(readFile).mockResolvedValue(Buffer.from(mockContent));
+      vi.mocked(readFile).mockResolvedValue(Buffer.from(mockContent) as unknown as string);
       vi.mocked(existsSync).mockReturnValue(true);
 
       const result = await safeReadFile('test.ts');
@@ -67,7 +69,7 @@ describe('analyze-react.ts', () => {
 
     it('should truncate content when exceeding MAX_FILE_BYTES', async () => {
       const longContent = 'a'.repeat(10_000);
-      vi.mocked(readFile).mockResolvedValue(Buffer.from(longContent));
+      vi.mocked(readFile).mockResolvedValue(Buffer.from(longContent) as unknown as string);
       vi.mocked(existsSync).mockReturnValue(true);
 
       const result = await safeReadFile('test.ts');
@@ -92,8 +94,8 @@ describe('analyze-react.ts', () => {
 
     it('should increase confidence with high-priority changes', () => {
       const changes = [
-        { filePath: 'file1.ts', description: 'Fix', priority: 'high' },
-        { filePath: 'file2.ts', description: 'Fix', priority: 'high' },
+        { filePath: 'file1.ts', description: 'Fix', priority: 'high' as const },
+        { filePath: 'file2.ts', description: 'Fix', priority: 'high' as const },
       ];
       const result = computeConfidence([], 'low', changes, 0);
       expect(result).toBe(0.8); // 0.7 + 2*0.05
@@ -122,7 +124,7 @@ describe('analyze-react.ts', () => {
       const resultLow = computeConfidence(['file1', 'file2', 'file3', 'file4', 'file5'], 'critical', [], 0);
       expect(resultLow).toBe(0.1);
 
-      const resultHigh = computeConfidence([], 'low', Array(20).fill({}), 0);
+      const resultHigh = computeConfidence([], 'low', Array(20).fill({ filePath: 'f.ts', description: 'x', priority: 'high' as const }), 0);
       expect(resultHigh).toBe(1.0);
     });
   });
@@ -161,7 +163,7 @@ describe('analyze-react.ts', () => {
   describe('runReadTurn', () => {
     it('should read top issue files and return observations', async () => {
       vi.mocked(existsSync).mockReturnValue(true);
-      vi.mocked(readFile).mockResolvedValue(Buffer.from('test content'));
+      vi.mocked(readFile).mockResolvedValue(Buffer.from('test content') as unknown as string);
 
       const result = await runReadTurn(mockScan, mockTarget, '/tmp');
       expect(result.turn.index).toBe(1);
@@ -181,9 +183,9 @@ describe('analyze-react.ts', () => {
     });
 
     it('should fall back to target path when no issue locations', async () => {
-      const scanWithNoLocations = { ...mockScan, issuesByType: [{ subcategory: 'None', count: 0, locations: [] }] };
+      const scanWithNoLocations: ScanResult = { ...mockScan, issuesByType: [{ category: 'Code Quality', subcategory: 'None', count: 0, description: 'None', severity: 'low', locations: [] }] };
       vi.mocked(existsSync).mockReturnValue(true);
-      vi.mocked(readFile).mockResolvedValue(Buffer.from('test'));
+      vi.mocked(readFile).mockResolvedValue(Buffer.from('test') as unknown as string);
 
       const result = await runReadTurn(scanWithNoLocations, mockTarget, '/tmp');
       expect(result.turn.actions).toContain('read:relative-path');
@@ -194,14 +196,14 @@ describe('analyze-react.ts', () => {
     it('should perform full analysis with 3 turns', async () => {
       // Mock all dependencies
       vi.mocked(existsSync).mockReturnValue(true);
-      vi.mocked(readFile).mockResolvedValue(Buffer.from('test content'));
+      vi.mocked(readFile).mockResolvedValue(Buffer.from('test content') as unknown as string);
       vi.mocked(isIndexed).mockReturnValue(true);
-      vi.mocked(getImpact).mockReturnValue({ directCallers: ['dep1', 'dep2'], riskLevel: 'low' });
-      vi.mocked(getContext).mockReturnValue({ incoming: { ref1: ['file1'] } });
+      vi.mocked(getImpact).mockReturnValue({ target: 'src/main.ts', directCallers: ['dep1', 'dep2'], affectedFiles: [], riskLevel: 'low', confidence: 0.7, raw: '' });
+      vi.mocked(getContext).mockReturnValue({ symbol: '', incoming: { ref1: [{ name: 'file1', filePath: 'file1.ts' }] }, outgoing: {}, raw: '' });
       vi.mocked(queryFlows).mockReturnValue(['flow1', 'flow2']);
 
       const result = await runDeepAnalyze(mockScan, mockTarget, '/tmp');
-      
+
       expect(result.turns.length).toBeGreaterThanOrEqual(3);
       expect(result.confidence).toBeGreaterThan(0);
       expect(result.riskLevel).toBeOneOf(['low', 'medium', 'high', 'critical']);
@@ -216,7 +218,7 @@ describe('analyze-react.ts', () => {
       vi.mocked(readFile).mockRejectedValue(new Error('Read failed'));
 
       const result = await runDeepAnalyze(mockScan, mockTarget, '/tmp');
-      
+
       expect(result.turns.length).toBeGreaterThan(0);
       expect(result.confidence).toBeGreaterThanOrEqual(0.1);
       expect(result.riskLevel).toBeDefined();
@@ -225,10 +227,10 @@ describe('analyze-react.ts', () => {
     it('should skip investigation when GitNexus not indexed', async () => {
       vi.mocked(isIndexed).mockReturnValue(false);
       vi.mocked(existsSync).mockReturnValue(true);
-      vi.mocked(readFile).mockResolvedValue(Buffer.from('test'));
+      vi.mocked(readFile).mockResolvedValue(Buffer.from('test') as unknown as string);
 
       const result = await runDeepAnalyze(mockScan, mockTarget, '/tmp');
-      
+
       const investigationTurn = result.turns.find(t => t.phase === 'investigate');
       expect(investigationTurn?.reasoning).toContain('GitNexus index not found');
       expect(result.blastRadiusConcerns).toEqual([]);

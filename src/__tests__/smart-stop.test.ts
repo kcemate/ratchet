@@ -8,12 +8,15 @@ import {
 
 // Placeholder for unimplemented shouldSmartStop API
 const DIMINISHING_TOKEN_THRESHOLD = 200;
-function shouldSmartStop(_tracker: any): { stop: boolean; reason?: string } {
+const CIRCUIT_BREAKER_THRESHOLD = 3;
+const FILE_THRASH_THRESHOLD = 3;
+function shouldSmartStop(_tracker: any, _opts?: any): { stop: boolean; reason?: string; earlyStopReason?: string; escalate?: string } {
   return { stop: false };
 }
-function makeTracker(_opts: any): any {
+function makeTracker(_opts?: any): any {
   return {};
 }
+function updateSmartStopTracker(_tracker: any, ..._args: any[]): void {}
 
 // ── checkTimeoutStop ─────────────────────────────────────────────────────────
 

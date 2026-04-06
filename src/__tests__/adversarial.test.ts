@@ -6,7 +6,7 @@ import * as childProcess from 'child_process';
 // ── Mock child_process and fs for unit tests ─────────────────────────────────
 
 vi.mock('child_process', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('child_process')>();
   return {
     ...actual,
     spawn: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('child_process', async (importOriginal) => {
 });
 
 vi.mock('fs/promises', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('fs/promises')>();
   return {
     ...actual,
     readFile: vi.fn(),

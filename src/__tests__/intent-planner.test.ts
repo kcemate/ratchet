@@ -304,7 +304,7 @@ describe('IntentPlanner', () => {
     expect(result).not.toBeNull();
     expect(sendSpy).toHaveBeenCalledTimes(2);
     // Second call should have "ONLY valid JSON" in the prompt
-    const secondCallPrompt = sendSpy.mock.calls[1]?.[0] as string;
+    const secondCallPrompt = (sendSpy.mock.calls as unknown as string[][])[1]?.[0];
     expect(secondCallPrompt).toContain('ONLY valid JSON');
   });
 
@@ -375,7 +375,7 @@ describe('IntentPlanner', () => {
     const result = await planner.plan(minimalFinding, SAMPLE_SOURCE);
     expect(result).not.toBeNull();
     // Prompt should still be constructed (file/line fall back to 'unknown'/1)
-    const prompt = sendSpy.mock.calls[0]?.[0] as string;
+    const prompt = (sendSpy.mock.calls as unknown as string[][])[0]?.[0];
     expect(prompt).toContain('Hardcoded secret detected');
   });
 });

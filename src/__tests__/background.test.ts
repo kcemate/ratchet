@@ -39,7 +39,7 @@ describe('startBackgroundRun', () => {
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(join(os.tmpdir(), 'ratchet-bg-test-'));
     vi.clearAllMocks();
-    vi.mocked(spawn).mockReturnValue(makeFakeChild(12345) as ReturnType<typeof spawn>);
+    vi.mocked(spawn).mockReturnValue(makeFakeChild(12345) as unknown as ReturnType<typeof spawn>);
   });
 
   afterEach(async () => {
@@ -110,7 +110,7 @@ describe('updateProgress', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(join(os.tmpdir(), 'ratchet-bg-progress-'));
-    vi.mocked(spawn).mockReturnValue(makeFakeChild(99) as ReturnType<typeof spawn>);
+    vi.mocked(spawn).mockReturnValue(makeFakeChild(99) as unknown as ReturnType<typeof spawn>);
   });
 
   afterEach(async () => {
@@ -158,7 +158,7 @@ describe('progress.json format', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(join(os.tmpdir(), 'ratchet-bg-format-'));
-    vi.mocked(spawn).mockReturnValue(makeFakeChild(555) as ReturnType<typeof spawn>);
+    vi.mocked(spawn).mockReturnValue(makeFakeChild(555) as unknown as ReturnType<typeof spawn>);
   });
 
   afterEach(async () => {

@@ -49,7 +49,7 @@ const MAX_FILE_BYTES = 8_000; // read first 8 KB of each file
 
 // ── Helpers
 
-async function safeReadFile(absPath: string): Promise<string> {
+export async function safeReadFile(absPath: string): Promise<string> {
   try {
     const buf = await readFile(absPath);
     const text = buf.toString('utf-8');
@@ -77,7 +77,7 @@ function topIssueFiles(scan: ScanResult, limit: number): string[] {
   return files;
 }
 
-function computeConfidence(
+export function computeConfidence(
   blastConcerns: string[],
   riskLevel: string,
   proposedChanges: ProposedChange[],
@@ -102,7 +102,7 @@ function computeConfidence(
   return Math.max(0.1, Math.min(1.0, score));
 }
 
-function deriveRiskLevel(blastConcerns: string[], maxDirectCallers: number): ReactAnalysis['riskLevel'] {
+export function deriveRiskLevel(blastConcerns: string[], maxDirectCallers: number): ReactAnalysis['riskLevel'] {
   if (maxDirectCallers >= 10 || blastConcerns.length >= 5) return 'critical';
   if (maxDirectCallers >= 5 || blastConcerns.length >= 3) return 'high';
   if (maxDirectCallers >= 2 || blastConcerns.length >= 1) return 'medium';

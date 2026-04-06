@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { allocateClicks } from '../core/allocator.js';
 import type { ScanResult, IssueType } from '../core/scanner';
-import { STRUCTURAL_SUBCATEGORIES, LOCAL_SUBCATEGORIES } from './scan-constants';
+import { STRUCTURAL_SUBCATEGORIES, LOCAL_SUBCATEGORIES } from '../core/taxonomy.js';
 
 // Helper to create a structural issue
 const createStructuralIssue = (
   subcategory: string,
   count: number,
-  severity: string = 'high',
+  severity: 'low' | 'medium' | 'high' = 'high',
   description: string = 'test issue'
 ): IssueType => ({
   category: 'Code Quality',
@@ -21,7 +21,7 @@ const createStructuralIssue = (
 const createLocalIssue = (
   subcategory: string,
   count: number,
-  severity: string = 'medium',
+  severity: 'low' | 'medium' | 'high' = 'medium',
   description: string = 'test issue'
 ): IssueType => ({
   category: 'Code Quality',
@@ -36,6 +36,10 @@ const createMockScan = (
   issuesByType: IssueType[] = [],
   totalIssuesFound?: number
 ): ScanResult => ({
+  projectName: 'test',
+  total: 0,
+  maxTotal: 0,
+  categories: [],
   issuesByType,
   totalIssuesFound: totalIssuesFound ?? issuesByType.reduce((sum, i) => sum + i.count, 0),
 });
@@ -118,7 +122,8 @@ expect(result.reasoning).toContain('structural severity');
       category: 'Code Quality',
       subcategory: 'UNKNOWN',
       count: 50,
-      severity: 'high',
+      description: 'Unknown issue',
+      severity: 'high' as const,
     };
 
     const scan = createMockScan([unknownIssue]);

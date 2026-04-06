@@ -118,7 +118,7 @@ describe('APIAgent issue-driven clicks', () => {
     const agent = new APIAgent({ provider: fakeProvider });
 
     // Simulate the analyze/propose/build pipeline with issues
-    const issues = [{ id: 'I1', description: 'Fix null check', category: 'safety', severity: 'high' as const, locations: [] }];
+    const issues = [{ id: 'I1', description: 'Fix null check', category: 'safety', subcategory: 'null-check', count: 1, priority: 1, severity: 'high' as const, locations: [] }];
     const fakeTarget = { name: 'test', path: '.', description: 'test target' };
 
     // analyze with issues sets _issueDrivenClick and returns the plan prompt

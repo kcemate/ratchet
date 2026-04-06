@@ -1,6 +1,8 @@
 // scoring.ts — Scoring logic and heuristics
 // Public API: scoreTests, scoreSecurity, scoreTypes, scoreErrorHandling, scorePerformance, scoreCodeQuality
 
+import type { Finding } from '../normalize.js';
+
 /**
  * Scoring interface for all heuristic-based evaluations.
  */

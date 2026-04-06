@@ -108,7 +108,7 @@ describe('prevalidateIssues', () => {
   });
 
   it('marks issue as valid when real console.log exists in code', async () => {
-    mockReadFile.mockResolvedValue('function foo() { console.log("debug"); }' as unknown as Buffer);
+    mockReadFile.mockResolvedValue('function foo() { console.log("debug"); }' as unknown as Buffer<ArrayBuffer>);
 
     const issues = [makeIssue()];
     const result = await prevalidateIssues(issues, cwd);
@@ -118,7 +118,7 @@ describe('prevalidateIssues', () => {
   });
 
   it('marks issue as false positive when console.log only in comment', async () => {
-    mockReadFile.mockResolvedValue('// console.log("example")\nconst x = 1;\n' as unknown as Buffer);
+    mockReadFile.mockResolvedValue('// console.log("example")\nconst x = 1;\n' as unknown as Buffer<ArrayBuffer>);
 
     const issues = [makeIssue()];
     const result = await prevalidateIssues(issues, cwd);
@@ -129,7 +129,7 @@ describe('prevalidateIssues', () => {
   });
 
   it('marks issue as false positive when console.log only in string literal', async () => {
-    mockReadFile.mockResolvedValue('const msg = "use console.log for debugging";\n' as unknown as Buffer);
+    mockReadFile.mockResolvedValue('const msg = "use console.log for debugging";\n' as unknown as Buffer<ArrayBuffer>);
 
     const issues = [makeIssue()];
     const result = await prevalidateIssues(issues, cwd);
@@ -139,7 +139,7 @@ describe('prevalidateIssues', () => {
   });
 
   it('marks issue as false positive when console.log only in template literal', async () => {
-    mockReadFile.mockResolvedValue('const doc = `Example: console.log(val)`;\n' as unknown as Buffer);
+    mockReadFile.mockResolvedValue('const doc = `Example: console.log(val)`;\n' as unknown as Buffer<ArrayBuffer>);
 
     const issues = [makeIssue()];
     const result = await prevalidateIssues(issues, cwd);
@@ -214,8 +214,8 @@ describe('prevalidateIssues', () => {
     // First file: only comment → false positive
     // Second file: real code → valid
     mockReadFile
-      .mockResolvedValueOnce('// console.log("example")\n' as unknown as Buffer)
-      .mockResolvedValueOnce('console.log("real debug");\n' as unknown as Buffer);
+      .mockResolvedValueOnce('// console.log("example")\n' as unknown as Buffer<ArrayBuffer>)
+      .mockResolvedValueOnce('console.log("real debug");\n' as unknown as Buffer<ArrayBuffer>);
 
     const fpIssue = makeIssue({
       description: 'console.log calls',
@@ -236,7 +236,7 @@ describe('prevalidateIssues', () => {
 
   it('marks as valid if at least one sweep file has real occurrence', async () => {
     // Two sweep files: first is doc file, second has real code
-    mockReadFile.mockResolvedValue('console.log("real");\n' as unknown as Buffer);
+    mockReadFile.mockResolvedValue('console.log("real");\n' as unknown as Buffer<ArrayBuffer>);
 
     const issue = makeIssue({
       sweepFiles: [
@@ -276,7 +276,7 @@ describe('prevalidateIssues', () => {
   });
 
   it('detects empty catch in real code', async () => {
-    mockReadFile.mockResolvedValue('try { risky(); } catch (e) {}\n' as unknown as Buffer);
+    mockReadFile.mockResolvedValue('try { risky(); } catch (e) {}\n' as unknown as Buffer<ArrayBuffer>);
 
     const issue = makeIssue({
       subcategory: 'Empty catches',
@@ -288,7 +288,7 @@ describe('prevalidateIssues', () => {
   });
 
   it('marks empty catch as false positive when only in comment', async () => {
-    mockReadFile.mockResolvedValue('// catch (e) {} — bad pattern\nrealCode();\n' as unknown as Buffer);
+    mockReadFile.mockResolvedValue('// catch (e) {} — bad pattern\nrealCode();\n' as unknown as Buffer<ArrayBuffer>);
 
     const issue = makeIssue({
       subcategory: 'Empty catches',

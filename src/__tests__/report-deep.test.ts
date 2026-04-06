@@ -64,8 +64,9 @@ function makeScanResult(total: number, maxTotal = 100): ScanResult {
 function makeRun(): RatchetRun {
   return {
     id: 'test-run-001',
-    target: { name: 'myapp', description: '', tests: '' },
+    target: { name: 'myapp', path: '.', description: '' },
     clicks: [],
+    status: 'completed' as const,
     startedAt: new Date('2026-03-27T10:00:00Z'),
     finishedAt: new Date('2026-03-27T10:05:00Z'),
   };

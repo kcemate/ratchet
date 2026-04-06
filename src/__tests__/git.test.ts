@@ -24,7 +24,7 @@ vi.mock('child_process', () => {
 
 import { execFile } from 'child_process';
 
-const mockExecFile = execFile as ReturnType<typeof vi.fn>;
+const mockExecFile = execFile as unknown as ReturnType<typeof vi.fn>;
 const CWD = '/test/repo';
 
 beforeEach(() => {

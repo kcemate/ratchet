@@ -511,10 +511,13 @@ describe('aggregateAndSortIssues', () => {
     subcategories: Array<{ name: string; found: number; desc: string; locations?: string[] }>,
   ): CategoryResult => ({
     name,
+    emoji: '',
+    summary: '',
     score: 0,
     max: 10,
     subcategories: subcategories.map(s => ({
       name: s.name,
+      summary: '',
       score: 0,
       max: 10,
       issuesFound: s.found,

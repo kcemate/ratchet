@@ -27,6 +27,7 @@ function makeGap(subcategory: string, overrides: Partial<TierGap> = {}): TierGap
     roiToMax: 0.8,
     effortPerFix: 2,
     sweepable: true,
+    fixMode: 'torque',
     fixInstruction: 'fix it',
     files: [],
     ...overrides,
@@ -151,25 +152,30 @@ describe('buildScoreOptimizedBacklog with focusCategory', () => {
   // Minimal ScanResult to drive the optimizer
   function makeScan() {
     return {
+      projectName: 'test-project',
       total: 60,
       maxTotal: 100,
       totalIssuesFound: 10,
       categories: [
         {
           name: 'Testing',
+          emoji: '',
+          summary: '',
           score: 4,
           max: 16,
           subcategories: [
-            { name: 'Test quality', score: 4, max: 8, issuesFound: 2, locations: [] },
+            { name: 'Test quality', summary: '', score: 4, max: 8, issuesFound: 2, locations: [] },
           ],
         },
         {
           name: 'Error Handling',
+          emoji: '',
+          summary: '',
           score: 10,
           max: 20,
           subcategories: [
-            { name: 'Empty catches', score: 3, max: 5, issuesFound: 4, locations: [] },
-            { name: 'Coverage', score: 4, max: 8, issuesFound: 10, locations: [] },
+            { name: 'Empty catches', summary: '', score: 3, max: 5, issuesFound: 4, locations: [] },
+            { name: 'Coverage', summary: '', score: 4, max: 8, issuesFound: 10, locations: [] },
           ],
         },
       ],
