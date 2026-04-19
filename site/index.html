@@ -1567,6 +1567,9 @@
         <p class="hero-subtitle">
             Ratchet finds the highest-impact fix in your codebase, ships it only if tests pass, and repeats. Your score only goes up.
         </p>
+        <p style="font-size:15px;color:var(--text-secondary);margin-bottom:8px;font-weight:500;">
+            Open source &nbsp;·&nbsp; 3,277 tests passing &nbsp;·&nbsp; <a href="https://github.com/giovanni-labs/ratchet-oss" style="color:var(--accent);text-decoration:none;font-weight:600;" target="_blank">Star on GitHub →</a>
+        </p>
         <div class="install-cmd" onclick="copyInstall(this)">
             <span class="prefix">$</span>
             <span class="cmd">npm install -g ratchet-run</span>
@@ -1576,6 +1579,11 @@
             <a href="/sandbox" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 32px;border-radius:10px;background:rgba(0,212,255,0.12);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;text-decoration:none;font-size:16px;font-weight:600;letter-spacing:0.01em;transition:all 0.2s;min-width:240px;" onmouseover="this.style.background='rgba(0,212,255,0.2)';this.style.borderColor='rgba(0,212,255,0.6)';this.style.boxShadow='0 0 20px rgba(0,212,255,0.15)'" onmouseout="this.style.background='rgba(0,212,255,0.12)';this.style.borderColor='rgba(0,212,255,0.4)';this.style.boxShadow='none'">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 3l14 9-14 9V3z"/></svg>
                 Try it in your browser
+            </a>
+        </div>
+        <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:16px;">
+            <a href="https://github.com/giovanni-labs/ratchet-oss" target="_blank" style="display:inline-flex;">
+                <img src="https://img.shields.io/github/stars/giovanni-labs/ratchet-oss?style=social&label=Star" alt="GitHub stars" style="height:22px;">
             </a>
         </div>
 
@@ -1614,6 +1622,42 @@
     </div>
 </section>
 
+<!-- ── GETTING STARTED QUICK WINS ── -->
+<section style="padding:56px 0 24px;background:var(--bg-primary);">
+    <div class="container" style="max-width:700px;text-align:center;">
+        <p style="font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">Get started in 60 seconds</p>
+        <div class="glass" style="padding:24px;display:inline-block;text-align:left;max-width:100%;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-family:var(--font-mono);color:var(--text-muted);font-size:13px;">$</span>
+                <span style="font-family:var(--font-mono);color:var(--accent);font-size:14px;">npm install -g ratchet-run</span>
+                <button onclick="navigator.clipboard.writeText('npm install -g ratchet-run');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)" style="margin-left:8px;padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:var(--font-mono);">Copy</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-family:var(--font-mono);color:var(--text-muted);font-size:13px;">$</span>
+                <span style="font-family:var(--font-mono);color:var(--accent);font-size:14px;">ratchet scan</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-family:var(--font-mono);color:var(--text-muted);font-size:13px;">$</span>
+                <span style="font-family:var(--font-mono);color:var(--accent);font-size:14px;">ratchet improve --clicks 5</span>
+            </div>
+        </div>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:16px;">Works with Claude, GPT-4o, and any OpenAI-compatible model.</p>
+        <p style="color:var(--text-secondary);font-size:13px;margin-top:8px;">Also works great alongside <span style="color:var(--accent);">Cursor</span>, <span style="color:var(--accent);">Windsurf</span>, and <span style="color:var(--accent);">Claude Code</span>. <span style="color:var(--text-muted);">VS Code extension coming soon — <a href="https://github.com/giovanni-labs/ratchet-oss" target="_blank" style="color:var(--accent);text-decoration:none;">star the repo</a> to get notified.</span></p>
+    </div>
+</section>
+
+<!-- ── TRUSTED BY ── -->
+<section style="padding:48px 0 24px;background:var(--bg-primary);">
+    <div class="container" style="text-align:center;">
+        <p style="font-size:14px;color:var(--text-muted);font-weight:500;letter-spacing:0.04em;">Trusted by developers who ship AI code to production</p>
+        <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap;">
+            <a href="https://github.com/giovanni-labs/ratchet-oss" target="_blank" style="display:inline-flex;"><img src="https://img.shields.io/github/stars/giovanni-labs/ratchet-oss?style=social&label=Star" alt="GitHub stars" style="height:22px;"></a>
+            <span style="color:var(--text-muted);font-size:13px;">3,277+ tests passing</span>
+            <span style="color:var(--text-muted);font-size:13px;">MIT licensed</span>
+        </div>
+    </div>
+</section>
+
 <!-- ── SECTION GLOW TRANSITION ── -->
 <div class="section-glow"></div>
 
@@ -1648,6 +1692,53 @@
                 <div class="step-code-hint">ratchet vision --open</div>
                 <div class="step-icon">📈</div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── OPEN SOURCE TRUST ── -->
+<section style="padding:80px 0;background:var(--bg-primary);">
+    <div class="container" style="max-width:800px;text-align:center;">
+        <div style="margin-bottom:40px;">
+            <p style="font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--success);margin-bottom:8px;">Open Source</p>
+            <h2 style="font-size:clamp(24px,3vw,32px);font-weight:800;letter-spacing:-0.02em;">Trust through transparency.</h2>
+            <p style="color:var(--text-secondary);font-size:15px;margin-top:8px;">Every line of code is inspectable. Your data stays on your machine.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px;">
+            <div class="glass" style="padding:24px;text-align:left;">
+                <span style="font-size:20px;">✓</span>
+                <div style="margin-top:8px;font-weight:600;font-size:15px;">MIT licensed</div>
+                <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">Fully permissive. Fork, modify, deploy.</div>
+            </div>
+            <div class="glass" style="padding:24px;text-align:left;">
+                <span style="font-size:20px;">✓</span>
+                <div style="margin-top:8px;font-weight:600;font-size:15px;">3,277+ tests passing</div>
+                <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">Every feature verified by real test suites.</div>
+            </div>
+            <div class="glass" style="padding:24px;text-align:left;">
+                <span style="font-size:20px;">✓</span>
+                <div style="margin-top:8px;font-weight:600;font-size:15px;">No telemetry, no data collection</div>
+                <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">Zero phone-home. Your code never leaves your machine.</div>
+            </div>
+            <div class="glass" style="padding:24px;text-align:left;">
+                <span style="font-size:20px;">✓</span>
+                <div style="margin-top:8px;font-weight:600;font-size:15px;">Runs 100% locally</div>
+                <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">Only contacts your chosen LLM provider.</div>
+            </div>
+            <div class="glass" style="padding:24px;text-align:left;">
+                <span style="font-size:20px;">✓</span>
+                <div style="margin-top:8px;font-weight:600;font-size:15px;">Self-hostable Enterprise</div>
+                <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">Deploy on-prem. Full control.</div>
+            </div>
+            <div class="glass" style="padding:24px;text-align:left;">
+                <span style="font-size:20px;">✓</span>
+                <div style="margin-top:8px;font-weight:600;font-size:15px;">Auditable security</div>
+                <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">Read the <a href="/docs/security" style="color:var(--accent);text-decoration:none;">security &amp; privacy audit</a>.</div>
+            </div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
+            <a href="https://github.com/giovanni-labs/ratchet-oss" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--radius);background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--success);font-weight:600;font-size:14px;text-decoration:none;transition:all var(--transition);">View source on GitHub →</a>
+            <a href="/docs/security" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--radius);background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);color:var(--accent);font-weight:600;font-size:14px;text-decoration:none;transition:all var(--transition);">Read the security audit →</a>
         </div>
     </div>
 </section>
@@ -1797,6 +1888,48 @@
     </div>
 </section>
 
+<!-- ── COMMUNITY AUDITS ── -->
+<section style="padding:80px 0;" class="fade-in">
+    <div class="container" style="max-width:800px;">
+        <div style="text-align:center;margin-bottom:40px;">
+            <p style="font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">Real Audits on Popular Codebases</p>
+            <h2 style="font-size:clamp(24px,3vw,32px);font-weight:800;letter-spacing:-0.02em;">We&rsquo;ve audited real open-source projects.</h2>
+            <p style="color:var(--text-secondary);font-size:15px;margin-top:8px;">Free production-readiness scores on repos developers actually use.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:32px;">
+            <div class="glass" style="padding:24px;text-align:center;">
+                <div style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;font-weight:500;">Version Impact</div>
+                <div style="font-size:36px;font-weight:800;color:#ffaa00;font-family:var(--font-mono);">53</div>
+                <div style="font-size:12px;color:var(--text-muted);">/100</div>
+            </div>
+            <div class="glass" style="padding:24px;text-align:center;">
+                <div style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;font-weight:500;">Prominent G</div>
+                <div style="font-size:36px;font-weight:800;color:var(--success);font-family:var(--font-mono);">69</div>
+                <div style="font-size:12px;color:var(--text-muted);">/100</div>
+            </div>
+            <div class="glass" style="padding:24px;text-align:center;">
+                <div style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;font-weight:500;">Prominent Git</div>
+                <div style="font-size:36px;font-weight:800;color:var(--success);font-family:var(--font-mono);">73.5</div>
+                <div style="font-size:12px;color:var(--text-muted);">/100</div>
+            </div>
+            <div class="glass" style="padding:24px;text-align:center;">
+                <div style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;font-weight:500;">LibreChat</div>
+                <div style="font-size:36px;font-weight:800;color:#ffaa00;font-family:var(--font-mono);">63</div>
+                <div style="font-size:12px;color:var(--text-muted);">/100</div>
+            </div>
+            <div class="glass" style="padding:24px;text-align:center;">
+                <div style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;font-weight:500;">Prominent Gi</div>
+                <div style="font-size:36px;font-weight:800;color:#ffaa00;font-family:var(--font-mono);">59</div>
+                <div style="font-size:12px;color:var(--text-muted);">/100</div>
+            </div>
+        </div>
+        <div style="text-align:center;">
+            <a href="https://github.com/giovanni-labs/ratchet-oss/issues?q=is%3Aissue+label%3Aaudit" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--radius);background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);color:var(--accent);font-weight:600;font-size:14px;text-decoration:none;transition:all var(--transition);">View all public audits →</a>
+            <p style="margin-top:16px;font-size:13px;color:var(--text-muted);">Want us to audit your repo for free? Reply to any issue or DM us.</p>
+        </div>
+    </div>
+</section>
+
 <!-- ── SECTION GLOW TRANSITION ── -->
 <div class="section-glow" style="background:radial-gradient(ellipse 60% 100% at 50% 0%, rgba(0,212,255,0.04) 0%, transparent 70%);"></div>
 
@@ -1805,7 +1938,7 @@
     <div class="container">
         <div class="section-header fade-in">
             <p class="section-label">Commands</p>
-            <h2 class="section-title">Nine commands. Every angle covered.</h2>
+            <h2 class="section-title">Ten commands. Every angle covered.</h2>
             <p class="section-subtitle">Ratchet covers the full improvement lifecycle — from scoring where you stand, to deep analysis with AI reasoning, to autonomously shipping fixes with smart model routing, to tracking progress in CI.</p>
         </div>
 
@@ -1863,6 +1996,12 @@
                 <h3>Smart Model Routing <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);font-weight:600;vertical-align:middle;margin-left:6px;">New</span></h3>
                 <p>Ratchet automatically picks the right model for each task. Simple formatting fixes use fast, cheap models. Complex multi-file refactors use Opus-class reasoning. Same quality, 30-40% lower cost per run.</p>
                 <span class="feature-tag">Automatic — configure in .ratchet.yml</span>
+            </div>
+            <div class="feature-card fade-in fade-in-d3">
+                <div class="feature-icon">🩺</div>
+                <h3>doctor <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:rgba(0,255,136,0.1);color:var(--success);border:1px solid rgba(0,255,136,0.25);font-weight:600;vertical-align:middle;margin-left:6px;">New</span></h3>
+                <p>Health check for your project. Detects language/framework, verifies LLM API key, checks for test scripts, shows your baseline score, and gives 3 personalized recommendations like “Your error handling score is low — run <code style="color:var(--accent);font-size:13px;">ratchet improve --target error-handling</code>.” Beautiful terminal output, zero config.</p>
+                <span class="feature-tag">ratchet doctor</span>
             </div>
         </div>
     </div>
@@ -2323,7 +2462,7 @@
                 <div class="pricing-divider"></div>
                 <ul class="pricing-features">
                     <li>Unlimited scans</li>
-                    <li>5 improvement cycles/month</li>
+                    <li>1 improvement cycle/month</li>
                     <li>Quick-fix: top 3 issues + predictions</li>
                     <li>Baseline &amp; delta tracking</li>
                     <li>Quality score across 6 dimensions</li>
@@ -2398,6 +2537,7 @@
                     </div>
                 </div>
                 <p id="calcNote" style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:12px;">1 cycle ≈ 1 torque click. A weekly scan + 7-click torque session = ~8 cycles/month.</p>
+                <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:6px;"><span style="color:var(--accent);">💡</span> Estimate: A weekly scan + 7-click improve session = ~8 cycles/month.</p>
             </div>
         </div>
         <script>
@@ -2496,7 +2636,11 @@
                 <li><a href="/docs/integrations">Integrations</a></li>
                 <li><a href="#pricing">Pricing</a></li>
                 <li><a href="mailto:hello@ratchetcli.com">Contact</a></li>
+                <li><a href="https://github.com/giovanni-labs/ratchet-oss" target="_blank" style="color:var(--accent);">⭐ Star on GitHub</a></li>
             </ul>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+                <a href="https://github.com/giovanni-labs/ratchet-oss" target="_blank"><img src="https://img.shields.io/github/stars/giovanni-labs/ratchet-oss?style=social&label=Star" alt="GitHub stars" style="height:20px;"></a>
+            </div>
             <p class="footer-copy">© 2026 Ratchet. Built for developers.</p>
         </div>
     </div>

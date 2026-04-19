@@ -606,8 +606,13 @@
     <section class="sandbox-hero">
         <div class="container">
             <div class="eyebrow">⚡ Live Demo</div>
-            <h1>Watch Ratchet <span>Fix Your Code</span></h1>
+            <h1>See Ratchet in Action — <span>Watch It Fix Real Code</span></h1>
             <p>A pre-recorded replay of ratchet scanning, diagnosing, and autonomously improving a real codebase.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px;">
+                <button class="example-btn active" data-example="nextjs" style="padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border-accent);background:rgba(0,212,255,0.12);color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-sans);transition:all var(--transition);">Try on a Next.js API route</button>
+                <button class="example-btn" data-example="python" style="padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text-secondary);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-sans);transition:all var(--transition);">Try on a Python FastAPI project</button>
+                <button class="example-btn" data-example="monorepo" style="padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text-secondary);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-sans);transition:all var(--transition);">Try on a TypeScript monorepo</button>
+            </div>
         </div>
     </section>
 
@@ -633,9 +638,38 @@
         </div>
     </div>
 
+    <!-- What Ratchet Actually Did -->
+    <section style="padding:48px 0;background:var(--bg-primary);">
+        <div class="container" style="max-width:700px;">
+            <h2 style="font-size:22px;font-weight:700;margin-bottom:20px;text-align:center;">What Ratchet Actually Did in This Run</h2>
+            <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:12px;">
+                <li style="display:flex;gap:10px;align-items:flex-start;padding:12px 16px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);">
+                    <span style="color:var(--success);font-weight:700;font-size:16px;">✓</span>
+                    <div><strong style="color:var(--text-primary);">Replaced empty catch blocks</strong><br/><span style="color:var(--text-muted);font-size:13px;">Added structured error logging with context — no more silently swallowed errors.</span></div>
+                </li>
+                <li style="display:flex;gap:10px;align-items:flex-start;padding:12px 16px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);">
+                    <span style="color:var(--success);font-weight:700;font-size:16px;">✓</span>
+                    <div><strong style="color:var(--text-primary);">Deduplicated API calls</strong><br/><span style="color:var(--text-muted);font-size:13px;">Consolidated 4 parallel fetch calls into a single batched request — 3× faster.</span></div>
+                </li>
+                <li style="display:flex;gap:10px;align-items:flex-start;padding:12px 16px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);">
+                    <span style="color:var(--success);font-weight:700;font-size:16px;">✓</span>
+                    <div><strong style="color:var(--text-primary);">Added proper error handling</strong><br/><span style="color:var(--text-muted);font-size:13px;">Wrapped bare throws in typed error classes with status codes and messages.</span></div>
+                </li>
+                <li style="display:flex;gap:10px;align-items:flex-start;padding:12px 16px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);">
+                    <span style="color:var(--success);font-weight:700;font-size:16px;">✓</span>
+                    <div><strong style="color:var(--text-primary);">Switched to structured logging</strong><br/><span style="color:var(--text-muted);font-size:13px;">Replaced console.log with a JSON logger — searchable, filterable, production-ready.</span></div>
+                </li>
+                <li style="display:flex;gap:10px;align-items:flex-start;padding:12px 16px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);">
+                    <span style="color:var(--success);font-weight:700;font-size:16px;">✓</span>
+                    <div><strong style="color:var(--text-primary);">Typed API responses</strong><br/><span style="color:var(--text-muted);font-size:13px;">Generated TypeScript interfaces for every endpoint — caught 6 type mismatches.</span></div>
+                </li>
+            </ul>
+        </div>
+    </section>
+
     <!-- CTA -->
     <section class="cta-section">
-        <h2>Try it on your codebase</h2>
+        <h2>Run this on your own codebase</h2>
         <p>Install ratchet globally and run your first scan in under 60 seconds.</p>
         <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
             <div class="cta-install-box">
