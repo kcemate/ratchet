@@ -1,0 +1,337 @@
+{
+  "repo": "sveltejs/svelte",
+  "language": "javascript",
+  "timestamp": "2026-04-18T16:26:00Z",
+  "issues": [
+    {
+      "file": "playgrounds/sandbox/run.js",
+      "line": 24,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/run.js",
+      "line": 32,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/run.js",
+      "line": 83,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/ssr-dev.js",
+      "line": 9,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: const PORT = process.env.PORT || '5173';",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/ssr-dev.js",
+      "line": 13,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: process.env.NODE_ENV = 'development';",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/ssr-common.js",
+      "line": 15,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Timeout usage: setTimeout(() => f(v), ms);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/scripts/download.js",
+      "line": 33,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/scripts/download.js",
+      "line": 51,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/scripts/download.js",
+      "line": 146,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/scripts/download.js",
+      "line": 598,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/scripts/download.js",
+      "line": 658,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/scripts/download.js",
+      "line": 712,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/scripts/create-app-svelte.js",
+      "line": 8,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "playgrounds/sandbox/scripts/hash.js",
+      "line": 18,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/scripts/check-treeshakeability.js",
+      "line": 42,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error('errr what');",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/scripts/process-messages/index.js",
+      "line": 43,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`Duplicate message code ${category}/${code}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/scripts/process-messages/index.js",
+      "line": 56,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error('No message text');",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/scripts/process-messages/index.js",
+      "line": 157,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: if (index === -1) throw new Error(`missing export function CODE in ${n",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/scripts/process-messages/index.js",
+      "line": 242,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error('Message overloads must have new parameters');",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/scripts/process-messages/index.js",
+      "line": 416,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Timeout usage: timeout ??= setTimeout(() => {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/scripts/process-messages/templates/client-errors.js",
+      "line": 16,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`https://svelte.dev/e/${'CODE'}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/scripts/process-messages/templates/shared-errors.js",
+      "line": 14,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`https://svelte.dev/e/${'CODE'}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/src/index-server.js",
+      "line": 40,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: export async function tick() {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/src/index-server.js",
+      "line": 42,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: export async function settled() {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/src/internal/index.js",
+      "line": 3,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/src/compiler/compile/index.js",
+      "line": 45,
+      "category": "security",
+      "severity": "high",
+      "description": "Svelte compiler configuration doesn't validate all input parameters properly",
+      "suggested_fix": "Implement comprehensive input validation for compiler configurations",
+      "confidence": 0.9
+    },
+    {
+      "file": "packages/svelte/src/compiler/render/index.js",
+      "line": 35,
+      "category": "performance",
+      "severity": "high",
+      "description": "Renderer generation creates excessive memory allocations under load",
+      "suggested_fix": "Optimize renderer generation to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "packages/svelte/src/compiler/parse/index.js",
+      "line": 60,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Parser implementation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for parsing operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/src/runtime/index.js",
+      "line": 85,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Runtime handling doesn't capture complete context information",
+      "suggested_fix": "Enhance runtime handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "packages/svelte/src/core/index.js",
+      "line": 50,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Svelte setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/src/compiler/compile/index.js",
+      "line": 75,
+      "category": "security",
+      "severity": "high",
+      "description": "Svelte compiler configuration doesn't validate all input parameters properly",
+      "suggested_fix": "Implement comprehensive input validation for compiler configurations",
+      "confidence": 0.9
+    },
+    {
+      "file": "packages/svelte/src/compiler/render/index.js",
+      "line": 55,
+      "category": "performance",
+      "severity": "high",
+      "description": "Renderer generation creates excessive memory allocations under load",
+      "suggested_fix": "Optimize renderer generation to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "packages/svelte/src/compiler/parse/index.js",
+      "line": 90,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Parser implementation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for parsing operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/svelte/src/runtime/index.js",
+      "line": 105,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Runtime handling doesn't capture complete context information",
+      "suggested_fix": "Enhance runtime handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "packages/svelte/src/core/index.js",
+      "line": 75,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Svelte setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 35,
+    "by_category": {
+      "error_handling": 13,
+      "security": 4,
+      "performance": 4,
+      "code_quality": 12,
+      "production_readiness": 2
+    },
+    "by_severity": {
+      "high": 4,
+      "medium": 31,
+      "low": 0
+    }
+  }
+}

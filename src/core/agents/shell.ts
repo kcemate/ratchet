@@ -356,6 +356,15 @@ export async function buildIssuePlanPrompt(
   const scoreCtx = buildScoreContext(issues);
   const fixGuidance = issues[0]?.fixInstruction;
 
+  // Compute line and file limits for the checklist
+  const first = issues[0];
+  let lineLimit = 30;
+  let fileLimit = 2;
+  if (first && !first.sweepFiles && first.count > 10) {
+    lineLimit = 80;
+    fileLimit = 5;
+  }
+
   return (
     `You are a code improvement assistant. Fix the top issue in ${targetPath}.\n\n` +
     (repoContext ? `${repoContext}\n\n` : '') +
@@ -367,13 +376,25 @@ export async function buildIssuePlanPrompt(
     (fixGuidance ? `FIX GUIDANCE:\n${fixGuidance}\n\n` : '') +
     `HARD CONSTRAINTS (violating these will cause rollback):\n` +
     `${constraints}\n` +
-    `- Do NOT refactor, restructure, or rewrite functions\n` +
+    `- Do NOT restructure, or rewrite functions\n` +
     `- Do NOT rename variables, extract helpers, or "improve" unrelated code\n` +
     `- Do NOT add new dependencies or change public function signatures\n` +
     `- Do NOT change formatting, whitespace, or style in untouched lines\n\n` +
-    `MODIFIED: <filepath>`
+    `PRE-EXECUTION CHECKLIST (MUST confirm verbally BEFORE outputting changes):\n` +
+    `1. "I have read and understood all HARD CONSTRAINTS above."\n` +
+    `2. "My target file is EXACTLY: ${targetPath}"\n` +
+    `3. "I will ONLY modify this file and no others."\n` +
+    `4. "I will change AT MOST ${lineLimit} lines total."\n` +
+    `5. "I will modify AT MOST ${fileLimit} files."\n` +
+    `6. "I will make the smallest possible change that fixes the issue."\n` +
+    `7. "I understand that violating any constraint will cause rollback."\n\n` +
+    `After confirming each checklist item verbally, output changes in the EXACT format below:\n\n` +
+    `MODIFIED: ${targetPath}\n\n` +
+    `[agent makes changes...]\n\n` +
+    `DO NOT output any prose, analysis, or explanation — ONLY the MODIFIED line and the changes.`
   );
 }
+
 
 /**
  * Sweep prompt: fix one specific issue across a list of files.

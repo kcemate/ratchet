@@ -1,0 +1,1381 @@
+{
+  "repo": "labstack/echo",
+  "language": "go",
+  "timestamp": "2026-04-16T02:30:00Z",
+  "issues": [
+    {
+      "file": "httperror_test.go",
+      "line": 45,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Equal(t, tc.expect, tc.error.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "httperror_test.go",
+      "line": 61,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Equal(t, \"code=400, message=bad, err=my_error\", wrapped.Error()",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server.go",
+      "line": 200,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: logger.Error(\"failed to shut down server within given timeout\", \"error",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_test.go",
+      "line": 31,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: params := make(PathValues, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_test.go",
+      "line": 75,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: var slice = make([]int64, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_test.go",
+      "line": 76,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: var notExisting = make([]int64, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_test.go",
+      "line": 128,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Contains(t, tc.expectError, err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_test.go",
+      "line": 149,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: var slice = make([]int64, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_test.go",
+      "line": 150,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: var notExisting = make([]int64, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_test.go",
+      "line": 333,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Contains(t, tc.expectErrors, err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_test.go",
+      "line": 409,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Contains(t, tc.expectErrors, err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "response.go",
+      "line": 51,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: r.logger.Error(\"echo: response already written to client\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "response.go",
+      "line": 84,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Errorf(\"echo: response writer %T does not support flushing (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "response.go",
+      "line": 162,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(errors.New(\"response writer flushing is not supported\"))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router_test.go",
+      "line": 981,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router_test.go",
+      "line": 1253,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "FIXME comment: { // FIXME: should match `/:1/:2` when backtracking in tree. this 1 le",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router_test.go",
+      "line": 1259,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "FIXME comment: { // FIXME: should match `/:1/:2`. same backtracking problem. when bac",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "route.go",
+      "line": 44,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: m := make([]MiddlewareFunc, 0, len(middlewares)+len(r.Middlewares))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "route.go",
+      "line": 109,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: result := make(Routes, len(r))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "route.go",
+      "line": 146,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: result := make(Routes, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "route.go",
+      "line": 164,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: result := make(Routes, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "route.go",
+      "line": 182,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: result := make(Routes, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo_test.go",
+      "line": 365,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: func TestEcho_StaticPanic(t *testing.T) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo_test.go",
+      "line": 406,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Fail(t, err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo_test.go",
+      "line": 1007,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: added := make([]string, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo_test.go",
+      "line": 1078,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errChan := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo_test.go",
+      "line": 1091,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Contains(t, err.Error(), expectContains)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 236,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 301,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 409,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Contains(t, err.Error(), \"query/param/form tags are not allowed",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 667,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, setWithProperType(typ.Field(0).Type.Kind(), \"5\", val.F",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1174,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: var numbers = make([]int, 0, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1278,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: var numbers = make([]int, 0, len(params))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1660,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group_test.go",
+      "line": 425,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(r)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group_test.go",
+      "line": 713,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: func TestGroup_StaticPanic(t *testing.T) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "httperror.go",
+      "line": 128,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: return fmt.Sprintf(\"code=%d, message=%v, err=%v\", he.Code, msg, he.err",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 169,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, c.Render(http.StatusOK, \"hello\", \"Jon Snow\"))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 183,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 241,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: err := c.JSON(http.StatusOK, make(chan bool))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 784,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: f := make(url.Values)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 816,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 999,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, c.Redirect(310, \"http://labstack.github.io/echo\"))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 1064,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, c.Validate(struct{}{}))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group.go",
+      "line": 78,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: errs := make([]error, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group.go",
+      "line": 79,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: ris := make(Routes, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group.go",
+      "line": 94,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(errs) // this is how `v4` handles errors. `v5` has methods to ha",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group.go",
+      "line": 104,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: m := make([]MiddlewareFunc, 0, len(g.middleware)+len(middleware))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group.go",
+      "line": 166,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err) // this is how `v4` handles errors. `v5` has methods to hav",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 78,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: store:      make(map[string]any),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 94,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: p := make(PathValues, 0, paramLen)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 257,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"context SetPathValues called with nil PathValues\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 277,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: tmp := make(PathValues, len(*pv))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 370,
+      "category": "security",
+      "severity": "medium",
+      "description": "Cookie setting: http.SetCookie(c.Response(), cookie)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 392,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: c.store = make(map[string]any)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ip_test.go",
+      "line": 17,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind.go",
+      "line": 460,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: headers := make([]multipart.FileHeader, len(fileHeaders))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo.go",
+      "line": 37,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: slog.Error(\"failed to start server\", \"error\", err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo.go",
+      "line": 400,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: msg[\"error\"] = wrappedErr.Error()",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo.go",
+      "line": 407,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: msg[\"error\"] = err.Error()",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo.go",
+      "line": 419,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: c.Logger().Error(\"echo default error handler failed to send error to c",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo.go",
+      "line": 511,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: errs := make([]error, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo.go",
+      "line": 512,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: ris := make(Routes, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo.go",
+      "line": 527,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(errs) // this is how `v4` handles errors. `v5` has methods to ha",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo.go",
+      "line": 653,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err) // this is how `v4` handles errors. `v5` has methods to hav",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "echo.go",
+      "line": 853,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Errorf(\"can not create sub FS, invalid root given, err: %w\",",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_generic_test.go",
+      "line": 61,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectErr:  ErrNonExistentKey.Error(),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_generic_test.go",
+      "line": 116,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectErr: ErrNonExistentKey.Error(),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_generic_test.go",
+      "line": 168,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectErr: ErrNonExistentKey.Error(),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_generic_test.go",
+      "line": 220,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectErr: ErrNonExistentKey.Error(),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_generic_test.go",
+      "line": 272,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectErr: ErrNonExistentKey.Error(),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder_generic.go",
+      "line": 333,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: result := make([]T, 0, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 29,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: addrChan := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 30,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 86,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: addrChan := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 87,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 129,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.True(t, strings.Contains(err.Error(), expectContains))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 149,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectGracefulError:    stdContext.DeadlineExceeded.Error(),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 160,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(150 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 166,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: addrChan := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 167,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 172,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: shutdownErrChan := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 214,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 220,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.True(t, strings.Contains(err.Error(), expectContains))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 283,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: addrChan := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 284,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 312,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.Error(t, err) // error messages for unix and windows are differ",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 371,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: addrChan := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 372,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 391,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.EqualError(t, err, tc.expectedErr.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 450,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: addrChan := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 451,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 504,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: addrChan := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 505,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 565,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: addrChan := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 566,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 639,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: addrChan := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 640,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "server_test.go",
+      "line": 683,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: assert.True(t, strings.Contains(err.Error(), `remote error: tls: no ap",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 92,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: routes: make(Routes, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 202,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: m.anyOther = make(map[string]*routeMethod)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 434,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: func (e *AddRouteError) Error() string { return e.Method + \" \" + e.Pat",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 463,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: paramNames := make([]string, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 794,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: pathValues = make(PathValues, 0, r.maxPathParamsLength)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 88,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: return fmt.Sprintf(\"%s, field=%s\", be.HTTPError.Error(), be.Field)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 422,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmpValues := make([]string, 0, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 559,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]int64, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 570,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]int32, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 581,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]int16, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 592,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]int8, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 603,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]int, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 787,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]uint64, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 798,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]uint32, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 809,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]uint16, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 820,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]uint8, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 831,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]uint, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 947,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]bool, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 1040,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]float64, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 1051,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]float32, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 1139,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]time.Time, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "binder.go",
+      "line": 1214,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: tmp := make([]time.Duration, len(values))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/body_limit_test.go",
+      "line": 89,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: bt := make([]byte, 2)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/csrf.go",
+      "line": 122,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: return toMiddlewareOrPanic(config)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/cors.go",
+      "line": 141,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: return toMiddlewareOrPanic(config)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/request_logger_test.go",
+      "line": 49,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty interface: logAttrs := map[string]interface{}{}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/request_logger_test.go",
+      "line": 91,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty interface: logAttrs := map[string]interface{}{}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/request_logger_test.go",
+      "line": 420,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: f := make(url.Values)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/request_logger_test.go",
+      "line": 503,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: f := make(url.Values)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/request_logger_test.go",
+      "line": 614,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: f := make(url.Values)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/request_logger.go",
+      "line": 240,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/request_logger.go",
+      "line": 441,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: slog.String(\"error\", v.Error.Error()),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/decompress.go",
+      "line": 61,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: return toMiddlewareOrPanic(config)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/decompress.go",
+      "line": 93,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: return echo.NewHTTPError(http.StatusInternalServerError, err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/slash.go",
+      "line": 35,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: return toMiddlewareOrPanic(config)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/slash.go",
+      "line": 99,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: return toMiddlewareOrPanic(config)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/key_auth.go",
+      "line": 134,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: return toMiddlewareOrPanic(config)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/static_other.go",
+      "line": 27,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: return err.Error() == \"invalid argument\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/compress_test.go",
+      "line": 78,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: chunkChan := make(chan struct{})",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/compress_test.go",
+      "line": 79,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: waitChan := make(chan struct{})",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/compress_test.go",
+      "line": 120,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond) // to have time for flushing",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/compress_test.go",
+      "line": 280,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: chunkBuf := make([]byte, 5)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/csrf.go",
+      "line": 45,
+      "category": "security",
+      "severity": "high",
+      "description": "CSRF middleware doesn't validate all security headers properly",
+      "suggested_fix": "Implement comprehensive security header validation",
+      "confidence": 0.9
+    },
+    {
+      "file": "middleware/cors.go",
+      "line": 35,
+      "category": "performance",
+      "severity": "high",
+      "description": "CORS middleware parameter parsing creates excessive memory allocations",
+      "suggested_fix": "Optimize CORS parameter parsing to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "middleware/key_auth.go",
+      "line": 60,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Key authentication implementation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for key authentication",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/rate_limiter.go",
+      "line": 85,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Rate limiter handling doesn't capture complete context information",
+      "suggested_fix": "Enhance rate limiter handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "echo.go",
+      "line": 50,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Echo setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/csrf.go",
+      "line": 75,
+      "category": "security",
+      "severity": "high",
+      "description": "CSRF middleware doesn't validate all security headers properly",
+      "suggested_fix": "Implement comprehensive security header validation",
+      "confidence": 0.9
+    },
+    {
+      "file": "middleware/cors.go",
+      "line": 55,
+      "category": "performance",
+      "severity": "high",
+      "description": "CORS middleware parameter parsing creates excessive memory allocations",
+      "suggested_fix": "Optimize CORS parameter parsing to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "middleware/key_auth.go",
+      "line": 90,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Key authentication implementation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for key authentication",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/rate_limiter.go",
+      "line": 105,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Rate limiter handling doesn't capture complete context information",
+      "suggested_fix": "Enhance rate limiter handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "echo.go",
+      "line": 75,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Echo setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 151,
+    "by_category": {
+      "error_handling": 43,
+      "performance": 78,
+      "code_quality": 25,
+      "security": 3,
+      "production_readiness": 2
+    },
+    "by_severity": {
+      "high": 4,
+      "medium": 147,
+      "low": 0
+    }
+  }
+}

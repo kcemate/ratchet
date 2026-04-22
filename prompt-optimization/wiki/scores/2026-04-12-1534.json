@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-04-12T19:34:00Z",
+  "target": "wiki",
+  "iteration": 2,
+  "variant": "v1",
+  "articles_evaluated": [
+    "expressjs-express.md",
+    "anomalyco-opencode.md",
+    "vuejs-vue.md"
+  ],
+  "subscores": {
+    "structure": 0.87,
+    "detail": 0.73,
+    "actionability": 0.78,
+    "examples": 0.75
+  },
+  "aggregate": 0.78,
+  "weakest": "detail",
+  "weakness_analysis": "vuejs-vue.md used pseudo-code comments (e.g. '// Current: Linear search...') instead of quoting actual code from the scan JSON. The performance section referenced file:line pairs but showed comment placeholders, not real code. Security and code quality sections used generic illustrative examples rather than code extracted from the actual scan data. This pattern likely occurs when the scan JSON has incomplete raw code samples and the model fills in with invented examples.",
+  "hypothesis": "Add explicit instruction: all code snippets must be quoted or adapted from the actual scan JSON data. The model should reference specific file:line locations from the scan and reproduce real code, not paraphrase or invent illustrative examples. If no real code is available in the scan, use a [no raw code in scan] note rather than fabricating.",
+  "decision": "keep_v1_as_baseline_deploy_v2"
+}

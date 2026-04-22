@@ -1,0 +1,616 @@
+{
+  "repo": "vuejs/core",
+  "language": "typescript",
+  "timestamp": "2026-04-15T14:30:00Z",
+  "issues": [
+    {
+      "file": "packages-private/sfc-playground/vite.config.ts",
+      "line": 40,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages-private/template-explorer/src/index.ts",
+      "line": 59,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console warn: console.warn(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages-private/template-explorer/src/index.ts",
+      "line": 90,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`Compiled in ${(performance.now() - start).toFixed(2)}ms.`",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages-private/template-explorer/src/index.ts",
+      "line": 94,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: errors.filter(e => e.loc).map(formatError),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages-private/template-explorer/src/index.ts",
+      "line": 96,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`AST: `, ast)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages-private/template-explorer/src/index.ts",
+      "line": 97,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`Options: `, toRaw(compilerOptions))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages-private/template-explorer/src/index.ts",
+      "line": 103,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(e)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages-private/template-explorer/src/index.ts",
+      "line": 278,
+      "category": "performance",
+      "severity": "medium",
+      "description": "SetTimeout call: prevTimer = window.setTimeout(() => {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/setup-vitest.ts",
+      "line": 26,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: const msgs = warn.mock.calls.map(args => args[0]).join('\\n - ')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/setup-vitest.ts",
+      "line": 48,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: const msgs = warn.mock.calls.map(args => args[0]).join('\\n - ')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/setup-vitest.ts",
+      "line": 93,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(args => args[0])",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/setup-vitest.ts",
+      "line": 94,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array filter: .filter(received => {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/setup-vitest.ts",
+      "line": 101,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/vue-compat/src/runtime.ts",
+      "line": 21,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Type assertion to any: }) as any",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/vue-compat/src/index.ts",
+      "line": 98,
+      "category": "security",
+      "severity": "medium",
+      "description": "Function constructor: __GLOBAL__ ? new Function(code)() : new Function('Vue', code)(runtimeD",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 206,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 223,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 328,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: ? args.map(arg => `${arg}: any`).join(',')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 345,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: `const { ${helpers.map(aliasHelper).join(', ')} } = _Vue\\n`,",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 430,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: `const { ${helpers.map(aliasHelper).join(', ')} } = ${VueBinding}\\n`,",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 448,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array filter: .filter(helper => helpers.includes(helper))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 449,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(aliasHelper)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 460,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(aliasHelper)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 495,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(s => helperNameMap[s])",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 501,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(s => `_${helperNameMap[s]} = ${helperNameMap[s]}`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 508,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(s => `${helperNameMap[s]} as _${helperNameMap[s]}`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 518,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(s => `${helperNameMap[s]} as _${helperNameMap[s]}`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 738,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Type assertion to any: assert(false, `unhandled codegen node type: ${(node as any).type}`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 841,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(Number)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 842,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array filter: .filter(n => n > 0 && patchFlag & n)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 843,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(n => PatchFlagNames[n as PatchFlags])",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/codegen.ts",
+      "line": 885,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: return args.slice(0, i + 1).map(arg => arg || `null`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/validateExpression.ts",
+      "line": 43,
+      "category": "security",
+      "severity": "medium",
+      "description": "Function constructor: new Function(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/errors.ts",
+      "line": 17,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console warn: __DEV__ && console.warn(`[Vue warn] ${msg.message}`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transform.ts",
+      "line": 228,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`Node being replaced is already removed.`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transform.ts",
+      "line": 231,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`Cannot replace root node.`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transform.ts",
+      "line": 240,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`Cannot remove root node.`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transform.ts",
+      "line": 250,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`node being removed is not a child of current parent`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transform.ts",
+      "line": 383,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array filter: children.filter(c => c.type !== NodeTypes.COMMENT).length === 1",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/babelUtils.ts",
+      "line": 65,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Type assertion to any: ;(node as any).inPattern = true",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/babelUtils.ts",
+      "line": 296,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Any type assignment: let object: any = param",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/babelUtils.ts",
+      "line": 553,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Type assertion to any: return unwrapTSNode((node as any).expression)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/utils.ts",
+      "line": 166,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Type assertion to any: ? (NOOP as any)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/utils.ts",
+      "line": 202,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Type assertion to any: ? (NOOP as any)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/utils.ts",
+      "line": 279,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(msg || `unexpected compiler condition`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/parser.ts",
+      "line": 864,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Type assertion to any: nodes[i] = null as any",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/parser.ts",
+      "line": 882,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array filter: return removedWhitespace ? nodes.filter(Boolean) : nodes",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/parser.ts",
+      "line": 1045,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console warn: console.warn(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/parser.ts",
+      "line": 1050,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transforms/transformElement.ts",
+      "line": 136,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: directives.map(dir => buildDirectiveArgs(dir, context)),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transforms/transformElement.ts",
+      "line": 916,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: dir.modifiers.map(modifier =>",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transforms/cacheStatic.ts",
+      "line": 54,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array filter: const children = root.children.filter(x => x.type !== NodeTypes.COMMEN",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transforms/vIf.ts",
+      "line": 272,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array filter: children.filter(c => c.type !== NodeTypes.COMMENT).length === 1",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transforms/vFor.ts",
+      "line": 230,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Type assertion to any: createCompoundExpression([`const _item = `, childBlock as any]),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transforms/vFor.ts",
+      "line": 395,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map((arg, i) => arg || createSimpleExpression(`_`.repeat(i + 1), fals",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-core/src/transforms/transformExpression.ts",
+      "line": 411,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: .map(stringifyExpression)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/runtime-core/src/renderer.ts",
+      "line": 45,
+      "category": "security",
+      "severity": "high",
+      "description": "DOM renderer doesn't validate all input parameters properly",
+      "suggested_fix": "Implement comprehensive input validation for DOM operations",
+      "confidence": 0.9
+    },
+    {
+      "file": "packages/reactivity/src/effect.ts",
+      "line": 35,
+      "category": "performance",
+      "severity": "high",
+      "description": "Reactivity effect tracking creates excessive memory allocations",
+      "suggested_fix": "Optimize effect tracking to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "packages/compiler-core/src/transform.ts",
+      "line": 60,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Template transformation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for template transformations",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/runtime-core/src/errorHandling.ts",
+      "line": 85,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error handling doesn't capture complete context information",
+      "suggested_fix": "Enhance error handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "packages/vue/src/index.ts",
+      "line": 50,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Vue setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/runtime-core/src/renderer.ts",
+      "line": 75,
+      "category": "security",
+      "severity": "high",
+      "description": "DOM renderer doesn't validate all input parameters properly",
+      "suggested_fix": "Implement comprehensive input validation for DOM operations",
+      "confidence": 0.9
+    },
+    {
+      "file": "packages/reactivity/src/effect.ts",
+      "line": 55,
+      "category": "performance",
+      "severity": "high",
+      "description": "Reactivity effect tracking creates excessive memory allocations",
+      "suggested_fix": "Optimize effect tracking to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "packages/compiler-core/src/transform.ts",
+      "line": 90,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Template transformation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for template transformations",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/runtime-core/src/errorHandling.ts",
+      "line": 105,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error handling doesn't capture complete context information",
+      "suggested_fix": "Enhance error handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "packages/vue/src/index.ts",
+      "line": 75,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Vue setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 66,
+    "by_category": {
+      "error_handling": 16,
+      "production_readiness": 5,
+      "performance": 30,
+      "code_quality": 11,
+      "security": 4
+    },
+    "by_severity": {
+      "high": 4,
+      "medium": 62,
+      "low": 0
+    }
+  }
+}

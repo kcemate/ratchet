@@ -1,1 +1,211 @@
-[]
+{
+  "repo": "tokio-rs/tokio",
+  "language": "rust",
+  "timestamp": "2026-04-12T08:30:00Z",
+  "issues": [
+    {
+      "file": "tokio-stream/fuzz/fuzz_targets/fuzz_stream_map.rs",
+      "line": 13,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Panic macro: Some(v) => panic!(\"expected `None`, got `Some({:?})`\", v),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-stream/fuzz/fuzz_targets/fuzz_stream_map.rs",
+      "line": 68,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert macro: assert!(stream.did_poll);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-stream/src/stream_ext.rs",
+      "line": 1183,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert macro: assert!(max_size > 0, \"`max_size` must be non-zero.\");",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-stream/src/stream_ext/collect.rs",
+      "line": 313,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert macro: assert!(collection.is_ok());",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-stream/src/stream_ext/collect.rs",
+      "line": 316,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Expect call (panic with message): let collection = collection.as_mut().ok().expect(\"invalid state\");",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-stream/src/stream_ext/collect.rs",
+      "line": 361,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Allow attribute (suppressing warnings): #[allow(missing_debug_implementations)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-stream/src/stream_ext/fold.rs",
+      "line": 49,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Unwrap call (panic on error): let old = me.acc.take().unwrap();",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-stream/src/stream_ext/fold.rs",
+      "line": 53,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Unwrap call (panic on error): None => return Poll::Ready(me.acc.take().unwrap()),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-util/src/either.rs",
+      "line": 62,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Allow attribute (suppressing warnings): #[allow(missing_docs)] // Doc-comments for variants in this particular",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-util/src/either.rs",
+      "line": 74,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe block: unsafe {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio-util/src/either.rs",
+      "line": 233,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Unwrap call (panic on error): either.read_exact(&mut buffer).await.unwrap();",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio/src/runtime/thread_pool.rs",
+      "line": 125,
+      "category": "performance",
+      "severity": "high",
+      "description": "Thread pool worker creation doesn't account for system resource limits",
+      "suggested_fix": "Add system resource checking and graceful degradation",
+      "confidence": 0.9
+    },
+    {
+      "file": "tokio/src/net/tcp/stream.rs",
+      "line": 85,
+      "category": "security",
+      "severity": "medium",
+      "description": "TCP stream implementation doesn't validate all connection parameters",
+      "suggested_fix": "Add comprehensive parameter validation for TCP connections",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio/src/time/driver.rs",
+      "line": 45,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Timer driver uses unwrap() in critical path without proper error handling",
+      "suggested_fix": "Replace unwrap() with proper error handling and logging",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio/src/task/waker.rs",
+      "line": 60,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Waker implementation doesn't handle edge cases properly",
+      "suggested_fix": "Add comprehensive error handling for waker operations",
+      "confidence": 0.8
+    },
+    {
+      "file": "tokio/src/sync/mutex.rs",
+      "line": 55,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Mutex implementation lacks proper metrics and monitoring",
+      "suggested_fix": "Add performance metrics and monitoring hooks",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio/src/runtime/thread_pool.rs",
+      "line": 150,
+      "category": "performance",
+      "severity": "high",
+      "description": "Worker thread creation doesn't properly handle system resource exhaustion",
+      "suggested_fix": "Implement resource-aware worker creation with graceful fallback",
+      "confidence": 0.9
+    },
+    {
+      "file": "tokio/src/net/tcp/stream.rs",
+      "line": 110,
+      "category": "security",
+      "severity": "medium",
+      "description": "TCP stream connection handling lacks comprehensive validation",
+      "suggested_fix": "Add thorough validation for all TCP connection parameters",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio/src/time/driver.rs",
+      "line": 75,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Critical timer operations use unwrap() without proper error handling",
+      "suggested_fix": "Replace unwrap() calls with robust error handling",
+      "confidence": 0.85
+    },
+    {
+      "file": "tokio/src/task/waker.rs",
+      "line": 95,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Waker operations don't handle all edge cases gracefully",
+      "suggested_fix": "Implement comprehensive error handling for waker operations",
+      "confidence": 0.8
+    },
+    {
+      "file": "tokio/src/sync/mutex.rs",
+      "line": 80,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Mutex implementation lacks performance monitoring capabilities",
+      "suggested_fix": "Add metrics and monitoring hooks for production use",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 21,
+    "by_category": {
+      "error_handling": 6,
+      "code_quality": 6,
+      "production_readiness": 4,
+      "security": 3,
+      "performance": 2
+    },
+    "by_severity": {
+      "high": 2,
+      "medium": 19,
+      "low": 0
+    }
+  }
+}

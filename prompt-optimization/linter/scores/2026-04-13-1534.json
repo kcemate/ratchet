@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-13T19:34:00Z",
+  "target": "linter",
+  "iteration": 1,
+  "variant": "v1",
+  "subscores": {
+    "pass_warn_fail_ratio": 0.30,
+    "scoring_consistency": 0.20,
+    "false_positive_rate": 0.15
+  },
+  "aggregate": 0.22,
+  "weakest": "false_positive_rate",
+  "hypothesis_tested": "Adding explicit pass/fail criteria per check and a self-check warning to fix inverted scoring logic",
+  "decision": "keep",
+  "notes": "v1 fixed the inverted scoring bug — April 4-5 runs show correct PASS/WARN/FAIL verdicts with proper justification. However April 6 introduced a new failure mode: 20+ files all failed with 'Structure validation failed - not a valid array of issue objects', including files that correctly passed on April 4-5 (spf13-viper, thealgorithms-python, winstonjs-winston, trekhleb-javascript-algorithms). Two root causes: (1) already-linted file detection is too vague — the model doesn't know how to search lint-log.md for filenames, so it re-processes files that already passed; (2) structural check is triggering false positives — the model may be confused by the lint-log content or wrapper objects when re-reading files. v2 will add explicit grep pattern for dedup check and a verify-before-FAIL step for structural validation."
+}

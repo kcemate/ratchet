@@ -1,191 +1,128 @@
 [
   {
-    "file": "ciphers/caesar_cipher.py",
-    "line": 239,
-    "category": "Error Handling",
+    "file": "searches/binary_search.py",
+    "line": 15,
+    "category": "code_quality",
     "severity": "medium",
-    "description": "User input for key is directly converted to int without try-except, which can raise ValueError for non-numeric input",
-    "suggested_fix": "Wrap the int conversion in a try-except block and provide user-friendly error message",
-    "confidence": "high"
+    "description": "The bisect_left function has a potential performance issue with the pairwise import that's only used in one function. The import should be moved to the function level or the function should use a more efficient approach.",
+    "suggested_fix": "Move 'from itertools import pairwise' inside the binary_search function where it's actually used, or replace pairwise with a more efficient local implementation.",
+    "confidence": 0.9
   },
   {
-    "file": "ciphers/caesar_cipher.py",
-    "line": 67,
-    "category": "Performance",
+    "file": "searches/binary_search.py",
+    "line": 120,
+    "category": "code_quality",
     "severity": "medium",
-    "description": "String concatenation in loop using `result += character` is inefficient for large inputs",
-    "suggested_fix": "Use list to collect characters and join at the end",
-    "confidence": "high"
+    "description": "The binary_search function creates a new list with 'list(sorted_collection)' which is inefficient for large collections. This creates an unnecessary copy.",
+    "suggested_fix": "Use 'sorted_collection.copy()' or better yet, remove the sorting check entirely since it's already documented that the collection must be sorted.",
+    "confidence": 0.85
   },
   {
-    "file": "ciphers/caesar_cipher.py",
-    "line": 6,
-    "category": "Robustness",
+    "file": "searches/binary_search.py",
+    "line": 165,
+    "category": "code_quality",
     "severity": "low",
-    "description": "No validation for alphabet parameter - empty or invalid alphabets can cause issues",
-    "suggested_fix": "Add validation to ensure alphabet is not empty and contains unique characters",
-    "confidence": "medium"
+    "description": "The exponential_search function has a potential issue where it might call binary_search_by_recursion with invalid parameters when bound exceeds the collection length.",
+    "suggested_fix": "Add bounds checking to ensure the binary_search_by_recursion call has valid left and right parameters.",
+    "confidence": 0.8
   },
   {
-    "file": "ciphers/caesar_cipher.py",
-    "line": 219,
-    "category": "Security",
-    "severity": "low",
-    "description": "Brute force function returns all possible decryptions, which could be a security risk for sensitive data",
-    "suggested_fix": "Add parameter to limit results or return only likely decryptions",
-    "confidence": "medium"
-  },
-  {
-    "file": "ciphers/caesar_cipher.py",
-    "line": 232,
-    "category": "Error Handling",
-    "severity": "low",
-    "description": "User input for menu choice not validated for non-numeric input before strip",
-    "suggested_fix": "Add validation to ensure choice is one of the expected options",
-    "confidence": "medium"
-  },
-  {
-    "file": "graphs/edmonds_karp_multiple_source_and_sink.py",
-    "line": 13,
-    "category": "Type Safety",
+    "file": "searches/binary_search.py",
+    "line": 170,
+    "category": "error_handling",
     "severity": "medium",
-    "description": "Missing type hints for parameters and return types in _normalize_graph method",
-    "suggested_fix": "Add type hints: def _normalize_graph(self, sources: list[int], sinks: list[int]) -> None:",
-    "confidence": "high"
+    "description": "The exponential_search function doesn't handle the case where binary_search_by_recursion returns None, which could lead to a TypeError when comparing with -1.",
+    "suggested_fix": "Add a check for None return value from binary_search_by_recursion and handle it appropriately.",
+    "confidence": 0.9
   },
   {
-    "file": "graphs/edmonds_karp_multiple_source_and_sink.py",
-    "line": 18,
-    "category": "Error Handling",
-    "severity": "high",
-    "description": "_normalize_graph returns None when sources or sinks are empty, but this leads to None source_index/sink_index which causes errors later",
-    "suggested_fix": "Raise ValueError instead of returning None, or set default values with proper handling",
-    "confidence": "high"
-  },
-  {
-    "file": "graphs/edmonds_karp_multiple_source_and_sink.py",
-    "line": 32,
-    "category": "Code Quality",
-    "severity": "medium",
-    "description": "The method modifies the input graph directly by inserting rows/columns, which is unexpected side effect",
-    "suggested_fix": "Create a copy of the graph before modification, or document this behavior clearly",
-    "confidence": "medium"
-  },
-  {
-    "file": "graphs/edmonds_karp_multiple_source_and_sink.py",
-    "line": 3,
-    "category": "Documentation",
-    "severity": "low",
-    "description": "Class lacks docstring explaining its purpose and usage",
-    "suggested_fix": "Add comprehensive docstring for FlowNetwork class",
-    "confidence": "medium"
-  },
-  {
-    "file": "graphs/dijkstra.py",
-    "line": 37,
-    "category": "Type Safety",
-    "severity": "medium",
-    "description": "Missing type hints for parameters and return type in dijkstra function",
-    "suggested_fix": "Add type hints: def dijkstra(graph: dict, start: str, end: str) -> int:",
-    "confidence": "high"
-  },
-  {
-    "file": "graphs/dijkstra.py",
-    "line": 62,
-    "category": "Error Handling",
-    "severity": "medium",
-    "description": "Returns -1 when no path exists, which could be confused with valid cost of -1 if negative edges were allowed",
-    "suggested_fix": "Return None or raise NoPathError instead of -1",
-    "confidence": "medium"
-  },
-  {
-    "file": "graphs/dijkstra.py",
-    "line": 37,
-    "category": "Robustness",
-    "severity": "low",
-    "description": "No validation that start and end nodes exist in the graph",
-    "suggested_fix": "Add check at beginning and raise KeyError if nodes are missing",
-    "confidence": "low"
-  },
-  {
-    "file": "graphs/dijkstra.py",
-    "line": 1,
-    "category": "Documentation",
-    "severity": "low",
-    "description": "File lacks header docstring explaining the purpose and usage",
-    "suggested_fix": "Add a module-level docstring describing the implementation",
-    "confidence": "medium"
-  },
-  {
-    "file": "data_structures/binary_tree/avl_tree.py",
-    "line": 16,
-    "category": "Code Quality",
-    "severity": "medium",
-    "description": "Unnecessary custom queue implementation (MyQueue) instead of using collections.deque",
-    "suggested_fix": "Replace MyQueue with collections.deque for better performance and readability",
-    "confidence": "high"
-  },
-  {
-    "file": "data_structures/binary_tree/avl_tree.py",
-    "line": 43,
-    "category": "Code Organization",
-    "severity": "low",
-    "description": "MyNode class is included in the same file as AVLtree, could be separated for better organization",
-    "suggested_fix": "Move MyNode to a separate file or make it an inner class of AVLtree",
-    "confidence": "low"
-  },
-  {
-    "file": "data_structures/binary_tree/avl_tree.py",
-    "line": 290,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "Print tree method uses inefficient custom queue with fixed-size checks (range 100) and math.pow calculations",
-    "suggested_fix": "Simplify with standard BFS using collections.deque and proper level tracking",
-    "confidence": "medium"
-  },
-  {
-    "file": "data_structures/binary_tree/avl_tree.py",
+    "file": "searches/binary_search.py",
     "line": 200,
-    "category": "Error Handling",
+    "category": "production_readiness",
     "severity": "low",
-    "description": "Delete method does not handle case where node to delete is not found",
-    "suggested_fix": "Add check and raise ValueError or return False when node is not found",
-    "confidence": "medium"
+    "description": "The main block uses input() without any validation, which could cause crashes with invalid user input.",
+    "suggested_fix": "Add try-catch blocks around user input parsing and provide helpful error messages.",
+    "confidence": 0.75
   },
   {
-    "file": "data_structures/binary_tree/binary_search_tree.py",
-    "line": 1,
-    "category": "Documentation",
+    "file": "sorts/quick_sort.py",
+    "line": 20,
+    "category": "performance",
+    "severity": "medium",
+    "description": "The quick_sort function uses list comprehensions and list concatenation which creates many intermediate lists, reducing performance for large collections.",
+    "suggested_fix": "Use in-place sorting with indices to avoid creating intermediate lists, or use slice assignment.",
+    "confidence": 0.85
+  },
+  {
+    "file": "sorts/quick_sort.py",
+    "line": 25,
+    "category": "performance",
+    "severity": "high",
+    "description": "The quick_sort function uses collection.pop(pivot_index) which is O(n) for lists, making the overall algorithm O(n^2) in the worst case instead of O(n log n).",
+    "suggested_fix": "Use index-based partitioning instead of popping elements to maintain O(n log n) performance.",
+    "confidence": 0.95
+  },
+  {
+    "file": "sorts/quick_sort.py",
+    "line": 35,
+    "category": "code_quality",
     "severity": "low",
-    "description": "Class name inconsistency: class is BST but docstring refers to BinarySearchTree",
-    "suggested_fix": "Rename class to BinarySearchTree or update docstring to match",
-    "confidence": "medium"
+    "description": "The main block doesn't validate user input, which could cause crashes with non-numeric input.",
+    "suggested_fix": "Add input validation and error handling for user input parsing.",
+    "confidence": 0.7
   },
   {
-    "file": "data_structures/binary_tree/binary_search_tree.py",
-    "line": 33,
-    "category": "Error Handling",
+    "file": "searches/binary_tree_traversal.py",
+    "line": 20,
+    "category": "code_quality",
     "severity": "medium",
-    "description": "Search method raises IndexError with custom message when tree is empty, which is misleading",
-    "suggested_fix": "Raise a more appropriate exception like ValueError or create a custom TreeEmptyError",
-    "confidence": "high"
+    "description": "The build_tree function uses input() without proper validation, making it vulnerable to crashes with non-integer input.",
+    "suggested_fix": "Add try-catch blocks and input validation to handle non-integer input gracefully.",
+    "confidence": 0.8
   },
   {
-    "file": "data_structures/binary_tree/binary_search_tree.py",
-    "line": 327,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "find_kth_smallest uses O(n) extra space to store all elements, should use O(h) space with inorder traversal",
-    "suggested_fix": "Implement kth smallest using iterative inorder traversal with stack",
-    "confidence": "high"
+    "file": "searches/binary_tree_traversal.py",
+    "line": 45,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "The traversal functions (pre_order, in_order, post_order) use recursive calls without any protection against stack overflow for very deep trees.",
+    "suggested_fix": "Add maximum depth checking or use iterative implementations for very deep trees.",
+    "confidence": 0.75
   },
   {
-    "file": "data_structures/binary_tree/binary_search_tree.py",
+    "file": "searches/binary_tree_traversal.py",
     "line": 100,
-    "category": "Code Quality",
+    "category": "code_quality",
     "severity": "low",
-    "description": "Method names are inconsistent: del_node vs delete, and some methods have underscores vs not",
-    "suggested_fix": "Standardize method names to follow PEP 8 conventions",
-    "confidence": "medium"
+    "description": "The level_order_actual function has inconsistent output formatting compared to other traversal functions - it prints newlines which breaks the expected comma-separated format.",
+    "suggested_fix": "Make the output format consistent with other traversal functions or document the difference clearly.",
+    "confidence": 0.85
+  },
+  {
+    "file": "searches/binary_tree_traversal.py",
+    "line": 150,
+    "category": "production_readiness",
+    "severity": "low",
+    "description": "The post_order_iter function uses two stacks which doubles memory usage compared to a single-stack implementation.",
+    "suggested_fix": "Implement a more memory-efficient single-stack solution for iterative post-order traversal.",
+    "confidence": 0.7
+  },
+  {
+    "file": "searches/binary_search.py",
+    "line": 50,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Multiple functions repeat the same validation logic for checking if collections are sorted. This violates DRY principles.",
+    "suggested_fix": "Create a shared validation function that can be reused across all search functions.",
+    "confidence": 0.9
+  },
+  {
+    "file": "searches/binary_search.py",
+    "line": 180,
+    "category": "performance",
+    "severity": "medium",
+    "description": "The exponential_search function could be optimized by avoiding the final binary search call when the item is found during the exponential phase.",
+    "suggested_fix": "Add early termination if the item is found during the bound-doubling phase.",
+    "confidence": 0.8
   }
 ]

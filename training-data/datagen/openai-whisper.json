@@ -1,0 +1,47 @@
+[
+  {
+    "file": "whisper/model.py",
+    "line": 1,
+    "category": "security",
+    "severity": "medium",
+    "description": "Hardcoded model URLs in _MODELS dictionary could be modified at runtime, potentially allowing supply chain attacks if an attacker can modify these URLs.",
+    "suggested_fix": "Use environment variables or a configuration file for model URLs, and validate checksums before loading models.",
+    "confidence": 0.8
+  },
+  {
+    "file": "whisper/__init__.py",
+    "line": 105,
+    "category": "security",
+    "severity": "high",
+    "description": "urllib.request.urlopen() is used without certificate verification or timeout settings, making it vulnerable to MITM attacks and hanging indefinitely.",
+    "suggested_fix": "Use requests library with proper timeout and SSL verification, or configure urllib to verify certificates and set timeouts.",
+    "confidence": 0.9
+  },
+  {
+    "file": "whisper/decoding.py",
+    "line": 100,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "detect_language function is quite long (50+ lines) and handles multiple responsibilities: validation, preprocessing, model inference, and postprocessing.",
+    "suggested_fix": "Break this function into smaller functions: validate_input(), preprocess_audio(), run_inference(), postprocess_results().",
+    "confidence": 0.8
+  },
+  {
+    "file": "whisper/transcribe.py",
+    "line": 1,
+    "category": "performance",
+    "severity": "low",
+    "description": "The transcribe function processes audio files sequentially with no built-in support for batching multiple audio files.",
+    "suggested_fix": "Add batch processing support to handle multiple audio files in parallel using multiprocessing or asyncio.",
+    "confidence": 0.7
+  },
+  {
+    "file": "whisper/__init__.py",
+    "line": 150,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "Broad exception handling in _download function catches all exceptions but doesn't handle specific error cases appropriately.",
+    "suggested_fix": "Catch specific exceptions (IOError, URLError, OSError) separately and provide targeted error messages and recovery strategies.",
+    "confidence": 0.8
+  }
+]

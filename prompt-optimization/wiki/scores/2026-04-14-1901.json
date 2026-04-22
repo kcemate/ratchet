@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-04-14T23:01:00Z",
+  "target": "wiki",
+  "iteration": 3,
+  "variant": "v2",
+  "articles_evaluated": [
+    "winstonjs-winston.md",
+    "yt-dlp-yt-dlp.md",
+    "yt-dlp.md"
+  ],
+  "subscores_per_article": {
+    "winstonjs-winston.md": {
+      "structure": 0.85,
+      "detail": 0.85,
+      "actionability": 0.85,
+      "examples": 0.90
+    },
+    "yt-dlp-yt-dlp.md": {
+      "structure": 0.82,
+      "detail": 0.80,
+      "actionability": 0.78,
+      "examples": 0.72
+    },
+    "yt-dlp.md": {
+      "structure": 0.83,
+      "detail": 0.82,
+      "actionability": 0.82,
+      "examples": 0.80
+    }
+  },
+  "subscores": {
+    "structure": 0.833,
+    "detail": 0.823,
+    "actionability": 0.817,
+    "examples": 0.807
+  },
+  "aggregate": 0.82,
+  "weakest": "examples",
+  "weakness_analysis": "yt-dlp-yt-dlp.md's remediation section shows a 'AFTER' js2py sandbox implementation using `js2py.require('math')` — a fabricated API that does not exist in the real js2py library. The fix code looks authoritative (has file:line attribution for the BEFORE block) but the AFTER block invents method names. This breaks trust in the fix guidance and reduces the actionability of the examples. The Code Citation Rules in v2 correctly enforce real code for BEFORE blocks, but do not address the quality/correctness of AFTER/fix blocks.",
+  "hypothesis": "Add explicit instruction for fix/after code examples: either use known-correct APIs or label the block as conceptual with a callout. The model should not present invented fix code as if it were immediately runnable. Proposed addition: if the fix example uses a library API, verify it against common knowledge; if uncertain, prepend with '> ⚠️ Conceptual — verify exact API surface before use'. This prevents authoritative-looking but incorrect fix examples.",
+  "decision": "keep_v2_deploy_v3"
+}

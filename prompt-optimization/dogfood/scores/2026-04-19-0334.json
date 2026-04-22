@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-04-19T07:34:00Z",
+  "target": "dogfood",
+  "iteration": 3,
+  "variant": "v3",
+  "subscores": {
+    "specificity": 0.15,
+    "actionability": 0.10,
+    "severity_accuracy": 0.35,
+    "coverage_breadth": 0.30
+  },
+  "aggregate": 0.225,
+  "weakest": "actionability",
+  "analysis": "v3 added a worked example to anchor fix pattern format, but output regressed severely. All code snippets are placeholder comments ('// ... 70 lines of complex logic') rather than real quoted file content. No fix patterns appear despite the example. The model is not reading actual source files — it's hallucinating findings based on function names and file sizes alone. Rotation plan at the end suggests re-scanning the same 5 files, opposite of the instruction. Zero High/Critical findings despite clearly complex codebase with large files (15K lines in consolidate.ts).",
+  "hypothesis": "v4: Add an explicit ZERO-TOLERANCE rule on placeholder comments in code snippets. Findings that contain '// ...' or paraphrased code must be discarded. Force the model to either quote exact lines or skip the finding entirely.",
+  "decision": "revert",
+  "previousScore": 0.5625,
+  "delta": -0.3375
+}

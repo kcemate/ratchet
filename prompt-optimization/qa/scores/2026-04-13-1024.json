@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-04-13T14:24:00Z",
+  "target": "qa",
+  "iteration": 2,
+  "variant": "v1",
+  "subscores": {
+    "instruction_clarity": 0.55,
+    "output_detail": 0.65,
+    "variety": 0.75,
+    "would_train_well": 0.60
+  },
+  "aggregate": 0.64,
+  "weakest": "instruction_clarity",
+  "hypothesis": "Template failure: when scan data has empty fields (file, severity, issue type), generator still emits entries with blank placeholders embedded in the instruction string. Adding a DATA QUALITY GATE that skips incomplete scan entries should eliminate these poisonous training pairs.",
+  "decision": null,
+  "evidence": "nestjs-nest.jsonl lines 1-2: instruction='Review this  issue: \\n\\nFile: \\nLine: \\nSeverity: \\nConfidence: \\n\\n...' output='\\n\\nImpact: This  issue could lead to...\\n\\nFix: '"
+}

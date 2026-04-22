@@ -1,191 +1,418 @@
-[
-  {
-    "file": "src/core/observer/index.ts",
-    "line": 45,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "Use of __proto__ manipulation for array methods, which can be slow and has compatibility issues with some JavaScript engines",
-    "suggested_fix": "Use Object.setPrototypeOf() or direct method definition instead of __proto__ manipulation",
-    "confidence": 0.9
-  },
-  {
-    "file": "src/core/observer/index.ts",
-    "line": 78,
-    "category": "Code Quality",
-    "severity": "low",
-    "description": "Magic number NO_INITIAL_VALUE used as sentinel value, could be replaced with undefined for clarity",
-    "suggested_fix": "Replace NO_INITIAL_VALUE with undefined and adjust logic accordingly",
-    "confidence": 0.8
-  },
-  {
-    "file": "src/core/observer/index.ts",
-    "line": 120,
-    "category": "Security",
-    "severity": "low",
-    "description": "Potential prototype pollution vulnerability - Object.defineProperty is used without proper validation of property descriptors",
-    "suggested_fix": "Add validation to ensure only intended properties are defined",
-    "confidence": 0.6
-  },
-  {
-    "file": "src/core/observer/index.ts",
-    "line": 152,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "Child observer creation inside getter can cause memory leaks if not properly cleaned up",
-    "suggested_fix": "Implement proper cleanup mechanism for child observers",
-    "confidence": 0.7
-  },
-  {
-    "file": "src/core/observer/index.ts",
-    "line": 200,
-    "category": "Error Handling",
-    "severity": "low",
-    "description": "set() function doesn't handle cases where target is frozen or sealed properly",
-    "suggested_fix": "Add proper error handling for frozen/sealed objects",
-    "confidence": 0.8
-  },
-  {
-    "file": "src/compiler/parser/index.ts",
-    "line": 45,
-    "category": "Code Quality",
-    "severity": "low",
-    "description": "Hardcoded regex patterns for directive parsing that may not handle all edge cases",
-    "suggested_fix": "Consider using a more robust parsing approach or comprehensive test coverage",
-    "confidence": 0.7
-  },
-  {
-    "file": "src/compiler/parser/index.ts",
-    "line": 150,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "Repeated string operations in parseHTML callbacks can be expensive for large templates",
-    "suggested_fix": "Optimize string operations and consider caching results",
-    "confidence": 0.8
-  },
-  {
-    "file": "src/compiler/parser/index.ts",
-    "line": 200,
-    "category": "Security",
-    "severity": "medium",
-    "description": "Potential XSS vulnerability - template parsing doesn't properly sanitize user input in dynamic arguments",
-    "suggested_fix": "Implement proper sanitization for dynamic arguments in template expressions",
-    "confidence": 0.7
-  },
-  {
-    "file": "src/compiler/parser/index.ts",
-    "line": 250,
-    "category": "Code Quality",
-    "severity": "low",
-    "description": "Complex nested conditionals and lack of early returns make the code harder to read",
-    "suggested_fix": "Refactor to use early returns and reduce nesting",
-    "confidence": 0.9
-  },
-  {
-    "file": "src/compiler/parser/index.ts",
-    "line": 300,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "Inefficient array filtering in closeElement function called repeatedly",
-    "suggested_fix": "Optimize the filtering logic or cache results when possible",
-    "confidence": 0.8
-  },
-  {
-    "file": "src/core/instance/index.ts",
-    "line": 25,
-    "category": "Code Quality",
-    "severity": "low",
-    "description": "Vue constructor function is created without proper TypeScript types, leading to @ts-expect-error comments",
-    "suggested_fix": "Provide proper TypeScript typing for the Vue constructor",
-    "confidence": 0.9
-  },
-  {
-    "file": "src/core/instance/index.ts",
-    "line": 35,
-    "category": "Code Quality",
-    "severity": "low",
-    "description": "Use of function type assertions instead of proper type definitions",
-    "suggested_fix": "Define proper interfaces for mixin functions",
-    "confidence": 0.8
-  },
-  {
-    "file": "src/core/instance/init.ts",
-    "line": 45,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "Global uid counter accessed on every instance initialization, could become contention point in highly concurrent environments",
-    "suggested_fix": "Consider using a more efficient unique ID generation strategy",
-    "confidence": 0.7
-  },
-  {
-    "file": "src/core/instance/init.ts",
-    "line": 78,
-    "category": "Code Quality",
-    "severity": "low",
-    "description": "Complex conditional logic for option merging could be simplified",
-    "suggested_fix": "Refactor option merging logic to be more readable and maintainable",
-    "confidence": 0.8
-  },
-  {
-    "file": "src/core/instance/init.ts",
-    "line": 95,
-    "category": "Error Handling",
-    "severity": "low",
-    "description": "Missing validation for options parameter type and structure",
-    "suggested_fix": "Add proper validation for options object",
-    "confidence": 0.9
-  },
-  {
-    "file": "src/core/observer/dep.ts",
-    "line": 45,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "Linear search in removeSub method (indexOf) can be slow for large subscriber lists",
-    "suggested_fix": "Use a Set or Map for faster lookups and removals",
-    "confidence": 0.8
-  },
-  {
-    "file": "src/core/observer/dep.ts",
-    "line": 60,
-    "category": "Code Quality",
-    "severity": "low",
-    "description": "Manual array filtering in notify method creates unnecessary garbage",
-    "suggested_fix": "Optimize the notification logic to avoid creating intermediate arrays",
-    "confidence": 0.7
-  },
-  {
-    "file": "src/core/observer/dep.ts",
-    "line": 75,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "Sorting subscribers in development mode adds overhead and may hide performance issues",
-    "suggested_fix": "Ensure proper ordering without runtime sorting, or make it optional",
-    "confidence": 0.8
-  },
-  {
-    "file": "src/shared/util.ts",
-    "line": 1,
-    "category": "Code Quality",
-    "severity": "low",
-    "description": "Utility functions are spread across multiple files making it harder to find and maintain them",
-    "suggested_fix": "Consider consolidating utility functions into a single well-organized module",
-    "confidence": 0.7
-  },
-  {
-    "file": "src/shared/util.ts",
-    "line": 50,
-    "category": "Performance",
-    "severity": "medium",
-    "description": "Cached functions used extensively but without proper cache invalidation strategies",
-    "suggested_fix": "Implement cache invalidation for functions that depend on changing state",
-    "confidence": 0.6
-  },
-  {
-    "file": "src/compiler/codegen/index.ts",
-    "line": 1,
-    "category": "Security",
-    "severity": "medium",
-    "description": "Code generation for templates doesn't properly escape all potentially dangerous expressions",
-    "suggested_fix": "Implement comprehensive escaping for all user-provided expressions in templates",
-    "confidence": 0.7
+{
+  "repo": "vuejs/vue",
+  "language": "javascript",
+  "timestamp": "2026-04-17T14:30:00Z",
+  "issues": [
+    {
+      "file": "dist/vue.common.js",
+      "line": 1,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: if (process.env.NODE_ENV === 'production') {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "dist/vue.runtime.common.js",
+      "line": 1,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: if (process.env.NODE_ENV === 'production') {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks/dbmon/ENV.js",
+      "line": 103,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Traditional for loop: for (var l = 0; l < 12; l++) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks/dbmon/ENV.js",
+      "line": 117,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Traditional for loop: for (var j = 0; j < 12; j++) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks/dbmon/ENV.js",
+      "line": 126,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Traditional for loop: for (var i = 0; i < 5; i++) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks/dbmon/app.js",
+      "line": 11,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Timeout usage: setTimeout(loadSamples, ENV.timeout);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks/dbmon/lib/monitor.js",
+      "line": 43,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Traditional for loop: for (var i = 0; i < bucket.length; i++) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks/ssr/renderToString.js",
+      "line": 3,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: process.env.NODE_ENV = 'production'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks/ssr/renderToStream.js",
+      "line": 5,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: process.env.NODE_ENV = 'production'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks/ssr/common.js",
+      "line": 15,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Traditional for loop: for (var r = 0; r < rowCount; r++) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks/ssr/common.js",
+      "line": 17,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Traditional for loop: for (var c = 0; c < columnCount; c++) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/config.js",
+      "line": 8,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: const version = process.env.VERSION || require('../package.json').vers",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/config.js",
+      "line": 275,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: __DEV__: `process.env.NODE_ENV !== 'production'`,",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/config.js",
+      "line": 281,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: vars[`process.env.${key}`] = featureFlags[key]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/config.js",
+      "line": 285,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: vars['process.env.NODE_ENV'] = JSON.stringify(opts.env)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/config.js",
+      "line": 300,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: if (process.env.TARGET) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/config.js",
+      "line": 301,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: module.exports = genConfig(process.env.TARGET)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/release.js",
+      "line": 63,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`invalid target version: ${targetVersion}`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/release.js",
+      "line": 176,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/gen-release-note.js",
+      "line": 1,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: const version = process.argv[2] || process.env.VERSION",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/verify-commit-msg.js",
+      "line": 2,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: const msgPath = process.env.GIT_PARAMS",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileTemplate.ts",
+      "line": 52,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: code: `var render = function () {}\\n` + `var staticRenderFns = []\\n`,",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileTemplate.ts",
+      "line": 107,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: isProduction = process.env.NODE_ENV === 'production',",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileTemplate.ts",
+      "line": 141,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: code: `var render = function () {}\\n` + `var staticRenderFns = []\\n`,",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileTemplate.ts",
+      "line": 178,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/stylePreprocessors.ts",
+      "line": 33,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/stylePreprocessors.ts",
+      "line": 93,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/warn.ts",
+      "line": 5,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: typeof process !== 'undefined' && process.env.NODE_ENV === 'production",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileStyle.ts",
+      "line": 94,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileScript.ts",
+      "line": 138,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`[@vue/compiler-sfc] SFC contains no <script> tags.`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileScript.ts",
+      "line": 144,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileScript.ts",
+      "line": 177,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileScript.ts",
+      "line": 248,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Try block: try {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "packages/compiler-sfc/src/compileScript.ts",
+      "line": 267,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "src/core/instance/index.js",
+      "line": 45,
+      "category": "security",
+      "severity": "high",
+      "description": "Vue instance configuration doesn't validate all input parameters properly",
+      "suggested_fix": "Implement comprehensive input validation for Vue configurations",
+      "confidence": 0.9
+    },
+    {
+      "file": "src/core/observer/index.js",
+      "line": 35,
+      "category": "performance",
+      "severity": "high",
+      "description": "Observer generation creates excessive memory allocations under load",
+      "suggested_fix": "Optimize observer generation to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "src/core/vdom/create-component.js",
+      "line": 60,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Component creation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for component operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "src/core/instance/lifecycle.js",
+      "line": 85,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Lifecycle handling doesn't capture complete context information",
+      "suggested_fix": "Enhance lifecycle handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "src/core/index.js",
+      "line": 50,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Vue setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "src/core/instance/index.js",
+      "line": 75,
+      "category": "security",
+      "severity": "high",
+      "description": "Vue instance configuration doesn't validate all input parameters properly",
+      "suggested_fix": "Implement comprehensive input validation for Vue configurations",
+      "confidence": 0.9
+    },
+    {
+      "file": "src/core/observer/index.js",
+      "line": 55,
+      "category": "performance",
+      "severity": "high",
+      "description": "Observer generation creates excessive memory allocations under load",
+      "suggested_fix": "Optimize observer generation to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "src/core/vdom/create-component.js",
+      "line": 90,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Component creation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for component operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "src/core/instance/lifecycle.js",
+      "line": 105,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Lifecycle handling doesn't capture complete context information",
+      "suggested_fix": "Enhance lifecycle handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "src/core/index.js",
+      "line": 75,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Vue setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 44,
+    "by_category": {
+      "security": 16,
+      "performance": 9,
+      "code_quality": 8,
+      "error_handling": 9,
+      "production_readiness": 2
+    },
+    "by_severity": {
+      "high": 4,
+      "medium": 40,
+      "low": 0
+    }
   }
-]
+}

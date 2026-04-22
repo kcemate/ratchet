@@ -1,182 +1,265 @@
-[
-  {
-    "file": "singleton/src/main/java/com/iluwatar/singleton/IvoryTower.java",
-    "line": 26,
-    "category": "Code Quality",
-    "severity": "Medium",
-    "description": "The comment 'Static to class instance of the class.' is grammatically awkward and unclear. It should be written more clearly.",
-    "suggested_fix": "Change to 'Static instance of the class, eagerly initialized for thread safety.'",
-    "confidence": 90
-  },
-  {
-    "file": "singleton/src/main/java/com/iluwatar/singleton/IvoryTower.java",
-    "line": 21,
-    "category": "Performance",
-    "severity": "Low",
-    "description": "Eager initialization may cause unnecessary resource consumption if the singleton is never used or used late in the application lifecycle.",
-    "suggested_fix": "Consider lazy initialization if resource usage is a concern.",
-    "confidence": 85
-  },
-  {
-    "file": "singleton/src/main/java/com/iluwatar/singleton/BillPughImplementation.java",
-    "line": 33,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "The field name 'instance' is not very descriptive. It could be more explicitly named to indicate it's a singleton instance.",
-    "suggested_fix": "Rename to 'INSTANCE' or 'SINGLETON_INSTANCE' for consistency with other implementations.",
-    "confidence": 80
-  },
-  {
-    "file": "singleton/src/main/java/com/iluwatar/singleton/BillPughImplementation.java",
-    "line": 20,
-    "category": "Error Handling",
-    "severity": "Medium",
-    "description": "The reflection check throws IllegalStateException but doesn't provide a clear message about what went wrong. The message 'Already initialized.' is vague.",
-    "suggested_fix": "Provide a more descriptive error message like 'Singleton instance already created via reflection attack prevention.'",
-    "confidence": 85
-  },
-  {
-    "file": "singleton/src/main/java/com/iluwatar/singleton/App.java",
-    "line": 59,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "Variable names 'dcl1' and 'dcl2' are abbreviations that are not immediately clear. They should be more descriptive.",
-    "suggested_fix": "Rename to 'doubleCheckedLockingInstance1' and 'doubleCheckedLockingInstance2'.",
-    "confidence": 90
-  },
-  {
-    "file": "factory-method/src/main/java/com/iluwatar/factory/method/OrcBlacksmith.java",
-    "line": 27,
-    "category": "Performance",
-    "severity": "Low",
-    "description": "The static block creates all weapon types upfront, which could be wasteful if only a subset are ever requested.",
-    "suggested_fix": "Use lazy initialization or create weapons on demand instead of pre-creating all types.",
-    "confidence": 80
-  },
-  {
-    "file": "factory-method/src/main/java/com/iluwatar/factory/method/OrcBlacksmith.java",
-    "line": 27,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "The map name 'ORCARSENAL' is misspelled (should be 'ORC_ARSENAL' or 'ORC_ARMORY').",
-    "suggested_fix": "Correct spelling to 'ORC_ARMORY' or similar.",
-    "confidence": 95
-  },
-  {
-    "file": "factory-method/src/main/java/com/iluwatar/factory/method/App.java",
-    "line": 32,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "The variable name 'blacksmith' is fine, but could be more specific like 'orcBlacksmith' after assignment to improve readability.",
-    "suggested_fix": "Rename to 'orcBlacksmith' for clarity.",
-    "confidence": 85
-  },
-  {
-    "file": "builder/src/main/java/com/iluwatar/builder/Hero.java",
-    "line": 33,
-    "category": "Error Handling",
-    "severity": "Medium",
-    "description": "The builder constructor only checks that profession and name are not null, but other fields like hairType, hairColor, armor, weapon could be null and may cause issues if the built Hero is used without null checks.",
-    "suggested_fix": "Add validation in the build() method to ensure required combinations are set, or document clearly which fields are optional.",
-    "confidence": 85
-  },
-  {
-    "file": "builder/src/main/java/com/iluwatar/builder/Hero.java",
-    "line": 54,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "The build() method simply creates a new Hero record without any additional validation or post-processing.",
-    "suggested_fix": "Consider adding validation logic to ensure the built object is in a consistent state.",
-    "confidence": 80
-  },
-  {
-    "file": "strategy/src/main/java/com/iluwatar/strategy/DragonSlayer.java",
-    "line": 13,
-    "category": "Error Handling",
-    "severity": "Medium",
-    "description": "The strategy field is not validated for null in the constructor. Passing null would cause a NullPointerException when goToBattle() is called.",
-    "suggested_fix": "Add null check in constructor: if (strategy == null) throw new IllegalArgumentException('Strategy must not be null');",
-    "confidence": 90
-  },
-  {
-    "file": "strategy/src/main/java/com/iluwatar/strategy/DragonSlayer.java",
-    "line": 19,
-    "category": "Error Handling",
-    "severity": "Medium",
-    "description": "The changeStrategy method doesn't validate for null, which could lead to a NullPointerException later.",
-    "suggested_fix": "Add null check: if (strategy == null) throw new IllegalArgumentException('Strategy must not be null');",
-    "confidence": 90
-  },
-  {
-    "file": "observer/src/main/java/com/iluwatar/observer/Weather.java",
-    "line": 35,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "The observers list is not thread-safe. If Weather is accessed from multiple threads, this could cause concurrency issues.",
-    "suggested_fix": "Use CopyOnWriteArrayList or synchronize access to the list.",
-    "confidence": 85
-  },
-  {
-    "file": "observer/src/main/java/com/iluwatar/observer/Weather.java",
-    "line": 44,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "The method uses ordinal() to cycle through weather types, which is fragile if the enum order changes.",
-    "suggested_fix": "Use a separate index field or a more robust cycling mechanism.",
-    "confidence": 90
-  },
-  {
-    "file": "decorator/src/main/java/com/iluwatar/decorator/ClubbedTroll.java",
-    "line": 18,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "The attack method calls decorated.attack() before logging, which means the log message appears after the decorated troll's attack output. This could lead to confusing log ordering.",
-    "suggested_fix": "Log first, then call decorated.attack() to maintain proper sequence.",
-    "confidence": 85
-  },
-  {
-    "file": "decorator/src/main/java/com/iluwatar/decorator/ClubbedTroll.java",
-    "line": 22,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "The method adds 10 to the decorated troll's attack power. This hard-coded value reduces flexibility.",
-    "suggested_fix": "Make the bonus configurable via constructor parameter.",
-    "confidence": 80
-  },
-  {
-    "file": "state/src/main/java/com/iluwatar/state/Mammoth.java",
-    "line": 21,
-    "category": "Code Quality",
-    "severity": "Medium",
-    "description": "The state transition logic uses getClass().equals() which is fragile and violates the Open/Closed principle. Adding new states requires modifying this method.",
-    "suggested_fix": "Use a state machine pattern with explicit state transitions or have each state define the next state.",
-    "confidence": 90
-  },
-  {
-    "file": "state/src/main/java/com/iluwatar/state/Mammoth.java",
-    "line": 21,
-    "category": "Error Handling",
-    "severity": "Low",
-    "description": "The method assumes only two states (Peaceful and Angry) and toggles between them. This is not extensible to more states.",
-    "suggested_fix": "Implement a more flexible state transition mechanism.",
-    "confidence": 90
-  },
-  {
-    "file": "chain-of-responsibility/src/main/java/com/iluwatar/chain/Request.java",
-    "line": 36,
-    "category": "Code Quality",
-    "severity": "Low",
-    "description": "The handled field is a boolean that can only go from false to true. However, there's no validation to prevent double-handling.",
-    "suggested_fix": "In markHandled(), check if already handled and throw an exception or log a warning.",
-    "confidence": 85
-  },
-  {
-    "file": "chain-of-responsibility/src/main/java/com/iluwatar/chain/Request.java",
-    "line": 43,
-    "category": "Error Handling",
-    "severity": "Low",
-    "description": "The constructor uses Objects.requireNonNull but doesn't provide a clear error message if null is passed.",
-    "suggested_fix": "Add descriptive messages: Objects.requireNonNull(requestType, 'requestType must not be null');",
-    "confidence": 90
+{
+  "repo": "iluwatar/java-design-patterns",
+  "language": "java",
+  "timestamp": "2026-04-11T20:30:00Z",
+  "issues": [
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/App.java",
+      "line": 109,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception e) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/HotelDaoImpl.java",
+      "line": 66,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception e) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/HotelDaoImpl.java",
+      "line": 67,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "RuntimeException throwing: throw new RuntimeException(e); // NOSONAR",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/HotelDaoImpl.java",
+      "line": 76,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception e) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/HotelDaoImpl.java",
+      "line": 80,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception e) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/HotelDaoImpl.java",
+      "line": 99,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception e) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/HotelDaoImpl.java",
+      "line": 122,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception e) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/HotelDaoImpl.java",
+      "line": 138,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception e) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/HotelDaoImpl.java",
+      "line": 149,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception e) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "transaction-script/src/main/java/com/iluwatar/transactionscript/HotelDaoImpl.java",
+      "line": 164,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception e) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "async-method-invocation/src/main/java/com/iluwatar/async/method/invocation/App.java",
+      "line": 80,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Thread sleep (blocking): Thread.sleep(350); // Oh boy, we are working hard here",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "async-method-invocation/src/main/java/com/iluwatar/async/method/invocation/App.java",
+      "line": 105,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Thread sleep (blocking): Thread.sleep(delayMillis);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "async-method-invocation/src/main/java/com/iluwatar/async/method/invocation/ThreadAsyncExecutor.java",
+      "line": 49,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Broad exception catching: } catch (Exception ex) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "async-method-invocation/src/main/java/com/iluwatar/async/method/invocation/ThreadAsyncExecutor.java",
+      "line": 109,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Synchronized block (potential bottleneck): synchronized (lock) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "async-method-invocation/src/main/java/com/iluwatar/async/method/invocation/ThreadAsyncExecutor.java",
+      "line": 126,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Synchronized block (potential bottleneck): synchronized (lock) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "async-method-invocation/src/main/java/com/iluwatar/async/method/invocation/ThreadAsyncExecutor.java",
+      "line": 149,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Synchronized block (potential bottleneck): synchronized (lock) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "data-access-object/src/main/java/com/iluwatar/dao/DbCustomerDao.java",
+      "line": 73,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "RuntimeException throwing: throw new RuntimeException(e); // NOSONAR",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "filterer/src/main/java/com/iluwatar/filterer/App.java",
+      "line": 45,
+      "category": "security",
+      "severity": "medium",
+      "description": "Main application class doesn't implement proper input validation for command line arguments",
+      "suggested_fix": "Add proper argument validation and error handling",
+      "confidence": 0.85
+    },
+    {
+      "file": "client-session/src/main/java/com/iluwatar/client/session/Server.java",
+      "line": 85,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Server implementation uses synchronous I/O which could become a bottleneck under load",
+      "suggested_fix": "Consider using asynchronous I/O or connection pooling",
+      "confidence": 0.8
+    },
+    {
+      "file": "singleton/src/main/java/com/iluwatar/singleton/App.java",
+      "line": 30,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Singleton pattern implementation doesn't handle reflection attacks properly",
+      "suggested_fix": "Add protection against reflection-based instantiation",
+      "confidence": 0.85
+    },
+    {
+      "file": "factory/src/main/java/com/iluwatar/factory/App.java",
+      "line": 60,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Factory pattern doesn't properly handle invalid input types",
+      "suggested_fix": "Add proper validation and error handling for factory methods",
+      "confidence": 0.8
+    },
+    {
+      "file": "observer/src/main/java/com/iluwatar/observer/App.java",
+      "line": 55,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Observer pattern implementation lacks proper thread safety for concurrent scenarios",
+      "suggested_fix": "Add proper synchronization or use concurrent collections",
+      "confidence": 0.85
+    },
+    {
+      "file": "filterer/src/main/java/com/iluwatar/filterer/App.java",
+      "line": 25,
+      "category": "security",
+      "severity": "high",
+      "description": "Command line argument processing doesn't validate input properly, allowing potential injection attacks",
+      "suggested_fix": "Implement strict input validation and sanitization for all command line arguments",
+      "confidence": 0.9
+    },
+    {
+      "file": "client-session/src/main/java/com/iluwatar/client/session/Server.java",
+      "line": 45,
+      "category": "performance",
+      "severity": "high",
+      "description": "Server uses blocking I/O operations which can lead to poor scalability under concurrent load",
+      "suggested_fix": "Implement non-blocking I/O using NIO or a framework like Netty",
+      "confidence": 0.9
+    },
+    {
+      "file": "singleton/src/main/java/com/iluwatar/singleton/App.java",
+      "line": 18,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Singleton implementation isn't thread-safe and can fail under concurrent access",
+      "suggested_fix": "Use proper synchronization or enum-based singleton pattern",
+      "confidence": 0.85
+    },
+    {
+      "file": "factory/src/main/java/com/iluwatar/factory/App.java",
+      "line": 35,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Factory methods don't provide meaningful error messages when invalid types are requested",
+      "suggested_fix": "Add detailed error messages and proper exception handling",
+      "confidence": 0.8
+    },
+    {
+      "file": "observer/src/main/java/com/iluwatar/observer/App.java",
+      "line": 28,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Observer pattern implementation lacks proper error handling for subscriber failures",
+      "suggested_fix": "Implement robust error handling and failure isolation for observers",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 27,
+    "by_category": {
+      "code_quality": 12,
+      "error_handling": 4,
+      "performance": 7,
+      "security": 2,
+      "production_readiness": 2
+    },
+    "by_severity": {
+      "high": 2,
+      "medium": 25,
+      "low": 0
+    }
   }
-]
+}

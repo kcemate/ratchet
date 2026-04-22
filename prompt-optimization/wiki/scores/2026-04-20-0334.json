@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-04-20T07:34:00Z",
+  "target": "wiki",
+  "iteration": 5,
+  "variant": "v4",
+  "articles_evaluated": [
+    "numpy-numpy.md",
+    "n8n-io-n8n.md",
+    "axios-axios.md"
+  ],
+  "subscores_per_article": {
+    "numpy-numpy.md": {
+      "structure": 0.85,
+      "detail": 0.75,
+      "actionability": 0.80,
+      "examples": 0.55
+    },
+    "n8n-io-n8n.md": {
+      "structure": 0.90,
+      "detail": 0.85,
+      "actionability": 0.85,
+      "examples": 0.45
+    },
+    "axios-axios.md": {
+      "structure": 0.90,
+      "detail": 0.80,
+      "actionability": 0.80,
+      "examples": 0.65
+    }
+  },
+  "subscores": {
+    "structure": 0.883,
+    "detail": 0.800,
+    "actionability": 0.817,
+    "examples": 0.550
+  },
+  "aggregate": 0.762,
+  "weakest": "examples",
+  "weakness_analysis": "Massive improvement from v3's 0.083 to 0.762 — v4's Template Enforcement section fixed the structural collapse. All three articles now follow the required template. However, code examples remain weak (0.55). AFTER/fix code blocks frequently use prose descriptions ('Before: single 8994-line file → After: multiple focused files') instead of actual code. The numpy article uses the [Scan data does not include raw source] callout for BEFORE blocks correctly, but the fix sections compensate with only descriptive text, not code. The n8n article has only 2 small inline code snippets despite 6 priority sections. The prompt requires AFTER code to be 'verified-correct or flagged as conceptual' but doesn't explicitly prohibit prose-only fix sections — allowing the model to satisfy the letter of the rule with non-code remediation text.",
+  "hypothesis": "Add an explicit rule: 'Every Priority section in the Remediation Strategy MUST contain at least one fenced code block — either a BEFORE/AFTER pair or a standalone AFTER example. If BEFORE code is unavailable, write the AFTER fix example anyway. Prose-only remediation steps are not sufficient.' This targets the pattern of high-quality planning steps without demonstrable code.",
+  "decision": "keep_v4_deploy_v5"
+}

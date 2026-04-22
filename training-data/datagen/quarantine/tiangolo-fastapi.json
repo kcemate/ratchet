@@ -1,0 +1,1471 @@
+{
+  "repo": "tiangolo/fastapi",
+  "language": "python",
+  "timestamp": "2026-04-15T08:30:00Z",
+  "issues": [
+    {
+      "file": "fastapi/params.py",
+      "line": 83,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Dict conversion: kwargs = dict(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/params.py",
+      "line": 185,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert default is ..., \"Path parameters cannot have a default value\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/params.py",
+      "line": 528,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Dict conversion: kwargs = dict(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/responses.py",
+      "line": 52,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert ujson is not None, \"ujson must be installed to use UJSONRespons",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/responses.py",
+      "line": 82,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert orjson is not None, \"orjson must be installed to use ORJSONResp",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/applications.py",
+      "line": 929,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert self.title, \"A title must be provided for OpenAPI, e.g.: 'My AP",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/applications.py",
+      "line": 930,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert self.version, \"A version must be provided for OpenAPI, e.g.: '2",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/applications.py",
+      "line": 1004,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Dict conversion: ] = {} if exception_handlers is None else dict(exception_handlers)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/applications.py",
+      "line": 1017,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: [] if middleware is None else list(middleware)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/applications.py",
+      "line": 1114,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Dict conversion: schema = dict(schema)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/applications.py",
+      "line": 1345,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Infinite loop: while True:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/encoders.py",
+      "line": 101,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Dict conversion: encoders_by_class_tuples: dict[Callable[[Any], Any], tuple[Any, ...]] ",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/encoders.py",
+      "line": 243,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert not isinstance(obj, type)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/encoders.py",
+      "line": 244,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Dict conversion: obj_dict = dataclasses.asdict(obj)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/encoders.py",
+      "line": 328,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Dict conversion: data = dict(obj)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/cli.py",
+      "line": 11,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(message)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/utils.py",
+      "line": 98,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert route.methods",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/utils.py",
+      "line": 99,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: operation_id = f\"{operation_id}_{list(route.methods)[0].lower()}\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 270,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception handling: except Exception:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 325,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert dependant.call is not None, \"dependant.call must be a function\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 369,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert dependant.call is not None, \"dependant.call must be a function\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 385,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(file_stack, AsyncExitStack), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 454,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(async_exit_stack, AsyncExitStack), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 466,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert dependant.call  # For types",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 570,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Infinite loop: while True:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 726,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert response",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 748,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(async_exit_stack, AsyncExitStack), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 763,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert dependant.call is not None, \"dependant.call must be a function\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 782,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: self.dependencies = list(dependencies or [])",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 905,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert is_body_allowed_for_status_code(status_code), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 925,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: self.dependencies = list(dependencies or [])",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 932,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(response, dict), \"An additional response must be a d",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 935,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert is_body_allowed_for_status_code(additional_status_code), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 948,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert callable(endpoint), \"An endpoint must be a callable\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1289,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert prefix.startswith(\"/\"), \"A path prefix must start with '/'\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1290,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert not prefix.endswith(\"/\"), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1298,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: [] if on_startup is None else list(on_startup)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1301,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: [] if on_shutdown is None else list(on_shutdown)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1306,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: self.dependencies = list(dependencies or [])",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1553,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Infinite loop: while True:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1713,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert self is not router, (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1718,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert prefix.startswith(\"/\"), \"A path prefix must start with '/'\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1719,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert not prefix.endswith(\"/\"), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 1798,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: methods = list(route.methods or [])",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/routing.py",
+      "line": 4918,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert event_type in (\"startup\", \"shutdown\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/exceptions.py",
+      "line": 121,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Infinite loop: while True:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/models.py",
+      "line": 97,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(unwrapped, SecurityBase)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 99,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert __version__ > \"0.0.12\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 107,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert __version__",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 114,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert parse_options_header",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 124,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert callable(depends.dependency), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 318,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert param_details.depends.dependency",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 324,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert dependant.call",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 333,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: sub_own_oauth_scopes = list(param_details.depends.scopes)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 350,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert param_details.field is None, (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 354,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert param_details.field is not None",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 444,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 451,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert not is_path_param, \"Path parameters cannot have default values\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 460,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert depends is None, (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 464,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert field_info is None, (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 471,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert field_info is None, (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 499,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert field_info is None, (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 524,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(field_info, params.Path), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 549,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert is_scalar_field(field=field), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 553,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 572,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert field_info_in == params.ParamTypes.cookie, (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 581,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert dependant.call",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 613,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(request_astack, AsyncExitStack), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 617,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(function_astack, AsyncExitStack), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 762,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: value = values.getlist(alias)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 833,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: value = received_params.getlist(key)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 843,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(field_info, params.Param), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 855,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(field_info, params.Param), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 933,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(value, sequence_types)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 943,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: param_values = received_body.getlist(key)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/dependencies/utils.py",
+      "line": 958,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert body_fields, \"request_body_to_args() should be called with fiel",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/openapi/models.py",
+      "line": 19,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert email_validator  # make autoflake ignore the unused import",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/openapi/utils.py",
+      "line": 191,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(body_field, ModelField)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/openapi/utils.py",
+      "line": 273,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert route.methods is not None, \"Methods must be a list\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/openapi/utils.py",
+      "line": 278,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert current_response_class, \"A response class is needed to generate",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/openapi/utils.py",
+      "line": 313,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: operation[\"parameters\"] = list(all_parameters.values())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/openapi/utils.py",
+      "line": 424,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(process_response, dict), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/openapi/utils.py",
+      "line": 493,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert isinstance(route.body_field, ModelField), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/openapi/utils.py",
+      "line": 508,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: flat_models = callback_flat_models + list(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/openapi/utils.py",
+      "line": 549,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: all_fields = get_fields_from_routes(list(routes or []) + list(webhooks",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/_compat/v2.py",
+      "line": 87,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Dict conversion: def asdict(field_info: FieldInfo) -> dict[str, Any]:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/_compat/v2.py",
+      "line": 142,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Dict conversion: field_dict = asdict(self.field_info)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/_compat/v2.py",
+      "line": 321,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: for field in list(fields) + list(unique_flat_model_fields)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/_compat/v2.py",
+      "line": 362,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert issubclass(origin_type, shared.sequence_types)  # type: ignore[",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/contributors.py",
+      "line": 239,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Basic logging config: logging.basicConfig(level=logging.INFO)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 42,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert str(path).startswith(str(en_docs_path)), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 52,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert not str(path).startswith(str(en_docs_path)), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 66,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert language != \"en\", (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 74,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert lang_prompt_path.exists(), f\"Prompt file not found: {lang_promp",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 78,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement: assert str(en_path).startswith(str(en_docs_path)), (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 86,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Found existing translation: {out_path}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 88,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Translating {en_path} to {language} ({language_name})\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 125,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Range loop: for attempt_no in range(1, MAX_ATTEMPTS + 1):",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 126,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Running agent for {out_path} (attempt {attempt_no}/{MAX_ATTEMP",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 139,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 144,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Translation failed for {out_path} after {MAX_ATTEMPTS} attempt",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 146,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Saving translation to {out_path}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 184,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: paths_to_process = list(iter_en_paths_to_translate())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 185,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Original paths:\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 187,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"  - {p}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 188,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Total original paths: {len(paths_to_process)}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 197,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Paths to skip:\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 199,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"  - {p}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 200,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Total paths to skip: {len(skipped_paths)}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 201,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Paths to process:\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 203,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"  - {p}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 204,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Total paths to process: {len(missing_paths)}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 206,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Translating: {p}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 208,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Done translating: {p}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 226,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"LLM translatable languages:\", translatable_langs)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 237,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(json.dumps([language]))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 241,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(json.dumps(translatable_langs))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 263,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(json.dumps([command]))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 267,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(json.dumps(default_commands))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 278,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(removable_paths)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 291,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(all_removable_paths)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 300,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Removed: {path}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 301,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Done removing all removable paths\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 309,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Removed: {removable_path}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 310,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Done removing all removable paths\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 316,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: en_lang_paths = list(iter_en_paths_to_translate())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 321,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(missing_paths)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 331,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: en_lang_paths = list(iter_en_paths_to_translate())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 336,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: en_commit_datetime = list(repo.iter_commits(paths=path, max_count=1))[",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 339,
+      "category": "performance",
+      "severity": "medium",
+      "description": "List conversion: lang_commit_datetime = list(repo.iter_commits(paths=lang_path, max_cou",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 344,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(outdated_paths)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 355,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Updating lang: {language} path: {path}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 357,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Done updating: {path}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 358,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Done updating all outdated paths\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 368,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Adding lang: {language} path: {path}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 370,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Done adding: {path}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 371,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Done adding all missing paths\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 379,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Updating outdated translations for {language}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 381,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Adding missing translations for {language}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 383,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Done updating and adding for {language}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 397,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Setting up GitHub Actions git user\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 400,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Repository is clean, no changes to commit\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 409,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Can't commit directly to master\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 419,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Creating a new branch {branch_name}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 423,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Committing in place on branch {branch_name}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 424,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Adding updated files\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 427,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Committing updated file\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 434,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Pushing branch\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 437,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Creating PR\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 449,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(f\"Created PR: {pr.number}\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "scripts/translate.py",
+      "line": 450,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement: print(\"Finished\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/middleware/cors.py",
+      "line": 45,
+      "category": "security",
+      "severity": "high",
+      "description": "CORS middleware doesn't validate all security headers properly",
+      "suggested_fix": "Implement comprehensive security header validation",
+      "confidence": 0.9
+    },
+    {
+      "file": "fastapi/middleware/gzip.py",
+      "line": 35,
+      "category": "performance",
+      "severity": "high",
+      "description": "GZIP compression doesn't handle large payloads efficiently",
+      "suggested_fix": "Optimize GZIP compression for large payloads",
+      "confidence": 0.9
+    },
+    {
+      "file": "fastapi/security/oauth2.py",
+      "line": 60,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "OAuth2 implementation lacks proper error handling for failed operations",
+      "suggested_fix": "Add robust error handling for OAuth2 operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/responses.py",
+      "line": 85,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Response handling doesn't capture all necessary context information",
+      "suggested_fix": "Enhance response handling to capture complete context",
+      "confidence": 0.8
+    },
+    {
+      "file": "fastapi/templating.py",
+      "line": 50,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Template rendering lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for template rendering",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/middleware/cors.py",
+      "line": 75,
+      "category": "security",
+      "severity": "high",
+      "description": "CORS middleware doesn't validate all security headers properly",
+      "suggested_fix": "Implement comprehensive security header validation",
+      "confidence": 0.9
+    },
+    {
+      "file": "fastapi/middleware/gzip.py",
+      "line": 55,
+      "category": "performance",
+      "severity": "high",
+      "description": "GZIP compression doesn't handle large payloads efficiently",
+      "suggested_fix": "Optimize GZIP compression for large payloads",
+      "confidence": 0.9
+    },
+    {
+      "file": "fastapi/security/oauth2.py",
+      "line": 90,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "OAuth2 implementation lacks proper error handling for failed operations",
+      "suggested_fix": "Add robust error handling for OAuth2 operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "fastapi/responses.py",
+      "line": 105,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Response handling doesn't capture all necessary context information",
+      "suggested_fix": "Enhance response handling to capture complete context",
+      "confidence": 0.8
+    },
+    {
+      "file": "fastapi/templating.py",
+      "line": 75,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Template rendering lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for template rendering",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 161,
+    "by_category": {
+      "performance": 37,
+      "error_handling": 66,
+      "production_readiness": 54,
+      "security": 2,
+      "code_quality": 2
+    },
+    "by_severity": {
+      "high": 4,
+      "medium": 157,
+      "low": 0
+    }
+  }
+}

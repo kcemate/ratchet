@@ -2,6 +2,25 @@
 
 **Generated:** Friday, April 3rd, 2026 — 11:41 PM (America/New_York) / 2026-04-04 03:41 UTC
 
+**Generated:** Monday, April 20th, 2026 — 6:30 AM (America/New_York) / 2026-04-20 10:30 UTC
+
+## Generated Tests (v2 - No Stubs)
+
+### add-catch-handler.test.ts
+- **Source:** `core/transforms/add-catch-handler.ts`
+- **Coverage:** Test file filtering, empty catch block handling, structured logger integration, non-empty catch blocks, catch without variable declaration
+- **Assertions:** 6 test cases with real expect() calls
+
+### add-type-annotations.test.ts
+- **Source:** `core/transforms/add-type-annotations.ts`
+- **Coverage:** Test file filtering, TypeScript-only enforcement, number/string/boolean type inference, arrow function handling, existing return types, error handling
+- **Assertions:** 8 test cases with real expect() calls
+
+### anthropic.test.ts
+- **Source:** `core/providers/anthropic.ts`
+- **Coverage:** Constructor initialization, message sending with defaults/custom options, API error handling, cost estimation, structured output support
+- **Assertions:** 13 test cases with real expect() calls
+
 ## Generated Tests
 
 ### add-catch-handler.test.ts
@@ -105,3 +124,21 @@ All tests use vitest, include proper mocking of external dependencies (Git, API,
 - Edge cases
 - Error conditions
 - Boundary values
+
+## 2026-04-06 — commands/ stockpile run
+
+- OK   scan.ts -> scan.test.ts (5632B)
+- OK   status.ts -> status.test.ts (8330B)
+- OK   quick-fix.ts -> quick-fix.test.ts (9221B)
+
+**Generated:** Tuesday, April 7th, 2026 — 7:14 PM (America/New_York) / 2026-04-07 23:14 UTC
+
+### scoring.test.ts
+- **Source:** `core/scoring.ts`
+- **Coverage:** Pure-function stop/rollback checks: `checkTotalScoreRegression`, `checkTimeoutStop`, `checkBudgetStop`, `checkDiminishingReturns`, `checkPlateauStop`, `checkRegressionStop`
+- **Cases:** 22 tests covering happy paths, boundary values, zero inputs, formatting, edge cases
+
+### score-optimizer.test.ts
+- **Source:** `core/score-optimizer.ts`
+- **Coverage:** `isSweepable`, `filterGapsByCategory`, `analyzeScoreGaps`, `generateScorePlan`, `SUBCATEGORY_TIERS` integrity, `CATEGORY_SUBCATEGORY_MAP` integrity
+- **Cases:** 25 tests covering lookup, filtering, ROI sorting, gap calculation, data integrity

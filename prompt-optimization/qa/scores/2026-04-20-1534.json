@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-04-20T19:34:00Z",
+  "target": "qa",
+  "iteration": 5,
+  "variant": "v4",
+  "subscores": {
+    "instruction_clarity": 0.62,
+    "output_detail": 0.72,
+    "variety": 0.70,
+    "would_train_well": 0.63
+  },
+  "aggregate": 0.6675,
+  "weakest": "instruction_clarity",
+  "evidence": "10 post-v4 files (Apr 19, 35 total entries). nestjs-nest: 4/13 still use banned generic templates ('What production-readiness problems exist in...'), 1 empty quality-gate failure entry. axios-axios: 3/10 generic templates. tokio-rs-tokio: 2/6 generic. Code gate regression: output_detail dropped from 0.90 to 0.72 — v4 removed the good/bad CODE EXAMPLE GATE examples that v3 had, and the model stopped following the gate as strictly (axios shows only 5/10 entries with code blocks). v4's 'ban list' approach failed: the model ignores prohibitions but complied when shown examples. Generic template ratio is ~35% of total entries.",
+  "decision": "revert",
+  "previousScore": 0.825,
+  "delta": -0.1575,
+  "cronJobId": "53abfe17-b8ee-40b9-8c28-e009415c09c1",
+  "v5_hypothesis": "v4's 'ban list' approach failed — the model ignores prohibitions but follows example patterns. v5 adds 5 explicit TRANSFORMATION EXAMPLES showing generic-to-specific rewrites, and restores the CODE EXAMPLE GATE good/bad examples that v4 removed. Targeting both instruction_clarity (0.62) and output_detail regression (0.72)."
+}

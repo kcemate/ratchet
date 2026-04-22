@@ -1,0 +1,92 @@
+[
+    {
+        "file": "src/repository/Repository.ts",
+        "line": 105,
+        "category": "code_quality",
+        "severity": "medium",
+        "description": "The create() method has multiple overloads but no implementation body shown in the visible code. This could lead to confusion about the actual implementation logic.",
+        "suggested_fix": "Ensure all method overloads have clear implementations or proper documentation explaining the behavior.",
+        "confidence": 85
+    },
+    {
+        "file": "src/repository/Repository.ts",
+        "line": 200,
+        "category": "code_quality",
+        "severity": "low",
+        "description": "The save() method has complex type signatures with multiple overloads that could be simplified using union types or better TypeScript generics.",
+        "suggested_fix": "Consider consolidating similar overloads using conditional types or utility types to reduce code duplication.",
+        "confidence": 75
+    },
+    {
+        "file": "src/entity-manager/EntityManager.ts",
+        "line": 50,
+        "category": "code_quality",
+        "severity": "medium",
+        "description": "The EntityManager class has a deprecated 'connection' property that redirects to 'dataSource'. This creates unnecessary legacy code paths.",
+        "suggested_fix": "Plan a deprecation timeline and eventually remove the 'connection' getter to clean up the API surface.",
+        "confidence": 90
+    },
+    {
+        "file": "src/query-builder/SelectQueryBuilder.ts",
+        "line": 80,
+        "category": "performance",
+        "severity": "medium",
+        "description": "The getQuery() method builds SQL strings by concatenation which could be inefficient for complex queries and may have SQL injection risks if not properly sanitized.",
+        "suggested_fix": "Use parameterized queries and consider a query builder pattern that separates SQL generation from parameter binding.",
+        "confidence": 80
+    },
+    {
+        "file": "src/query-builder/SelectQueryBuilder.ts",
+        "line": 45,
+        "category": "code_quality",
+        "severity": "low",
+        "description": "The class has many protected properties that are directly manipulated, which could lead to inconsistent state if not carefully managed.",
+        "suggested_fix": "Consider using private properties with controlled accessors or a builder pattern for safer state management.",
+        "confidence": 70
+    },
+    {
+        "file": "src/driver/DriverFactory.ts",
+        "line": 30,
+        "category": "error_handling",
+        "severity": "high",
+        "description": "The create() method uses a switch statement without a default case that throws MissingDriverError, but the error message includes a hardcoded list of supported drivers that could become outdated.",
+        "suggested_fix": "Generate the list of supported drivers dynamically from available driver classes or maintain it in a single source of truth.",
+        "confidence": 95
+    },
+    {
+        "file": "src/driver/DriverFactory.ts",
+        "line": 50,
+        "category": "maintainability",
+        "severity": "medium",
+        "description": "The driver creation logic uses string-based type matching which is error-prone and doesn't leverage TypeScript's type system effectively.",
+        "suggested_fix": "Consider using a registry pattern or dependency injection to map driver types to implementations more safely.",
+        "confidence": 85
+    },
+    {
+        "file": "src/repository/Repository.ts",
+        "line": 250,
+        "category": "api_design",
+        "severity": "low",
+        "description": "The softRemove() method has similar overload patterns to remove() but with different semantics, which could confuse developers.",
+        "suggested_fix": "Consider clearer naming or documentation to distinguish soft delete operations from hard deletes.",
+        "confidence": 80
+    },
+    {
+        "file": "src/entity-manager/EntityManager.ts",
+        "line": 75,
+        "category": "performance",
+        "severity": "medium",
+        "description": "The repositories Map and treeRepositories array are cached but could lead to memory leaks if entities are dynamically loaded/unloaded.",
+        "suggested_fix": "Implement a cleanup mechanism for cached repositories when they're no longer needed.",
+        "confidence": 75
+    },
+    {
+        "file": "src/query-builder/SelectQueryBuilder.ts",
+        "line": 90,
+        "category": "security",
+        "severity": "high",
+        "description": "The SQL query building process uses string concatenation and property name replacement which could be vulnerable to SQL injection if user input isn't properly sanitized.",
+        "suggested_fix": "Ensure all user-provided values are properly escaped and use parameterized queries throughout.",
+        "confidence": 90
+    }
+]

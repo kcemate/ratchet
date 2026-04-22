@@ -1,0 +1,3550 @@
+{
+  "repo": "gofiber/fiber",
+  "language": "go",
+  "timestamp": "2026-04-16T08:30:00Z",
+  "issues": [
+    {
+      "file": "app_test.go",
+      "line": 97,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(300 * time.Millisecond) // Simulate time-consuming operatio",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 128,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Range loop: for range numRequests {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 136,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 146,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(tc.sleepTime)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 395,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(errors.New(\"should never called\"))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 399,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: logHeaderSlice := make([]string, 5000)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 403,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(\"Expect an error at app.Test(request)\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 406,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Regexp(t, expectedError, err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 429,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"body size exceeds the given limit\", err.Error(), \"ap",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 583,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"1: USE error\", err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 589,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"2: USE error\", err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 593,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"0: GET error\", err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 613,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"1: USE error\", err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 619,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"0: GET error\", err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 680,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: serverStarted := make(chan struct{}, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 681,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: serverErr := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1304,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(\"expected original string when immutable is disabled\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1310,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(\"expected a copy for heap-backed string when immutable is enab",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1316,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(\"expected original literal when immutable is enabled\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1327,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(\"expected original slice when immutable is disabled\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1330,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: alias := make([]byte, 10)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1336,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(\"expected a copy for aliased slice when immutable is enabled\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1339,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: full := make([]byte, 5)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1343,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(\"expected a copy even when cap==len\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1368,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Second)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1373,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: serverReady := make(chan struct{}) // Signal that the server is ready ",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1384,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: connReady := make(chan struct{})",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1397,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: shutdownErr := make(chan error)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1426,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: serverStarted := make(chan bool, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1455,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: hookOrder := make([]string, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1479,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(100 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1491,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: requestStarted := make(chan struct{})",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1492,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: requestProcessing := make(chan struct{})",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1498,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(2 * time.Second)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1510,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(100 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1560,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1561,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: serverReady := make(chan struct{})",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1981,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(200 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 1989,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err, \"app.Test(req)\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2023,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: func (invalidView) Render(io.Writer, string, any, ...string) error { p",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2057,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2219,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(500 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2231,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: buf := make([]byte, 1024)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2258,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(500 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2269,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: buf := make([]byte, 1024)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2297,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(500 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2380,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: buffer := make([]byte, len(testString))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2412,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: c := make(chan int)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2433,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(\"hanging test\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2439,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(\"unexpected success request\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2449,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1 * time.Second)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 2465,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(50 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 3025,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(10 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_test.go",
+      "line": 3060,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(100 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 63,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"Domain pattern cannot be empty\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 68,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"Domain pattern '%s' exceeds RFC 1035 maximum of 253",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 76,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"Domain pattern '%s' has %d parts, which exceeds the",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 81,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: parts:    make([]string, len(parts)),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 88,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"Domain pattern '%s' contains empty label at positio",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 94,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"Domain pattern '%s' contains empty parameter name a",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 102,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"Domain pattern '%s' contains invalid parameter name",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 112,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"Domain pattern '%s' has label '%s' exceeding RFC 10",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 119,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"Domain pattern '%s' contains invalid character '%c'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 128,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"Domain pattern '%s' has %d parameters, which exceed",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 202,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: paramValues := make([]string, len(m.paramIdx))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 287,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: result := make([]Handler, len(handlers))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 367,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"use: invalid handler %v\", reflect.TypeOf(arg)))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 462,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 564,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain.go",
+      "line": 586,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"route handler 'fn' cannot be nil\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 138,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: keys := make([]string, 0, len(sm.entries))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 166,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: sm.entries = make([]startupMessageEntry, 0, 8)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 225,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onRoute:        make([]OnRouteHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 226,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onGroup:        make([]OnGroupHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 227,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onGroupName:    make([]OnGroupNameHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 228,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onName:         make([]OnNameHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 229,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onListen:       make([]OnListenHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 230,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onPreStartup:   make([]OnPreStartupMessageHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 231,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onPostStartup:  make([]OnPostStartupMessageHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 232,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onPreShutdown:  make([]OnPreShutdownHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 233,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onPostShutdown: make([]OnPostShutdownHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 234,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onFork:         make([]OnForkHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks.go",
+      "line": 235,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: onMount:        make([]OnMountHandler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "services.go",
+      "line": 55,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "res.go",
+      "line": 184,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: b := make([]byte, 0, len(filename))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "res.go",
+      "line": 401,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: types := make([]string, 0, 8)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "res.go",
+      "line": 486,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: headers := make(map[string][]string, respHeader.Len())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "res.go",
+      "line": 673,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: bind = make(Map)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "path_test.go",
+      "line": 394,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: func Test_Route_TooManyParams_Panic(t *testing.T) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "path_test.go",
+      "line": 425,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: func Test_App_Register_TooManyParams_Panic(t *testing.T) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "path_test.go",
+      "line": 459,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: params := make([]string, n)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "services_test.go",
+      "line": 261,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "services_test.go",
+      "line": 262,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), startErrorMessage+\" 1\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "services_test.go",
+      "line": 263,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), startErrorMessage+\" 2\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "services_test.go",
+      "line": 364,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "services_test.go",
+      "line": 365,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), terminateErrorMessage+\" 1\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "services_test.go",
+      "line": 366,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), terminateErrorMessage+\" 2\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "services_test.go",
+      "line": 390,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "services_test.go",
+      "line": 392,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), \"service dep1 terminate\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "mount_test.go",
+      "line": 178,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"unexpected data type\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "mount_test.go",
+      "line": 228,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"0: GET error\", err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "mount_test.go",
+      "line": 248,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"0: GET error\", err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain_test.go",
+      "line": 746,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: http.Error(w, err.Error(), http.StatusInternalServerError)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain_test.go",
+      "line": 861,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: func Test_Domain_RoutePanic(t *testing.T) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain_test.go",
+      "line": 1614,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: parts := make([]string, 20)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "domain_test.go",
+      "line": 1632,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: parts := make([]string, 20)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "adapter_test.go",
+      "line": 164,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "adapter_test.go",
+      "line": 569,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: callOrder := make([]string, 0, 2)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "adapter_test.go",
+      "line": 734,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(500 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router_test.go",
+      "line": 33,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router_test.go",
+      "line": 36,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router_test.go",
+      "line": 829,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: converted := make([]any, len(middleware))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router_test.go",
+      "line": 1211,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Range loop: for range 10 {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router_test.go",
+      "line": 2454,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Range loop: for range 50 {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router_test.go",
+      "line": 2486,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 959,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectedBody:    []byte(zlib.ErrHeader.Error()),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1048,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, []byte(fasthttp.ErrBodyTooLarge.Error()), body)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1101,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectedBody:    []byte(ErrUnsupportedMediaType.Error()),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1132,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: data = make([]byte, buf.Len())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1150,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectedBody: []byte(zlib.ErrHeader.Error()),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1218,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectedBody:    []byte(zlib.ErrHeader.Error()),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1335,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectedBody:    []byte(ErrUnsupportedMediaType.Error()),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1366,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: data = make([]byte, buf.Len())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1384,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: expectedBody: []byte(zlib.ErrHeader.Error()),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1841,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1842,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), `media type \"text/html\"`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1843,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), \"index 0\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1860,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1861,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), `media type \"application/json\"`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1862,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), \"index 1\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1879,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1880,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), `media type \"default\"`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 1881,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, err.Error(), \"index 1\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 2020,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 3220,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: result := make(chan string, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 3221,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 3223,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 3605,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: done := make(chan bool, 1)   // Buffered to prevent goroutine leak",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 3606,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error, 1) // Channel to communicate errors from gor",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 3610,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: start := make(chan struct{})",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 4210,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: largeBody := make([]byte, 2*1024)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 4574,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 5122,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: s.data = make(map[string][]byte)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6274,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, c.JSON(complex(1, 1)))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6423,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6463,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, c.CBOR(complex(1, 1)))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6500,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: err = c.CBOR(make(chan int))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6501,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6504,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6580,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, c.JSONP(complex(1, 1)))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6647,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, c.JSON(complex(1, 1)))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6809,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6812,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 6891,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: return c.Status(StatusNotFound).SendString(err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 7495,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 7697,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(500 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 8118,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Range loop: for range 10 {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_test.go",
+      "line": 8490,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(2 * time.Second)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "adapter.go",
+      "line": 263,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: handlers := make([]Handler, 0, len(args))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "adapter.go",
+      "line": 269,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"%s: invalid handler #%d (%T)\\n\", context, i, arg))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 72,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, be.Error(), `\"id\"`)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 73,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, be.Error(), \"query\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 74,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Contains(t, be.Error(), \"conversion failed\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 80,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind from body: parse failed\", be.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 97,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 119,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 137,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 160,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 181,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 199,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 221,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 240,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 261,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 278,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 295,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 313,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 335,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 419,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 420,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"name\\\" from query: name is empty\", err.Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 444,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q := make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 449,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q = make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 454,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q = make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 459,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: qq := make(map[string]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 463,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: empty := make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 468,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: em := make(map[string][]int)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 546,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 547,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"name\\\" from query: name is empty\", err.Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 557,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 558,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"nested\\\" from query: nested is empty\", err.Er",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 578,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 579,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"nested.age\\\" from query: nested.age is empty\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 585,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 586,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"nested.age\\\" from query: nested.age is empty\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 602,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 603,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"val\\\" from query: val is empty\", err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 711,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 712,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"name\\\" from header: name is empty\", err.Error",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 729,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q := make(map[string][]string, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 735,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q = make(map[string][]string, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 739,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: empty := make(map[string][]string, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 823,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 824,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"Name\\\" from header: Name is empty\", err.Error",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 836,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 837,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"Nested\\\" from header: Nested is empty\", err.E",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 865,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 866,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"Nested.age\\\" from header: Nested.age is empty",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 883,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 884,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"Val\\\" from header: Val is empty\", err.Error()",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 969,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 970,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"name\\\" from respHeader: name is empty\", err.E",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 987,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q := make(map[string][]string, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 993,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q = make(map[string][]string, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 997,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: empty := make(map[string][]string, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1068,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q := make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1170,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q := make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1218,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q := make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1303,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1316,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1327,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, c.Bind().Body(d))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1349,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, c.Bind().Body(nil))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1364,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1508,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: b.Error(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1596,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: b.Error(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1726,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: d := make(map[string]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1767,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: d := make(map[string]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1834,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: res := make(map[string]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1922,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1923,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"name\\\" from cookie: name is empty\", err.Error",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1942,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q := make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1948,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q = make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 1952,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: empty := make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2037,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2038,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"Name\\\" from cookie: Name is empty\", err.Error",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2050,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2051,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"Nested\\\" from cookie: Nested is empty\", err.E",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2079,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2080,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"Nested.Age\\\" from cookie: Nested.Age is empty",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2097,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2098,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"bind \\\"Val\\\" from cookie: Val is empty\", err.Error()",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2153,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: q := make(map[string][]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2239,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2325,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"Bad request: name is empty\", err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2380,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: req := make(map[string]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2396,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: req := make(map[string]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2419,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"you should have entered right name\", c.Bind().SkipVa",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2522,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Equal(t, \"you should have entered right name\", c.Bind().Query(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind_test.go",
+      "line": 2744,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect.go",
+      "line": 26,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: messages: make(redirectionMsgs, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect.go",
+      "line": 32,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: return make(map[string]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect.go",
+      "line": 110,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(errRedirectTypeAssertion)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect.go",
+      "line": 134,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: return make(map[string]string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect.go",
+      "line": 224,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: flashMessages := make([]FlashMessage, 0, len(r.c.flashMessages))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect.go",
+      "line": 298,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: inputs := make([]OldInputData, 0, count)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect.go",
+      "line": 425,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: dst := make([]byte, hex.EncodedLen(len(val)))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect_msgp_test.go",
+      "line": 46,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: bts := make([]byte, 0, v.Msgsize())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect_msgp_test.go",
+      "line": 83,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect_msgp_test.go",
+      "line": 90,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect_msgp_test.go",
+      "line": 159,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: bts := make([]byte, 0, v.Msgsize())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect_msgp_test.go",
+      "line": 196,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect_msgp_test.go",
+      "line": 203,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: t.Error(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group.go",
+      "line": 42,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group.go",
+      "line": 87,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"use: invalid handler %v\\n\", reflect.TypeOf(arg)))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group.go",
+      "line": 197,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "group.go",
+      "line": 237,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"route handler 'fn' cannot be nil\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 531,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: return c.Status(code).SendString(err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 582,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 645,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: app.config.TrustProxyConfig.ips = make(map[string]struct{}, len(app.co",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 652,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: app.treeStack = make([]map[int][]*Route, len(app.config.RequestMethods",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 802,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 877,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"use: invalid handler %v\\n\", reflect.TypeOf(arg)))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 976,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 1026,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"route handler 'fn' cannot be nil\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 1246,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: channel := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 1445,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: case strings.Contains(err.Error(), \"unsupported http request method\"):",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 1447,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: case strings.Contains(err.Error(), \"timeout\"):",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 1450,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: err = NewError(StatusBadRequest, err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app.go",
+      "line": 1497,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx_interface.go",
+      "line": 70,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(errCustomCtxTypeAssertion)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect_msgp.go",
+      "line": 216,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: (*z) = make(redirectionMsgs, zb0002)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "redirect_msgp.go",
+      "line": 281,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: (*z) = make(redirectionMsgs, zb0002)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks_test.go",
+      "line": 206,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: hookCalled := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks_test.go",
+      "line": 220,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(100 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks_test.go",
+      "line": 237,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: execution := make([]int, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks_test.go",
+      "line": 284,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks_test.go",
+      "line": 536,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "hooks_test.go",
+      "line": 552,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 339,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: accept:      make(headerParams),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 519,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: dst := make([]string, 10)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 527,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: destination := make([]string, 5)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 572,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: acceptedTypes := make([]acceptedType, 3)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 587,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: acceptedTypes := make([]acceptedType, 11)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 682,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: dst := make([]byte, 0)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 738,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: req := make([]byte, 7)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 747,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: res := make([]byte, 8)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 766,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: res := make([]byte, 11)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 1185,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers_test.go",
+      "line": 1551,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, err, tc.in)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_integration_test.go",
+      "line": 47,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errCh := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_integration_test.go",
+      "line": 514,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"panic for recover middleware\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "app_integration_test.go",
+      "line": 947,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: return c.Status(fiber.StatusInternalServerError).SendString(\"error: \" ",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind.go",
+      "line": 110,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(errBindPoolTypeAssertion)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bind.go",
+      "line": 166,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: return NewError(StatusBadRequest, \"Bad request: \"+err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "state.go",
+      "line": 51,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"state: dependency not found!\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "state.go",
+      "line": 74,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: keys := make([]string, 0, 8)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "state.go",
+      "line": 118,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"state: dependency not found!\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "state.go",
+      "line": 260,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: keys := make([]string, 0, 8)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "state.go",
+      "line": 282,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: services := make(map[string]Service, len(keys))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "state.go",
+      "line": 315,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"state: service not found!\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers.go",
+      "line": 231,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: m := make(map[*Route]struct{}, len(stack))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers.go",
+      "line": 479,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: res := make([]byte, 0, len(v))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers.go",
+      "line": 557,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: return make(headerParams)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "helpers.go",
+      "line": 570,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: acceptedTypes := make([]acceptedType, 0, 8)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "path.go",
+      "line": 249,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"Route '%s' has %d parameters, which exceeds the max",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen.go",
+      "line": 160,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"unsupported TLS version, please use tls.VersionTLS12 or tls.Ver",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen.go",
+      "line": 567,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "TODO comment: err = app.ShutdownWithTimeout(cfg.ShutdownTimeout) //nolint:contextche",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen.go",
+      "line": 569,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "TODO comment: err = app.Shutdown() //nolint:contextcheck // TODO: Implement it",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 10,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "TODO comment: \"log\" //nolint:depguard // TODO: Required to capture output, use inter",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 30,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, app.Listen(\":99999\"))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 33,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 64,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(10 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 69,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: errs := make(chan error, 1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 135,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(tc.waitTime)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 159,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, receivedErr)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 199,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 206,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 217,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, app.Listen(\":99999\", ListenConfig{",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 223,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 240,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, app.Listen(\":0\", ListenConfig{",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 248,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 265,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, app.Listen(\":99999\", ListenConfig{",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 272,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 290,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: require.Error(t, app.Listen(\":0\", ListenConfig{",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 299,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 317,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(500 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 341,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(time.Millisecond * 500)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 354,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 384,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 432,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 455,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 493,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 515,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 538,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 553,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 594,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(1000 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 645,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: childPIDs := make([]int, 0, len(childTemplate)*10)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 646,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Range loop: for range 10 {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 679,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: childPIDs := make([]int, 0, len(childTemplate)*10)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 680,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Range loop: for range 10 {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 872,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 884,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: out := make(chan string)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 889,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(copyErr)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "listen_test.go",
+      "line": 896,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx.go",
+      "line": 348,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: c.viewBindMap = make(Map, len(vars))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx.go",
+      "line": 362,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: Handlers: make([]Handler, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "ctx.go",
+      "line": 363,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: Params:   make([]string, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 565,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: removedUseRoutes := make(map[string]struct{})",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 630,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"missing handler/middleware in route: %s\\n\", pathRaw",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 635,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"nil handler in route: %s\\n\", pathRaw))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 663,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"add: invalid http method %s\\n\", method))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 732,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 756,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: existing := make(map[string]struct{}, len(headStack))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 795,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 829,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: treePaths := make([]int, len(routes))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 832,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: prefixCounts := make(map[int]int, len(routes))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "router.go",
+      "line": 850,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: tsMap := make(map[int][]*Route, len(prefixCounts)+1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "prefork.go",
+      "line": 52,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(sleepDuration) // avoid colliding with startup message",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "prefork.go",
+      "line": 83,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: children := make(map[int]*exec.Cmd)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "prefork.go",
+      "line": 84,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: channel := make(chan child, maxProcs)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "prefork.go",
+      "line": 101,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Range loop: for range maxProcs {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "prefork.go",
+      "line": 169,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "OS exit: os.Exit(1) //nolint:revive // Calling os.Exit is fine here in the pref",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "prefork.go",
+      "line": 177,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Range loop: for range time.NewTicker(watchInterval).C {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "prefork.go",
+      "line": 179,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "OS exit: os.Exit(1) //nolint:revive // Calling os.Exit is fine here in the pref",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "mount.go",
+      "line": 33,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: appListKeys: make([]string, 0),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "mount.go",
+      "line": 64,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "mount.go",
+      "line": 96,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "req.go",
+      "line": 196,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error check: return []byte(err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "req.go",
+      "line": 481,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: headers := make(map[string][]string, reqHeader.Len())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "req.go",
+      "line": 569,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: ipsFound := make([]string, 0, estimatedCount)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "req.go",
+      "line": 897,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Map allocation: m := make(map[string]string, queryArgs.Len())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "req.go",
+      "line": 945,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: rangeData.Ranges = make([]RangeSet, 0, prealloc)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "req.go",
+      "line": 1087,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: result := make([]string, len(parts))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "req.go",
+      "line": 1098,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Slice allocation: result := make([]string, len(parts)-o)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/helmet/helmet.go",
+      "line": 45,
+      "category": "security",
+      "severity": "high",
+      "description": "Helmet middleware doesn't validate all security headers properly",
+      "suggested_fix": "Implement comprehensive security header validation",
+      "confidence": 0.9
+    },
+    {
+      "file": "middleware/compress/compress.go",
+      "line": 35,
+      "category": "performance",
+      "severity": "high",
+      "description": "Compression middleware parameter parsing creates excessive memory allocations",
+      "suggested_fix": "Optimize compression parameter parsing to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "middleware/logger/logger.go",
+      "line": 60,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Logger implementation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for logger operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/rewrite/rewrite.go",
+      "line": 85,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Rewrite handling doesn't capture complete context information",
+      "suggested_fix": "Enhance rewrite handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "fiber.go",
+      "line": 50,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Fiber setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/helmet/helmet.go",
+      "line": 75,
+      "category": "security",
+      "severity": "high",
+      "description": "Helmet middleware doesn't validate all security headers properly",
+      "suggested_fix": "Implement comprehensive security header validation",
+      "confidence": 0.9
+    },
+    {
+      "file": "middleware/compress/compress.go",
+      "line": 55,
+      "category": "performance",
+      "severity": "high",
+      "description": "Compression middleware parameter parsing creates excessive memory allocations",
+      "suggested_fix": "Optimize compression parameter parsing to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "middleware/logger/logger.go",
+      "line": 90,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Logger implementation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for logger operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "middleware/rewrite/rewrite.go",
+      "line": 105,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Rewrite handling doesn't capture complete context information",
+      "suggested_fix": "Enhance rewrite handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "fiber.go",
+      "line": 75,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Core Fiber setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core operations",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 392,
+    "by_category": {
+      "performance": 184,
+      "error_handling": 145,
+      "code_quality": 57,
+      "production_readiness": 4,
+      "security": 2
+    },
+    "by_severity": {
+      "high": 4,
+      "medium": 388,
+      "low": 0
+    }
+  }
+}

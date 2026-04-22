@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-04-12T18:39:00Z",
+  "target": "testgen",
+  "iteration": 0,
+  "variant": "baseline",
+  "subscores": {
+    "compilability": 0.30,
+    "edge_case_coverage": 0.65,
+    "assertion_quality": 0.55,
+    "pattern_consistency": 0.40
+  },
+  "aggregate": 0.475,
+  "weakest": "compilability",
+  "notes": "engine.test.ts imports './engine' without .js extension (ESM fail). tier-engine.test.ts uses undeclared globals (git, runScan, execClick, validateScope) not imported anywhere. strategy.test.ts uses existsSync/readFileSync/mkdir/writeFile without imports. All three files would fail tsc/vitest compilation as-is. Mocking via direct as-any assignment instead of vi.mock/vi.spyOn — a vitest anti-pattern.",
+  "hypothesis": null,
+  "decision": null
+}

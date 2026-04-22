@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-04-18T16:08:00Z",
+  "target": "qa",
+  "iteration": 4,
+  "variant": "v3",
+  "subscores": {
+    "instruction_clarity": 0.72,
+    "output_detail": 0.90,
+    "variety": 0.80,
+    "would_train_well": 0.88
+  },
+  "aggregate": 0.825,
+  "weakest": "instruction_clarity",
+  "hypothesis": "v4: Type A/B template instructions are too generic — 'Analyze this TypeScript code for security vulnerabilities. Consider: authentication, authorization...' is interchangeable across every entry and trains the model on category patterns, not issue-specific reasoning. Strong training instructions should embed the specific pattern/symptom: 'How does unvalidated Object.defineProperty enable prototype pollution in Vue's observer?' beats 'Analyze this TypeScript code for security vulnerabilities.' Change: replace generic Type A/B templates with issue-embedded question patterns that name the concrete symptom found.",
+  "decision": "keep",
+  "evidence": "denoland-deno.jsonl (Apr 16), go-kit-kit.jsonl (Apr 15), yt-dlp-yt-dlp.jsonl: all post-v3 outputs have rich before/after code blocks, multiple fix approaches, references. CODE EXAMPLE GATE is working — output_detail jumped from 0.70 to 0.90. Weakest dimension is now instruction_clarity: generic template questions like 'What production-readiness problems exist in this Go code?' don't encode the specific issue, reducing diversity and specificity of training signal.",
+  "previousScore": 0.76,
+  "delta": 0.065,
+  "cronJobId": "53abfe17-b8ee-40b9-8c28-e009415c09c1"
+}

@@ -197,24 +197,103 @@ export function formatRollbackMessage(
 
 /**
  * Pre-flight check: run the configured test command once before starting clicks.
- * If the command exits with "Missing script" or equivalent "no test script" errors,
- * throws an actionable error so the user knows to configure a test script first.
+ *
+ * Throws an actionable error for the most common "the agent never had a chance" failures:
+ *   1. No "test" script in package.json (Missing script)
+ *   2. Dependencies not installed (Cannot find module / command not found)
+ *   3. Test runner binary missing on PATH
+ *
+ * Catching these up-front saves a wasted click cycle and gives the user a fix
+ * instead of a generic "build failed" rollback message. Other failures (real
+ * test failures, flakes) fall through to baseline capture and per-click handling.
  */
 export async function preflightTestCommand(testCommand: string, cwd: string): Promise<void> {
   const result = await runTests({ command: testCommand, cwd, timeout: 30_000 });
-  if (!result.passed) {
-    const output = (result.output ?? '') + (result.error ?? '');
-    const isMissingScript =
-      /Missing script[:\s]/i.test(output) ||
-      /npm error Missing script/i.test(output) ||
-      /no test specified/i.test(output) ||
-      (result.error?.includes('Missing script') ?? false);
-    if (isMissingScript) {
-      throw new Error(
-        `No working test command — add a test script to package.json before running torque.\n` +
-        `  Current command: ${testCommand}\n` +
-        `  Fix: add a "test" script to package.json (e.g. "vitest run" or "jest")`,
-      );
-    }
+  if (result.passed) return;
+
+  const output = (result.output ?? '') + '\n' + (result.error ?? '');
+
+  // 1. Missing test script in package.json
+  const isMissingScript =
+    /Missing script[:\s]/i.test(output) ||
+    /npm error Missing script/i.test(output) ||
+    /no test specified/i.test(output) ||
+    (result.error?.includes('Missing script') ?? false);
+  if (isMissingScript) {
+    throw new Error(
+      `No working test command — add a test script to package.json before running ratchet improve.\n` +
+      `  Current command: ${testCommand}\n` +
+      `  Fix: add a "test" script to package.json (e.g. "vitest run" or "jest")`,
+    );
   }
+
+  // 2. Dependencies not installed — covers npm/pnpm/yarn JS, pip Python, cargo Rust, etc.
+  //    The exact phrasing varies by ecosystem; we match the high-signal phrases.
+  const isMissingDeps =
+    /Cannot find module/i.test(output) ||
+    /MODULE_NOT_FOUND/i.test(output) ||
+    /Error: Cannot find package/i.test(output) ||
+    /command not found.*node_modules/i.test(output) ||
+    /sh: .*: command not found/i.test(output) && /node_modules|vitest|jest|mocha/i.test(testCommand) ||
+    /ModuleNotFoundError/i.test(output) ||                       // Python
+    /No module named/i.test(output) ||                            // Python
+    /could not find `Cargo\.lock`/i.test(output) ||              // Rust
+    /go: .* no required module provides/i.test(output);          // Go
+  if (isMissingDeps) {
+    const installHint = detectInstallHint(testCommand, cwd);
+    throw new Error(
+      `Dependencies are not installed — ratchet improve needs a working test suite to gate clicks.\n` +
+      `  Current command: ${testCommand}\n` +
+      `  Fix: ${installHint}\n` +
+      `  Then re-run "ratchet improve".`,
+    );
+  }
+
+  // 3. Test runner binary itself is missing (ENOENT from runner.ts already returns a friendly
+  //    message — re-throw so improve doesn't silently roll back the first click).
+  const isBinaryMissing =
+    /Test command not found:/i.test(output) ||
+    /ENOENT/i.test(output);
+  if (isBinaryMissing) {
+    throw new Error(
+      `Test runner not on PATH — cannot run "${testCommand}".\n` +
+      `  Fix: install the test runner, or update test_command in .ratchet.yml to a binary that exists.\n` +
+      `  Tip: run "${testCommand}" yourself first to confirm it works before retrying ratchet improve.`,
+    );
+  }
+
+  // Otherwise: real test failures. Let baseline capture / per-click test gate handle it.
+}
+
+/**
+ * Heuristic install-command suggestion based on the project's lockfile / test command.
+ * Best-effort — never throws, always returns something actionable.
+ */
+function detectInstallHint(testCommand: string, cwd: string): string {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { existsSync } = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { join } = require('path');
+    if (existsSync(join(cwd, 'pnpm-lock.yaml'))) return 'run "pnpm install" to install dependencies';
+    if (existsSync(join(cwd, 'yarn.lock'))) return 'run "yarn install" to install dependencies';
+    if (existsSync(join(cwd, 'bun.lock')) || existsSync(join(cwd, 'bun.lockb'))) {
+      return 'run "bun install" to install dependencies';
+    }
+    if (existsSync(join(cwd, 'package-lock.json')) || existsSync(join(cwd, 'package.json'))) {
+      return 'run "npm install" to install dependencies';
+    }
+    if (existsSync(join(cwd, 'pyproject.toml'))) return 'run "pip install -e ." or "poetry install" to install dependencies';
+    if (existsSync(join(cwd, 'requirements.txt'))) return 'run "pip install -r requirements.txt" to install dependencies';
+    if (existsSync(join(cwd, 'Cargo.toml'))) return 'run "cargo build" to fetch dependencies';
+    if (existsSync(join(cwd, 'go.mod'))) return 'run "go mod download" to fetch dependencies';
+  } catch {
+    /* ignore — fall through to generic hint */
+  }
+  // Fallback hint based on test command
+  if (/npm/i.test(testCommand)) return 'run "npm install" to install dependencies';
+  if (/pnpm/i.test(testCommand)) return 'run "pnpm install" to install dependencies';
+  if (/yarn/i.test(testCommand)) return 'run "yarn install" to install dependencies';
+  if (/pytest|python/i.test(testCommand)) return 'install your project dependencies (pip / poetry / uv) and try again';
+  return 'install your project dependencies and try again';
 }

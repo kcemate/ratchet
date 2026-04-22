@@ -91,12 +91,19 @@ export function reportCommand(): Command {
 
   cmd
     .description(
-      'Generate a Ratchet run report (markdown and/or PDF).\n' +
-      'Loads the latest run from history, or a specific run with --run <id>.\n\n' +
+      'Generate a Ratchet run report.\n' +
+      '\n' +
+      'By default, writes BOTH a markdown report and a PDF to docs/<target>-ratchet-report.{md,pdf}.\n' +
+      'Loads the latest run from history, or a specific run with --run <id>.\n' +
+      '\n' +
+      'Use --pdf / --md / --json for a single format, or --format <type> to be explicit.\n' +
       'Also shows run status (--status), click logs (--log), and score badges (--badge).',
     )
     .option('--run <id>', 'Specific run ID to report on (default: latest)')
-    .option('--format <type>', 'Output format: "pdf", "markdown", "json", or "both"', 'both')
+    .option('--format <type>', 'Output format: "pdf", "markdown", "json", or "both" (default: both = markdown + pdf)', 'both')
+    .option('--pdf', 'Shortcut for --format pdf (PDF only, skips markdown)')
+    .option('--md, --markdown', 'Shortcut for --format markdown (markdown only, skips PDF)')
+    .option('--json', 'Shortcut for --format json (machine-readable JSON, skips markdown + PDF)')
     .option('--output <path>', 'Output directory (default: docs/)')
     .option('--open', 'Open the PDF after generation')
     .option('--list', 'List all saved runs')
@@ -107,15 +114,16 @@ export function reportCommand(): Command {
     .addHelpText(
       'after',
       '\nExamples:\n' +
-      '  $ ratchet report\n' +
-      '  $ ratchet report --deep\n' +
-      '  $ ratchet report --format markdown\n' +
-      '  $ ratchet report --format json --deep\n' +
+      '  $ ratchet report                       # markdown + PDF (default)\n' +
+      '  $ ratchet report --pdf                 # PDF only\n' +
+      '  $ ratchet report --md                  # markdown only\n' +
+      '  $ ratchet report --json                # JSON only (for CI / automation)\n' +
+      '  $ ratchet report --deep                # add LLM-powered deep analysis section\n' +
       '  $ ratchet report --run my-run-id --open\n' +
-      '  $ ratchet report --list\n' +
-      '  $ ratchet report --status\n' +
-      '  $ ratchet report --log\n' +
-      '  $ ratchet report --badge\n',
+      '  $ ratchet report --list                # show saved runs\n' +
+      '  $ ratchet report --status              # show current run status\n' +
+      '  $ ratchet report --log                 # show click log\n' +
+      '  $ ratchet report --badge               # generate README badge\n',
     )
     .action(async (opts: {
       run?: string;
@@ -127,7 +135,25 @@ export function reportCommand(): Command {
       log?: boolean;
       badge?: boolean;
       deep?: boolean;
+      pdf?: boolean;
+      markdown?: boolean;
+      json?: boolean;
     }) => {
+      // Resolve convenience shortcuts — they override --format if set.
+      // Mutually exclusive: last one wins, but warn if multiple are passed.
+      const shortcuts = [
+        opts.pdf ? 'pdf' : null,
+        opts.markdown ? 'markdown' : null,
+        opts.json ? 'json' : null,
+      ].filter((x): x is string => x !== null);
+      if (shortcuts.length > 1) {
+        process.stderr.write(
+          `  ${chalk.yellow('⚠')} Multiple format flags passed (${shortcuts.join(', ')}); using "${shortcuts[shortcuts.length - 1]}".\n`,
+        );
+      }
+      if (shortcuts.length > 0) {
+        opts.format = shortcuts[shortcuts.length - 1];
+      }
       const cwd = process.cwd();
 
       // --status: delegate to status command

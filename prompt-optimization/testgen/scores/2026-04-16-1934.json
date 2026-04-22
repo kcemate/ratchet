@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-04-16T19:34:00Z",
+  "target": "testgen",
+  "iteration": 3,
+  "variant": "v2",
+  "subscores": {
+    "compilability": 0.25,
+    "edge_case_coverage": 0.45,
+    "assertion_quality": 0.40,
+    "pattern_consistency": 0.42
+  },
+  "aggregate": 0.38,
+  "weakest": "compilability",
+  "notes": "Catastrophic regression. torque.test.ts contains zero TypeScript — model generated a markdown prose code analysis report (headers, tables, refactoring suggestions) instead of test code. quick-fix.test.ts and status.test.ts have real it() blocks but both use non-existent 'vi.doSetMock' API and have other compile errors. Root cause: no output format constraint in the prompt. When source code is piped via stdin, Gemma interprets it as an analysis request rather than raw material to write tests against. The 'NO STUBS' rule added by v2 did not address this failure mode. Cron job also shows 2 consecutive timeouts, likely caused by the model spending time on lengthy analysis prose.",
+  "hypothesis": "v3 must add an explicit OUTPUT FORMAT preamble at the very top of the prompt — before the numbered steps — making clear the output will be saved directly to a .ts file and must contain only raw TypeScript, no prose, no markdown fences, no analysis.",
+  "decision": "revert"
+}

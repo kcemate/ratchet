@@ -1,0 +1,4436 @@
+{
+  "repo": "django/django",
+  "scanned_at": "2026-04-06T11:04:51.768909",
+  "issues": [
+    {
+      "file": "django/db/models/query.py",
+      "line": 11,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential tight coupling detected",
+      "suggested_fix": "Review line for potential tight coupling",
+      "confidence": 0.7,
+      "raw_line": "from weakref import ref as weak_ref"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 44,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "MAX_GET_RESULTS = 21"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 47,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "REPR_OUTPUT_SIZE = 20"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 64,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def next_slice(gen):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 345,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def query(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 353,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def query(self, value):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 358,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def as_manager(cls):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 438,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def generator():"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 558,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def iterator(self, chunk_size=None):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 577,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aiterator(self, chunk_size=2000):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 613,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def aggregate(self, *args, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 638,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aaggregate(self, *args, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 641,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def count(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 654,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def acount(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 657,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get(self, *args, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 692,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aget(self, *args, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 695,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def create(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 717,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def acreate(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 792,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def bulk_create("
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 930,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def abulk_create("
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 950,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def bulk_update(self, objs, fields, batch_size=None):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1010,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def abulk_update(self, objs, fields, batch_size=None):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1019,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_or_create(self, defaults=None, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1046,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aget_or_create(self, defaults=None, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1054,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def update_or_create(self, defaults=None, create_defaults=None, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1102,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aupdate_or_create(self, defaults=None, create_defaults=None, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1160,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def earliest(self, *fields):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1165,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aearliest(self, *fields):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1168,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def latest(self, *fields):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1177,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def alatest(self, *fields):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1180,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def first(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1190,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def afirst(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1193,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def last(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1203,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def alast(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1206,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def in_bulk(self, id_list=None, *, field_name=\"pk\"):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1234,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_obj(obj):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1245,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_obj(obj):  # noqa: F811"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1302,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def ain_bulk(self, id_list=None, *, field_name=\"pk\"):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1308,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def delete(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1341,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def adelete(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1358,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def update(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1402,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aupdate(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1428,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def exists(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1436,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aexists(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1439,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def contains(self, obj):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1460,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def acontains(self, obj):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1468,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def explain(self, *, format=None, **options):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1475,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aexplain(self, *, format=None, **options):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1482,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def raw(self, raw_query, params=(), translations=None, using=None):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1509,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def values(self, *fields, **expressions):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1515,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def values_list(self, *fields, flat=False, named=False):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1575,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def dates(self, field_name, kind, order=\"ASC\"):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1595,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def datetimes(self, field_name, kind, order=\"ASC\", tzinfo=None):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1628,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def none(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1638,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def all(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1645,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def filter(self, *args, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1653,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def exclude(self, *args, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1681,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def complex_filter(self, filter_obj):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1710,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def union(self, *other_qs, all=False):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1723,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def intersection(self, *other_qs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1732,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def difference(self, *other_qs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1738,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def select_for_update(self, nowait=False, skip_locked=False, of=(), no_key=False):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1754,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def select_related(self, *fields):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1778,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def prefetch_related(self, *lookups):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1803,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def annotate(self, *args, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1811,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def alias(self, *args, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1876,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def order_by(self, *field_names):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1885,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def distinct(self, *field_names):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1898,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def extra("
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1915,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def reverse(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1923,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def defer(self, *fields):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1940,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def only(self, *fields):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1961,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def using(self, alias):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1967,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def fetch_mode(self, fetch_mode):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1978,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def ordered(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 1999,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def totally_ordered(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2073,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2266,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def resolve_expression(self, *args, **kwargs):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2373,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def resolve_model_init_order(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2392,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def prefetch_related(self, *lookups):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2440,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def generator():"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2447,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def iterator(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2457,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2461,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def using(self, alias):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2474,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def columns(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2492,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def model_fields(self):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2538,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def add_prefix(self, prefix):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2542,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_current_prefetch_to(self, level):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2545,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_current_to_attr(self, level):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2551,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_current_querysets(self, level):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2568,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def normalize_prefetch_lookups(lookups, prefix=None):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2580,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def prefetch_related_objects(model_instances, *related_lookups):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2736,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aprefetch_related_objects(model_instances, *related_lookups):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2743,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prefetcher(instance, through_attr, to_attr):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2755,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def is_to_attr_fetched(model, to_attr):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2760,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_cached_property(instance):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2765,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_to_attr_attribute(instance):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2801,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def in_prefetched_cache(instance):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2808,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def prefetch_one_level(instances, prefetcher, lookup, level):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 2995,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def populate(self, row, from_obj):"
+    },
+    {
+      "file": "django/db/models/query.py",
+      "line": 3016,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_related_populators(klass_info, select, db, fetch_mode):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 95,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def pop(self, key, default=None):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 98,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def setdefault(self, key, value):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 115,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 200"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 148,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def reason_phrase(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 156,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def reason_phrase(self, value):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 160,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def charset(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 175,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def charset(self, value):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 178,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def serialize_headers(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 206,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_header(self, header):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 212,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def items(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 215,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get(self, header, alternate=None):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 218,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def set_cookie("
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 282,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def setdefault(self, key, value):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 286,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def set_signed_cookie(self, key, value, salt=\"\", **kwargs):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 290,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def delete_cookie(self, key, path=\"/\", domain=None, samesite=None):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 310,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def make_bytes(self, value):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 332,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def close(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 343,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def write(self, content):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 346,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def flush(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 349,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def tell(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 357,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def readable(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 360,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def seekable(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 363,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def writable(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 366,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def writelines(self, lines):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 391,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def serialize(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 398,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def content(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 402,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def content(self, value):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 420,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def text(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 426,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def write(self, content):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 429,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def tell(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 432,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def getvalue(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 435,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def writable(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 438,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def writelines(self, lines):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 468,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def content(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 475,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def text(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 481,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def streaming_content(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 487,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def awrapper():"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 496,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def streaming_content(self, value):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 522,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def to_list(_iterator):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 546,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def getvalue(self):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 555,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "block_size = 4096"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 577,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def set_headers(self, filelike):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 666,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 302"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 667,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code_preserve_request = 307"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 671,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 301"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 672,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code_preserve_request = 308"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 676,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 304"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 683,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def content(self, value):"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 692,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 400"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 696,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 404"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 700,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 403"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 704,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 405"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 720,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 410"
+    },
+    {
+      "file": "django/http/response.py",
+      "line": 724,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "status_code = 500"
+    },
+    {
+      "file": "django/utils/crypto.py",
+      "line": 19,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def salted_hmac(key_salt, value, secret=None, *, algorithm=\"sha1\"):"
+    },
+    {
+      "file": "django/utils/crypto.py",
+      "line": 51,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_random_string(length, allowed_chars=RANDOM_STRING_CHARS):"
+    },
+    {
+      "file": "django/utils/crypto.py",
+      "line": 65,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def constant_time_compare(val1, val2):"
+    },
+    {
+      "file": "django/utils/crypto.py",
+      "line": 70,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def pbkdf2(password, salt, iterations, dklen=0, digest=None):"
+    },
+    {
+      "file": "django/core/handlers/wsgi.py",
+      "line": 29,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def read(self, size=-1, /):"
+    },
+    {
+      "file": "django/core/handlers/wsgi.py",
+      "line": 42,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def readline(self, size=-1, /):"
+    },
+    {
+      "file": "django/core/handlers/wsgi.py",
+      "line": 86,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def GET(self):"
+    },
+    {
+      "file": "django/core/handlers/wsgi.py",
+      "line": 100,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def COOKIES(self):"
+    },
+    {
+      "file": "django/core/handlers/wsgi.py",
+      "line": 105,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def FILES(self):"
+    },
+    {
+      "file": "django/core/handlers/wsgi.py",
+      "line": 147,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_path_info(environ):"
+    },
+    {
+      "file": "django/core/handlers/wsgi.py",
+      "line": 154,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_script_name(environ):"
+    },
+    {
+      "file": "django/core/handlers/wsgi.py",
+      "line": 187,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_bytes_from_wsgi(environ, key, default):"
+    },
+    {
+      "file": "django/core/handlers/wsgi.py",
+      "line": 200,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_str_from_wsgi(environ, key, default):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 8,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential tight coupling detected",
+      "suggested_fix": "Review line for potential tight coupling",
+      "confidence": 0.7,
+      "raw_line": "from gzip import compress as gzip_compress"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 26,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def capfirst(x):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 41,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def wrap(text, width):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 73,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def add_truncation_text(text, truncate=None):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 89,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def calculate_truncate_chars_length(length, replacement):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 111,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def void_elements(self):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 116,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def handle_startendtag(self, tag, attrs):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 121,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def handle_starttag(self, tag, attrs):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 126,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def handle_endtag(self, tag):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 135,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def handle_data(self, data):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 145,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def feed(self, data):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 167,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def process(self, data):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 179,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def process(self, data):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 193,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def chars(self, num, truncate=None, html=False):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 234,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def words(self, num, truncate=None, html=False):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 265,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_valid_filename(name):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 282,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_text_list(list_, last_word=gettext_lazy(\"or\")):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 308,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def normalize_newlines(text):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 314,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def phone2numeric(phone):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 351,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def compress_string(s, *, max_random_bytes=None):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 367,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def read(self):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 375,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def compress_sequence(sequence, *, max_random_bytes=None):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 392,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def acompress_sequence(sequence, *, max_random_bytes=None):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 425,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def smart_split(text):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 445,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def unescape_string_literal(s):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 466,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def slugify(value, allow_unicode=False):"
+    },
+    {
+      "file": "django/utils/text.py",
+      "line": 486,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def camel_case_to_spaces(value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 115,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def return_None():"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 201,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_placeholder_sql(self, value, compiler, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 220,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Potential missing index detected",
+      "suggested_fix": "Review line for potential missing index",
+      "confidence": 0.7,
+      "raw_line": "db_index=False,"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 291,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 566,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_col(self, alias, output_field=None):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 576,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def choices(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 580,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def choices(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 584,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def cached_col(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 589,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def select_format(self, compiler, sql, params):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 597,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 698,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def clone(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 779,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_pk_value_on_save(self, instance):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 790,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 799,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def error_messages(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 807,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def validators(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 814,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def run_validators(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 830,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def validate(self, value, model_instance):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 861,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def clean(self, value, model_instance):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 872,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db_type_parameters(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 875,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db_check(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 889,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db_type(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 920,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def rel_db_type(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 928,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def cast_db_type(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 935,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db_parameters(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 948,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db_type_suffix(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 951,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_converters(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 957,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def unique(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 961,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db_tablespace(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 965,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db_returning(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 969,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def set_attributes_from_name(self, name):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 976,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def contribute_to_class(self, cls, name, private_only=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1000,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_filter_kwargs_for_object(self, obj):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1007,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_attname(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1010,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_attname_column(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1015,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1018,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def pre_save(self, model_instance, add):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1022,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1028,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1039,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_save(self, value, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1045,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_default(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1049,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_db_default(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1053,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_default(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1088,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_choices("
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1117,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def value_to_string(self, obj):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1125,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def flatchoices(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1129,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def save_form_data(self, instance, data):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1132,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, form_class=None, choices_form_class=None, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1181,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def value_from_object(self, obj):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1185,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def slice_expression(self, expression, start, length):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1198,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1201,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1217,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1223,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1244,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def description(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1250,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1310,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def cast_db_type(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1315,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db_parameters(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1320,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1323,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1328,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1332,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1343,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1349,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def slice_expression(self, expression, start, length):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1382,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1496,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1507,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1510,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1540,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def pre_save(self, model_instance, add):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1548,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def contribute_to_class(self, cls, name, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1566,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1570,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1576,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def value_to_string(self, obj):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1580,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1624,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1627,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1680,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def pre_save(self, model_instance, add):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1691,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1711,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1717,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def value_to_string(self, obj):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1721,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1748,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1862,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def validators(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1869,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def context(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1872,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1880,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1883,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1905,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1911,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1915,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1943,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1946,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1965,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1968,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_converters(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1974,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def value_to_string(self, obj):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1978,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 1996,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2002,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2032,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2050,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2066,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2072,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2085,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2096,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2107,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2110,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2122,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2138,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2158,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def validators(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2192,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2203,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2207,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2210,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2222,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2233,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "MAX_BIGINT = 9223372036854775807"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2235,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2238,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2251,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2268,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "kwargs[\"max_length\"] = 15"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2271,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2276,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2282,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2308,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2326,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2336,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2339,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2351,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2356,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2367,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2397,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2417,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def rel_db_type(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2435,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2438,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2450,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2453,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2465,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2468,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2489,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2501,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2504,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2521,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2550,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def db_parameters(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2555,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2558,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2563,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2567,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2579,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2585,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def slice_expression(self, expression, start, length):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2636,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2647,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2650,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2678,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def pre_save(self, model_instance, add):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2686,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2690,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2696,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def value_to_string(self, obj):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2700,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2717,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2723,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2744,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2759,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2767,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2770,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_placeholder_sql(self, value, compiler, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2773,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_default(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2781,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2787,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def value_to_string(self, obj):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2791,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2806,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential magic numbers detected",
+      "suggested_fix": "Review line for potential magic numbers",
+      "confidence": 0.7,
+      "raw_line": "kwargs[\"max_length\"] = 32"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2809,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2814,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2817,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_prep_value(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2821,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2831,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def to_python(self, value):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2844,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2860,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2878,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def deconstruct(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2884,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def validate(self, value, model_instance):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2887,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_value(self, value, connection, prepared=False):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2890,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_db_prep_save(self, value, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2897,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def contribute_to_class(self, cls, name, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2906,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def formfield(self, **kwargs):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2943,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2946,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def rel_db_type(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2951,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2954,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def rel_db_type(self, connection):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2959,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_internal_type(self):"
+    },
+    {
+      "file": "django/db/models/fields/__init__.py",
+      "line": 2962,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def rel_db_type(self, connection):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 18,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def update_last_login(sender, user, **kwargs):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 30,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_by_natural_key(self, codename, app_label, model):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 82,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def natural_key(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 95,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_by_natural_key(self, name):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 98,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aget_by_natural_key(self, name):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 136,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def natural_key(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 172,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def create_user(self, username, email=None, password=None, **extra_fields):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 179,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def acreate_user(self, username, email=None, password=None, **extra_fields):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 186,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def create_superuser(self, username, email=None, password=None, **extra_fields):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 199,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def acreate_superuser("
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 214,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def with_perm("
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 354,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_user_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 362,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aget_user_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 366,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_group_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 374,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aget_group_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 378,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_all_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 381,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aget_all_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 384,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_perm(self, perm, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 399,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def ahas_perm(self, perm, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 408,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_perms(self, perm_list, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 417,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def ahas_perms(self, perm_list, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 426,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_module_perms(self, app_label):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 437,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def ahas_module_perms(self, app_label):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 497,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def clean(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 501,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_full_name(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 508,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_short_name(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 512,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def email_user(self, subject, message, from_email=None, **kwargs):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 554,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def save(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 559,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def delete(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 564,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def set_password(self, raw_password):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 569,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def check_password(self, raw_password):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 575,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def groups(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 579,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def user_permissions(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 582,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_user_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 585,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aget_user_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 588,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_group_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 591,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aget_group_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 594,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_all_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 597,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def aget_all_permissions(self, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 600,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_perm(self, perm, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 603,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def ahas_perm(self, perm, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 606,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_perms(self, perm_list, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 611,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def ahas_perms(self, perm_list, obj=None):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 619,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def has_module_perms(self, module):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 622,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "async def ahas_module_perms(self, module):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 626,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def is_anonymous(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 630,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def is_authenticated(self):"
+    },
+    {
+      "file": "django/contrib/auth/models.py",
+      "line": 633,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def get_username(self):"
+    },
+    {
+      "file": "django/views/decorators/csrf.py",
+      "line": 35,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def process_view(self, request, callback, callback_args, callback_kwargs):"
+    },
+    {
+      "file": "django/views/decorators/csrf.py",
+      "line": 50,
+      "category": "security",
+      "severity": "medium",
+      "description": "Potential csrf detected",
+      "suggested_fix": "Review line for potential csrf",
+      "confidence": 0.7,
+      "raw_line": "def csrf_exempt(view_func):"
+    },
+    {
+      "file": "django/views/decorators/csrf.py",
+      "line": 50,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def csrf_exempt(view_func):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 67,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def configure_logging(logging_config, logging_settings):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 94,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def emit(self, record):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 137,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def send_mail(self, subject, message, *args, **kwargs):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 142,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def connection(self):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 145,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def format_subject(self, subject):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 162,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def filter(self, record):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 169,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def filter(self, record):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 174,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def filter(self, record):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 185,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def format(self, record):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 213,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def uses_server_time(self):"
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 217,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def log_message("
+    },
+    {
+      "file": "django/utils/log.py",
+      "line": 257,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Potential poor names detected",
+      "suggested_fix": "Review line for potential poor names",
+      "confidence": 0.7,
+      "raw_line": "def log_response("
+    }
+  ]
+}

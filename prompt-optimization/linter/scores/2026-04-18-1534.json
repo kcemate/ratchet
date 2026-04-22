@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-18T19:34:00Z",
+  "target": "linter",
+  "iteration": 3,
+  "variant": "v3",
+  "subscores": {
+    "pass_warn_fail_ratio": 0.05,
+    "scoring_consistency": 0.15,
+    "false_positive_rate": 0.05
+  },
+  "aggregate": 0.083,
+  "weakest": "false_positive_rate",
+  "hypothesis_tested": "Explicit 5-step decision tree + Gemma unavailability fallback (treat as WARN not FAIL)",
+  "decision": "revert",
+  "notes": "v3 regressed. Post-deployment (2026-04-16 to 2026-04-18) processed 5 files: angular-angular, denoland-deno, gofiber-fiber, uber-go-zap (Apr 16), sveltejs-svelte (Apr 18) — all FAIL with blanket all-5-checks-❌. Critical false positive: denoland-deno.json was previously WARN on 2026-04-14 (good content, only structural issue), re-processed on 2026-04-16 and quarantined as FAIL. Root cause: the decision tree didn't fix the core problem — the model is outputting the failure table format WITHOUT actually reading file content. The model pattern-matches the log format rather than executing the checks. Evidence: all 5 checks fail simultaneously, including Check 4 (fix diversity) which requires counting unique strings — something that would only fail if actually read. The dedup grep is also inconsistent: denoland-deno had a 2026-04-14 log entry but was re-processed on 2026-04-16. v4 will require the model to quote raw file evidence before each check result, making it impossible to assign PASS/FAIL without actual file inspection."
+}

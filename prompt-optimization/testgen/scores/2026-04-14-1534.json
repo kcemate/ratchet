@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-04-14T19:34:00Z",
+  "target": "testgen",
+  "iteration": 1,
+  "variant": "v1",
+  "subscores": {
+    "compilability": 0.65,
+    "edge_case_coverage": 0.65,
+    "assertion_quality": 0.60,
+    "pattern_consistency": 0.80
+  },
+  "aggregate": 0.675,
+  "weakest": "assertion_quality",
+  "notes": "v1 COMPILATION RULES improved vi.mock usage and imports, but ~30% of generated files are empty stubs (allocator.test.ts, scan-engine.test.ts) containing only 'Test cases will be generated here' placeholders with zero actual it() blocks. Judge scored sample generously (0.9+) but corpus analysis reveals the empty stub pattern is the primary failure mode. Pattern consistency improved significantly. Net: +0.20 improvement from baseline (0.475 → 0.675). v1 kept.",
+  "hypothesis": "v1 improved compilability; v2 will target the empty stub problem — model generates scaffold but fails to write actual test bodies",
+  "decision": "keep"
+}

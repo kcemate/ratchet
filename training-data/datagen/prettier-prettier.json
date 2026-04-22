@@ -1,0 +1,236 @@
+[
+  {
+    "file": "src/language-yaml/printer-yaml.js",
+    "line": 39,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "God function: genericPrint handles all YAML node types in a single 120+ line function with deeply nested conditionals. This violates the Single Responsibility Principle — mapping, sequence, scalar, comment, anchor, tag, and directive printing are all interleaved in one function body.",
+    "suggested_fix": "Apply Strategy pattern: extract per-node-type print handlers into a registry map (e.g., `const printers = { mapping: printMapping, sequence: printSequence, ... }`) and dispatch from a thin genericPrint that delegates. This improves testability, readability, and makes adding new node types safer.",
+    "confidence": 92
+  },
+  {
+    "file": "src/language-yaml/printer-yaml.js",
+    "line": 62,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Tight coupling: genericPrint directly accesses node.tag, node.anchor, node.middleComments, node.trailingComment, node.endComments, and node.position. The printer is brittle to any AST schema change — there's no abstraction layer between the AST shape and the printing logic.",
+    "suggested_fix": "Introduce accessor functions or a node adapter that normalizes the AST interface (e.g., `getTag(node)`, `getAnchor(node)`), decoupling the printer from raw property access. Alternatively, use the visitor pattern with typed node handlers.",
+    "confidence": 85
+  },
+  {
+    "file": "src/language-yaml/printer-yaml.js",
+    "line": 45,
+    "category": "performance",
+    "severity": "low",
+    "description": "Multiple path.map() calls (lines 45, 63, 86) iterate over child arrays and create intermediate arrays. For deeply nested or large YAML documents this could create GC pressure with many small arrays.",
+    "suggested_fix": "Consider lazy iteration or batching path.map() results where order doesn't matter. Profile with real-world large YAML files (10k+ lines) to confirm this is an actual bottleneck before optimizing.",
+    "confidence": 55
+  },
+  {
+    "file": "src/language-graphql/printer-graphql.js",
+    "line": 20,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "God function: the genericPrint function for GraphQL contains a massive switch statement handling ~30 GraphQL AST node types in a single function. This makes the function extremely difficult to navigate, test in isolation, and extend.",
+    "suggested_fix": "Extract each case branch into its own named function (e.g., `printField`, `printFragmentDefinition`, `printOperationDefinition`) and use a dispatch map. Each handler becomes independently testable and the main function becomes a thin router.",
+    "confidence": 90
+  },
+  {
+    "file": "src/language-graphql/printer-graphql.js",
+    "line": 25,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "No input validation on GraphQL node structures before property access. The printer assumes well-formed AST nodes — if a node has an unexpected shape (e.g., missing `name` on a Field node), it will throw an opaque TypeError rather than a descriptive error.",
+    "suggested_fix": "Add runtime assertions or use the existing UnexpectedNodeError for unknown/unexpected node types. Consider adding a development-mode schema check that validates node shapes match the expected GraphQL AST spec.",
+    "confidence": 78
+  },
+  {
+    "file": "src/language-graphql/printer-graphql.js",
+    "line": 50,
+    "category": "performance",
+    "severity": "low",
+    "description": "Recursive printing of deeply nested GraphQL documents (e.g., deeply nested fragments or directives) has no depth limit. A malicious or buggy input with excessive nesting could cause a stack overflow.",
+    "suggested_fix": "Add a configurable max-depth guard (e.g., 256 levels) that throws a clear error if exceeded. Most real GraphQL documents are under 20 levels deep, so this would only affect pathological inputs.",
+    "confidence": 70
+  },
+  {
+    "file": "src/language-css/massage-ast/index.js",
+    "line": 5,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "The `ignoredProperties` set uses hardcoded string values ('raw', 'raws', 'sourceIndex', 'source', 'before', 'after', 'trailingComma', 'spaces'). These are essentially magic strings scattered across the codebase — any property rename requires updating this set and hunting for other references.",
+    "suggested_fix": "Define these as named constants (e.g., `const IGNORED_AST_PROPERTIES = { RAW: 'raw', ... }`) or extract into a shared AST schema module. This makes the intent clear and enables IDE-assisted refactoring.",
+    "confidence": 72
+  },
+  {
+    "file": "src/language-css/massage-ast/index.js",
+    "line": 10,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Tight coupling to CSS AST node type strings ('css-comment', 'css-root', 'value-root', 'media-query', etc.). The function uses long if-else chains keyed on these type strings, making it brittle to AST schema changes.",
+    "suggested_fix": "Use a handler map pattern: `const massageHandlers = { 'css-comment': massageCssComment, 'value-root': massageValueRoot, ... }` with a default handler. This decouples the dispatch from the implementation and allows per-handler testing.",
+    "confidence": 80
+  },
+  {
+    "file": "src/language-css/massage-ast/index.js",
+    "line": 220,
+    "category": "performance",
+    "severity": "low",
+    "description": "cleanCSSStrings performs multiple sequential string replaceAll operations on each CSS value. For large stylesheets with many values, this creates intermediate strings and could be optimized.",
+    "suggested_fix": "Combine regex patterns where possible into a single pass, or use a compiled regex pipeline. Profile with real-world large CSS files (e.g., Bootstrap) before optimizing — the current approach may be fast enough for typical inputs.",
+    "confidence": 60
+  },
+  {
+    "file": "src/main/core.js",
+    "line": 30,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "coreFormat mutates the opts parameter in-place (`opts.cursorOffset >= 0` check followed by `opts = { ...opts, ...getCursorLocation(ast, opts) }`). The reassignment shadows the original parameter, but the destructuring spread makes it unclear what properties are being overridden. This pattern is error-prone when debugging cursor-related bugs.",
+    "suggested_fix": "Use a separate variable for the modified options (e.g., `const formatOpts = opts.cursorOffset >= 0 ? { ...opts, ...getCursorLocation(ast, opts) } : opts;`) to make the data flow explicit and avoid confusion between the original and modified options.",
+    "confidence": 75
+  },
+  {
+    "file": "src/main/core.js",
+    "line": 155,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "The cursor offset diff algorithm (lines ~100-180) uses `String.prototype.split('')` which splits by UTF-16 code units, not Unicode code points. This means emoji and other astral plane characters will produce incorrect cursor positioning in formatted output.",
+    "suggested_fix": "Use `Array.from(text)` or `[...text]` instead of `text.split('')` to correctly handle Unicode characters beyond the BMP. This is already flagged by an eslint-disable comment for `unicorn/prefer-spread`, suggesting the team is aware but hasn't fixed it.",
+    "confidence": 88
+  },
+  {
+    "file": "src/main/core.js",
+    "line": 22,
+    "category": "production_readiness",
+    "severity": "medium",
+    "description": "BOM (Byte Order Mark) character `\\uFEFF` is defined as a module-level constant but never documented why it exists or when it's used. The constant name `BOM` is terse and could be confused with other acronyms.",
+    "suggested_fix": "Rename to `UTF8_BOM` or add a JSDoc comment explaining: `/** @const {string} Byte Order Mark character, prepended/removed during format to handle UTF-8 BOM files */`.",
+    "confidence": 50
+  },
+  {
+    "file": "src/cli/format.js",
+    "line": 17,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "handleError uses `process.exitCode = 1` or `process.exitCode = 2` as side effects mixed with return values. The function sometimes returns `true` (to signal the error was handled), sometimes returns `undefined` (fall-through), and always mutates global state. This makes control flow hard to follow and test.",
+    "suggested_fix": "Return a structured result object (e.g., `{ handled: true, exitCode: 2 }`) instead of mixing return values with process.exitCode mutations. Let the caller decide whether to set the exit code, making the function pure and testable.",
+    "confidence": 82
+  },
+  {
+    "file": "src/cli/format.js",
+    "line": 130,
+    "category": "security",
+    "severity": "medium",
+    "description": "The debug benchmark path dynamically imports `tinybench` using `await import('tinybench')` with only a try/catch for the missing package. This dynamic import could be exploited if an attacker can place a malicious tinybench module earlier in the module resolution path (path hijacking).",
+    "suggested_fix": "Pin tinybench as an optional peer dependency with a known-good version. Consider adding an integrity check or using `createRequire` to resolve from a known path. At minimum, document the security assumption that tinybench comes from a trusted source.",
+    "confidence": 45
+  },
+  {
+    "file": "src/cli/format.js",
+    "line": 350,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "formatFiles uses `process.exitCode` as mutable global state across a 200-line async function. Multiple branches set exitCode to different values (1, 2) without clear ownership, making it hard to reason about the final exit code.",
+    "suggested_fix": "Track exit state locally (e.g., `let hasError = false, hasUnformatted = false`) and set process.exitCode once at the end of the function based on accumulated state. This eliminates scattered global mutations and makes the exit logic explicit.",
+    "confidence": 75
+  },
+  {
+    "file": "src/cli/expand-patterns.js",
+    "line": 40,
+    "category": "security",
+    "severity": "medium",
+    "description": "followSymbolicLinks is explicitly set to `false` in globOptions (line ~40), but symbolic links are still resolved by `path.resolve(pattern)` before the glob. An attacker could craft a symlink that resolves to an unexpected directory, bypassing the ignore patterns.",
+    "suggested_fix": "Validate that resolved paths don't escape the expected directory scope. Consider using `fs.realpathSync` to resolve the final path and re-check against ignore patterns after resolution, or document the security tradeoff explicitly.",
+    "confidence": 55
+  },
+  {
+    "file": "src/cli/expand-patterns.js",
+    "line": 58,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "The function uses `process.cwd()` directly without any way to override it for testing. This makes unit testing difficult since the function's behavior depends on the actual working directory.",
+    "suggested_fix": "Accept `cwd` as an optional parameter with `process.cwd()` as the default. This makes the function pure and testable without depending on the host process state.",
+    "confidence": 80
+  },
+  {
+    "file": "src/main/normalize-options.js",
+    "line": 15,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Module-level mutable state: `hasDeprecationWarned` is a module-level variable that persists across all calls. This is shared mutable state that makes the function impure and hard to test in isolation — a test that triggers a deprecation warning will affect subsequent tests.",
+    "suggested_fix": "Move the warning tracking into the Normalizer instance or pass it as an explicit context object. Alternatively, use a WeakMap keyed on the logger instance to track which warnings have been emitted, avoiding module-level state.",
+    "confidence": 85
+  },
+  {
+    "file": "src/main/normalize-options.js",
+    "line": 55,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Uses `@ts-expect-error` comments to suppress TypeScript errors when accessing private `_hasDeprecationWarned` on the Normalizer instance. This is fragile — if the library updates and renames/removes this property, the errors will be silently swallowed.",
+    "suggested_fix": "Create a wrapper class or adapter that encapsulates the private property access with a typed interface. If that's not possible, add a runtime check that the property exists before accessing it, and log a warning if it doesn't.",
+    "confidence": 70
+  },
+  {
+    "file": "src/document/printer/printer.js",
+    "line": 37,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "The `fits` function is 150+ lines with deeply nested while loops, manual stack management via arrays (`commands`, `restCommands`), and complex branching logic. It's essentially a custom interpreter for the document model. This level of complexity in a single function makes it extremely difficult to verify correctness and maintain.",
+    "suggested_fix": "Refactor into smaller, focused functions: `fitsLine`, `fitsFill`, `fitsGroup`, etc. Each document type handler should be its own function. Consider extracting the command stack into a class with clear push/pop/peek semantics.",
+    "confidence": 88
+  },
+  {
+    "file": "src/document/printer/printer.js",
+    "line": 70,
+    "category": "performance",
+    "severity": "medium",
+    "description": "The `fits` function uses `String.prototype.trimEnd()` inside a tight loop (line ~70) for DOC_TYPE_TRIM handling. This creates intermediate strings on each iteration and could be a performance hotspot for documents with many trim operations.",
+    "suggested_fix": "Track trim state as a boolean flag and only apply the trim when computing the final width, rather than creating intermediate strings on each iteration. Alternatively, measure with real benchmarks — string.trimEnd() is V8-optimized and may not be a real bottleneck.",
+    "confidence": 55
+  },
+  {
+    "file": "src/language-yaml/utilities.js",
+    "line": 60,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "isLastDescendantNode accesses path.stack[i] and path.stack[i+2] without bounds checking. If called with a path that has fewer stack elements than expected, this will throw an IndexError rather than a meaningful error message.",
+    "suggested_fix": "Add a guard clause: `if (path.stack.length < 3) return false;` at the start of the function, or use optional chaining with a fallback. Add a JSDoc comment specifying the minimum path depth required.",
+    "confidence": 82
+  },
+  {
+    "file": "src/language-yaml/utilities.js",
+    "line": 105,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "getBlockValueLineContents contains a nested function `removeUnnecessaryTrailingNewlines` defined inside the outer function. This creates a new closure on every call, and the nested function is 20+ lines — large enough to warrant its own module-level function.",
+    "suggested_fix": "Extract `removeUnnecessaryTrailingNewlines` as a module-level function (or a static method) with explicit parameters instead of capturing variables from the closure. This improves testability and reduces cognitive load when reading getBlockValueLineContents.",
+    "confidence": 75
+  },
+  {
+    "file": "src/language-js/print/estree.js",
+    "line": 75,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "printEstree uses a 250+ line switch statement dispatching on node.type strings. This is the same god-function pattern seen across all Prettier language printers. The massive switch makes it hard to find the handler for any specific node type, and adding new node types requires modifying this central function.",
+    "suggested_fix": "Use a handler registry: `const estreePrinters = { AssignmentExpression: printAssignmentExpression, ... }` and dispatch with `return estreePrinters[node.type]?.(path, options, print) ?? throwUnexpectedNodeError(node)`. This pattern is used by many AST tools (Babel, ESLint) and scales well.",
+    "confidence": 92
+  },
+  {
+    "file": "src/language-html/parse/parse.js",
+    "line": 32,
+    "category": "error_handling",
+    "severity": "low",
+    "description": "When the Angular HTML parser reports errors, only the first error (`errors[0]`) is thrown. If there are multiple parse errors, the user only sees the first one and must fix-and-re-run repeatedly to discover subsequent issues.",
+    "suggested_fix": "Aggregate all parse errors into a single error message (e.g., `Found ${errors.length} parse errors:\\n${errors.map((e, i) => `${i+1}. ${e.msg}`).join('\\n')}`). This is more user-friendly and matches how compilers like TypeScript report multiple diagnostics at once.",
+    "confidence": 72
+  },
+  {
+    "file": "src/cli/format.js",
+    "line": 200,
+    "category": "production_readiness",
+    "severity": "low",
+    "description": "The `listDifferent` function silently swallows errors from `prettier.check()` — it catches and logs `error.message` but doesn't propagate the error or set an exit code, so a check that fails due to a parser error (rather than a formatting difference) will be silently ignored.",
+    "suggested_fix": "At minimum, set `process.exitCode = 2` when catching an error in `listDifferent`, similar to how `handleError` works. Consider also logging the error type to help users distinguish parser failures from formatting mismatches.",
+    "confidence": 68
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "file": "lib/application.js",
+    "line": 1,
+    "category": "code quality",
+    "severity": "high",
+    "description": "The main application.js file is 631 lines and handles multiple responsibilities including configuration, routing, middleware management, view rendering, and server handling. This violates the single responsibility principle and makes the code harder to maintain and test.",
+    "suggested_fix": "Split application.js into smaller, focused modules: one for core application setup, one for configuration management, one for routing, one for middleware handling, and one for view rendering.",
+    "confidence": 90
+  },
+  {
+    "file": "lib/response.js",
+    "line": 1,
+    "category": "code quality",
+    "severity": "high",
+    "description": "The response.js file is 1047 lines and contains numerous methods for handling HTTP responses, content negotiation, header management, and streaming. This is a large file with multiple responsibilities that should be separated.",
+    "suggested_fix": "Split response.js into smaller modules: one for status and header management, one for content negotiation, one for streaming responses, and one for error handling.",
+    "confidence": 85
+  },
+  {
+    "file": "lib/request.js",
+    "line": 1,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "The request.js file is 527 lines and handles HTTP request parsing, header inspection, URL parsing, and various utility methods. While smaller than response.js, it still handles multiple concerns that could be separated.",
+    "suggested_fix": "Consider splitting request.js into separate modules for request parsing, header inspection, and URL utilities to improve maintainability.",
+    "confidence": 70
+  },
+  {
+    "file": "lib/utils.js",
+    "line": 1,
+    "category": "code quality",
+    "severity": "medium",
+    "description": "The utils.js file is 271 lines and contains various helper functions including methods, normalizeType, normalizeTypes, setCharset, compileETag, compileQueryParser, and compileTrust. While utility modules are common, this could benefit from further organization.",
+    "suggested_fix": "Split utils.js into smaller, focused utility modules (e.g., arrayUtils.js, stringUtils.js, objectUtils.js) and import them as needed for better organization and testability.",
+    "confidence": 75
+  },
+  {
+    "file": "lib/express.js",
+    "line": 1,
+    "category": "code quality",
+    "severity": "low",
+    "description": "The express.js file is only 81 lines and serves as a thin wrapper around application.js. While not problematic, it could be merged with application.js to reduce file complexity.",
+    "suggested_fix": "Consider merging express.js into application.js to simplify the module structure and reduce the number of files.",
+    "confidence": 60
+  },
+  {
+    "file": "lib/application.js",
+    "line": 615-617",
+    "category": "error handling",
+    "severity": "medium",
+    "description": "The logerror function logs errors to console.error but only when the environment is not 'test'. This could lead to missed error logging in development or production environments if not properly configured.",
+    "suggested_fix": "Implement a proper logging system that works across all environments and provides more control over error output. Consider using a logging library or at least making the logging behavior configurable.",
+    "confidence": 80
+  },
+  {
+    "file": "lib/application.js",
+    "line": 146-147, 507, 603",
+    "category": "error handling",
+    "severity": "medium",
+    "description": "Error handling is mentioned in comments but there's no comprehensive error handling strategy. The onerror handler is set but it's not clear how errors are propagated through the middleware stack.",
+    "suggested_fix": "Implement a more robust error handling mechanism with clear error propagation through the middleware chain and better documentation on how to handle errors in Express applications.",
+    "confidence": 75
+  },
+  {
+    "file": "lib/application.js",
+    "line": 1,
+    "category": "security",
+    "severity": "medium",
+    "description": "Express does not provide built-in protection against common web vulnerabilities like SQL injection, XSS, or CSRF. While Express is a minimal framework, it could provide better defaults or easier integration with security middleware.",
+    "suggested_fix": "Consider providing built-in middleware for common security protections (helmet, csurf integration) or at least better documentation and defaults for securing Express applications.",
+    "confidence": 70
+  },
+  {
+    "file": "lib/application.js",
+    "line": 1,
+    "category": "security",
+    "severity": "medium",
+    "description": "There is no input validation for URL routes or query parameters. Malicious users could potentially craft URLs that cause unexpected behavior or security issues.",
+    "suggested_fix": "Add validation for route parameters and query strings, or provide utilities for input validation to help developers build more secure applications.",
+    "confidence": 65
+  },
+  {
+    "file": "lib/application.js",
+    "line": 1,
+    "category": "performance",
+    "severity": "low",
+    "description": "The application.js file uses Object.create(null) for caches and settings, which is good for performance, but there's no clear strategy for cache invalidation or memory management in long-running processes.",
+    "suggested_fix": "Implement cache management strategies and provide options for cache invalidation to prevent memory leaks in long-running Express applications.",
+    "confidence": 60
+  }
+]

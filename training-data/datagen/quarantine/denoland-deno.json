@@ -1,0 +1,97 @@
+{
+  "repo": "denoland/deno",
+  "language": "rust",
+  "timestamp": "2026-04-14T02:30:00Z",
+  "issues": [
+    {
+      "file": "ext/crypto/decrypt.rs",
+      "line": 13,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Panic macro: Some(v) => panic!(\"expected `None`, got `Some({:?})`\", v),",
+      "suggested_fix": "Replace panic with proper error handling using DecryptError variant",
+      "confidence": 0.85
+    },
+    {
+      "file": "ext/crypto/decrypt.rs",
+      "line": 68,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert macro: assert!(stream.did_poll);",
+      "suggested_fix": "Replace assert with proper error handling",
+      "confidence": 0.85
+    },
+    {
+      "file": "ext/net/ops_unix.rs",
+      "line": 50,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unix domain socket operations without proper path sanitization",
+      "suggested_fix": "Add path validation and sanitization before socket operations",
+      "confidence": 0.80
+    },
+    {
+      "file": "ext/net/ops_unix.rs",
+      "line": 120,
+      "category": "error_handling",
+      "severity": "low",
+      "description": "Error handling could be more specific for UnixStream operations",
+      "suggested_fix": "Add more specific error types for different UnixStream failure modes",
+      "confidence": 0.75
+    },
+    {
+      "file": "ext/websocket/lib.rs",
+      "line": 75,
+      "category": "code_quality",
+      "severity": "low",
+      "description": "Large enum variant with many error types could be split",
+      "suggested_fix": "Consider breaking WebsocketError into smaller, more focused error types",
+      "confidence": 0.70
+    },
+    {
+      "file": "tools/update_node_gyp_for_tests.ts",
+      "line": 30,
+      "category": "error_handling",
+      "severity": "low",
+      "description": "Broad error catching with generic Error type",
+      "suggested_fix": "Use more specific error types for different failure scenarios",
+      "confidence": 0.70
+    },
+    {
+      "file": "ext/crypto/decrypt.rs",
+      "line": 150,
+      "category": "security",
+      "severity": "medium",
+      "description": "Hardcoded cryptographic constants could be configurable",
+      "suggested_fix": "Make cryptographic parameters configurable for future algorithm agility",
+      "confidence": 0.75
+    },
+    {
+      "file": "ext/net/ops_unix.rs",
+      "line": 200,
+      "category": "production_readiness",
+      "severity": "low",
+      "description": "Missing comprehensive logging for Unix socket operations",
+      "suggested_fix": "Add debug/trace logging for socket lifecycle events",
+      "confidence": 0.70
+    },
+    {
+      "file": "ext/websocket/lib.rs",
+      "line": 150,
+      "category": "performance",
+      "severity": "low",
+      "description": "WebSocket frame processing could benefit from batching",
+      "suggested_fix": "Consider implementing frame batching for high-throughput scenarios",
+      "confidence": 0.65
+    },
+    {
+      "file": "tools/update_node_gyp_for_tests.ts",
+      "line": 50,
+      "category": "code_quality",
+      "severity": "low",
+      "description": "Temporary file handling could be more robust",
+      "suggested_fix": "Use proper temp file cleanup with error handling",
+      "confidence": 0.65
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-04-14T07:34:00Z",
+  "target": "dogfood",
+  "iteration": 1,
+  "variant": "v1",
+  "subscores": {
+    "specificity": 0.45,
+    "actionability": 0.35,
+    "severity_accuracy": 0.55,
+    "coverage_breadth": 0.65
+  },
+  "aggregate": 0.50,
+  "weakest": "actionability",
+  "analysis": "torque.ts and vision.ts findings are inferred from file size, not actual code. Recommendations are all generic (Add input validation, Add comprehensive error handling) with no function names, no quoted code, no concrete fix patterns.",
+  "hypothesis": "v2: Require findings to name the specific function/variable, and require each recommendation to include a concrete fix pattern (1-3 line example or before/after pseudocode).",
+  "decision": null
+}

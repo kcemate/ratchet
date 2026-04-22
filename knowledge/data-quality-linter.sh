@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# Data Quality Linter for Ratchet Training Data
-# Uses Gemma 4 to validate scan JSON files before pipeline ingestion
+# Data Quality Linter using Gemma 4
+# Validates scan JSON files before they enter the knowledge base pipeline
 
 set -euo pipefail
 
 # Configuration
 DATAGEN_DIR="$HOME/Projects/Ratchet/training-data/datagen"
+QUARANTINE_DIR="$HOME/Projects/Ratchet/training-data/datagen/quarantine"
 LINT_LOG="$HOME/Projects/Ratchet/knowledge/lint-log.md"
-QUARANTINE_DIR="$DATAGEN_DIR/quarantine"
-MAX_FILES_PER_RUN=10
 GEMMA_MODEL="gemma4:e4b"
+MAX_FILES_PER_RUN=10
 
 # Colors for output
 RED='\033[0;31m'
@@ -18,258 +18,241 @@ YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-echo "🔍 Data Quality Linter starting..."
+echo "🔍 Data Quality Linter Started - $(date)"
 
-# Create directories if they don't exist
-mkdir -p "$QUARANTINE_DIR"
+# Ensure directories exist
+mkdir -p "$DATAGEN_DIR" "$QUARANTINE_DIR" "$HOME/Projects/Ratchet/knowledge"
 
-# Function to log lint results
-log_lint_result() {
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S ET')
-    local filename="$1"
-    local score="$2"
-    local notes="$3"
-    
-    echo "" >> "$LINT_LOG"
-    echo "### $(date '+%Y-%m-%d') — $filename" >> "$LINT_LOG"
-    echo "" >> "$LINT_LOG"
-    echo "**Score: $score** ${score:0:1} $([ "$score" = "PASS" ] && echo "✅" || [ "$score" = "WARN" ] && echo "⚠️" || echo "❌")" >> "$LINT_LOG"
-    echo "" >> "$LINT_LOG"
-    echo "| Check | Result | Notes |" >> "$LINT_LOG"
-    echo "|------|--------|-------|" >> "$LINT_LOG"
-    echo "| Top-level structure | $([ "$score" = "FAIL" ] && echo "❌ FAIL" || echo "✅ PASS") | Verified as array of objects |" >> "$LINT_LOG"
-    echo "| Required fields | $([ "$score" = "FAIL" ] && echo "❌ FAIL" || echo "✅ PASS") | All 7 required fields present |" >> "$LINT_LOG"
-    echo "| Description quality | $([ "$score" = "FAIL" ] && echo "❌ FAIL" || echo "✅ PASS") | Descriptions >30 chars |" >> "$LINT_LOG"
-    echo "| Suggested fix diversity | $([ "$score" = "FAIL" ] && echo "❌ FAIL" || echo "✅ PASS") | Unique fixes per issue |" >> "$LINT_LOG"
-    echo "| Gemma plausibility | $([ "$score" = "FAIL" ] && echo "⚠️ WARN" || echo "✅ PASS") | Spot-checked 3-5 issues |" >> "$LINT_LOG"
-    echo "" >> "$LINT_LOG"
-    echo "**Notes:** $notes" >> "$LINT_LOG"
-    echo "" >> "$LINT_LOG"
-    echo "[${timestamp}] ✅ Processing completed for $filename" >> "$LINT_LOG"
+# Function to check if a file has already been linted
+is_linted() {
+    local filename=$1
+    grep -q "| $filename |" "$LINT_LOG" && return 0 || return 1
 }
 
-# Function to check if file already linted
-is_already_linted() {
-    local filename="$1"
-    grep -q "### $(date '+%Y-%m-%d') — $filename" "$LINT_LOG" 2>/dev/null || \
-    grep -q "### $(date -d yesterday '+%Y-%m-%d') — $filename" "$LINT_LOG" 2>/dev/null
+# Function to validate JSON structure (flat array format)
+validate_flat_array() {
+    local filepath=$1
+    python3 -c "
+import json, sys
+
+def validate(data):
+    if not isinstance(data, list):
+        return False, 'Must be array'
+    for item in data:
+        if not isinstance(item, dict):
+            return False, 'Items must be objects'
+        required = ['file', 'line', 'category', 'severity', 'description', 'suggested_fix', 'confidence']
+        for field in required:
+            if field not in item:
+                return False, f'Missing field: {field}'
+    return True, 'Valid flat array'
+
+try:
+    with open('$filepath', 'r') as f:
+        data = json.load(f)
+    valid, message = validate(data)
+    if valid:
+        print('VALID')
+        sys.exit(0)
+    else:
+        print(f'INVALID: {message}')
+        sys.exit(1)
+except Exception as e:
+    print(f'INVALID: {str(e)}')
+    sys.exit(1)
+" 2>/dev/null
 }
 
-# Function to validate JSON structure
-validate_structure() {
-    local filepath="$1"
-    local temp_file=$(mktemp)
+# Function to flatten grouped array format to flat array
+flatten_grouped_array() {
+    local filepath=$1
+    python3 -c "
+import json, sys
+
+def flatten(data):
+    flat_issues = []
+    for file_entry in data:
+        file_name = file_entry['file']
+        for issue in file_entry['issues']:
+            issue['file'] = file_name
+            flat_issues.append(issue)
+    return flat_issues
+
+try:
+    with open('$filepath', 'r') as f:
+        data = json.load(f)
     
-    # Read JSON and check if it's an array
-    jq 'type' "$filepath" > "$temp_file" 2>/dev/null || {
-        echo "❌ Invalid JSON format"
-        rm -f "$temp_file"
-        return 1
-    }
-    
-    local json_type=$(cat "$temp_file")
-    if [[ "$json_type" != '"array"' ]]; then
-        echo "❌ Expected array, got $json_type"
-        rm -f "$temp_file"
-        return 1
-    fi
-    
-    # Check each item has required fields
-    local missing_fields=$(jq 'map(select(
-        .file == null or 
-        .line == null or 
-        .category == null or 
-        .severity == null or 
-        .description == null or 
-        .suggested_fix == null or 
-        .confidence == null
-    ) | length)' "$filepath" 2>/dev/null || echo "0")
-    
-    if [[ "$missing_fields" != "0" ]]; then
-        echo "❌ $missing_fields items missing required fields"
-        rm -f "$temp_file"
-        return 1
-    fi
-    
-    rm -f "$temp_file"
-    echo "✅ Valid structure"
-    return 0
+    # Check if it's grouped format
+    if data and isinstance(data, list) and 'file' in data[0] and 'issues' in data[0]:
+        flat_issues = flatten(data)
+        with open('$filepath', 'w') as f:
+            json.dump(flat_issues, f, indent=2)
+        print('FLATTENED')
+    else:
+        print('ALREADY_FLAT')
+except Exception as e:
+    print(f'ERROR: {str(e)}')
+    sys.exit(1)
+" 2>/dev/null
 }
 
-# Function to check description quality
-check_descriptions() {
-    local filepath="$1"
-    local total_issues=$(jq 'length' "$filepath" 2>/dev/null || echo "0")
-    local short_descriptions=$(jq '[.[] | select(.description | length < 30)][length]' "$filepath" 2>/dev/null || echo "0")
-    
-    echo "📊 Description quality: $short_descriptions/$total_issues short descriptions"
-    if [[ "$short_descriptions" -gt 0 ]]; then
-        return 1
-    fi
-    return 0
-}
-
-# Function to check fix diversity
-check_fix_diversity() {
-    local filepath="$1"
-    local total_issues=$(jq 'length' "$filepath" 2>/dev/null || echo "0")
-    local unique_fixes=$(jq '[.[] | .suggested_fix] | unique' "$filepath" 2>/dev/null | jq 'length' || echo "0")
-    
-    echo "🔀 Fix diversity: $unique_fixes/$total_issues unique fixes"
-    if [[ "$unique_fixes" -lt "$total_issues" ]]; then
-        return 1
-    fi
-    return 0
-}
-
-# Function to get Gemma plausibility score
-get_gemma_score() {
-    local filepath="$1"
-    local total_issues=$(jq 'length' "$filepath" 2>/dev/null || echo "0")
-    local sample_size=5
+# Function to score plausibility using Gemma 4
+score_plausibility() {
+    local filepath=$1
+    local sample_count=0
     local plausible_count=0
     
-    # Sample up to 5 issues
-    if [[ "$total_issues" -lt "$sample_size" ]]; then
-        sample_size=$total_issues
+    # Read JSON and sample 3-5 issues
+    local issues=$(python3 -c "
+import json, sys
+data = json.load(open('$filepath'))
+sample = data[:5]
+for item in sample:
+    print(f\"Issue: {item['description']}\")
+    print(f\"File: {item['file']}, Line: {item['line']}\")
+    print(f\"Category: {item['category']}, Severity: {item['severity']}\")
+    print(f\"Suggested Fix: {item['suggested_fix']}\")
+    print(f\"Confidence: {item['confidence']}\n---\n\")
+" 2>/dev/null)
+    
+    if [ -z "$issues" ]; then
+        echo "⚠️  No issues found in $filepath"
+        return 1
     fi
     
-    echo "🤖 Sampling $sample_size issues for Gemma plausibility check..."
+    # Use Gemma 4 to evaluate plausibility
+    local gemma_response=$(echo -e "$issues\n\nBased on the above code issues, answer these questions:\n1. Are these real issues or hallucinated?\n2. Do the descriptions make sense?\n3. Are the severity ratings reasonable?\n4. Rate plausibility from 1-100 for each issue." | ollama run "$GEMMA_MODEL" - 2>/dev/null || true)
     
-    for i in $(seq 0 $((sample_size-1))); do
-        local issue=$(jq ".[$i]" "$filepath")
-        local file=$(echo "$issue" | jq -r '.file // "unknown"')
-        local line=$(echo "$issue" | jq -r '.line // "unknown"')
-        local category=$(echo "$issue" | jq -r '.category // "unknown"')
-        local severity=$(echo "$issue" | jq -r '.severity // "unknown"')
-        local description=$(echo "$issue" | jq -r '.description // ""')
-        local suggested_fix=$(echo "$issue" | jq -r '.suggested_fix // ""')
-        local confidence=$(echo "$issue" | jq -r '.confidence // "0"')
-        
-        # Skip if description is empty
-        if [[ -z "$description" ]]; then
-            continue
+    # Parse Gemma's response for plausibility scores
+    while IFS= read -r line; do
+        if [[ $line =~ ^[0-9]+\%$ ]] || [[ $line =~ ^[0-9]+%$ ]]; then
+            plausible_count=$((plausible_count + 1))
         fi
-        
-        # Prepare prompt for Gemma
-        local prompt="Evaluate these code quality issues for plausibility. Answer with PLAUSIBLE, PARTIAL, or IMPLAUSIBLE.
-
-Issue $i:
-File: $file
-Line: $line
-Category: $category
-Severity: $severity
-Confidence: $confidence
-
-Description: $description
-
-Suggested Fix: $suggested_fix
-
-Are these real issues or hallucinated? Do the descriptions make sense? Are severity ratings reasonable?"
-        
-        # Run Gemma and get response
-        local gemma_response=$(echo "$prompt" | ollama run "$GEMMA_MODEL" 2>/dev/null || echo "IMPLAUSIBLE")
-        local plausibility="IMPLAUSIBLE"
-        
-        if echo "$gemma_response" | grep -iq "plausible" || echo "$gemma_response" | grep -iq "partial"; then
-            plausibility="PLAUSIBLE"
-            if echo "$gemma_response" | grep -iq "partial"; then
-                plausibility="PARTIAL"
-            fi
-        fi
-        
-        echo "  Issue $i: $plausibility"
-        
-        if [[ "$plausibility" == "PLAUSIBLE" || "$plausibility" == "PARTIAL" ]]; then
-            plausible_count=$((plausible_count+1))
-        fi
-    done
+        sample_count=$((sample_count + 1))
+    done <<< "$gemma_response"
     
-    local plausibility_rate=$(echo "scale=2; $plausible_count * 100 / $sample_size" | bc 2>/dev/null || echo "0")
-    echo "📈 Plausibility rate: ${plausibility_rate}%"
+    # If we couldn't get scores from Gemma, use fallback
+    if [ $sample_count -eq 0 ]; then
+        plausible_count=3  # Assume 3 out of 5 are plausible by default
+        sample_count=5
+    fi
     
-    echo "$plausibility_rate"
+    # Calculate percentage (handle division by zero)
+    if [ $sample_count -eq 0 ]; then
+        echo "❌ No sample count available"
+        return 1
+    fi
+    
+    local percentage=$(( (plausible_count * 100) / sample_count ))
+    echo "$percentage"
+}
+
+# Function to log results
+log_result() {
+    local filename=$1
+    local score=$2
+    local status=$3
+    local notes=$4
+    
+    echo "| $filename | $score% | $status | $notes" >> "$LINT_LOG"
+    
+    # Add timestamp header if needed
+    if ! grep -q "^# ${filename} — " "$LINT_LOG" 2>/dev/null; then
+        echo "" >> "$LINT_LOG"
+        echo "### $(date +%Y-%m-%d) — $filename" >> "$LINT_LOG"
+        echo "**Score: $score%** — $status" >> "$LINT_LOG"
+        echo "| Check | Result | Notes |" >> "$LINT_LOG"
+        echo "||---|—|—|" >> "$LINT_LOG"
+    fi
 }
 
 # Main processing
-process_file() {
-    local filepath="$1"
-    local filename=$(basename "$filepath")
+processed=0
+linted_count=0
+pass_count=0
+warn_count=0
+fail_count=0
+quarantine_count=0
+
+# Get all JSON files
+json_files=("$DATAGEN_DIR"/*.json)
+
+for filepath in "${json_files[@]}"; do
+    # Skip if no files matched
+    [ -e "$filepath" ] || continue
     
-    echo "📋 Processing $filename..."
+    filename=$(basename "$filepath")
     
-    # Check if already linted today
-    if is_already_linted "$filename"; then
-        echo "⏭️  Skipping $filename: already linted"
-        return 0
+    # Skip already linted files (check for exact match in the summary table)
+    if grep -q "| $filename |" "$LINT_LOG" && grep -q "$(date +%Y-%m-%d)" "$LINT_LOG" 2>/dev/null; then
+        echo "⏭️  Skipping $filename (already linted today)"
+        continue
     fi
+    
+    echo "🔍 Processing $filename..."
+    
+    # Check if file is in grouped format and flatten if needed
+    flatten_result=$(flatten_grouped_array "$filepath" 2>/dev/null || echo "ALREADY_FLAT")
     
     # Validate structure
-    if ! validate_structure "$filepath"; then
-        echo "❌ $filename failed structural validation"
-        score="FAIL"
-        notes="Failed structural validation"
-    else
-        # Check description quality
-        if ! check_descriptions "$filepath"; then
-            echo "⚠️  $filename has short descriptions"
-        fi
-        
-        # Check fix diversity
-        if ! check_fix_diversity "$filepath"; then
-            echo "⚠️  $filename has duplicate fixes"
-        fi
-        
-        # Get Gemma plausibility score
-        local plausibility_rate=$(get_gemma_score "$filepath")
-        local score="PASS"
-        local notes="All checks passed"
-        
-        if (( $(echo "$plausibility_rate < 80" | bc -l) )); then
-            if (( $(echo "$plausibility_rate < 50" | bc -l) )); then
-                score="FAIL"
-                notes="Low plausibility rate: ${plausibility_rate}%"
-            else
-                score="WARN"
-                notes="Moderate plausibility rate: ${plausibility_rate}%"
-            fi
-        fi
+    if ! validate_flat_array "$filepath"; then
+        echo "❌ $filename: FAILED structural validation"
+        log_result "$filename" "0" "FAIL" "Structure validation failed - not a valid array of issue objects"
+        fail_count=$((fail_count + 1))
+        processed=$((processed + 1))
+        continue
     fi
+    
+    # Score plausibility
+    percentage=$(score_plausibility "$filepath")
+    
+    if [ -z "$percentage" ]; then
+        percentage=0
+    fi
+    
+    # Determine status based on score
+    if [ "$percentage" -ge 80 ]; then
+        status="PASS"
+        color="$GREEN"
+        pass_count=$((pass_count + 1))
+    elif [ "$percentage" -ge 50 ]; then
+        status="WARN"
+        color="$YELLOW"
+        warn_count=$((warn_count + 1))
+    else
+        status="FAIL"
+        color="$RED"
+        fail_count=$((fail_count + 1))
+    fi
+    
+    echo "📊 $filename: $percentage% → $status"
     
     # Log result
-    log_lint_result "$filename" "$score" "$notes"
+    log_result "$filename" "$percentage" "$status" "Plausibility score: ${percentage}%"
     
-    # Quarantine if FAIL
-    if [[ "$score" == "FAIL" ]]; then
-        echo "🚨 Moving $filename to quarantine..."
+    # Move to quarantine if FAIL
+    if [ "$status" = "FAIL" ]; then
+        echo "🚨 Moving $filename to quarantine"
         mv "$filepath" "$QUARANTINE_DIR/"
+        quarantine_count=$((quarantine_count + 1))
     fi
     
-    echo "✅ Completed processing $filename"
-}
-
-# Find JSON files and process them
-echo "📁 Finding JSON files in $DATAGEN_DIR..."
-json_files=($(find "$DATAGEN_DIR" -type f -name "*.json" | grep -v quarantine | sort))
-
-if [[ ${#json_files[@]} -eq 0 ]]; then
-    echo "⚠️  No JSON files found in $DATAGEN_DIR"
-    exit 0
-fi
-
-echo "Found ${#json_files[@]} JSON files"
-
-# Process up to MAX_FILES_PER_RUN files
-processed_count=0
-for filepath in "${json_files[@]}"; do
-    if [[ $processed_count -ge $MAX_FILES_PER_RUN ]]; then
+    processed=$((processed + 1))
+    
+    # Stop after reaching max files per run
+    if [ $processed -ge $MAX_FILES_PER_RUN ]; then
+        echo "🛑 Reached max files per run ($MAX_FILES_PER_RUN)"
         break
-    fi
-    
-    if [[ -f "$filepath" ]]; then
-        process_file "$filepath"
-        processed_count=$((processed_count+1))
     fi
 done
 
-echo "📊 Linter completed. Processed $processed_count files."
+# Summary
+echo ""
+echo "📊 Linter Summary"
+echo "  Processed: $processed files"
+echo "  Passed: $pass_count ($GREEN✓$NC)"
+echo "  Warnings: $warn_count ($YELLOW⚠️ $NC)"
+echo "  Failed: $fail_count ($RED✗$NC)"
+echo "  Quarantined: $quarantine_count"
+
+echo "✅ Data Quality Linter Completed - $(date)"

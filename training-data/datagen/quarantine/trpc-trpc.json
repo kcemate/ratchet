@@ -1,0 +1,92 @@
+[
+  {
+    "file": "packages/server/src/unstable-core-do-not-import/initTRPC.ts",
+    "line": 125,
+    "category": "code-quality",
+    "severity": "medium",
+    "description": "Hardcoded error message in server environment check could benefit from more descriptive guidance",
+    "suggested_fix": "Enhance the error message to suggest common solutions like setting isServer=true or allowOutsideOfServer=true in the config",
+    "confidence": 85
+  },
+  {
+    "file": "packages/server/src/unstable-core-do-not-import/initTRPC.ts",
+    "line": 45,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Deprecated experimental_standaloneMiddleware export still present",
+    "suggested_fix": "Remove deprecated export in v12 as indicated by the deprecation comment",
+    "confidence": 90
+  },
+  {
+    "file": "packages/server/src/unstable-core-do-not-import/error/TRPCError.ts",
+    "line": 80,
+    "category": "error-handling",
+    "severity": "medium",
+    "description": "TRPCError constructor doesn't validate that opts.code is a valid TRPC_ERROR_CODE_KEY",
+    "suggested_fix": "Add validation to ensure code is one of the defined error codes to prevent typos",
+    "confidence": 80
+  },
+  {
+    "file": "packages/server/src/unstable-core-do-not-import/error/TRPCError.ts",
+    "line": 95,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "TS-ignore comments indicate potential type system limitations",
+    "suggested_fix": "Investigate if Error cause parameter can be properly typed without ts-ignore",
+    "confidence": 75
+  },
+  {
+    "file": "packages/server/src/adapters/express.ts",
+    "line": 30,
+    "category": "error-handling",
+    "severity": "medium",
+    "description": "Express middleware error handling relies on internal_exceptionHandler without explicit error logging",
+    "suggested_fix": "Add explicit error logging before passing to internal_exceptionHandler",
+    "confidence": 85
+  },
+  {
+    "file": "packages/server/src/adapters/aws-lambda/index.ts",
+    "line": 60,
+    "category": "performance",
+    "severity": "low",
+    "description": "AWS Lambda handlers create planner on every invocation without caching",
+    "suggested_fix": "Consider caching planner creation for repeated use in same lambda invocation",
+    "confidence": 70
+  },
+  {
+    "file": "packages/server/src/unstable-core-do-not-import/router.ts",
+    "line": 150,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Lazy router loading error message could be more specific about module structure",
+    "suggested_fix": "Improve error message to clearly explain expected module exports format",
+    "confidence": 75
+  },
+  {
+    "file": "packages/server/src/unstable-core-do-not-import/initTRPC.ts",
+    "line": 80,
+    "category": "security",
+    "severity": "low",
+    "description": "Environment variable access for NODE_ENV doesn't have validation",
+    "suggested_fix": "Add validation to ensure NODE_ENV is a valid string before comparison",
+    "confidence": 65
+  },
+  {
+    "file": "packages/server/src/unstable-core-do-not-import/router.ts",
+    "line": 200,
+    "category": "production-readiness",
+    "severity": "low",
+    "description": "Empty router object uses null assertions which could fail at runtime",
+    "suggested_fix": "Replace null assertions with proper runtime validation",
+    "confidence": 70
+  },
+  {
+    "file": "packages/server/src/unstable-core-do-not-import/initTRPC.ts",
+    "line": 105,
+    "category": "code-quality",
+    "severity": "low",
+    "description": "Config object creation mixes runtime values with type-only properties",
+    "suggested_fix": "Separate type-only properties from runtime config more clearly",
+    "confidence": 60
+  }
+]

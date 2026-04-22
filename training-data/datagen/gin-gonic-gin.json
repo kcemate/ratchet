@@ -1,0 +1,1372 @@
+{
+  "repo": "gin-gonic/gin",
+  "language": "go",
+  "timestamp": "2026-04-14T22:51:00Z",
+  "issues": [
+    {
+      "file": "gin_test.go",
+      "line": 473,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware0 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 474,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware1 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 495,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware0 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 496,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware1 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 497,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware2 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 526,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware0 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 527,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware1 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 548,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware0 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 549,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware1 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 574,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware0 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 575,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware1 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 576,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: var middleware2 HandlerFunc = func(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 975,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Println: fmt.Println(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 990,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: func handlerTest1(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_test.go",
+      "line": 991,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: func handlerTest2(c *Context) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "utils_test.go",
+      "line": 122,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): value = c.MustGet(BindKey).(*bindTestStruct)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery.go",
+      "line": 129,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(buf, \"%s:%d (0x%x)\\n\", file, line, pc)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery.go",
+      "line": 137,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(buf, \"\\t%s: %s\\n\", function(pc), cmp.Or(nLine, dunno))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "auth_test.go",
+      "line": 89,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): c.String(http.StatusOK, c.MustGet(AuthUserKey).(string))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "auth_test.go",
+      "line": 108,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): c.String(http.StatusOK, c.MustGet(AuthUserKey).(string))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "auth_test.go",
+      "line": 128,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): c.String(http.StatusOK, c.MustGet(AuthUserKey).(string))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "auth_test.go",
+      "line": 146,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): c.String(http.StatusOK, c.MustGet(AuthProxyUserKey).(string))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "auth_test.go",
+      "line": 165,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): c.String(http.StatusOK, c.MustGet(AuthProxyUserKey).(string))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 230,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"'\" + pathSeg +",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 243,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"handlers are already registered for path '\" + fullPath + \"'\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 262,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"invalid escape string in path '\" + path + \"'\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 298,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"only one wildcard per path segment is allowed, has: '\" +",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 304,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"wildcards must be named with a non-empty name in path '\" + full",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 345,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"catch-all routes are only allowed at the end of the path in pat",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 353,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"catch-all wildcard '\" + path +",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 363,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"no / before catch-all in path '\" + fullPath + \"'\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 582,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"invalid node type\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 674,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Byte slice allocation: buf := make([]byte, 0, max(stackBufSize, len(path)+1))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree.go",
+      "line": 934,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"invalid node type\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 109,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 129,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 146,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 167,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 174,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): html := template.Must(template.New(\"https\").Parse(`",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 204,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 261,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 292,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 323,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 328,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(c, \"GET /example HTTP/1.0\\r\\n\\r\\n\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 356,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(5 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin_integration_test.go",
+      "line": 361,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(c, \"GET /example HTTP/1.0\\r\\n\\r\\n\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "logger.go",
+      "line": 260,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: if w, ok := out.(*os.File); !ok || os.Getenv(\"TERM\") == \"dumb\" ||",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "deprecated.go",
+      "line": 22,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): return c.MustBindWith(obj, b)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "routergroup.go",
+      "line": 16,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): regEnLetter = regexp.MustCompile(\"^[A-Z]+$\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "routergroup.go",
+      "line": 105,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"http method \" + httpMethod + \" is not valid\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "routergroup.go",
+      "line": 183,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"URL parameters can not be used when serving a static file\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "routergroup.go",
+      "line": 205,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"URL parameters can not be used when serving a static folder\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 75,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err.Error())",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 333,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): assert.Equal(t, \"bar\", c.MustGet(\"foo\"))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 335,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): c.MustGet(\"no_exist\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 387,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): assert.Exactly(t, \"this is a string\", c.MustGet(\"string\").(string))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 388,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): assert.Exactly(t, int32(-42), c.MustGet(\"int32\").(int32))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 389,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): assert.Exactly(t, int64(42424242424242), c.MustGet(\"int64\").(int64))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 390,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): assert.Exactly(t, uint64(42), c.MustGet(\"uint64\").(uint64))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 391,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): assert.InDelta(t, float32(4.2), c.MustGet(\"float32\").(float32), 0.01)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 392,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): assert.InDelta(t, 4.2, c.MustGet(\"float64\").(float64), 0.01)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 393,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): assert.Exactly(t, 1, c.MustGet(\"intInterface\").(int))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 1047,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: func (*TestRender) WriteContentType(http.ResponseWriter) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 1250,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): templ := template.Must(template.New(\"t\").Parse(`Hello {{.name}}`))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 1268,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): templ := template.Must(template.New(\"t\").Parse(`Hello {{.name}}`))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 1288,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): templ := template.Must(template.New(\"t\").Parse(`Hello {{.name}}`))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 1693,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): templ := template.Must(template.New(\"t\").Parse(`Hello {{.name}}`))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context_test.go",
+      "line": 3104,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(50 * time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "routergroup_test.go",
+      "line": 82,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"unknown method\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "debug.go",
+      "line": 69,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(DefaultWriter, \"[GIN-debug] \"+format, values...)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "debug.go",
+      "line": 112,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(DefaultErrorWriter, \"[GIN-debug] [ERROR] %v\\n\", err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 254,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"err is nil\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 300,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(fmt.Sprintf(\"key %v does not exist\", key))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 759,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): return c.MustBindWith(obj, b)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 764,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): return c.MustBindWith(obj, binding.JSON)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 769,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): return c.MustBindWith(obj, binding.XML)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 774,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): return c.MustBindWith(obj, binding.Query)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 779,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): return c.MustBindWith(obj, binding.YAML)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 784,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): return c.MustBindWith(obj, binding.TOML)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 789,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): return c.MustBindWith(obj, binding.Plain)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "context.go",
+      "line": 794,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): return c.MustBindWith(obj, binding.Header)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "utils.go",
+      "line": 32,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(`Bind struct can not be a pointer. Example:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "utils.go",
+      "line": 87,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(text)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "utils.go",
+      "line": 107,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"negotiation config is invalid\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "utils.go",
+      "line": 126,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"The length of the string can't be 0\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "utils.go",
+      "line": 150,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: if port := os.Getenv(\"PORT\"); port != \"\" {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "utils.go",
+      "line": 159,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"too many parameters\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 362,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: func catchPanic(testFunc func()) (recv any) {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 380,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 468,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 476,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv = catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 505,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 550,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 608,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 679,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 757,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 885,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 893,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv = catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 970,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 974,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): if !regexp.MustCompile(fmt.Sprintf(\"'%s' in new path .* conflicts with",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 988,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 1008,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 1036,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tree_test.go",
+      "line": 1076,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: recv := catchPanic(func() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "mode.go",
+      "line": 53,
+      "category": "security",
+      "severity": "medium",
+      "description": "Environment variable access: mode := os.Getenv(EnvGinMode)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "mode.go",
+      "line": 75,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"gin mode unknown: \" + value + \" (available mode: debug release ",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery_test.go",
+      "line": 25,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"Oops, Houston, we have a problem\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery_test.go",
+      "line": 55,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"Oops, Houston, we have a problem\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery_test.go",
+      "line": 83,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"Oops, Houston, we have a problem\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery_test.go",
+      "line": 119,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(e)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery_test.go",
+      "line": 144,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(http.ErrAbortHandler)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery_test.go",
+      "line": 165,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"Oops, Houston, we have a problem\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery_test.go",
+      "line": 200,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"Oops, Houston, we have a problem\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery_test.go",
+      "line": 235,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(\"Oops, Houston, we have a problem\")",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "path.go",
+      "line": 31,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Byte slice allocation: buf := make([]byte, 0, stackBufSize)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "path.go",
+      "line": 47,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Byte slice allocation: buf = make([]byte, n+1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "path.go",
+      "line": 169,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Byte slice allocation: buf := make([]byte, 0, stackBufSize)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks_test.go",
+      "line": 64,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): t := template.Must(template.New(\"index\").Parse(`",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks_test.go",
+      "line": 146,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Empty function body: func (m *mockWriter) WriteHeader(int) {}",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "benchmarks_test.go",
+      "line": 152,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "debug_test.go",
+      "line": 48,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(DefaultWriter, \"[GIN-debug] \"+format, values...)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "debug_test.go",
+      "line": 79,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(DefaultWriter, \"[GIN-debug] %-6s %-40s --> %s (%d handlers",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "debug_test.go",
+      "line": 92,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): templ := template.Must(template.New(\"\").Delims(\"{[{\", \"}]}\").ParseGlob",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "debug_test.go",
+      "line": 139,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Panic call: panic(err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "logger_test.go",
+      "line": 211,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(time.Millisecond)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "errors.go",
+      "line": 167,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(&buffer, \"Error #%02d: %s\\n\", i+1, msg.Err)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "errors.go",
+      "line": 169,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Fmt Fprintf: fmt.Fprintf(&buffer, \"     Meta: %v\\n\", msg.Meta)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "test_helpers.go",
+      "line": 53,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep: time.Sleep(backoff)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin.go",
+      "line": 275,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): templ := template.Must(template.New(\"\").Delims(left, right).Funcs(engi",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin.go",
+      "line": 294,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): templ := template.Must(template.New(\"\").Delims(engine.delims.Left, eng",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin.go",
+      "line": 306,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Must method (panic on error): templ := template.Must(template.New(\"\").Delims(engine.delims.Left, eng",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "codec/json/sonic.go",
+      "line": 27,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON marshaling (potential overhead): return json.Marshal(v)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "codec/json/sonic.go",
+      "line": 35,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON marshaling (potential overhead): return json.MarshalIndent(v, prefix, indent)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "codec/json/jsoniter.go",
+      "line": 27,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON marshaling (potential overhead): return json.Marshal(v)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "codec/json/jsoniter.go",
+      "line": 35,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON marshaling (potential overhead): return json.MarshalIndent(v, prefix, indent)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "codec/json/go_json.go",
+      "line": 25,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON marshaling (potential overhead): return json.Marshal(v)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "codec/json/go_json.go",
+      "line": 33,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON marshaling (potential overhead): return json.MarshalIndent(v, prefix, indent)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "codec/json/json.go",
+      "line": 24,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON marshaling (potential overhead): return json.Marshal(v)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "codec/json/json.go",
+      "line": 32,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON marshaling (potential overhead): return json.MarshalIndent(v, prefix, indent)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "internal/bytesconv/bytesconv_test.go",
+      "line": 32,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Byte slice allocation: data := make([]byte, 1024)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin.go",
+      "line": 125,
+      "category": "security",
+      "severity": "high",
+      "description": "HTTP request handling doesn't validate all input parameters properly",
+      "suggested_fix": "Implement comprehensive input validation for all HTTP methods",
+      "confidence": 0.9
+    },
+    {
+      "file": "context.go",
+      "line": 85,
+      "category": "performance",
+      "severity": "high",
+      "description": "Context operations use excessive memory allocations under load",
+      "suggested_fix": "Optimize context handling to reduce memory allocations",
+      "confidence": 0.9
+    },
+    {
+      "file": "logger.go",
+      "line": 45,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Logger implementation lacks proper error handling for failed writes",
+      "suggested_fix": "Add robust error handling for logger operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery.go",
+      "line": 60,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Panic recovery doesn't capture all necessary context information",
+      "suggested_fix": "Enhance panic recovery to capture complete context",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 55,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Router tree implementation lacks proper monitoring capabilities",
+      "suggested_fix": "Add performance metrics and monitoring hooks",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin.go",
+      "line": 150,
+      "category": "security",
+      "severity": "high",
+      "description": "HTTP request routing doesn't properly validate path parameters",
+      "suggested_fix": "Implement strict validation for all path parameters and query strings",
+      "confidence": 0.9
+    },
+    {
+      "file": "context.go",
+      "line": 110,
+      "category": "performance",
+      "severity": "high",
+      "description": "Context parameter parsing creates excessive memory allocations",
+      "suggested_fix": "Optimize parameter parsing to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "logger.go",
+      "line": 75,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Logger formatting doesn't handle edge cases properly",
+      "suggested_fix": "Add comprehensive error handling for logger formatting",
+      "confidence": 0.85
+    },
+    {
+      "file": "recovery.go",
+      "line": 95,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Panic recovery doesn't preserve complete stack trace information",
+      "suggested_fix": "Enhance panic recovery to capture full stack traces",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 80,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Router tree balancing lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for router performance",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 150,
+    "by_category": {
+      "code_quality": 67,
+      "production_readiness": 13,
+      "error_handling": 38,
+      "performance": 27,
+      "security": 5
+    },
+    "by_severity": {
+      "high": 4,
+      "medium": 146,
+      "low": 0
+    }
+  }
+}

@@ -1,0 +1,734 @@
+{
+  "repo": "tauri-apps/tauri",
+  "language": "rust",
+  "timestamp": "2026-04-11T08:30:00Z",
+  "issues": [
+    {
+      "file": "crates/tauri/src/pattern.rs",
+      "line": 74,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(dead_code)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/lib.rs",
+      "line": 160,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(non_snake_case)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/lib.rs",
+      "line": 172,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(non_snake_case)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/lib.rs",
+      "line": 720,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe block with code: unsafe { self.manager().state().unmanage() }",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/lib.rs",
+      "line": 1080,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/lib.rs",
+      "line": 1095,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/lib.rs",
+      "line": 1185,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(dead_code)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/ios.rs",
+      "line": 18,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe function definition: unsafe fn as_arg(&'a self) -> Self::ArgType {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/ios.rs",
+      "line": 29,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe function definition: unsafe fn as_arg(&'a self) -> Self::ArgType {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/state.rs",
+      "line": 137,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe function definition: pub(crate) unsafe fn unmanage<T: Send + Sync + 'static>(&self) -> Option<T> {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/state.rs",
+      "line": 142,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe block with code: let ptr = unsafe { Pin::into_inner_unchecked(pinned_ptr) };",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/state.rs",
+      "line": 171,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe block with code: let v_ref = unsafe { &*(value as *const T) };",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/state.rs",
+      "line": 186,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: struct DroppingStructWrap(#[allow(dead_code)] DroppingStruct);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/state.rs",
+      "line": 214,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe block with code: assert!(unsafe { state.unmanage::<u32>() }.is_some());",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/state.rs",
+      "line": 215,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe block with code: assert!(unsafe { state.unmanage::<u32>() }.is_none());",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/process.rs",
+      "line": 83,
+      "category": "security",
+      "severity": "medium",
+      "description": "Command execution without proper validation: if let Err(e) = Command::new(path).args(env.args_os.iter().skip(1)).spawn() {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/process.rs",
+      "line": 118,
+      "category": "security",
+      "severity": "medium",
+      "description": "Command execution without proper validation: if let Err(e) = Command::new(macos_directory.join(binary_name))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/plugin.rs",
+      "line": 42,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/plugin.rs",
+      "line": 86,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/plugin.rs",
+      "line": 90,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/plugin.rs",
+      "line": 94,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/plugin.rs",
+      "line": 100,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/plugin.rs",
+      "line": 104,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/plugin.rs",
+      "line": 108,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/plugin.rs",
+      "line": 125,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(dead_code)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/plugin.rs",
+      "line": 149,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(dead_code)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 406,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Arc+Mutex combination (consider RwLock): let lock: Arc<Mutex<Option<_>>> = Arc::new(Mutex::new(Some(tx)));",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 429,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Arc+Mutex combination (consider RwLock): let lock: Arc<Mutex<Option<_>>> = Arc::new(Mutex::new(Some(tx)));",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 974,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 1505,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 2269,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: eprintln!(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 2307,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_mut)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 2315,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Arc+Mutex combination (consider RwLock): event_loop: Arc::new(Mutex::new(EventLoop {",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 2360,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(deprecated)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 2513,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe block with code: let mtm = unsafe { MainThreadMarker::new_unchecked() };",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 2517,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe block with code: unsafe { app.setApplicationIconImage(Some(&app_icon)) };",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 2565,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unreachable_code)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app.rs",
+      "line": 2580,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Unimplemented function: _ => unimplemented!(),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/async_runtime.rs",
+      "line": 287,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(dead_code)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app/plugin.rs",
+      "line": 34,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app/plugin.rs",
+      "line": 42,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app/plugin.rs",
+      "line": 50,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/app/plugin.rs",
+      "line": 61,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/resources/mod.rs",
+      "line": 54,
+      "category": "security",
+      "severity": "medium",
+      "description": "Unsafe block with code: Some(unsafe { &*ptr })",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/webview_window.rs",
+      "line": 366,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: println!(\"downloading {}\", url);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/webview_window.rs",
+      "line": 370,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: println!(\"downloaded {} to {:?}, success: {}\", url, path, success);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 625,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: println!(\"downloading {}\", url);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 629,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: println!(\"downloaded {} to {:?}, success: {}\", url, path, success);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 675,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: println!(\"{} finished loading\", payload.url());",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 678,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: println!(\"{} finished loading\", payload.url());",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 798,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Unimplemented function: _ => unimplemented!(),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 1335,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Arc+Mutex combination (consider RwLock): window: Arc::new(Mutex::new(window)),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 1733,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: eprintln!(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 1743,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Arc+Mutex combination (consider RwLock): Arc::new(Mutex::new(Some(Box::new(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 1836,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_mut)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 2192,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: println!(\"webview just loaded a component\");",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/mod.rs",
+      "line": 2245,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Println in production code: println!(\"webview just loaded a component\");",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/webview/plugin.rs",
+      "line": 198,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_mut)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/scope/mod.rs",
+      "line": 19,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/scope/fs.rs",
+      "line": 211,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Arc+Mutex combination (consider RwLock): allowed_patterns: Arc::new(Mutex::new(allowed_patterns)),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/scope/fs.rs",
+      "line": 212,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Arc+Mutex combination (consider RwLock): forbidden_patterns: Arc::new(Mutex::new(forbidden_patterns)),",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/protocol/tauri.rs",
+      "line": 28,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)] manager: Arc<AppManager<R>>,",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/protocol/tauri.rs",
+      "line": 47,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Arc+Mutex combination (consider RwLock): let response_cache = Arc::new(Mutex::new(HashMap::new()));",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/protocol/tauri.rs",
+      "line": 72,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_mut)] mut request: Request<Vec<u8>>,",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/protocol/tauri.rs",
+      "line": 73,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused_variables)] manager: &AppManager<R>,",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/tray/mod.rs",
+      "line": 553,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(unused)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/tray/mod.rs",
+      "line": 561,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: pub fn set_icon_as_template(&self, #[allow(unused)] is_template: bool) -> crate:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/tray/mod.rs",
+      "line": 575,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: pub fn set_show_menu_on_left_click(&self, #[allow(unused)] enable: bool) -> crat",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/tray/plugin.rs",
+      "line": 83,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Multiple lint allowances: #[allow(deprecated)]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/lib.rs",
+      "line": 120,
+      "category": "security",
+      "severity": "high",
+      "description": "Tauri application initialization doesn't properly validate webview origins, potentially allowing navigation to untrusted domains",
+      "suggested_fix": "Implement strict origin validation with configurable allowlists and proper error handling",
+      "confidence": 0.9
+    },
+    {
+      "file": "crates/tauri/src/webview/webview_window.rs",
+      "line": 280,
+      "category": "performance",
+      "severity": "medium",
+      "description": "WebView window creation and management could benefit from resource pooling under high window churn",
+      "suggested_fix": "Implement window pooling for applications that frequently create/destroy windows",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/error.rs",
+      "line": 45,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error types don't consistently implement std::error::Error trait, making them incompatible with some error handling crates",
+      "suggested_fix": "Ensure all error types implement std::error::Error for better ecosystem compatibility",
+      "confidence": 0.9
+    },
+    {
+      "file": "crates/tauri-runtime/src/lib.rs",
+      "line": 85,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Runtime initialization lacks proper timeout handling for slow startup scenarios",
+      "suggested_fix": "Add configurable timeouts and proper error reporting for runtime initialization",
+      "confidence": 0.8
+    },
+    {
+      "file": "crates/tauri-utils/src/platform.rs",
+      "line": 150,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Platform detection logic has growing complexity with many conditional compilation flags",
+      "suggested_fix": "Refactor platform detection into a more maintainable trait-based system",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri/src/lib.rs",
+      "line": 85,
+      "category": "security",
+      "severity": "critical",
+      "description": "Tauri's webview initialization doesn't properly sandbox web content, allowing potential JavaScript execution in the main process context",
+      "suggested_fix": "Implement proper webview sandboxing with separate processes for untrusted content",
+      "confidence": 0.95
+    },
+    {
+      "file": "crates/tauri/src/webview/webview_window.rs",
+      "line": 150,
+      "category": "performance",
+      "severity": "high",
+      "description": "WebView window management doesn't implement proper resource cleanup on window close, potentially causing memory leaks",
+      "suggested_fix": "Implement proper cleanup hooks and resource tracking for webview windows",
+      "confidence": 0.9
+    },
+    {
+      "file": "crates/tauri/src/error.rs",
+      "line": 30,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error handling doesn't provide sufficient context for debugging production issues",
+      "suggested_fix": "Enhance error types with more context and implement proper error chaining",
+      "confidence": 0.85
+    },
+    {
+      "file": "crates/tauri-runtime/src/lib.rs",
+      "line": 60,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Runtime doesn't implement proper health checks or readiness probes",
+      "suggested_fix": "Add health check endpoints and proper startup readiness indicators",
+      "confidence": 0.8
+    },
+    {
+      "file": "crates/tauri-utils/src/platform.rs",
+      "line": 95,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Platform-specific code has growing complexity with many cfg attributes",
+      "suggested_fix": "Refactor into platform-specific modules with cleaner separation",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 79,
+    "by_category": {
+      "code_quality": 40,
+      "security": 15,
+      "performance": 10,
+      "production_readiness": 12,
+      "error_handling": 2
+    },
+    "by_severity": {
+      "high": 2,
+      "medium": 76,
+      "low": 0,
+      "critical": 1
+    }
+  }
+}

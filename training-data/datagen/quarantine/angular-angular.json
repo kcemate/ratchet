@@ -1,0 +1,90 @@
+[{
+  "file": "packages/core/src/render3/instructions/shared.ts",
+  "line": 120,
+  "category": "Performance",
+  "severity": "Medium",
+  "description": "The mapPropName function uses a series of if-else statements for property name mapping, which could be more efficiently implemented using a lookup object or Map for O(1) access time instead of O(n) linear search.",
+  "suggested_fix": "Replace the if-else chain with a constant lookup object: const PROP_NAME_MAP = { 'class': 'className', 'for': 'htmlFor', 'formaction': 'formAction', 'innerHtml': 'innerHTML', 'readonly': 'readOnly', 'tabindex': 'tabIndex' }; function mapPropName(name) { return PROP_NAME_MAP[name] || name; }",
+  "confidence": 90
+},
+{
+  "file": "packages/core/src/render3/instructions/shared.ts",
+  "line": 205,
+  "category": "Code Quality",
+  "severity": "Low",
+  "description": "The setDomProperty function has a complex conditional structure with nested if-else blocks that could be simplified for better readability and maintainability.",
+  "suggested_fix": "Extract the DOM property setting logic into separate helper functions to reduce cyclomatic complexity and improve code clarity.",
+  "confidence": 85
+},
+{
+  "file": "packages/core/src/render3/instructions/shared.ts",
+  "line": 350,
+  "category": "Error Handling",
+  "severity": "Medium",
+  "description": "The findDirectiveDefMatches function uses null checks but doesn't handle the case where registry might be undefined, potentially causing runtime errors.",
+  "suggested_fix": "Add explicit null/undefined check for registry parameter and provide appropriate error handling or default behavior.",
+  "confidence": 80
+},
+{
+  "file": "packages/core/src/render3/instructions/shared.ts",
+  "line": 420,
+  "category": "Security",
+  "severity": "High",
+  "description": "The elementAttributeInternal function directly uses user-provided attribute names and values without sufficient validation against XSS vectors, especially for dangerous attributes like 'onclick', 'onload', etc.",
+  "suggested_fix": "Add validation to block or sanitize dangerous event handler attributes and other XSS-prone attribute names before processing.",
+  "confidence": 95
+},
+{
+  "file": "packages/core/src/render3/instructions/shared.ts",
+  "line": 510,
+  "category": "Production Readiness",
+  "severity": "Medium",
+  "description": "The storePropertyBindingMetadata function uses string concatenation with a special delimiter character that could cause issues if the property name or interpolation parts contain the same delimiter.",
+  "suggested_fix": "Use a more robust serialization format like JSON or a structured object instead of delimiter-separated strings to avoid collision issues.",
+  "confidence": 90
+},
+{
+  "file": "packages/core/src/render3/instructions/element.ts",
+  "line": 85,
+  "category": "Code Quality",
+  "severity": "Low",
+  "description": "The ɵɵelementStart function has a long parameter list and complex logic that could benefit from being broken down into smaller, more focused functions.",
+  "suggested_fix": "Refactor the function to extract specific responsibilities (validation, node creation, attribute handling) into separate helper functions.",
+  "confidence": 80
+},
+{
+  "file": "tools/tslint/noExportedInferredCallTypeRule.ts",
+  "line": 32,
+  "category": "Code Quality",
+  "severity": "Medium",
+  "description": "The TSLint rule uses string concatenation for error messages which could lead to inconsistent formatting and makes internationalization more difficult.",
+  "suggested_fix": "Use template literals for better readability and consider using a message catalog for internationalization support.",
+  "confidence": 75
+},
+{
+  "file": "packages/core/src/render3/instructions/shared.ts",
+  "line": 150,
+  "category": "Performance",
+  "severity": "Medium",
+  "description": "The setNgReflectProperties function performs multiple type checks and property lookups in a loop, which could be optimized by caching frequently accessed properties.",
+  "suggested_fix": "Cache lView[ENVIRONMENT] and other frequently accessed properties outside the loop to reduce redundant lookups.",
+  "confidence": 85
+},
+{
+  "file": "packages/core/src/render3/instructions/shared.ts",
+  "line": 280,
+  "category": "Error Handling",
+  "severity": "Medium",
+  "description": "The instantiateAllDirectives function has nested conditional logic that could fail silently if getNodeInjectable returns undefined or null.",
+  "suggested_fix": "Add null checks and appropriate error handling for the directive instantiation process.",
+  "confidence": 80
+},
+{
+  "file": "packages/core/src/render3/instructions/shared.ts",
+  "line": 320,
+  "category": "Code Quality",
+  "severity": "Low",
+  "description": "The invokeDirectivesHostBindings function uses a try-finally block with complex state management that could be simplified using a more functional approach.",
+  "suggested_fix": "Consider using a state management pattern or context object to reduce the need for manual state restoration in finally blocks.",
+  "confidence": 75
+}]

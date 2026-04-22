@@ -1,110 +1,697 @@
-[
-  {
-    "file": "gin.go",
-    "line": 102,
-    "category": "security",
-    "severity": "high",
-    "description": "Engine trusts all proxies by default with `trustedProxies: []string{\"0.0.0.0/0\", \"::/0\"}`. This allows any client to spoof their IP address when ForwardedByClientIP is enabled, leading to security vulnerabilities in production environments.",
-    "suggested_fix": "Change default to empty or minimal trusted CIDRs. Add clear warning in documentation and require explicit configuration for proxy trust.",
-    "confidence": 95
-  },
-  {
-    "file": "gin.go",
-    "line": 135,
-    "category": "security",
-    "severity": "high",
-    "description": "TrustedPlatform defaults to empty string, but AppEngine field is deprecated. This creates confusion and potential misconfiguration where security settings might not be applied correctly.",
-    "suggested_fix": "Remove deprecated AppEngine field completely and make TrustedPlatform required with proper validation.",
-    "confidence": 90
-  },
-  {
-    "file": "recovery.go",
-    "line": 72,
-    "category": "error-handling",
-    "severity": "high",
-    "description": "Broken pipe errors (EPIPE, ECONNRESET) are caught but not properly logged. The error is added to context but the response is aborted without proper cleanup, potentially leaving resources in inconsistent state.",
-    "suggested_fix": "Ensure proper error logging and resource cleanup. Consider using context cancellation and proper defer patterns.",
-    "confidence": 85
-  },
-  {
-    "file": "tree.go",
-    "line": 287,
-    "category": "code-quality",
-    "severity": "medium",
-    "description": "Multiple functions use panic for control flow (e.g., route registration conflicts). This is inappropriate for production code as it crashes the entire server instead of returning proper HTTP errors.",
-    "suggested_fix": "Replace panics with proper error returns and HTTP error responses. Use custom errors that can be handled gracefully.",
-    "confidence": 92
-  },
-  {
-    "file": "tree.go",
-    "line": 156,
-    "category": "security",
-    "severity": "medium",
-    "description": "Path parameter validation is minimal. Wildcard patterns like `:name*` and `*` are allowed but not properly validated, potentially allowing path traversal or unexpected routing behavior.",
-    "suggested_fix": "Add strict validation for path parameters. Disallow dangerous patterns and enforce naming conventions.",
-    "confidence": 88
-  },
-  {
-    "file": "logger.go",
-    "line": 144,
-    "category": "performance",
-    "severity": "medium",
-    "description": "Logger uses `fmt.Fprint` directly to output logs without any buffering or pooling. This causes excessive allocations and can become a bottleneck under high load.",
-    "suggested_fix": "Implement a buffered logger or use sync.Pool for log buffers. Consider asynchronous logging for high-traffic scenarios.",
-    "confidence": 80
-  },
-  {
-    "file": "logger.go",
-    "line": 78,
-    "category": "production-readiness",
-    "severity": "medium",
-    "description": "Logger lacks request ID correlation. Without request IDs, it's difficult to trace requests across microservices or debug complex request flows.",
-    "suggested_fix": "Add request ID support to LoggerConfig. Extract from headers or generate new UUID for each request.",
-    "confidence": 85
-  },
-  {
-    "file": "auth.go",
-    "line": 62,
-    "category": "security",
-    "severity": "medium",
-    "description": "Basic Auth uses `subtle.ConstantTimeCompare` but the comparison is done on string bytes without constant-time string comparison. This could potentially leak timing information.",
-    "suggested_fix": "Use constant-time comparison for the entire authentication process. Consider using a dedicated security library for authentication.",
-    "confidence": 75
-  },
-  {
-    "file": "routergroup.go",
-    "line": 189,
-    "category": "error-handling",
-    "severity": "medium",
-    "description": "Static file serving uses `panic` when URL parameters are detected, which crashes the server. Should return HTTP 500 error instead.",
-    "suggested_fix": "Replace panic with proper error handling and HTTP error response. Validate inputs before processing.",
-    "confidence": 90
-  },
-  {
-    "file": "context.go",
-    "line": 845,
-    "category": "security",
-    "severity": "low",
-    "description": "ClientIP method doesn't properly validate IP addresses from headers. Could be vulnerable to IP spoofing if trusted proxies aren't configured correctly.",
-    "suggested_fix": "Add IP address validation and sanitization. Ensure only trusted headers are used for client IP extraction.",
-    "confidence": 70
-  },
-  {
-    "file": "render/json.go",
-    "line": 21,
-    "category": "code-quality",
-    "severity": "low",
-    "description": "JSON render uses `go-json` library but doesn't handle encoding errors properly. Errors during marshaling are not logged or reported.",
-    "suggested_fix": "Add proper error handling for JSON marshaling. Log errors and return appropriate HTTP responses.",
-    "confidence": 65
-  },
-  {
-    "file": "version.go",
-    "line": 1,
-    "category": "code-quality",
-    "severity": "low",
-    "description": "Deprecated fields like `AppEngine` are still present but marked as deprecated. This creates technical debt and confusion for developers.",
-    "suggested_fix": "Remove deprecated fields in next major version. Add migration guides for breaking changes.",
-    "confidence": 80
+{
+  "repo": "gin-gonic/gin",
+  "language": "go",
+  "timestamp": "2026-04-10T14:30:00Z",
+  "issues": [
+    {
+      "file": "recovery.go",
+      "line": 58,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return func(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "recovery.go",
+      "line": 60,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Panic recovery: if rec := recover(); rec != nil {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "recovery.go",
+      "line": 83,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Linting suppression: c.Error(err) //nolint: errcheck",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "recovery.go",
+      "line": 155,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Resource leaks if not deferred: defer f.Close()",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 230,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"'\" + pathSeg +",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 243,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"handlers are already registered for path '\"",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 262,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"invalid escape string in path '\" + path + \"",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 298,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"only one wildcard per path segment is allow",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 304,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"wildcards must be named with a non-empty na",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 345,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"catch-all routes are only allowed at the en",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 353,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"catch-all wildcard '\" + path +",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 363,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"no / before catch-all in path '\" + fullPath",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 582,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"invalid node type\")",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 934,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"invalid node type\")",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "auth.go",
+      "line": 17,
+      "category": "security",
+      "severity": "medium",
+      "description": "Hardcoded secrets: const AuthUserKey = \"user\"",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "auth.go",
+      "line": 20,
+      "category": "security",
+      "severity": "medium",
+      "description": "Hardcoded secrets: const AuthProxyUserKey = \"proxy_user\"",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "auth.go",
+      "line": 54,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return func(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "auth.go",
+      "line": 104,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return func(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "logger.go",
+      "line": 213,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return func(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "logger.go",
+      "line": 275,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return func(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "routergroup.go",
+      "line": 105,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"http method \" + httpMethod + \" is not valid",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "routergroup.go",
+      "line": 167,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return group.staticFileHandler(relativePath, func(",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "routergroup.go",
+      "line": 176,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return group.staticFileHandler(relativePath, func(",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "routergroup.go",
+      "line": 183,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"URL parameters can not be used when serving",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "routergroup.go",
+      "line": 205,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"URL parameters can not be used when serving",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "routergroup.go",
+      "line": 220,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return func(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "debug.go",
+      "line": 47,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Potential N+1 queries: for _, tmpl := range tmpl.Templates() {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 47,
+      "category": "security",
+      "severity": "medium",
+      "description": "Hardcoded secrets: const BodyBytesKey = \"_gin-gonic/gin/bodybyteskey\"",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 50,
+      "category": "security",
+      "severity": "medium",
+      "description": "Hardcoded secrets: const ContextKey = \"_gin-gonic/gin/contextkey\"",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 254,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"err is nil\")",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 300,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(fmt.Sprintf(\"key %v does not exist\", key))",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 724,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Resource leaks if not deferred: defer src.Close()",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 742,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Resource leaks if not deferred: defer out.Close()",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 801,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Linting suppression: c.AbortWithError(http.StatusBadRequest, err).SetTy",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 820,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Linting suppression: c.AbortWithError(http.StatusRequestEntityTooLarge,",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 822,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Linting suppression: c.AbortWithError(http.StatusBadRequest, err).SetTy",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "context.go",
+      "line": 1395,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Linting suppression: c.AbortWithError(http.StatusNotAcceptable, errors.",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "utils.go",
+      "line": 20,
+      "category": "security",
+      "severity": "medium",
+      "description": "Hardcoded secrets: const BindKey = \"_gin-gonic/gin/bindkey\"",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "utils.go",
+      "line": 32,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(`Bind struct can not be a pointer. Example:",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "utils.go",
+      "line": 38,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return func(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "utils.go",
+      "line": 48,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return func(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "utils.go",
+      "line": 55,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): return func(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "utils.go",
+      "line": 87,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(text)",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "utils.go",
+      "line": 107,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"negotiation config is invalid\")",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "utils.go",
+      "line": 126,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"The length of the string can't be 0\")",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "utils.go",
+      "line": 159,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"too many parameters\")",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "mode.go",
+      "line": 75,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"gin mode unknown: \" + value + \" (available ",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "errors.go",
+      "line": 63,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Potential N+1 queries: for _, key := range value.MapKeys() {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "errors.go",
+      "line": 71,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error string extraction (potential info loss): jsonData[\"error\"] = msg.Error()",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "errors.go",
+      "line": 83,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error string extraction (potential info loss): return msg.Err.Error()",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "errors.go",
+      "line": 136,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error string extraction (potential info loss): errorStrings[i] = err.Error()",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "test_helpers.go",
+      "line": 30,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): func CreateTestContextOnly(w http.ResponseWriter, ",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "test_helpers.go",
+      "line": 53,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep calls: time.Sleep(backoff)",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "gin.go",
+      "line": 594,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Resource leaks if not deferred: defer listener.Close()",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "gin.go",
+      "line": 617,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Resource leaks if not deferred: defer f.Close()",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "gin.go",
+      "line": 622,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Resource leaks if not deferred: defer listener.Close()",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "gin.go",
+      "line": 680,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): func (engine *Engine) HandleContext(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "gin.go",
+      "line": 690,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): func (engine *Engine) handleHTTPRequest(c *Context",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "gin.go",
+      "line": 781,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): func redirectTrailingSlash(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "gin.go",
+      "line": 820,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Context methods (check for god methods): func redirectRequest(c *Context) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "render/html.go",
+      "line": 85,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(\"the HTML debug render was created without f",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "render/redirect.go",
+      "line": 22,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Explicit panic calls: panic(fmt.Sprintf(\"Cannot redirect with status cod",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "render/json.go",
+      "line": 165,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Potential N+1 queries: for _, r := range bytesconv.BytesToString(ret) {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "binding/form_mapping.go",
+      "line": 122,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Potential N+1 queries: for i := range value.NumField() {",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "binding/default_validator.go",
+      "line": 35,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Error string extraction (potential info loss): b.WriteString(\"[\" + strconv.Itoa(i) + \"]: \" + err[",
+      "suggested_fix": "",
+      "confidence": 0.8
+    },
+    {
+      "file": "recovery.go",
+      "line": 75,
+      "category": "error_handling",
+      "severity": "high",
+      "description": "Panic recovery middleware catches all panics including broken pipe errors that should be handled differently",
+      "suggested_fix": "Consider separating broken pipe handling from other panic types for better error classification",
+      "confidence": 0.9
+    },
+    {
+      "file": "context.go",
+      "line": 100,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Context struct contains sync.RWMutex for Keys map which could be a bottleneck under high concurrency",
+      "suggested_fix": "Consider using sync.Map for better performance under high contention",
+      "confidence": 0.8
+    },
+    {
+      "file": "tree.go",
+      "line": 50,
+      "category": "code_quality",
+      "severity": "low",
+      "description": "Router tree implementation has complex path matching logic that could benefit from more unit tests",
+      "suggested_fix": "Add more edge case tests for path parameter handling",
+      "confidence": 0.7
+    },
+    {
+      "file": "binding/binding.go",
+      "line": 50,
+      "category": "security",
+      "severity": "medium",
+      "description": "Binding interface doesn't enforce validation of input data before binding to structs",
+      "suggested_fix": "Add validation hooks or integrate with validator library by default",
+      "confidence": 0.85
+    },
+    {
+      "file": "gin.go",
+      "line": 120,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Default error handlers don't include request IDs for tracing",
+      "suggested_fix": "Add request ID generation and include in error responses",
+      "confidence": 0.9
+    },
+    {
+      "file": "context.go",
+      "line": 85,
+      "category": "performance",
+      "severity": "high",
+      "description": "Context.Keys uses sync.RWMutex which can become a bottleneck under high request load. The mutex protects a map[any]any which means type assertions are needed on every access, adding overhead.",
+      "suggested_fix": "Consider using sync.Map for better scalability under high concurrency, or provide type-safe alternatives for common use cases.",
+      "confidence": 0.95
+    },
+    {
+      "file": "gin.go",
+      "line": 450,
+      "category": "security",
+      "severity": "medium",
+      "description": "Engine.Run() uses http.ListenAndServe which doesn't set read/write timeouts by default. This could make the server vulnerable to slow client attacks.",
+      "suggested_fix": "Set reasonable ReadTimeout and WriteTimeout values on the http.Server, or make them configurable through Engine options.",
+      "confidence": 0.9
+    },
+    {
+      "file": "tree.go",
+      "line": 420,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "The router tree implementation has complex path parameter handling with multiple node types (static, param, catchAll). The logic for adding and finding routes could benefit from more comprehensive documentation.",
+      "suggested_fix": "Add detailed comments explaining the routing algorithm, especially the interaction between different node types and parameter precedence.",
+      "confidence": 0.85
+    },
+    {
+      "file": "binding/form.go",
+      "line": 75,
+      "category": "security",
+      "severity": "medium",
+      "description": "Form binding doesn't validate maximum field sizes, which could lead to memory exhaustion attacks with very large form submissions.",
+      "suggested_fix": "Add configurable maximum size limits for form fields and reject requests that exceed them.",
+      "confidence": 0.8
+    },
+    {
+      "file": "render/json.go",
+      "line": 60,
+      "category": "production_readiness",
+      "severity": "low",
+      "description": "JSON renderer uses json.Marshal which can be slow for large responses. No option for streaming JSON responses is provided.",
+      "suggested_fix": "Add support for streaming JSON responses using json.Encoder for better performance with large datasets.",
+      "confidence": 0.75
+    }
+  ],
+  "stats": {
+    "total_issues": 75,
+    "by_category": {
+      "code_quality": 23,
+      "error_handling": 29,
+      "performance": 13,
+      "security": 8,
+      "production_readiness": 2
+    },
+    "by_severity": {
+      "high": 2,
+      "medium": 71,
+      "low": 2
+    }
   }
-]
+}

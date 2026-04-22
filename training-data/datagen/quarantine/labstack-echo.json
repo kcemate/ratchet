@@ -1,0 +1,308 @@
+[
+  {
+    "file": "echo.go",
+    "line": 105,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Goroutine safety comment indicates potential data race issues when mutating Echo instance fields after server start, but no runtime protection is implemented.",
+    "suggested_fix": "Consider adding runtime checks or making the Echo struct immutable after Start() is called.",
+    "confidence": "high"
+  },
+  {
+    "file": "echo.go",
+    "line": 220,
+    "category": "security",
+    "severity": "low",
+    "description": "DefaultHTTPErrorHandler exposes error details when exposeError=true, which could leak sensitive information in production.",
+    "suggested_fix": "Add a production mode flag or sanitize error messages before exposing them to clients.",
+    "confidence": "medium"
+  },
+  {
+    "file": "echo.go",
+    "line": 300,
+    "category": "performance",
+    "severity": "low",
+    "description": "New() creates a new slog.Logger on every call, which could be expensive if called frequently.",
+    "suggested_fix": "Consider lazy initialization or allow logger injection to avoid unnecessary logger creation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "echo.go",
+    "line": 450,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "DefaultHTTPErrorHandler swallows errors when response is already committed, which could hide important error information.",
+    "suggested_fix": "Log swallowed errors even when response is committed for better debugging.",
+    "confidence": "high"
+  },
+  {
+    "file": "echo.go",
+    "line": 520,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Add() method panics on error, which is not ideal for library code that should handle errors gracefully.",
+    "suggested_fix": "Return error instead of panicking, or provide both panicking and non-panicking variants.",
+    "confidence": "medium"
+  },
+  {
+    "file": "context.go",
+    "line": 75,
+    "category": "memory_management",
+    "severity": "medium",
+    "description": "Reset() method sets c.store to nil, which could cause memory leaks if there are references to the old map.",
+    "suggested_fix": "Clear the map instead of setting to nil, or ensure all references are properly cleaned up.",
+    "confidence": "high"
+  },
+  {
+    "file": "context.go",
+    "line": 150,
+    "category": "security",
+    "severity": "medium",
+    "description": "RealIP() method trusts proxy headers by default without validation, making it vulnerable to IP spoofing attacks.",
+    "suggested_fix": "Add configuration to validate/trust proxy headers and provide secure defaults.",
+    "confidence": "high"
+  },
+  {
+    "file": "context.go",
+    "line": 200,
+    "category": "performance",
+    "severity": "low",
+    "description": "FormFile() and FormFiles() methods parse multipart form on every call, which could be expensive.",
+    "suggested_fix": "Cache parsed form data or provide a way to parse once and reuse.",
+    "confidence": "medium"
+  },
+  {
+    "file": "router.go",
+    "line": 50,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Router interface doesn't specify thread-safety guarantees, which could lead to race conditions when routes are modified during request handling.",
+    "suggested_fix": "Document thread-safety guarantees and consider adding synchronization for route modifications.",
+    "confidence": "medium"
+  },
+  {
+    "file": "router.go",
+    "line": 120,
+    "category": "performance",
+    "severity": "low",
+    "description": "Route tree structure could benefit from optimization for high-cardinality path parameter scenarios.",
+    "suggested_fix": "Consider benchmarking and optimizing the radix tree implementation for parameter-heavy routes.",
+    "confidence": "medium"
+  },
+  {
+    "file": "middleware/basic_auth.go",
+    "line": 25,
+    "category": "security",
+    "severity": "high",
+    "description": "BasicAuthValidator documentation warns about timing attacks but doesn't enforce constant-time comparison, leaving implementations vulnerable.",
+    "suggested_fix": "Provide a secure default validator implementation or enforce constant-time comparison in the middleware.",
+    "confidence": "high"
+  }
+]
+  {
+    "file": "echo.go",
+    "line": 105,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Goroutine safety comment indicates potential data race issues when mutating Echo instance fields after server start, but no runtime protection is implemented.",
+    "suggested_fix": "Consider adding runtime checks or making the Echo struct immutable after Start() is called.",
+    "confidence": "high"
+  },
+  {
+    "file": "echo.go",
+    "line": 220,
+    "category": "security",
+    "severity": "low",
+    "description": "DefaultHTTPErrorHandler exposes error details when exposeError=true, which could leak sensitive information in production.",
+    "suggested_fix": "Add a production mode flag or sanitize error messages before exposing them to clients.",
+    "confidence": "medium"
+  },
+  {
+    "file": "echo.go",
+    "line": 300,
+    "category": "performance",
+    "severity": "low",
+    "description": "New() creates a new slog.Logger on every call, which could be expensive if called frequently.",
+    "suggested_fix": "Consider lazy initialization or allow logger injection to avoid unnecessary logger creation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "echo.go",
+    "line": 450,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "DefaultHTTPErrorHandler swallows errors when response is already committed, which could hide important error information.",
+    "suggested_fix": "Log swallowed errors even when response is committed for better debugging.",
+    "confidence": "high"
+  },
+  {
+    "file": "echo.go",
+    "line": 520,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Add() method panics on error, which is not ideal for library code that should handle errors gracefully.",
+    "suggested_fix": "Return error instead of panicking, or provide both panicking and non-panicking variants.",
+    "confidence": "medium"
+  },
+  {
+    "file": "context.go",
+    "line": 75,
+    "category": "memory_management",
+    "severity": "medium",
+    "description": "Reset() method sets c.store to nil, which could cause memory leaks if there are references to the old map.",
+    "suggested_fix": "Clear the map instead of setting to nil, or ensure all references are properly cleaned up.",
+    "confidence": "high"
+  },
+  {
+    "file": "context.go",
+    "line": 150,
+    "category": "security",
+    "severity": "medium",
+    "description": "RealIP() method trusts proxy headers by default without validation, making it vulnerable to IP spoofing attacks.",
+    "suggested_fix": "Add configuration to validate/trust proxy headers and provide secure defaults.",
+    "confidence": "high"
+  },
+  {
+    "file": "context.go",
+    "line": 200,
+    "category": "performance",
+    "severity": "low",
+    "description": "FormFile() and FormFiles() methods parse multipart form on every call, which could be expensive.",
+    "suggested_fix": "Cache parsed form data or provide a way to parse once and reuse.",
+    "confidence": "medium"
+  },
+  {
+    "file": "router.go",
+    "line": 50,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Router interface doesn't specify thread-safety guarantees, which could lead to race conditions when routes are modified during request handling.",
+    "suggested_fix": "Document thread-safety guarantees and consider adding synchronization for route modifications.",
+    "confidence": "medium"
+  },
+  {
+    "file": "router.go",
+    "line": 120,
+    "category": "performance",
+    "severity": "low",
+    "description": "Route tree structure could benefit from optimization for high-cardinality path parameter scenarios.",
+    "suggested_fix": "Consider benchmarking and optimizing the radix tree implementation for parameter-heavy routes.",
+    "confidence": "medium"
+  }
+  {
+    "file": "echo.go",
+    "line": 105,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Goroutine safety comment indicates potential data race issues when mutating Echo instance fields after server start, but no runtime protection is implemented.",
+    "suggested_fix": "Consider adding runtime checks or making the Echo struct immutable after Start() is called.",
+    "confidence": "high"
+  },
+  {
+    "file": "echo.go",
+    "line": 220,
+    "category": "security",
+    "severity": "low",
+    "description": "DefaultHTTPErrorHandler exposes error details when exposeError=true, which could leak sensitive information in production.",
+    "suggested_fix": "Add a production mode flag or sanitize error messages before exposing them to clients.",
+    "confidence": "medium"
+  },
+  {
+    "file": "echo.go",
+    "line": 300,
+    "category": "performance",
+    "severity": "low",
+    "description": "New() creates a new slog.Logger on every call, which could be expensive if called frequently.",
+    "suggested_fix": "Consider lazy initialization or allow logger injection to avoid unnecessary logger creation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "echo.go",
+    "line": 450,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "DefaultHTTPErrorHandler swallows errors when response is already committed, which could hide important error information.",
+    "suggested_fix": "Log swallowed errors even when response is committed for better debugging.",
+    "confidence": "high"
+  },
+  {
+    "file": "echo.go",
+    "line": 520,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Add() method panics on error, which is not ideal for library code that should handle errors gracefully.",
+    "suggested_fix": "Return error instead of panicking, or provide both panicking and non-panicking variants.",
+    "confidence": "medium"
+  },
+  {
+    "file": "context.go",
+    "line": 75,
+    "category": "memory_management",
+    "severity": "medium",
+    "description": "Reset() method sets c.store to nil, which could cause memory leaks if there are references to the old map.",
+    "suggested_fix": "Clear the map instead of setting to nil, or ensure all references are properly cleaned up.",
+    "confidence": "high"
+  },
+  {
+    "file": "context.go",
+    "line": 150,
+    "category": "security",
+    "severity": "medium",
+    "description": "RealIP() method trusts proxy headers by default without validation, making it vulnerable to IP spoofing attacks.",
+    "suggested_fix": "Add configuration to validate/trust proxy headers and provide secure defaults.",
+    "confidence": "high"
+  },
+  {
+    "file": "context.go",
+    "line": 200,
+    "category": "performance",
+    "severity": "low",
+    "description": "FormFile() and FormFiles() methods parse multipart form on every call, which could be expensive.",
+    "suggested_fix": "Cache parsed form data or provide a way to parse once and reuse.",
+    "confidence": "medium"
+  }
+  {
+    "file": "echo.go",
+    "line": 105,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Goroutine safety comment indicates potential data race issues when mutating Echo instance fields after server start, but no runtime protection is implemented.",
+    "suggested_fix": "Consider adding runtime checks or making the Echo struct immutable after Start() is called.",
+    "confidence": "high"
+  },
+  {
+    "file": "echo.go",
+    "line": 220,
+    "category": "security",
+    "severity": "low",
+    "description": "DefaultHTTPErrorHandler exposes error details when exposeError=true, which could leak sensitive information in production.",
+    "suggested_fix": "Add a production mode flag or sanitize error messages before exposing them to clients.",
+    "confidence": "medium"
+  },
+  {
+    "file": "echo.go",
+    "line": 300,
+    "category": "performance",
+    "severity": "low",
+    "description": "New() creates a new slog.Logger on every call, which could be expensive if called frequently.",
+    "suggested_fix": "Consider lazy initialization or allow logger injection to avoid unnecessary logger creation.",
+    "confidence": "medium"
+  },
+  {
+    "file": "echo.go",
+    "line": 450,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "DefaultHTTPErrorHandler swallows errors when response is already committed, which could hide important error information.",
+    "suggested_fix": "Log swallowed errors even when response is committed for better debugging.",
+    "confidence": "high"
+  },
+  {
+    "file": "echo.go",
+    "line": 520,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Add() method panics on error, which is not ideal for library code that should handle errors gracefully.",
+    "suggested_fix": "Return error instead of panicking, or provide both panicking and non-panicking variants.",
+    "confidence": "medium"
+  }

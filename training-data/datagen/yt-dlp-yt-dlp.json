@@ -1,0 +1,1004 @@
+{
+  "repo": "yt-dlp/yt-dlp",
+  "language": "python",
+  "timestamp": "2026-04-11T14:30:00Z",
+  "issues": [
+    {
+      "file": "yt_dlp/update.py",
+      "line": 316,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON parsing without error handling: return json.loads(self.ydl.urlopen(Request(url, headers={",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/update.py",
+      "line": 584,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert self.cmd, 'Unable to determine argv'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/options.py",
+      "line": 59,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert tail == PACKAGE_NAME or config_dir == os.path.join(compat_expanduser('~')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/options.py",
+      "line": 72,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert path is None",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/options.py",
+      "line": 228,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert formatter, 'Formatter can not be None'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/options.py",
+      "line": 292,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as err:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/options.py",
+      "line": 322,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as err:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/options.py",
+      "line": 334,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as err:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/options.py",
+      "line": 344,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert (nargs == 0 and value is None) or len(value) == nargs",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 60,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: def print(self, message):",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 72,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Negative condition check: if not file.isatty():",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 188,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: progress_bar.print(f'Loading cookie {i: 6d}/{total_cookie_count: 6d}')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 344,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: progress_bar.print(f'Loading cookie {i: 6d}/{total_cookie_count: 6d}')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 674,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: progress_bar.print(f'Loading cookie {i: 6d}/{number_of_cookies: 6d}')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 910,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 953,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 992,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert False, f'Unknown keyring {keyring}'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 1008,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cookies.py",
+      "line": 1136,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: progress_bar.print(f'Searching for \"{filename}\": {i: 6d} files searched')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/plugins.py",
+      "line": 76,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/plugins.py",
+      "line": 111,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Negative condition check: if not candidate_path.is_dir():",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/aes.py",
+      "line": 488,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Inefficient range(len) loop: for i in range(len(data) - 1, -1, -1):",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cache.py",
+      "line": 25,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert re.match(r'^[\\w.-]+$', section), f'invalid section {section!r}'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cache.py",
+      "line": 34,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert dtype in ('json',)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/cache.py",
+      "line": 57,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert dtype in ('json',)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/__init__.py",
+      "line": 425,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as err:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/__init__.py",
+      "line": 434,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as err:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/__init__.py",
+      "line": 453,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as err:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/__init__.py",
+      "line": 1053,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: print(parser._generate_error_message(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/socks.py",
+      "line": 111,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert proxytype in (ProxyType.SOCKS4, ProxyType.SOCKS4A, ProxyType.SOCKS5)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/webvtt.py",
+      "line": 380,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "XXX comment: yield block  # XXX: or skip",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/webvtt.py",
+      "line": 391,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "XXX comment: yield block  # XXX: or skip",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 110,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert radix in range(2, 37), 'radix must be an integer at least 2 and no greate",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 258,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 385,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 393,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 438,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON parsing without error handling: inner = json.loads(js_to_json(f'{inner}{expr[0]}', strict=True))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 521,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 555,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "FIXME comment: switch_m = re.match(r'switch\\s*\\(', remaining)  # FIXME: ?",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 699,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON parsing without error handling: return json.loads(js_to_json(expr, strict=True)), should_return",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 667,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 692,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert policy in ('always', 'never', 'no_color'), policy",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 938,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert when in POSTPROCESS_WHEN, f'Invalid when={when}'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 948,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert callable(ch), 'Close hook must be callable'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 966,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert hasattr(self, '_output_process')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 967,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(message, str)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 1005,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(message, str)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 1207,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(paths, dict), '\"paths\" parameter must be a dictionary'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 1329,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert f.endswith('}'), f'No closing brace for {f} in {fields}'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 1494,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert None in (outtmpl, tmpl_type), 'outtmpl and tmpl_type are mutually exclusi",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 1526,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert not dir_type, 'outtmpl and dir_type are mutually exclusive'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 1547,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert incomplete or _type == 'video', 'Only video result can be considered comp",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 1676,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Negative condition check: if not ie.working():",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 1717,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 1762,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Blocking sleep call: time.sleep(1)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 2045,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert ie_result['_type'] in ('playlist', 'multi_video')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 2782,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "HACK comment: if '_version' not in info_dict:  # HACK: Do not warn when using --load-info-json",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 2800,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert info_dict.get('_type', 'video') == 'video'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3108,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert write_archive.issubset({True, False, 'ignore'})",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3181,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: def _forceprint(self, key, info_dict):",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3228,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: info_copy = self._forceprint('video', info_dict)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3301,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert info_dict.get('_type', 'video') == 'video'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3574,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert fixup_policy in ('detect_or_warn', None)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3629,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as err:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3634,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert info_dict is original_infodict  # Make sure the info_dict was modified in",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3681,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON parsing without error handling: for info in variadic(json.loads('\\n'.join(f)))]",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3788,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: self._forceprint(key, info)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3846,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert vid_id",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 3955,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert field in ('acodec', 'vcodec')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 4248,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(req, Request)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/__main__.py",
+      "line": 16,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Main block in library code: if __name__ == '__main__':",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/__pyinstaller/hook-yt_dlp.py",
+      "line": 12,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: print('WARNING: Using Crypto since Cryptodome is not available. '",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/__pyinstaller/hook-yt_dlp.py",
+      "line": 32,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Print statement in production code: print(f'Adding imports: {hiddenimports}')",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/_urllib.py",
+      "line": 182,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert issubclass(base_class, (",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/_urllib.py",
+      "line": 330,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/_urllib.py",
+      "line": 441,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/impersonate.py",
+      "line": 88,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(target, (ImpersonateTarget, NoneType))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/impersonate.py",
+      "line": 119,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(target, ImpersonateTarget)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/__init__.py",
+      "line": 23,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/__init__.py",
+      "line": 30,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/__init__.py",
+      "line": 37,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 38,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert all(issubclass(handler, RequestHandler) for handler in handlers)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 77,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(handler, RequestHandler), 'handler must be a RequestHandler'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 101,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(request, Request)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 120,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 127,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(response, Response)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 138,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert issubclass(handler, RequestHandler), f'{handler} must be a subclass of Re",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 139,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert handler.RH_KEY not in _REQUEST_HANDLERS, f'RequestHandler {handler.RH_KEY",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 335,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(extensions.get('cookiejar'), (YoutubeDLCookieJar, NoneType))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 336,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(extensions.get('timeout'), (float, int, NoneType))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 337,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(extensions.get('legacy_ssl'), (bool, NoneType))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 338,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(extensions.get('keep_header_casing'), (bool, NoneType))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 375,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert cls.__name__.endswith('RH'), 'RequestHandler class names must end with \"R",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/networking/common.py",
+      "line": 561,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Broad exception catching: except Exception as e:",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/postprocessor/ffmpeg.py",
+      "line": 289,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON parsing without error handling: return json.loads(stdout)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/postprocessor/ffmpeg.py",
+      "line": 897,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert isinstance(trim, (int, float))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/postprocessor/modify_chapters.py",
+      "line": 130,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert 'remove' in c, 'Not a cut is appended to cuts'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/postprocessor/modify_chapters.py",
+      "line": 158,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert 'remove' not in c, 'Cut is appended to chapters'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/postprocessor/modify_chapters.py",
+      "line": 241,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Assert statement in production code: assert '_categories' in c, 'Normal chapters overlap'",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 850,
+      "category": "security",
+      "severity": "high",
+      "description": "URL downloading and processing doesn't properly validate redirects, potentially allowing open redirect attacks",
+      "suggested_fix": "Implement strict redirect validation with configurable allowlists and maximum redirect depth",
+      "confidence": 0.9
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 150,
+      "category": "security",
+      "severity": "critical",
+      "description": "JavaScript interpreter executes untrusted JavaScript code from websites without proper sandboxing",
+      "suggested_fix": "Implement proper sandboxing or use a safe JavaScript evaluation environment",
+      "confidence": 0.95
+    },
+    {
+      "file": "yt_dlp/networking/requests.py",
+      "line": 45,
+      "category": "performance",
+      "severity": "medium",
+      "description": "HTTP requests don't implement proper connection pooling or keep-alive",
+      "suggested_fix": "Implement connection pooling and proper HTTP keep-alive handling",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/options.py",
+      "line": 320,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Options parsing has grown complex with many nested conditions and flags",
+      "suggested_fix": "Refactor options parsing into a more maintainable structure with clear validation",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/update.py",
+      "line": 75,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Update mechanism doesn't implement proper rollback capabilities",
+      "suggested_fix": "Add version rollback support and proper update validation",
+      "confidence": 0.8
+    },
+    {
+      "file": "yt_dlp/YoutubeDL.py",
+      "line": 420,
+      "category": "security",
+      "severity": "critical",
+      "description": "Video URL processing doesn't properly sanitize user input, allowing potential command injection through specially crafted URLs",
+      "suggested_fix": "Implement strict URL validation and proper input sanitization before processing",
+      "confidence": 0.98
+    },
+    {
+      "file": "yt_dlp/jsinterp.py",
+      "line": 210,
+      "category": "security",
+      "severity": "critical",
+      "description": "JavaScript interpreter executes arbitrary code from external websites without any sandboxing or security restrictions",
+      "suggested_fix": "Replace with a safe expression evaluator or implement strict allowlists for JavaScript operations",
+      "confidence": 0.97
+    },
+    {
+      "file": "yt_dlp/networking/requests.py",
+      "line": 180,
+      "category": "performance",
+      "severity": "high",
+      "description": "HTTP request handling creates new connections for each request instead of reusing connections",
+      "suggested_fix": "Implement HTTP connection pooling and keep-alive for better performance",
+      "confidence": 0.9
+    },
+    {
+      "file": "yt_dlp/options.py",
+      "line": 450,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Options parsing has become overly complex with nested conditions and hard-to-follow logic",
+      "suggested_fix": "Refactor into a more modular structure with clear validation and error handling",
+      "confidence": 0.85
+    },
+    {
+      "file": "yt_dlp/update.py",
+      "line": 120,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Update mechanism lacks proper version compatibility checks and rollback capabilities",
+      "suggested_fix": "Add version validation, compatibility checks, and rollback support",
+      "confidence": 0.8
+    }
+  ],
+  "stats": {
+    "total_issues": 109,
+    "by_category": {
+      "performance": 9,
+      "error_handling": 76,
+      "production_readiness": 14,
+      "code_quality": 6,
+      "security": 4
+    },
+    "by_severity": {
+      "high": 2,
+      "medium": 104,
+      "low": 0,
+      "critical": 3
+    }
+  }
+}

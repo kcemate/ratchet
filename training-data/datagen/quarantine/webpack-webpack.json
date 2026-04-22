@@ -1,0 +1,553 @@
+{
+  "repo": "webpack/webpack",
+  "language": "javascript",
+  "timestamp": "2026-04-15T20:30:00Z",
+  "issues": [
+    {
+      "file": "tooling/generate-runtime-code.js",
+      "line": 5,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(\"Node.js 16+ required to build embedded WASM\");",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/generate-runtime-code.js",
+      "line": 52,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/generate-runtime-code.js",
+      "line": 76,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`No code generated for ${name} in ${file}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/generate-runtime-code.js",
+      "line": 81,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(`Code Style of ${name} in ${file} is too high`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/generate-runtime-code.js",
+      "line": 120,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(`${file} updated`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/generate-runtime-code.js",
+      "line": 122,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(`${file} need to be updated`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/print-cache-file.js",
+      "line": 53,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: if (!Array.isArray(data)) throw new Error(\"Not an array\");",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/print-cache-file.js",
+      "line": 62,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`${indent}= lazy ${sizeInfo} {`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/print-cache-file.js",
+      "line": 64,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`${indent}}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/print-cache-file.js",
+      "line": 66,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`${indent}= ${b.toString(\"hex\")}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/print-cache-file.js",
+      "line": 82,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`${indent}${content}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/print-cache-file.js",
+      "line": 105,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON stringification: `Reference ${nextItem} => ${JSON.stringify(value)} #${ref}`",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/print-cache-file.js",
+      "line": 131,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON stringification: printLine(`${JSON.stringify(item)} = #${currentReference++}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/print-cache-file.js",
+      "line": 160,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON stringification: printLine(`- #${ref} x ${count} = ${JSON.stringify(value)}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/print-cache-file.js",
+      "line": 178,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`${filename} ${sizeInfo}:`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/generate-wasm-code.js",
+      "line": 46,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array filter: ...flags.split(\" \").filter(Boolean)",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/generate-wasm-code.js",
+      "line": 67,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON stringification: ${JSON.stringify(wasm.toString(\"base64\"))},",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/generate-wasm-code.js",
+      "line": 82,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(`${file} updated`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "tooling/generate-wasm-code.js",
+      "line": 84,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(`${file} need to be updated`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bin/webpack.js",
+      "line": 92,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(err);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bin/webpack.js",
+      "line": 126,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(notify);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bin/webpack.js",
+      "line": 141,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bin/webpack.js",
+      "line": 164,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bin/webpack.js",
+      "line": 173,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "bin/webpack.js",
+      "line": 190,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(err);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "setup/setup.js",
+      "line": 20,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(\"windows symlink was not successfully created\");",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "setup/setup.js",
+      "line": 28,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Console error: console.error(err);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "setup/setup.js",
+      "line": 93,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`Setup: ${description}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "setup/setup.js",
+      "line": 121,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Console log: console.log(`Setup: ${description}`);",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/WebpackOptions.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: const e=/^(?:[A-Za-z]:[\\\\/]|\\\\\\\\|\\/)/;module.exports=Ve,module.exports",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/plugins/BannerPlugin.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: \"use strict\";function n(t,{instancePath:s=\"\",parentData:e,parentDataPr",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/plugins/DllReferencePlugin.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: const s=/^(?:[A-Za-z]:[\\\\/]|\\\\\\\\|\\/)/;function t(s,{instancePath:e=\"\",",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/plugins/SourceMapDevToolPlugin.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: const n=/^(?:[A-Za-z]:[\\\\/]|\\\\\\\\|\\/)/;module.exports=l,module.exports.",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/plugins/sharing/ConsumeSharedPlugin.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: \"use strict\";function r(e,{instancePath:t=\"\",parentData:n,parentDataPr",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/plugins/sharing/ProvideSharedPlugin.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: \"use strict\";function r(t,{instancePath:e=\"\",parentData:s,parentDataPr",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/plugins/sharing/SharePlugin.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: \"use strict\";module.exports=a,module.exports.default=a;const r={type:\"",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/plugins/container/ContainerReferencePlugin.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: \"use strict\";function r(t,{instancePath:e=\"\",parentData:a,parentDataPr",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/plugins/container/ContainerPlugin.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: const r=/^(?:[A-Za-z]:[\\\\/]|\\\\\\\\|\\/)/;function t(r,{instancePath:e=\"\",",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "schemas/plugins/container/ModuleFederationPlugin.check.js",
+      "line": 6,
+      "category": "performance",
+      "severity": "medium",
+      "description": "For-in loop: const t=/^(?:[A-Za-z]:[\\\\/]|\\\\\\\\|\\/)/;module.exports=D,module.exports.",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/webpack.js",
+      "line": 58,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: const compilers = childOptions.map((options, index) =>",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/webpack.js",
+      "line": 198,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: ? options.map((options) => (needValidate(options) ? options : {}))",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/webpack.js",
+      "line": 223,
+      "category": "performance",
+      "severity": "medium",
+      "description": "Array map: watchOptions = options.map((options) => options.watchOptions || {});",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/MainTemplate.js",
+      "line": 78,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/MainTemplate.js",
+      "line": 85,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/MainTemplate.js",
+      "line": 109,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/MainTemplate.js",
+      "line": 116,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/MainTemplate.js",
+      "line": 123,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/MainTemplate.js",
+      "line": 265,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Generic error throw: throw new Error(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/NodeStuffInWebError.js",
+      "line": 22,
+      "category": "performance",
+      "severity": "medium",
+      "description": "JSON stringification: `${JSON.stringify(",
+      "suggested_fix": "",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/webpack.js",
+      "line": 45,
+      "category": "security",
+      "severity": "high",
+      "description": "Webpack configuration doesn't validate all input parameters properly",
+      "suggested_fix": "Implement comprehensive input validation for webpack configurations",
+      "confidence": 0.9
+    },
+    {
+      "file": "lib/MainTemplate.js",
+      "line": 35,
+      "category": "performance",
+      "severity": "high",
+      "description": "Main template generation creates excessive memory allocations under load",
+      "suggested_fix": "Optimize main template generation to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "lib/RuntimePlugin.js",
+      "line": 60,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Runtime plugin implementation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for runtime plugin operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/ModuleTemplate.js",
+      "line": 85,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Module template handling doesn't capture complete context information",
+      "suggested_fix": "Enhance module template handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "lib/webpack.js",
+      "line": 50,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Webpack core setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core webpack operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/webpack.js",
+      "line": 75,
+      "category": "security",
+      "severity": "high",
+      "description": "Webpack configuration doesn't validate all input parameters properly",
+      "suggested_fix": "Implement comprehensive input validation for webpack configurations",
+      "confidence": 0.9
+    },
+    {
+      "file": "lib/MainTemplate.js",
+      "line": 55,
+      "category": "performance",
+      "severity": "high",
+      "description": "Main template generation creates excessive memory allocations under load",
+      "suggested_fix": "Optimize main template generation to reduce memory overhead",
+      "confidence": 0.9
+    },
+    {
+      "file": "lib/RuntimePlugin.js",
+      "line": 90,
+      "category": "code_quality",
+      "severity": "medium",
+      "description": "Runtime plugin implementation lacks proper error handling for edge cases",
+      "suggested_fix": "Add robust error handling for runtime plugin operations",
+      "confidence": 0.85
+    },
+    {
+      "file": "lib/ModuleTemplate.js",
+      "line": 105,
+      "category": "error_handling",
+      "severity": "medium",
+      "description": "Module template handling doesn't capture complete context information",
+      "suggested_fix": "Enhance module template handling to capture full context",
+      "confidence": 0.8
+    },
+    {
+      "file": "lib/webpack.js",
+      "line": 75,
+      "category": "production_readiness",
+      "severity": "medium",
+      "description": "Webpack core setup lacks performance metrics",
+      "suggested_fix": "Add monitoring and metrics for core webpack operations",
+      "confidence": 0.85
+    }
+  ],
+  "stats": {
+    "total_issues": 59,
+    "by_category": {
+      "error_handling": 24,
+      "production_readiness": 10,
+      "performance": 21,
+      "security": 2,
+      "code_quality": 2
+    },
+    "by_severity": {
+      "high": 4,
+      "medium": 55,
+      "low": 0
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-04-22T18:31:00Z",
+  "target": "linter",
+  "iteration": 5,
+  "variant": "v5",
+  "subscores": {
+    "pass_warn_fail_ratio": 0.05,
+    "scoring_consistency": 0.05,
+    "false_positive_rate": 0.05
+  },
+  "aggregate": 0.05,
+  "weakest": "false_positive_rate",
+  "hypothesis": "All-FAIL sanity guard: when all 4 structural checks fail simultaneously, force model to re-read file via `head -c 200` before confirming. Also fixes hardcoded model name to {GENERATOR_CMD} placeholder.",
+  "v4_decision": "keep",
+  "v4_decision_notes": "No post-deployment lint output available to compare — all 29 datagen files were already linted when linter next ran. v4 not exercised on new data. Keeping v4 as current baseline (no regression evidence). Score reflects pre-v4 state from lint-log.",
+  "decision": null,
+  "notes": "Most recent lint runs (Apr 15-18): 5 files processed, all blanket FAIL with all-5-❌ and no evidence quoted. Critical false positives confirmed: denoland-deno.json (previously WARN on Apr 14 with good content) quarantined as FAIL on Apr 16. Root cause pattern unchanged: model outputs canned failure template without reading files. v5 adds mandatory all-FAIL re-read trigger using `head -c 200` as a grounding step before confirming all-FAIL results. Secondary fix: Check 5 prompt had hardcoded 'ollama run gemma4:e4b' instead of {GENERATOR_CMD}; corrected to placeholder."
+}
