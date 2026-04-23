@@ -237,25 +237,31 @@ function buildAPIBuildPrompt(
     `TASK: ${basePrompt}\n\n` +
     (fileContents ? `FILE CONTENTS (editable — use SEARCH/REPLACE to modify):\n${fileContents}\n\n` : '') +
     (readOnlyContext ? `READ-ONLY CONTEXT (do NOT edit these — for reference only):\n${readOnlyContext}\n\n` : '') +
-    `STRICT RULES:\n` +
-    `- Output ONLY SEARCH/REPLACE blocks. NO prose, NO analysis, NO explanation.\n` +
-    `- Modify at most ${maxFiles} file(s), change at most ${maxLines} total lines.\n` +
-    `- Fix ONLY the specific issue described above. Nothing else.\n` +
-    `- ONLY edit files listed in FILE CONTENTS above. Do NOT invent or guess file paths.\n` +
-    `- If no FILE CONTENTS are provided, output nothing.\n\n` +
+    `PRE-EXECUTION CHECKLIST (MUST confirm verbally BEFORE outputting changes):\n` +
+    `1. "I will modify at most ${maxFiles} file(s)."\n` +
+    `2. "I will change at most ${maxLines} total lines."\n` +
+    `3. "My target file is: <path from FILE CONTENTS above>"\n` +
+    `4. "I will copy-paste EXACTLY from FILE CONTENTS for every SEARCH block."\n` +
+    `5. "I will output NO prose, analysis, or explanation — only SEARCH/REPLACE blocks."\n\n` +
+    `SEARCH BLOCK RULES:\n` +
+    `- Copy EXACTLY 5-10 consecutive lines from FILE CONTENTS above\n` +
+    `- Include the code to change PLUS 2-3 lines of context on each side\n` +
+    `- Do NOT include the \`<<<<<<<< SEARCH\` marker inside your search block\n` +
+    `- Do NOT include the \`=======\` or \`>>>>>>>> REPLACE\` markers inside either block\n` +
+    `- Verify your SEARCH block appears VERBATIM in FILE CONTENTS above before outputting\n` +
+    `- If unsure, use MORE context lines (8-10) rather than fewer\n\n` +
     `OUTPUT FORMAT (output NOTHING except this):\n\n` +
     `EDIT: <path from FILE CONTENTS above — must match exactly>\n` +
     `<<<<<<< SEARCH\n` +
-    `exact consecutive lines copied from the file above\n` +
+    `[exact consecutive lines copied from FILE CONTENTS — 5-10 lines minimum]\n` +
     `=======\n` +
-    `replacement lines\n` +
+    `[replacement lines]\n` +
     `>>>>>>> REPLACE\n\n` +
     `MODIFIED: <filepath>\n\n` +
-    `CRITICAL:\n` +
-    `- SEARCH block must be EXACT copy-paste of consecutive lines from FILE CONTENTS above\n` +
-    `- Include 3-5 context lines around the change for unique matching\n` +
+    `TERMINAL RULES:\n` +
     `- Do NOT output anything before the first EDIT: line\n` +
     `- Do NOT output anything after the last MODIFIED: line\n` +
+    `- After MODIFIED:, output NOTHING else — no closing braces, no explanations, no JSON\n` +
     `- Do NOT reformat, restyle, or change whitespace outside the fix\n`
   );
 }
