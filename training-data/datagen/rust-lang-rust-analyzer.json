@@ -1,0 +1,110 @@
+[
+  {
+    "file": "crates/hir-def/src/builtin_type.rs",
+    "line": 30,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "The BuiltinType enum has multiple nested enums (BuiltinInt, BuiltinUint, BuiltinFloat) which could be flattened for simpler usage patterns.",
+    "suggested_fix": "Consider flattening the nested enum structure to reduce complexity when working with built-in types.",
+    "confidence": 0.75
+  },
+  {
+    "file": "crates/hir-def/src/builtin_type.rs",
+    "line": 40,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "The all_builtin_types() method uses rustfmt::skip but has a very long array literal that could be organized more clearly.",
+    "suggested_fix": "Refactor the long array into smaller, more manageable chunks or use a different organizational pattern.",
+    "confidence": 0.7
+  },
+  {
+    "file": "crates/hir-def/src/builtin_type.rs",
+    "line": 80,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Multiple from_suffix methods have repetitive match patterns that could be consolidated.",
+    "suggested_fix": "Consider using a macro or helper function to reduce code duplication in the from_suffix methods.",
+    "confidence": 0.8
+  },
+  {
+    "file": "crates/hir-def/src/item_scope.rs",
+    "line": 50,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "The ImportOrExternCrate enum has methods that return Options, suggesting it may be trying to handle too many responsibilities.",
+    "suggested_fix": "Consider splitting this enum into more focused types or using composition to separate concerns.",
+    "confidence": 0.85
+  },
+  {
+    "file": "crates/hir-def/src/item_scope.rs",
+    "line": 80,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "The file is very large (881+ lines) indicating it may be handling too many responsibilities related to item scopes.",
+    "suggested_fix": "Refactor this large file into smaller, more focused modules following single responsibility principle.",
+    "confidence": 0.9
+  },
+  {
+    "file": "crates/hir-def/src/item_scope.rs",
+    "line": 20,
+    "category": "performance",
+    "severity": "low",
+    "description": "Heavy use of FxHashMap, FxHashSet, and other hash-based collections may benefit from more memory-efficient alternatives for certain use cases.",
+    "suggested_fix": "Review collection usage and consider alternatives like index-based lookups for performance-critical paths.",
+    "confidence": 0.7
+  },
+  {
+    "file": "crates/hir-def/src/import_map.rs",
+    "line": 40,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "The ImportMap struct has complex internal state management with multiple related collections that could be better encapsulated.",
+    "suggested_fix": "Consider using a builder pattern or better encapsulation to manage the complex internal state.",
+    "confidence": 0.8
+  },
+  {
+    "file": "crates/hir-def/src/import_map.rs",
+    "line": 60,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "The import_map_query_impl function uses tracing spans but the span is created and immediately entered without clear boundaries.",
+    "suggested_fix": "Review tracing span usage to ensure proper scoping and meaningful span boundaries.",
+    "confidence": 0.75
+  },
+  {
+    "file": "crates/hir-def/src/import_map.rs",
+    "line": 80,
+    "category": "performance",
+    "severity": "medium",
+    "description": "The import map collection process involves multiple iterations and sorting that could potentially be optimized.",
+    "suggested_fix": "Review the collection and sorting logic for potential performance improvements.",
+    "confidence": 0.75
+  },
+  {
+    "file": "crates/hir-def/src/builtin_type.rs",
+    "line": 120,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "The Display implementation for BuiltinType uses string literals that could be centralized for consistency.",
+    "suggested_fix": "Consider using constants or a centralized location for type name strings to ensure consistency.",
+    "confidence": 0.7
+  },
+  {
+    "file": "crates/hir-def/src/item_scope.rs",
+    "line": 30,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Heavy use of various collection types (FxHashMap, FxHashSet, SmallVec, ThinVec) suggests potential for standardization.",
+    "suggested_fix": "Review collection type usage and consider standardizing on a smaller set for maintainability.",
+    "confidence": 0.75
+  },
+  {
+    "file": "crates/hir-def/src/import_map.rs",
+    "line": 20,
+    "category": "production_readiness",
+    "severity": "low",
+    "description": "The ImportMap uses fst crate for efficient string matching but lacks comprehensive error handling for edge cases.",
+    "suggested_fix": "Add more robust error handling for fst operations and edge cases in import resolution.",
+    "confidence": 0.7
+  }
+]

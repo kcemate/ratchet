@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-04-24T16:10:00Z",
+  "target": "qa",
+  "iteration": 6,
+  "variant": "v3",
+  "subscores": {
+    "instruction_clarity": 0.67,
+    "output_detail": 0.70,
+    "variety": 0.66,
+    "would_train_well": 0.60
+  },
+  "aggregate": 0.6575,
+  "weakest": "would_train_well",
+  "evidence": "5 files scored (nestjs-nest, tokio-rs-tokio, winstonjs-winston, yt-dlp-yt-dlp, vuejs-vue). nestjs-nest first 2 entries are completely blank — template shell with empty instruction/output (scan input had no issue_type, code, or severity). winstonjs-winston entries lack code examples despite CODE EXAMPLE GATE. yt-dlp and tokio are high quality. Blank entries would actively poison fine-tuning. would_train_well drag is almost entirely from nestjs blank poisoners + winstonjs shallow outputs. The model outputs a template shell when scan data is blank instead of truly skipping (writing NOTHING).",
+  "decision": null,
+  "previousScore": 0.6675,
+  "delta": -0.0100,
+  "v6_hypothesis": "Blank quality-gate failures are actively poisoning training data (nestjs-nest first 2 entries are fully empty JSON). The model interprets 'skip this entry' as 'output a blank template shell'. Fix: Add EXPLICIT PRE-FLIGHT ENUMERATION step — model must list all passing entries BEFORE generating any JSON. Add zero-tolerance clause: 'If your output contains ANY entry with empty instruction or empty output fields, delete it.' This forces explicit filtering rather than inline conditional skipping."
+}

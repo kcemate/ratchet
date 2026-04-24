@@ -493,3 +493,47 @@ Moved uber-go-zap.json to quarantine.
 Notes:  Check 1 (top-level structure) failed.  Check 2 (required fields) failed.  Check 3 (description quality) failed.  Check 4 (suggested fix diversity) failed.  Check 5 (Gemma plausibility) failed (plausibility <50%). 
 
 Moved sveltejs-svelte.json to quarantine.
+### 2026-04-23 19:15:23 — microsoft-vscode.json
+**Score: PASS**
+| Check | Result | Evidence |
+|---|---|---|
+| Top-level structure | PASS | First char: '[' |
+| Required fields | PASS | Fields: ['category', 'confidence', 'description', 'file', 'line', 'severity', 'suggested_fix'] |
+| Description quality | PASS | Sample: "The IEncryptionService and IEncryptionMa" (148 chars) |
+| Suggested fix diversity | PASS | 5 unique fixes out of 5 non-empty fixes |
+| Gemma plausibility | PASS | 5/5 (100%) plausible |
+**Notes:** 5/5 (100%) plausible
+
+### 2026-04-23 19:15:26 — ollama-ollama.json
+**Score: PASS**
+| Check | Result | Evidence |
+|---|---|---|
+| Top-level structure | PASS | First char: '[' |
+| Required fields | PASS | Fields: ['category', 'confidence', 'description', 'file', 'line', 'severity', 'suggested_fix'] |
+| Description quality | PASS | Sample: "The CreateHandler function has multiple " (177 chars) |
+| Suggested fix diversity | PASS | 5 unique fixes out of 5 non-empty fixes |
+| Gemma plausibility | PASS | 5/5 (100%) plausible |
+**Notes:** 5/5 (100%) plausible
+
+### 2026-04-23 19:15:29 — rust-lang-rust-analyzer.json
+**Score: PASS**
+| Check | Result | Evidence |
+|---|---|---|
+| Top-level structure | PASS | First char: '[' |
+| Required fields | PASS | Fields: ['category', 'confidence', 'description', 'file', 'line', 'severity', 'suggested_fix'] |
+| Description quality | PASS | Sample: "The BuiltinType enum has multiple nested" (139 chars) |
+| Suggested fix diversity | PASS | 5 unique fixes out of 5 non-empty fixes |
+| Gemma plausibility | PASS | 5/5 (100%) plausible |
+**Notes:** 5/5 (100%) plausible
+
+### 2026-04-24 12:16:30 — vercel-next.js.json
+**Score: WARN**
+| Check | Result | Evidence |
+|---|---|---|
+| Top-level structure | PASS | First char: '[' |
+| Required fields | PASS | Fields: ['file', 'line', 'category', 'severity', 'description', 'suggested_fix', 'confidence'] |
+| Description quality | PASS | Sample: "The matchRoute function has complex nest" (102 chars) |
+| Suggested fix diversity | PASS | 5 unique fixes out of 5 non-empty fixes |
+| Gemma plausibility | WARN | Model timeout |
+**Notes:** 0 structural checks failed, Gemma plausibility WARN
+

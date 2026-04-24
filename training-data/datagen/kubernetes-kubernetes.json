@@ -1,0 +1,111 @@
+[
+  {
+    "file": "cmd/kubemark/app/hollow_node.go",
+    "line": 50,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "The hollowNodeConfig struct has deprecated fields (UseRealProxier, ProxierSyncPeriod, ProxierMinSyncPeriod) that are still present in the code but marked as having no effect.",
+    "suggested_fix": "Remove deprecated fields that have no effect to clean up the configuration structure.",
+    "confidence": 0.85
+  },
+  {
+    "file": "cmd/kubemark/app/hollow_node.go",
+    "line": 65,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "The TODO comment indicates that hollow-node should be refactored into hollow-kubelet and hollow-proxy, suggesting technical debt.",
+    "suggested_fix": "Complete the refactoring to separate concerns and improve maintainability.",
+    "confidence": 0.9
+  },
+  {
+    "file": "cmd/kubemark/app/hollow_node.go",
+    "line": 120,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "The run function has multiple error return paths but some error handling could be more specific about the types of failures.",
+    "suggested_fix": "Add more specific error types and handling for different failure scenarios.",
+    "confidence": 0.8
+  },
+  {
+    "file": "cmd/kubemark/app/hollow_node.go",
+    "line": 180,
+    "category": "production_readiness",
+    "severity": "low",
+    "description": "The hollow kubelet creation and setup has multiple client configurations but lacks comprehensive retry logic for transient failures.",
+    "suggested_fix": "Add retry logic with exponential backoff for client creation and API server communication.",
+    "confidence": 0.75
+  },
+  {
+    "file": "pkg/kubelet/cm/container_manager.go",
+    "line": 80,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "The ContainerManager interface is very large with 15+ methods, indicating it may be violating the Interface Segregation Principle.",
+    "suggested_fix": "Consider splitting this large interface into smaller, more focused interfaces.",
+    "confidence": 0.9
+  },
+  {
+    "file": "pkg/kubelet/cm/container_manager.go",
+    "line": 45,
+    "category": "production_readiness",
+    "severity": "medium",
+    "description": "The cgroup v1 deprecation warning indicates technical debt that needs to be addressed before removal.",
+    "suggested_fix": "Plan and execute migration to cgroup v2 as indicated in the warning message.",
+    "confidence": 0.85
+  },
+  {
+    "file": "pkg/kubelet/cm/container_manager.go",
+    "line": 55,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "The TODO comment about migrating kubelet to use internal objects or client library indicates technical debt.",
+    "suggested_fix": "Address the TODO by standardizing on either internal objects or client library usage.",
+    "confidence": 0.8
+  },
+  {
+    "file": "pkg/kubelet/kubelet.go",
+    "line": 100,
+    "category": "code_quality",
+    "severity": "high",
+    "category": "code_quality",
+    "description": "The kubelet.go file is extremely large (3480+ lines) indicating it may be a 'god file' with too many responsibilities.",
+    "suggested_fix": "Refactor this large file into smaller, more focused modules following single responsibility principle.",
+    "confidence": 0.95
+  },
+  {
+    "file": "pkg/kubelet/kubelet.go",
+    "line": 80,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "The import section is very large with 50+ imports, suggesting the file has too many dependencies.",
+    "suggested_fix": "Consider breaking this file into smaller modules to reduce dependencies and improve maintainability.",
+    "confidence": 0.85
+  },
+  {
+    "file": "cmd/kubemark/app/hollow_node.go",
+    "line": 200,
+    "category": "error_handling",
+    "severity": "medium",
+    "description": "The proxy morph section creates multiple clients but doesn't have comprehensive error handling for cleanup if initialization fails.",
+    "suggested_fix": "Add proper resource cleanup in error paths to prevent resource leaks.",
+    "confidence": 0.8
+  },
+  {
+    "file": "pkg/kubelet/cm/container_manager.go",
+    "line": 100,
+    "category": "performance",
+    "severity": "low",
+    "description": "The ContainerManager interface has methods that suggest complex resource management that could benefit from caching strategies.",
+    "suggested_fix": "Review resource management methods for potential caching optimizations.",
+    "confidence": 0.75
+  },
+  {
+    "file": "cmd/kubemark/app/hollow_node.go",
+    "line": 150,
+    "category": "security",
+    "severity": "low",
+    "description": "The hollow kubelet uses fake runtime and image services which could have different security characteristics than real implementations.",
+    "suggested_fix": "Document security differences between fake and real services, especially for testing vs production use.",
+    "confidence": 0.7
+  }
+]

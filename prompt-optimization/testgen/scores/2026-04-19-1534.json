@@ -13,5 +13,5 @@
   "weakest": "compilability",
   "notes": "No new test files generated since v3 was deployed on 2026-04-16. generation-log.md was touched today at 13:26 (cron ran, found all source files already logged, exited without generating). Cannot score v3 output. Last known score was v2 aggregate 0.38 (compilability 0.25). v3 is kept as rollback baseline. Root cause analysis: the OUTPUT FORMAT — STRICT block in v3 targets the devstral orchestrator agent, but the constraint is NOT embedded in what gets piped to Gemma in step 5c. Devstral constructs the ollama shell call and likely only pipes the source code, so Gemma never sees the format constraint and generates prose code analysis instead of TypeScript.",
   "hypothesis": "v4 adds an explicit bash command template in step 5c that embeds the OUTPUT FORMAT preamble directly into the stdin pipe to Gemma. This ensures Gemma sees the constraint, not just the orchestrating devstral agent.",
-  "decision": "pending"
+  "decision": "keep"
 }

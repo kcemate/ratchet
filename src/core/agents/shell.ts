@@ -388,8 +388,8 @@ export async function buildIssuePlanPrompt(
     `5. "I will modify AT MOST ${fileLimit} files."\n` +
     `6. "I will make the smallest possible change that fixes the issue."\n` +
     `7. "I understand that violating any constraint will cause rollback."\n\n` +
-    `After confirming each checklist item verbally, output changes in the EXACT format below:\n\n` +
-    `MODIFIED: ${targetPath}\n\n` +
+    `After confirming each checklist item verbally, output changes in EXACT SEARCH/REPLACE BLOCK format:\n\n` +
+    `MODIFIED: ${targetPath}\n` +
     `[agent makes changes...]\n\n` +
     `DO NOT output any prose, analysis, or explanation — ONLY the MODIFIED line and the changes.`
   );
