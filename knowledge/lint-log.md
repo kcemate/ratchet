@@ -537,3 +537,58 @@ Moved sveltejs-svelte.json to quarantine.
 | Gemma plausibility | WARN | Model timeout |
 **Notes:** 0 structural checks failed, Gemma plausibility WARN
 
+### 2026-04-25 13:08:22 — trend-Alishahryar1_free-claude-code-20260425.json
+**Score: FAIL**
+| Check | Result | Evidence |
+|---|---|---|
+| Top-level structure | FAIL | First char: '?' |
+| Required fields | FAIL | Fields: [] |
+| Description quality | FAIL | Sample: "" (0 chars) |
+| Suggested fix diversity | FAIL | 0 unique fixes out of 0 total fixes |
+| Gemma plausibility | WARN | Model unavailable (not tried) |
+**Notes:** unreadable - not a JSON array or object
+
+### 2026-04-25 13:08:23 — trend-PostHog_posthog-20260425.json
+**Score: FAIL**
+| Check | Result | Evidence |
+|---|---|---|
+| Top-level structure | FAIL | First char: '?' |
+| Required fields | FAIL | Fields: [] |
+| Description quality | FAIL | Sample: "" (0 chars) |
+| Suggested fix diversity | FAIL | 0 unique fixes out of 0 total fixes |
+| Gemma plausibility | WARN | Model unavailable (not tried) |
+**Notes:** unreadable - not a JSON array or object
+
+### 2026-04-25 13:08:23 — trend-Z4nzu_hackingtool-20260425.json
+**Score: FAIL**
+| Check | Result | Evidence |
+|---|---|---|
+| Top-level structure | FAIL | First char: '?' |
+| Required fields | FAIL | Fields: [] |
+| Description quality | FAIL | Sample: "" (0 chars) |
+| Suggested fix diversity | FAIL | 0 unique fixes out of 0 total fixes |
+| Gemma plausibility | WARN | Model unavailable (not tried) |
+**Notes:** unreadable - not a JSON array or object
+
+### 2026-04-25 13:08:23 — trend-davila7_claude-code-templates-20260425.json
+**Score: FAIL**
+| Check | Result | Evidence |
+|---|---|---|
+| Top-level structure | FAIL | First char: '?' |
+| Required fields | FAIL | Fields: [] |
+| Description quality | FAIL | Sample: "" (0 chars) |
+| Suggested fix diversity | FAIL | 0 unique fixes out of 0 total fixes |
+| Gemma plausibility | WARN | Model unavailable (not tried) |
+**Notes:** unreadable - not a JSON array or object
+
+### 2026-04-25 13:08:23 — trend-mattpocock_skills-20260425.json
+**Score: FAIL**
+| Check | Result | Evidence |
+|---|---|---|
+| Top-level structure | FAIL | First char: '?' |
+| Required fields | FAIL | Fields: [] |
+| Description quality | FAIL | Sample: "" (0 chars) |
+| Suggested fix diversity | FAIL | 0 unique fixes out of 0 total fixes |
+| Gemma plausibility | WARN | Model unavailable (not tried) |
+**Notes:** unreadable - not a JSON array or object
+

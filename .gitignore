@@ -6,3 +6,7 @@ dist/
 .ratchet/
 .ratchet-state.json
 coverage/
+
+training-data/
+prompt-optimization/
+docs/architecture-review-*.md

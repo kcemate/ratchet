@@ -56,8 +56,8 @@ const DEFAULT_PROVIDER_MODELS: Record<string, Record<CapabilityTier, string | un
   },
   OllamaCloud: {
     cheap: 'nemotron-3-super:cloud',
-    standard: 'nemotron-3-super:cloud',
-    best: 'mistral-large-3:675b-cloud',
+    standard: 'glm-5.1:cloud',
+    best: 'glm-5.1:cloud',
   },
   SI: {
     cheap: 'si-1-mini',

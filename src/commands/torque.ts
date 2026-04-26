@@ -215,6 +215,8 @@ export function torqueCommand(): Command {
     )
     .option('--parallel <number>', 'Run multiple specs/targets in parallel (requires multiple --spec or --specs-file)')
     .option('--specs-file <path>', 'Path to a markdown file where each ## heading is a separate task spec')
+    .option('--model <model>', 'Model to use for fixes (overrides provider default, e.g. glm-5.1:cloud, kimi-k2.6:cloud)')
+    .option('--provider <provider>', 'Provider to use: anthropic, openai, openrouter, ollama-cloud, local, si')
     .option('--local', 'Use local on-device MLX model instead of cloud API (privacy mode)', false)
     .option('--local-port <number>', `Port for local MLX server (default: ${LOCAL_MLX_DEFAULT_PORT})`)
     .option('--pro', 'Force Pro fix engine (Claude Sonnet via ShellAgent) — requires ANTHROPIC_API_KEY', false)
@@ -225,7 +227,8 @@ export function torqueCommand(): Command {
         '  $ ratchet improve --target src\n' +
         '  $ ratchet improve --target api --clicks 3\n' +
         '  $ ratchet improve --target src --dry-run\n' +
-        '  $ ratchet improve --target src --verbose --no-branch\n',
+        '  $ ratchet improve --target src --verbose --no-branch\n' +
+        '  $ ratchet improve --provider ollama-cloud --model glm-5.1:cloud\n',
     )
     .action(
       async (options: {
@@ -267,6 +270,7 @@ export function torqueCommand(): Command {
         parallel?: string;
         specsFile?: string;
         model?: string;
+        provider?: string;
         local: boolean;
         localPort?: string;
         pro: boolean;
@@ -593,6 +597,11 @@ export function torqueCommand(): Command {
         if (options.local) {
           const port = options.localPort ?? String(LOCAL_MLX_DEFAULT_PORT);
           fields.push(['Model', chalk.green(`local MLX :${port}`)]);
+        } else if (options.provider) {
+          fields.push(['Provider', chalk.cyan(options.provider)]);
+          if (options.model) fields.push(['Model', chalk.cyan(options.model)]);
+        } else if (options.model) {
+          fields.push(['Model', chalk.cyan(options.model)]);
         }
         if (options.architect) fields.push(['Architect', chalk.yellow('enabled')]);
         if (options.planFirst) fields.push(['Plan-first', chalk.yellow('enabled')]);
@@ -635,15 +644,48 @@ export function torqueCommand(): Command {
           );
           agent = new APIAgent({ provider: localProvider });
         } else {
+          // Build explicit provider config from CLI flags
+          const explicitConfig = options.provider
+            ? {
+                provider: options.provider as import('../core/providers/index.js').ProviderConfig['provider'],
+                apiKey: undefined as string | undefined,
+                model: options.model,
+              }
+            : undefined;
+
+          // Resolve API key for explicit provider
+          if (explicitConfig) {
+            switch (explicitConfig.provider) {
+              case 'ollama-cloud':
+                explicitConfig.apiKey = process.env['OLLAMA_CLOUD_API_KEY'];
+                break;
+              case 'anthropic':
+                explicitConfig.apiKey = process.env['ANTHROPIC_API_KEY'];
+                break;
+              case 'openai':
+                explicitConfig.apiKey = process.env['OPENAI_API_KEY'];
+                break;
+              case 'openrouter':
+                explicitConfig.apiKey = process.env['OPENROUTER_API_KEY'];
+                break;
+              case 'si':
+                explicitConfig.apiKey = process.env['RATCHET_SI_KEY'];
+                break;
+            }
+          }
+
           // Detect provider first (uses env keys), then resolve model for that provider
-          const baseProvider = detectProvider();
+          const baseProvider = explicitConfig
+            ? detectProvider(explicitConfig as import('../core/providers/index.js').ProviderConfig, options.model)
+            : detectProvider(undefined, options.model);
+
           const useProEngine = options.pro || baseProvider.name === 'Anthropic';
           if (useProEngine) {
-            const fixModel = options.pro ? 'claude-sonnet-4-6' : modelRegistry.getModel('fix', baseProvider.name);
+            const fixModel = options.pro ? 'claude-sonnet-4-6' : (options.model ?? modelRegistry.getModel('fix', baseProvider.name));
             process.stdout.write(chalk.green('  ⚡ Using Pro fix engine (Claude Sonnet)\n') + '\n');
             agent = new ShellAgent({ model: fixModel, cwd });
           } else {
-            const fixModel = modelRegistry.getModel('fix', baseProvider.name);
+            const fixModel = options.model ?? modelRegistry.getModel('fix', baseProvider.name);
             process.stdout.write(chalk.dim('  Using free fix engine (best-effort)\n') + '\n');
             // Re-detect with correct model for this provider (avoids claude model on OllamaCloud)
             const fixProvider = fixModel ? detectProvider(undefined, fixModel) : baseProvider;
