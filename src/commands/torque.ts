@@ -219,7 +219,7 @@ export function torqueCommand(): Command {
     .option('--provider <provider>', 'Provider to use: anthropic, openai, openrouter, ollama-cloud, local, si')
     .option('--local', 'Use local on-device MLX model instead of cloud API (privacy mode)', false)
     .option('--local-port <number>', `Port for local MLX server (default: ${LOCAL_MLX_DEFAULT_PORT})`)
-    .option('--pro', 'Force Pro fix engine (Claude Sonnet via ShellAgent) — requires ANTHROPIC_API_KEY', false)
+    .option('--pro', 'Force best-tier fix engine — uses the strongest model for your configured provider (best tier)', false)
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -228,7 +228,8 @@ export function torqueCommand(): Command {
         '  $ ratchet improve --target api --clicks 3\n' +
         '  $ ratchet improve --target src --dry-run\n' +
         '  $ ratchet improve --target src --verbose --no-branch\n' +
-        '  $ ratchet improve --provider ollama-cloud --model glm-5.1:cloud\n',
+        '  $ ratchet improve --provider ollama-cloud --model glm-5.1:cloud\n' +
+        '  $ ratchet improve --provider openrouter --pro\n',
     )
     .action(
       async (options: {
@@ -680,14 +681,18 @@ export function torqueCommand(): Command {
             : detectProvider(undefined, options.model);
 
           const useProEngine = options.pro || baseProvider.name === 'Anthropic';
-          if (useProEngine) {
-            const fixModel = options.pro ? 'claude-sonnet-4-6' : (options.model ?? modelRegistry.getModel('fix', baseProvider.name));
-            process.stdout.write(chalk.green('  ⚡ Using Pro fix engine (Claude Sonnet)\n') + '\n');
+          const tier: import('../types.js').CapabilityTier = useProEngine ? 'best' : 'standard';
+          const fixModel = options.model ?? modelRegistry.getModelForTier(tier, baseProvider.name);
+
+          if (baseProvider.name === 'Anthropic') {
+            process.stdout.write(chalk.green(`  ⚡ Pro fix engine: ${fixModel}\n`) + '\n');
             agent = new ShellAgent({ model: fixModel, cwd });
+          } else if (useProEngine) {
+            process.stdout.write(chalk.green(`  ⚡ Pro fix engine: ${fixModel}\n`) + '\n');
+            const fixProvider = fixModel ? detectProvider(undefined, fixModel) : baseProvider;
+            agent = new APIAgent({ provider: fixProvider });
           } else {
-            const fixModel = options.model ?? modelRegistry.getModel('fix', baseProvider.name);
-            process.stdout.write(chalk.dim('  Using free fix engine (best-effort)\n') + '\n');
-            // Re-detect with correct model for this provider (avoids claude model on OllamaCloud)
+            process.stdout.write(chalk.dim(`  Standard fix engine: ${fixModel}\n`) + '\n');
             const fixProvider = fixModel ? detectProvider(undefined, fixModel) : baseProvider;
             agent = new APIAgent({ provider: fixProvider });
           }
@@ -1273,10 +1278,10 @@ export function torqueCommand(): Command {
                   }
                   spinner = null;
                 }
-                // Free-tier tip: suggest --pro when using APIAgent and click failed or had 0 score delta
-                if (!options.pro && agent instanceof APIAgent && (rolledBack || (clickDelta !== undefined && clickDelta <= 0))) {
+                // Tip: suggest --pro when click failed or had 0 score delta
+                if (!options.pro && (rolledBack || (clickDelta !== undefined && clickDelta <= 0))) {
                   process.stdout.write(
-                    chalk.dim('  ⚡ Tip: Use --pro for higher fix success rate (requires ANTHROPIC_API_KEY)\n'),
+                    chalk.dim('  ⚡ Tip: Use --pro for the best model tier\n'),
                   );
                 }
                 // Reset per-click tracking
