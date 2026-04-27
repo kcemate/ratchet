@@ -400,8 +400,11 @@ export async function buildIssuePlanPrompt(
     `- Include the code to change PLUS 2-3 lines of context on each side\n` +
     `- Do NOT include the \`<<<<<<< SEARCH\` marker inside your search block\n` +
     `- Do NOT include the \`=======\` or \`>>>>>>> REPLACE\` markers inside either block\n` +
-    `- Verify your SEARCH block appears VERBATIM in the current file before outputting\n` +
-    `- If unsure, use MORE context lines (8-10) rather than fewer\n\n` +
+    `- Verify your SEARCH block appears VERBATIM in the current file before outputting
+    - Whitespace matters: every space, tab, and line ending must match EXACTLY
+    - Use your editor's line/column indicators to verify exact copying
+    - To verify: paste SEARCH block into a temporary file and use diff to check against original
+    - If unsure about exact lines, use MORE context (8-10 lines) rather than fewer
     `OUTPUT FORMAT (output NOTHING except this):\n\n` +
     `MODIFIED: ${targetPath}\n` +
     `<<<<<<< SEARCH\n` +
