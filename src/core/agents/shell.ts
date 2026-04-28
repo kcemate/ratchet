@@ -405,7 +405,7 @@ export async function buildIssuePlanPrompt(
     - Use your editor's line/column indicators to verify exact copying
     - To verify: paste SEARCH block into a temporary file and use diff to check against original
     - If unsure about exact lines, use MORE context (8-10 lines) rather than fewer
-    `OUTPUT FORMAT (output NOTHING except this):\n\n` +
+    `- Ensure your replacement code is syntactically valid and matches the language's grammar\n    `- Make minimal, direct changes that fix the reported issue\n    `- Avoid speculative changes or "preventive improvements" that aren't requested\n\n`OUTPUT FORMAT (output NOTHING except this):\n\n` +
     `MODIFIED: ${targetPath}\n` +
     `<<<<<<< SEARCH\n` +
     `[exact consecutive lines copied from the file above — 5-10 lines minimum]\n` +
