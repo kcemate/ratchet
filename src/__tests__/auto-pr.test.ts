@@ -141,6 +141,7 @@ describe('auto-pr', () => {
       expect(result.reason).toContain('branch ratchet/add-badge already exists');
     });
 
+    it('should create PR with ratchet badges', async () => {
       const gitMock = vi.spyOn(child_process, 'execFile').mockImplementation(async (file, args, opts, callback) => {
         if (file === 'git') {
           if (args[0] === 'branch' && args[1] === '--list') {

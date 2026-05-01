@@ -1,6 +1,6 @@
 # Ratchet
 
-[![npm version](https://img.shields.io/npm/v/ratchet-run)](https://npmjs.com/package/ratchet-run) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/node/v/ratchet-run)](https://nodejs.org) [![tests](https://img.shields.io/badge/tests-3%2C277%20passing-brightgreen)](https://github.com/kcemate/ratchet)
+[![npm version](https://img.shields.io/npm/v/ratchet-run)](https://npmjs.com/package/ratchet-run) [![CI](https://github.com/kcemate/ratchet/actions/workflows/ci.yml/badge.svg)](https://github.com/kcemate/ratchet/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/node/v/ratchet-run)](https://nodejs.org)
 
 > **Security scanner for AI-generated code.** AI coding tools ship fast but introduce security gaps, empty catches, unvalidated inputs, and missing error handling. Ratchet scans, scores, and auto-fixes what AI gets wrong — only changes that pass tests get committed.
 
