@@ -1,12 +1,78 @@
+# === Dependencies ===
 node_modules/
+.pnp
+.pnp.js
+
+# === Build outputs ===
 dist/
+build/
+*.tsbuildinfo
+
+# === Logs & debug ===
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# === OS & editor ===
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# === Environment & secrets (CRITICAL) ===
 .env
+.env.local
+.env.*.local
+*.pem
+*.key
+stripe-config.json
+secrets.json
+
+# === Test & coverage ===
+coverage/
+.nyc_output/
+*.lcov
+
+# === Ratchet self files ===
 .ratchet/
 .ratchet-state.json
-coverage/
-
 training-data/
 prompt-optimization/
 docs/architecture-review-*.md
+
+# === AI / LLM tooling artifacts ===
+.claude/
+.gitnexus/
+.brv/
+.wrangler/
+.cursor/
+.aider/
+.zed/
+
+# === Data generation & ephemeral results ===
+datagen-scans/
+knowledge/
+results/
+Documents/
+*.tmp
+*.bak
+*.orig
+
+# === Scratch scripts (move to scripts/ if keeping) ===
+fix_*.js
+fix_*.py
+qa-generator*.py
+generate_qa.*
+run_qa_generator.*
+simple_qa_generator.py
+
+# === Misc junk ===
+something.txt
+REPO-SPLIT-PLAN.md
+notes.md
