@@ -23,11 +23,9 @@ describe('history module', () => {
   const mockRun: RatchetRun = {
     id: 'test-run-123',
     target: {
-      owner: 'test-owner',
-      repo: 'test-repo',
-      branch: 'main',
-      sha: 'abc123',
-      prNumber: null,
+      name: 'test-target',
+      description: 'test description',
+      path: '/tmp/ratchet-history-test/test-repo',
     },
     clicks: [],
     startedAt: new Date('2023-01-01T00:00:00Z'),
@@ -41,8 +39,6 @@ describe('history module', () => {
     categories: [],
     totalIssuesFound: 5,
     issuesByType: [],
-    language: 'typescript',
-    timestamp: new Date().toISOString(),
   };
 
   describe('saveRun', () => {
@@ -78,7 +74,7 @@ describe('history module', () => {
       const loaded = await loadRun(testCwd, 'test-run-123');
       expect(loaded).not.toBeNull();
       expect(loaded?.run.id).toBe('test-run-123');
-      expect(loaded?.run.target.repo).toBe('test-repo');
+      expect(loaded?.run.target.name).toBe('test-target');
     });
 
     it('hydrates date fields from JSON strings', async () => {

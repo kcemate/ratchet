@@ -13,7 +13,7 @@ vi.mock('../core/click.js', () => ({
   executeClick: vi.fn(async (opts) => {
     return {
       click: {
-        clickNumber: opts.clickNumber,
+        number: opts.number,
         testsPassed: true,
         commitHash: 'mock-hash',
       },
@@ -23,10 +23,7 @@ vi.mock('../core/click.js', () => ({
 }));
 
 vi.mock('../core/scanner', () => ({
-  runScan: vi.fn(async () => ({
-    total: 100,
-    totalIssuesFound: 100,
-  })),
+  runScan: vi.fn(async () => ({ projectName: 'test', total: 100, maxTotal: 100, totalIssuesFound: 100, issuesByType: [], categories: [] })),
 }));
 
 vi.mock('../core/git.js', () => ({
@@ -76,10 +73,10 @@ describe('engine-architect', () => {
   it('should run architect engine with default options', async () => {
     const options: EngineRunOptions = {
       clicks: 2,
-      target: { name: 'test-target', path: 'src' },
-      config: {},
+      target: { name: 'test-target', path: 'src', description: 'Test target' },
+      config: { agent: 'shell', defaults: { clicks: 1, testCommand: 'npm test', autoCommit: false }, targets: [] } as any,
       cwd: '/test',
-      agent: { name: 'test-agent' },
+      agent: { analyze: vi.fn(async () => ''), propose: vi.fn(async () => ''), build: vi.fn(async () => ({ success: true, output: '' })) } as any,
       callbacks: mockCallbacks,
       createBranch: false,
     };
@@ -89,24 +86,24 @@ describe('engine-architect', () => {
     expect(run.clicks.length).toBe(2);
     expect(run.clicks[0].testsPassed).toBe(true);
     expect(run.clicks[1].testsPassed).toBe(true);
-    expect(mockCallbacks.onClickStart).toHaveBeenCalledTimes(2);
-    expect(mockCallbacks.onClickComplete).toHaveBeenCalledTimes(2);
-    expect(mockCallbacks.onRunComplete).toHaveBeenCalledWith(run);
+    expect(mockCallbacks!.onClickStart).toHaveBeenCalledTimes(2);
+    expect(mockCallbacks!.onClickComplete).toHaveBeenCalledTimes(2);
+    expect(mockCallbacks!.onRunComplete).toHaveBeenCalledWith(run);
   });
 
   it('should handle click rollback on score regression', async () => {
     const { executeClick } = await import('../core/click.js');
-    executeClick.mockResolvedValueOnce({
-      click: { clickNumber: 1, testsPassed: true, commitHash: 'mock-hash' },
+    (executeClick as any).mockResolvedValueOnce({
+      click: { number: 1, testsPassed: true, commitHash: 'mock-hash' },
       rolled_back: false,
     });
 
     const options: EngineRunOptions = {
       clicks: 1,
-      target: { name: 'test-target', path: 'src' },
-      config: {},
+      target: { name: 'test-target', path: 'src', description: 'Test target' },
+      config: { agent: 'shell', defaults: { clicks: 1, testCommand: 'npm test', autoCommit: false }, targets: [] } as any,
       cwd: '/test',
-      agent: { name: 'test-agent' },
+      agent: { analyze: vi.fn(async () => ''), propose: vi.fn(async () => ''), build: vi.fn(async () => ({ success: true, output: '' })) } as any,
       callbacks: mockCallbacks,
       createBranch: false,
     };
@@ -119,26 +116,26 @@ describe('engine-architect', () => {
     const options: EngineRunOptions = {
       clicks: 1,
       clickOffset: 10,
-      target: { name: 'test-target', path: 'src' },
-      config: {},
+      target: { name: 'test-target', path: 'src', description: 'Test target' },
+      config: { agent: 'shell', defaults: { clicks: 1, testCommand: 'npm test', autoCommit: false }, targets: [] } as any,
       cwd: '/test',
-      agent: { name: 'test-agent' },
+      agent: { analyze: vi.fn(async () => ''), propose: vi.fn(async () => ''), build: vi.fn(async () => ({ success: true, output: '' })) } as any,
       callbacks: mockCallbacks,
       createBranch: false,
     };
 
     const run = await runArchitectEngine(options);
-    expect(run.clicks[0].clickNumber).toBe(11);
+    expect(run.clicks[0].number).toBe(11);
   });
 
   it('should create branch when createBranch is true', async () => {
     const { createBranch } = await import('../core/git.js');
     const options: EngineRunOptions = {
       clicks: 1,
-      target: { name: 'test-target', path: 'src' },
-      config: {},
+      target: { name: 'test-target', path: 'src', description: 'Test target' },
+      config: { agent: 'shell', defaults: { clicks: 1, testCommand: 'npm test', autoCommit: false }, targets: [] } as any,
       cwd: '/test',
-      agent: { name: 'test-agent' },
+      agent: { analyze: vi.fn(async () => ''), propose: vi.fn(async () => ''), build: vi.fn(async () => ({ success: true, output: '' })) } as any,
       callbacks: mockCallbacks,
       createBranch: true,
     };
@@ -148,19 +145,19 @@ describe('engine-architect', () => {
   });
 
   it('should use provided scanResult', async () => {
-    const scanResult = { total: 50, totalIssuesFound: 50 };
+    const scanResult = { total: 50, totalIssuesFound: 50, projectName: 'test', maxTotal: 100, categories: [], issuesByType: {} } as any;
     const options: EngineRunOptions = {
       clicks: 1,
-      target: { name: 'test-target', path: 'src' },
-      config: {},
+      target: { name: 'test-target', path: 'src', description: 'Test target' },
+      config: { agent: 'shell', defaults: { clicks: 1, testCommand: 'npm test', autoCommit: false }, targets: [] } as any,
       cwd: '/test',
-      agent: { name: 'test-agent' },
+      agent: { analyze: vi.fn(async () => ''), propose: vi.fn(async () => ''), build: vi.fn(async () => ({ success: true, output: '' })) } as any,
       callbacks: mockCallbacks,
       createBranch: false,
       scanResult,
     };
 
     await runArchitectEngine(options);
-    expect(mockCallbacks.onScanComplete).toHaveBeenCalledWith(scanResult);
+    expect(mockCallbacks!.onScanComplete).toHaveBeenCalledWith(scanResult);
   });
 });
