@@ -375,7 +375,9 @@ export function torqueCommand(): Command {
           options.dryRun = false;
         }
         if (options.dryRun && !options.apply) {
-          logger.info(chalk.yellow('  ⚠  Dry-run mode (default). Use --apply to commit changes.'));
+          pinoLogger.info(
+            chalk.yellow('  ⚠  Dry-run mode (default). Use --apply to commit changes.'),
+          );
         }
 
         // ── Parallel mode
