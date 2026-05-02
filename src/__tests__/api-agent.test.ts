@@ -179,13 +179,13 @@ describe('APIAgent.build() — guard limits', () => {
       'Fix the issue.',
       { maxFiles: 3, maxLines: 60 },
     );
-    expect(capturedPrompt).toContain('Modify at most 3 file(s)');
+    expect(capturedPrompt).toContain('I will modify at most 3 file(s).');
     expect(capturedPrompt).toContain('at most 60 total lines');
   });
 
   it('prompt defaults to 1 file / 20 lines when no guards', async () => {
     const capturedPrompt = await capturePrompt(tempDir, 'Fix the issue.', undefined);
-    expect(capturedPrompt).toContain('Modify at most 1 file(s)');
+    expect(capturedPrompt).toContain('I will modify at most 1 file(s).');
     expect(capturedPrompt).toContain('at most 20 total lines');
   });
 });
