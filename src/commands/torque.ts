@@ -160,7 +160,12 @@ export function torqueCommand(): Command {
       '-n, --clicks <number>',
       'Number of clicks to run (overrides defaults.clicks in config)',
     )
-    .option('--dry-run', 'Preview mode — analyze and propose without committing any changes', false)
+    .option(
+      '--dry-run',
+      'Preview mode — analyze and propose without committing any changes (default: true)',
+      true,
+    )
+    .option('--apply', 'Actually commit changes — required to override --dry-run', false)
     .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
     .option('--no-branch', 'Run on the current branch instead of creating a ratchet branch', false)
     .option(
@@ -309,7 +314,8 @@ export function torqueCommand(): Command {
         '  $ ratchet improve\n' +
         '  $ ratchet improve --target src\n' +
         '  $ ratchet improve --target api --clicks 3\n' +
-        '  $ ratchet improve --target src --dry-run\n' +
+        '  $ ratchet improve --target src --apply   # actually commit changes\n' +
+        '  $ ratchet improve --target src --dry-run  # preview only (default)\n' +
         '  $ ratchet improve --target src --verbose --no-branch\n' +
         '  $ ratchet improve --provider ollama-cloud --model glm-5.1:cloud\n' +
         '  $ ratchet improve --provider openrouter --pro\n',
@@ -319,6 +325,7 @@ export function torqueCommand(): Command {
         target?: string;
         clicks?: string;
         dryRun: boolean;
+        apply: boolean;
         verbose: boolean;
         branch: boolean;
         mode?: string;
@@ -362,6 +369,14 @@ export function torqueCommand(): Command {
         deep: boolean;
       }) => {
         const cwd = process.cwd();
+
+        // Safety: --apply overrides the default --dry-run=true
+        if (options.apply) {
+          options.dryRun = false;
+        }
+        if (options.dryRun && !options.apply) {
+          logger.info(chalk.yellow('  ⚠  Dry-run mode (default). Use --apply to commit changes.'));
+        }
 
         // ── Parallel mode
         if (options.parallel) {
