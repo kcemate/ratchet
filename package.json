@@ -22,11 +22,16 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "prepare": "npm run build",
+    "prepare": "husky",
     "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "cli",
@@ -36,7 +41,7 @@
     "automation",
     "ratchet"
   ],
-  "author": "Ratchet Team",
+  "author": "kcemate",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -52,9 +57,16 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.0",
     "@types/pdfkit": "^0.17.5",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
+    "eslint": "^8.57.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "jsonwebtoken": "^9.0.3"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
@@ -66,7 +78,6 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.1",
     "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.3",
     "ora": "^9.3.0",
     "pdfkit": "^0.17.2",
     "pino": "^10.3.1",

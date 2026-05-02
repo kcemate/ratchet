@@ -29,10 +29,12 @@ import { torqueCommand } from './commands/torque.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 let version = '0.1.0';
 try {
-  const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8')) as { version: string };
+  const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8')) as {
+    version: string;
+  };
   version = pkg.version;
-} catch {
-  // fallback
+} catch (err) {
+  if (process.env.RATCHET_DEBUG) console.debug('Could not read package.json version:', err);
 }
 
 const program = new Command();
@@ -40,15 +42,16 @@ const program = new Command();
 program
   .name('ratchet')
   .description(
-    'Autonomous code improvement CLI.\n\n' +
-    'Quick start:\n' +
-    '  ratchet init          Set up your project\n' +
-    '  ratchet scan          Score your codebase\n\n' +
-    'Upgrade to Pro for AI-powered fixes:\n' +
-    '  npm install -g ratchet-pro'
+    'Security scanner for AI-generated code. Scan, score, and auto-fix what AI gets wrong.\n\n' +
+      'Quick start:\n' +
+      '  ratchet init          Set up your project\n' +
+      '  ratchet scan          Score your codebase\n\n' +
+      'Upgrade to Pro for AI-powered fixes:\n' +
+      '  npm install -g ratchet-pro',
   )
   .version(version, '-v, --version', 'print version');
 
+// Register core commands
 program.addCommand(initCommand());
 program.addCommand(scanCommand());
 program.addCommand(reportCommand());
@@ -59,23 +62,32 @@ program.addCommand(statusCommand());
 program.addCommand(logCommand());
 program.addCommand(stopCommand());
 program.addCommand(pushCommand());
-program.addCommand(torqueCommand());
-const torqueAlias = torqueCommand();
-torqueAlias.name('torque');
-(torqueAlias as unknown as { _hidden: boolean })._hidden = true;
-program.addCommand(torqueAlias);
 program.addCommand(quickFixCommand());
 registerGraphCommand(program);
 
+// Hidden internal alias
+const torque = torqueCommand();
+torque.name('torque');
+(torque as any).hidden = true;
+program.addCommand(torque);
+
 // Try to load ratchet-pro plugin (paid features)
 try {
-  // @ts-ignore — ratchet-pro is an optional peer dep
-  const pro = await import('ratchet-pro') as { registerCommands?: (p: typeof program) => void };
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error ratchet-pro is an optional peer dependency
+  const pro = (await import('ratchet-pro')) as { registerCommands?: (p: typeof program) => void };
   if (pro.registerCommands) {
     pro.registerCommands(program);
   }
 } catch {
   // ratchet-pro not installed — free tier only
 }
+
+program.exitOverride((err) => {
+  if (err.code !== 'commander.helpDisplayed') {
+    console.error('\x1b[31mError:\x1b[0m', err.message);
+    process.exit(1);
+  }
+});
 
 program.parse(process.argv);
