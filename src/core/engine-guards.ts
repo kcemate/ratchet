@@ -46,8 +46,9 @@ export function resolveGuards(
   focusCategory?: string,
 ): ClickGuards | null {
   // config.guards is set by CLI (highest priority)
-  const source = config.guards ?? target.guards;
+  const source = config.guards !== undefined ? config.guards : target.guards;
   if (source !== undefined) {
+    if (source === null) return null;
     if (typeof source === 'string') return GUARD_PROFILES[source];
     return source;
   }

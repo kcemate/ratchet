@@ -9,7 +9,7 @@ describe('engine-guards', () => {
     });
 
     it('should escalate tight → refactor', () => {
-      const tight: ClickGuards = { maxFilesChanged: 6, maxLinesChanged: 120 };
+      const tight: ClickGuards = { maxFilesChanged: 3, maxLinesChanged: 40 };
       const result = nextGuardProfile(tight);
       expect(result?.name).toBe('refactor');
       expect(result?.guards).toEqual({ maxFilesChanged: 12, maxLinesChanged: 280 });
@@ -19,7 +19,7 @@ describe('engine-guards', () => {
       const refactor: ClickGuards = { maxFilesChanged: 12, maxLinesChanged: 280 };
       const result = nextGuardProfile(refactor);
       expect(result?.name).toBe('broad');
-      expect(result?.guards).toEqual({ maxFilesChanged: 24, maxLinesChanged: 560 });
+      expect(result?.guards).toEqual({ maxFilesChanged: 20, maxLinesChanged: 500 });
     });
 
     it('should return null when already at atomic', () => {
@@ -74,17 +74,17 @@ describe('engine-guards', () => {
 
     it('should use architect mode defaults', () => {
       const result = resolveGuards(mockTarget, mockConfig, 'architect');
-      expect(result).toEqual({ maxFilesChanged: 24, maxLinesChanged: 560 });
+      expect(result).toEqual({ maxFilesChanged: 20, maxLinesChanged: 500 });
     });
 
     it('should use sweep mode defaults', () => {
       const result = resolveGuards(mockTarget, mockConfig, 'sweep');
-      expect(result).toEqual({ maxFilesChanged: 48, maxLinesChanged: 1200 });
+      expect(result).toEqual({ maxFilesChanged: 50, maxLinesChanged: 1000 });
     });
 
     it('should use normal mode defaults (tight)', () => {
       const result = resolveGuards(mockTarget, mockConfig, 'normal');
-      expect(result).toEqual({ maxFilesChanged: 6, maxLinesChanged: 120 });
+      expect(result).toEqual({ maxFilesChanged: 3, maxLinesChanged: 40 });
     });
 
     it('should handle null guards (atomic)', () => {

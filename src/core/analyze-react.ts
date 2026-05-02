@@ -53,7 +53,7 @@ export async function safeReadFile(absPath: string): Promise<string> {
   try {
     const buf = await readFile(absPath);
     const text = buf.toString('utf-8');
-    return text.length > MAX_FILE_BYTES ? text.slice(0, MAX_FILE_BYTES) + '\n... [truncated]' : text;
+    return text.length > MAX_FILE_BYTES ? text.slice(0, MAX_FILE_BYTES - '...[truncated]'.length) + '...[truncated]' : text;
   } catch {
     return '';
   }
@@ -99,12 +99,12 @@ export function computeConfidence(
   // More tool calls = more thorough analysis = slightly higher confidence
   score += Math.min(toolCallsUsed * 0.01, 0.05);
 
-  return Math.max(0.1, Math.min(1.0, score));
+  return Math.round(Math.max(0.1, Math.min(1.0, score)) * 100) / 100;
 }
 
 export function deriveRiskLevel(blastConcerns: string[], maxDirectCallers: number): ReactAnalysis['riskLevel'] {
   if (maxDirectCallers >= 10 || blastConcerns.length >= 5) return 'critical';
-  if (maxDirectCallers >= 5 || blastConcerns.length >= 3) return 'high';
+  if (maxDirectCallers >= 5 || blastConcerns.length >= 2) return 'high';
   if (maxDirectCallers >= 2 || blastConcerns.length >= 1) return 'medium';
   return 'low';
 }
@@ -383,7 +383,7 @@ export async function runDeepAnalyze(
   let proposedChanges: ProposedChange[] = [];
   let executionOrder: string[] = [];
 
-  if (totalToolCalls < MAX_TURNS) {
+  if (turns.length < MAX_TURNS) {
     const confidence = computeConfidence(blastConcerns, riskLevel, [], totalToolCalls);
     try {
       const result = runPlanTurn(scan, topFiles, blastConcerns, riskLevel, confidence);
