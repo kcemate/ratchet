@@ -63,7 +63,7 @@ export class ClassicEngine implements ScanEngine {
 
     const lang = options.lang ?? detectProjectLanguage(cwd);
     const detectedFrameworks: Framework[] = detectFrameworks(cwd);
-    console.log(`Detected frameworks: ${detectedFrameworks.map(f => f.name).join(', ') || 'none'}`);
+    logger.debug(`Detected frameworks: ${detectedFrameworks.map(f => f.name).join(', ') || 'none'}`);
 
     const categories: CategoryResult[] = [
       scoreTests(allFiles, contents, cwd, lang),
