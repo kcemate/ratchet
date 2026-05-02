@@ -42,7 +42,10 @@ export function loadAutoPrConfig(cwd: string): AutoPrConfig {
     // Parse minimal YAML badge section without a full YAML parser dependency
     const raw = readFileSync(configPath, 'utf-8');
     const badgeSection = raw.match(/^badge:\s*\n((?:[ \t]+.+\n?)*)/m);
-    if (!badgeSection) return defaults;
+    if (!badgeSection) {
+      logger.warn('No badge section found in .ratchet.yml, using defaults');
+      return defaults;
+    }
 
     const section = badgeSection[1]!;
     const autoPr = /auto-pr:\s*(false)/i.test(section) ? false : defaults.autoPr;

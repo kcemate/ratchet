@@ -390,8 +390,36 @@ export async function buildIssuePlanPrompt(
     `7. "I understand that violating any constraint will cause rollback."\n\n` +
     `After confirming each checklist item verbally, output changes in EXACT SEARCH/REPLACE BLOCK format:\n\n` +
     `MODIFIED: ${targetPath}\n` +
-    `[agent makes changes...]\n\n` +
-    `DO NOT output any prose, analysis, or explanation — ONLY the MODIFIED line and the changes.`
+    `<<<<<<< SEARCH\n` +
+    `[exact consecutive lines copied from the file above — must match exactly, including whitespace]\n` +
+    `=======\n` +
+    `[replacement lines with fix applied]\n` +
+    `>>>>>>> REPLACE\n\n` +
+    `SEARCH BLOCK RULES:\n` +
+    `- Copy EXACTLY 5-10 consecutive lines from the current file\n` +
+    `- Include the code to change PLUS 2-3 lines of context on each side\n` +
+    `- Do NOT include the \`<<<<<<< SEARCH\` marker inside your search block\n` +
+    `- Do NOT include the \`=======\` or \`>>>>>>> REPLACE\` markers inside either block\n` +
+    `- Verify your SEARCH block appears VERBATIM in the current file before outputting\n` +
+    `- Whitespace matters: every space, tab, and line ending must match EXACTLY\n` +
+    `- Use your editor's line/column indicators to verify exact copying\n` +
+    `- To verify: paste SEARCH block into a temporary file and use diff to check against original\n` +
+    `- If unsure about exact lines, use MORE context (8-10 lines) rather than fewer\n` +
+    `- Ensure your replacement code is syntactically valid and matches the language's grammar\n` +
+    `- Make minimal, direct changes that fix the reported issue\n` +
+    `- Avoid speculative changes or "preventive improvements" that aren't requested\n\n` +
+    `OUTPUT FORMAT (output NOTHING except this):\n\n` +
+    `MODIFIED: ${targetPath}\n` +
+    `<<<<<<< SEARCH\n` +
+    `[exact consecutive lines copied from the file above — 5-10 lines minimum]\n` +
+    `=======\n` +
+    `[replacement lines]\n` +
+    `>>>>>>> REPLACE\n\n` +
+    `TERMINAL RULES:\n` +
+    `- Do NOT output anything before the first MODIFIED: line\n` +
+    `- Do NOT output anything after the last REPLACE: line\n` +
+    `- After the last REPLACE: line, output NOTHING else — no closing braces, no explanations, no JSON, no backticks\n` +
+    `- Do NOT reformat, restyle, or change whitespace outside the fix\n`
   );
 }
 
