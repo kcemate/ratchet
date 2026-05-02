@@ -29,7 +29,9 @@ import { torqueCommand } from './commands/torque.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 let version = '0.1.0';
 try {
-  const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8')) as { version: string };
+  const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8')) as {
+    version: string;
+  };
   version = pkg.version;
 } catch (err) {
   if (process.env.RATCHET_DEBUG) console.debug('Could not read package.json version:', err);
@@ -41,11 +43,11 @@ program
   .name('ratchet')
   .description(
     'Security scanner for AI-generated code. Scan, score, and auto-fix what AI gets wrong.\n\n' +
-    'Quick start:\n' +
-    '  ratchet init          Set up your project\n' +
-    '  ratchet scan          Score your codebase\n\n' +
-    'Upgrade to Pro for AI-powered fixes:\n' +
-    '  npm install -g ratchet-pro'
+      'Quick start:\n' +
+      '  ratchet init          Set up your project\n' +
+      '  ratchet scan          Score your codebase\n\n' +
+      'Upgrade to Pro for AI-powered fixes:\n' +
+      '  npm install -g ratchet-pro',
   )
   .version(version, '-v, --version', 'print version');
 
@@ -65,12 +67,14 @@ registerGraphCommand(program);
 
 // Hidden internal alias
 const torque = torqueCommand();
-torque.name('torque').hidden();
+(torque as any).name('torque').hidden(); // Commander .hidden() not in types
 program.addCommand(torque);
 
 // Try to load ratchet-pro plugin (paid features)
 try {
-  const pro = await import('ratchet-pro') as { registerCommands?: (p: typeof program) => void };
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error ratchet-pro is an optional peer dependency
+  const pro = (await import('ratchet-pro')) as { registerCommands?: (p: typeof program) => void };
   if (pro.registerCommands) {
     pro.registerCommands(program);
   }

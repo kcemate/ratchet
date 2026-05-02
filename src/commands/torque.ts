@@ -4,7 +4,12 @@ import ora from 'ora';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
-import { configFilePath, findTarget, findIncompleteTargets, getConfigWarnings } from '../core/config.js';
+import {
+  configFilePath,
+  findTarget,
+  findIncompleteTargets,
+  getConfigWarnings,
+} from '../core/config.js';
 import { saveRun, loadRun, listRuns } from '../core/history.js';
 import { readFileSync } from 'fs';
 import { runEngine, runSweepEngine, runArchitectEngine } from '../core/engine.js';
@@ -33,8 +38,14 @@ import { GUARD_PROFILES } from '../types.js';
 import type { GuardProfileName } from '../types.js';
 import { formatDuration } from '../core/utils.js';
 import {
-  printHeader, exitWithError, validateInt, printFields,
-  validateProjectEnv, CLICK_PHASE_LABELS, formatScoreDelta, renderClickTable,
+  printHeader,
+  exitWithError,
+  validateInt,
+  printFields,
+  validateProjectEnv,
+  CLICK_PHASE_LABELS,
+  formatScoreDelta,
+  renderClickTable,
 } from '../lib/cli.js';
 import { STATE_FILE } from './status.js';
 import { requireLicense } from '../core/license.js';
@@ -83,7 +94,7 @@ function printEconomics(economics: RunEconomics): void {
 }
 
 function printDeductionBreakdown(result: ScanResult): void {
-  const deductedCategories = result.categories.filter(c => c.score < c.max);
+  const deductedCategories = result.categories.filter((c) => c.score < c.max);
   if (deductedCategories.length === 0) {
     process.stdout.write(chalk.green('\n  ✨ No deductions — perfect score!\n\n'));
     return;
@@ -96,8 +107,8 @@ function printDeductionBreakdown(result: ScanResult): void {
     const catDeduction = cat.max - cat.score;
     process.stdout.write(
       `\n  ${cat.emoji} ${chalk.bold(cat.name)} ` +
-      `${chalk.dim(`${cat.score}/${cat.max}`)}  ` +
-      `${chalk.red(`−${catDeduction} pts`)}\n`,
+        `${chalk.dim(`${cat.score}/${cat.max}`)}  ` +
+        `${chalk.red(`−${catDeduction} pts`)}\n`,
     );
 
     for (const sub of cat.subcategories) {
@@ -112,7 +123,7 @@ function printDeductionBreakdown(result: ScanResult): void {
           const subLabel = i === 0 ? sub.name.padEnd(22) : ''.padEnd(22);
           process.stdout.write(
             `    ${chalk.dim(subLabel)}  ${chalk.cyan(loc.padEnd(38))}  ` +
-            `${chalk.yellow(reason)}  ${chalk.red(`−${deduction} pts`)}\n`,
+              `${chalk.yellow(reason)}  ${chalk.red(`−${deduction} pts`)}\n`,
           );
         }
         if (sub.locations.length > 5) {
@@ -123,7 +134,7 @@ function printDeductionBreakdown(result: ScanResult): void {
       } else {
         process.stdout.write(
           `    ${chalk.dim(sub.name.padEnd(22))}  ${chalk.dim('(no specific locations)'.padEnd(38))}  ` +
-          `${chalk.yellow(reason)}  ${chalk.red(`−${deduction} pts`)}\n`,
+            `${chalk.yellow(reason)}  ${chalk.red(`−${deduction} pts`)}\n`,
         );
       }
     }
@@ -141,8 +152,14 @@ export function torqueCommand(): Command {
         'and writes a live log to docs/<target>-ratchet.md.\n\n' +
         'Each click: analyze → propose → build → test → commit (or revert).',
     )
-    .option('-t, --target <name>', 'Target name defined in .ratchet.yml (omit to use auto-detection)')
-    .option('-n, --clicks <number>', 'Number of clicks to run (overrides defaults.clicks in config)')
+    .option(
+      '-t, --target <name>',
+      'Target name defined in .ratchet.yml (omit to use auto-detection)',
+    )
+    .option(
+      '-n, --clicks <number>',
+      'Number of clicks to run (overrides defaults.clicks in config)',
+    )
     .option('--dry-run', 'Preview mode — analyze and propose without committing any changes', false)
     .option('--verbose', 'Show per-click timing, proposal preview, and modified files', false)
     .option('--no-branch', 'Run on the current branch instead of creating a ratchet branch', false)
@@ -156,30 +173,59 @@ export function torqueCommand(): Command {
     )
     .option('--swarm', 'Enable swarm mode — N agents compete per click, best change wins', false)
     .option('--agents <number>', 'Number of competing agents in swarm mode (default: 3)')
-    .option('--focus <specs>', 'Comma-separated specializations: security,performance,quality,errors,types')
+    .option(
+      '--focus <specs>',
+      'Comma-separated specializations: security,performance,quality,errors,types',
+    )
     .option(
       '--focus-category <category>',
       'Force torque to target a specific score category:' +
-      ' testing, security, type-safety, error-handling, performance, code-quality',
+        ' testing, security, type-safety, error-handling, performance, code-quality',
     )
-    .option('--debate', 'Enable debate round in swarm mode — judge picks winner (default: true)', true)
+    .option(
+      '--debate',
+      'Enable debate round in swarm mode — judge picks winner (default: true)',
+      true,
+    )
     .option('--no-debate', 'Disable debate round — pick winner by score only')
-    .option('--personalities <names>', 'Comma-separated personality names for swarm agents (e.g. the-surgeon,the-hawk)')
-    .option('--adversarial', 'Enable adversarial QA — red team tests each landed change for regressions', false)
+    .option(
+      '--personalities <names>',
+      'Comma-separated personality names for swarm agents (e.g. the-surgeon,the-hawk)',
+    )
+    .option(
+      '--adversarial',
+      'Enable adversarial QA — red team tests each landed change for regressions',
+      false,
+    )
     .option('--sweep', 'Sweep mode — fix one issue type across the entire codebase', false)
     .option(
       '--category <type>',
       'Filter sweep to a specific issue category (e.g. line-length, console-cleanup, console-log)',
     )
-    .option('--guards <profile>', 'Guard profile: tight (3/40), refactor (12/280), broad (20/500), atomic (no limits)')
-    .option('--max-lines <number>', 'Max lines changed per click before auto-rollback (overrides --guards)')
-    .option('--max-files <number>', 'Max files changed per click before auto-rollback (overrides --guards)')
-    .option('--no-escalate', 'Disable adaptive escalation — stay on single-file target even when stalled')
+    .option(
+      '--guards <profile>',
+      'Guard profile: tight (3/40), refactor (12/280), broad (20/500), atomic (no limits)',
+    )
+    .option(
+      '--max-lines <number>',
+      'Max lines changed per click before auto-rollback (overrides --guards)',
+    )
+    .option(
+      '--max-files <number>',
+      'Max files changed per click before auto-rollback (overrides --guards)',
+    )
+    .option(
+      '--no-escalate',
+      'Disable adaptive escalation — stay on single-file target even when stalled',
+    )
     .option(
       '--no-guard-escalation',
-      'Disable smart guard escalation — don\'t auto-bump guard profile on consecutive guard rejections',
+      "Disable smart guard escalation — don't auto-bump guard profile on consecutive guard rejections",
     )
-    .option('--architect', 'Enable architect mode — structural refactoring with relaxed guards (20 files, 500 lines)')
+    .option(
+      '--architect',
+      'Enable architect mode — structural refactoring with relaxed guards (20 files, 500 lines)',
+    )
     .option(
       '--plan-first',
       'Run a planning click 0 before execution clicks — read-only, generates a structured plan',
@@ -191,9 +237,18 @@ export function torqueCommand(): Command {
       'After scanning, show a detailed breakdown of points lost per subcategory and file',
       false,
     )
-    .option('--no-pr-comment', 'Disable the before/after score card appended to output after torque completes')
-    .option('--no-pr-comment-footer', 'Hide the "Powered by Ratchet" footer in score cards (paid tiers)')
-    .option('--scope <spec>', 'Limit changes to specific files: diff, branch, staged, <glob>, or file:a.ts,b.ts')
+    .option(
+      '--no-pr-comment',
+      'Disable the before/after score card appended to output after torque completes',
+    )
+    .option(
+      '--no-pr-comment-footer',
+      'Hide the "Powered by Ratchet" footer in score cards (paid tiers)',
+    )
+    .option(
+      '--scope <spec>',
+      'Limit changes to specific files: diff, branch, staged, <glob>, or file:a.ts,b.ts',
+    )
     .option('--resume <id>', 'Resume an interrupted run by its run ID')
     .option('--no-auto-resume', 'Start fresh even if an interrupted run exists')
     .option('--background', 'Detach from terminal and run in background', false)
@@ -202,24 +257,52 @@ export function torqueCommand(): Command {
       'Enable context pruning for faster clicks — inject focused issue context into agent prompts (experimental)',
       false,
     )
-    .option('--timeout <minutes>', 'Maximum wall time in minutes (stops cleanly after current click finishes)')
-    .option('--budget <dollars>', 'Maximum estimated cost in USD (stops when budget would be exceeded)')
-    .option('--deep', 'Use DeepEngine for full semantic picture — re-runs every 3 clicks (default budget: $5.00)')
+    .option(
+      '--timeout <minutes>',
+      'Maximum wall time in minutes (stops cleanly after current click finishes)',
+    )
+    .option(
+      '--budget <dollars>',
+      'Maximum estimated cost in USD (stops when budget would be exceeded)',
+    )
+    .option(
+      '--deep',
+      'Use DeepEngine for full semantic picture — re-runs every 3 clicks (default budget: $5.00)',
+    )
     .option('--stop-on-regression', 'Stop immediately when a score regression is detected', false)
     .option('--no-strategy', 'Disable self-evolving strategy loading and evolution for this run')
     .option(
       '--deep-analyze',
       'Run a multi-turn ReACT analysis loop before the first click — reads files, ' +
-      'queries GitNexus for blast radius, and produces a structured risk assessment',
+        'queries GitNexus for blast radius, and produces a structured risk assessment',
       false,
     )
-    .option('--parallel <number>', 'Run multiple specs/targets in parallel (requires multiple --spec or --specs-file)')
-    .option('--specs-file <path>', 'Path to a markdown file where each ## heading is a separate task spec')
-    .option('--model <model>', 'Model to use for fixes (overrides provider default, e.g. glm-5.1:cloud, kimi-k2.6:cloud)')
-    .option('--provider <provider>', 'Provider to use: anthropic, openai, openrouter, ollama-cloud, local, si')
+    .option(
+      '--parallel <number>',
+      'Run multiple specs/targets in parallel (requires multiple --spec or --specs-file)',
+    )
+    .option(
+      '--specs-file <path>',
+      'Path to a markdown file where each ## heading is a separate task spec',
+    )
+    .option(
+      '--model <model>',
+      'Model to use for fixes (overrides provider default, e.g. glm-5.1:cloud, kimi-k2.6:cloud)',
+    )
+    .option(
+      '--provider <provider>',
+      'Provider to use: anthropic, openai, openrouter, ollama-cloud, local, si',
+    )
     .option('--local', 'Use local on-device MLX model instead of cloud API (privacy mode)', false)
-    .option('--local-port <number>', `Port for local MLX server (default: ${LOCAL_MLX_DEFAULT_PORT})`)
-    .option('--pro', 'Force best-tier fix engine — uses the strongest model for your configured provider (best tier)', false)
+    .option(
+      '--local-port <number>',
+      `Port for local MLX server (default: ${LOCAL_MLX_DEFAULT_PORT})`,
+    )
+    .option(
+      '--pro',
+      'Force best-tier fix engine — uses the strongest model for your configured provider (best tier)',
+      false,
+    )
     .addHelpText(
       'after',
       '\nExamples:\n' +
@@ -291,9 +374,14 @@ export function torqueCommand(): Command {
 
           printHeader('⚡ Ratchet Parallel');
 
-          const { runParallel, loadSpecsFile, buildParallelReport } = await import('../core/parallel.js');
+          const { runParallel, buildParallelReport } = await import('../core/parallel.js');
           const { parseSpecsFile } = await import('../core/parallel.js');
-          const mode = options.mode === 'feature' ? 'feature' : options.mode === 'harden' ? 'harden' : 'normal';
+          const mode =
+            options.mode === 'feature'
+              ? 'feature'
+              : options.mode === 'harden'
+                ? 'harden'
+                : 'normal';
           const clicks = options.clicks ? parseInt(options.clicks, 10) : 7;
 
           let tasks: import('../core/parallel.js').ParallelTask[] = [];
@@ -306,7 +394,9 @@ export function torqueCommand(): Command {
               const specs = parseSpecsFile(content);
               tasks = specs.map((spec, i) => {
                 const firstLine = spec.split('\n')[0] ?? '';
-                const title = firstLine.startsWith('## ') ? firstLine.slice(3).trim() : `task-${i + 1}`;
+                const title = firstLine.startsWith('## ')
+                  ? firstLine.slice(3).trim()
+                  : `task-${i + 1}`;
                 return {
                   id: `specs-${i + 1}-${title.toLowerCase().replace(/\s+/g, '-').slice(0, 40)}`,
                   spec,
@@ -315,7 +405,9 @@ export function torqueCommand(): Command {
                 };
               });
             } catch (err) {
-              exitWithError(`  Could not read specs file: ${err instanceof Error ? err.message : String(err)}`);
+              exitWithError(
+                `  Could not read specs file: ${err instanceof Error ? err.message : String(err)}`,
+              );
             }
           }
 
@@ -344,7 +436,7 @@ export function torqueCommand(): Command {
           if (tasks.length === 0) {
             exitWithError(
               '  --parallel requires at least one task.\n' +
-              '  Use --specs-file <path> or --spec "..." to specify tasks.',
+                '  Use --specs-file <path> or --spec "..." to specify tasks.',
             );
           }
 
@@ -368,15 +460,15 @@ export function torqueCommand(): Command {
 
         // Background mode: detach and run in a child process
         if (options.background && !process.env['RATCHET_BACKGROUND']) {
-          const filteredArgs = process.argv.slice(2).filter(a => a !== '--background');
+          const filteredArgs = process.argv.slice(2).filter((a) => a !== '--background');
           const result = await startBackgroundRun(cwd, filteredArgs);
           process.stdout.write(
             `\n  ⚙  Ratchet running in background\n\n` +
-            `  Run ID : ${result.runId}\n` +
-            `  PID    : ${result.pid}\n` +
-            `  Log    : ${result.logPath}\n\n` +
-            `  Monitor: ratchet status\n` +
-            `  Stop   : ratchet stop ${result.runId}\n\n`,
+              `  Run ID : ${result.runId}\n` +
+              `  PID    : ${result.pid}\n` +
+              `  Log    : ${result.logPath}\n\n` +
+              `  Monitor: ratchet status\n` +
+              `  Stop   : ratchet stop ${result.runId}\n\n`,
           );
           process.exit(0);
         }
@@ -396,7 +488,8 @@ export function torqueCommand(): Command {
         if (config._source === 'auto-detected') {
           process.stdout.write(
             chalk.dim('  ✦ No .ratchet.yml found — running in zero-config mode.') +
-              chalk.dim(' Run ' + chalk.cyan('ratchet init') + ' to create a config.\n') + '\n',
+              chalk.dim(' Run ' + chalk.cyan('ratchet init') + ' to create a config.\n') +
+              '\n',
           );
           if (config._noTestCommand) {
             pinoLogger.warn('No test command detected — harden mode auto-enabled');
@@ -408,12 +501,17 @@ export function torqueCommand(): Command {
 
         // Validate --focus-category
         const VALID_FOCUS_CATEGORIES = [
-          'testing', 'security', 'type-safety', 'error-handling', 'performance', 'code-quality',
+          'testing',
+          'security',
+          'type-safety',
+          'error-handling',
+          'performance',
+          'code-quality',
         ];
         if (options.focusCategory && !VALID_FOCUS_CATEGORIES.includes(options.focusCategory)) {
           exitWithError(
             `  Invalid --focus-category: ${options.focusCategory}\n` +
-            `  Valid categories: ${VALID_FOCUS_CATEGORIES.join(', ')}`,
+              `  Valid categories: ${VALID_FOCUS_CATEGORIES.join(', ')}`,
           );
         }
 
@@ -422,9 +520,9 @@ export function torqueCommand(): Command {
         if (featureMode && !options.spec) {
           exitWithError(
             `  --mode feature requires --spec <text-or-file>\n\n` +
-            `  Examples:\n` +
-            `    ${chalk.cyan('ratchet improve --mode feature --spec "Add user authentication with JWT"')}\n` +
-            `    ${chalk.cyan('ratchet improve --mode feature --spec ./specs/auth.md')}`,
+              `  Examples:\n` +
+              `    ${chalk.cyan('ratchet improve --mode feature --spec "Add user authentication with JWT"')}\n` +
+              `    ${chalk.cyan('ratchet improve --mode feature --spec ./specs/auth.md')}`,
           );
         }
 
@@ -439,7 +537,7 @@ export function torqueCommand(): Command {
             if (invalid.length > 0) {
               exitWithError(
                 `  Invalid --focus specialization(s): ${invalid.join(', ')}\n` +
-                `  Valid: security, performance, quality, errors, types`,
+                  `  Valid: security, performance, quality, errors, types`,
               );
             }
           }
@@ -467,10 +565,7 @@ export function torqueCommand(): Command {
         if (config._source === 'file') {
           try {
             const rawYml = readFileSync(configFilePath(cwd), 'utf-8');
-            const warnings = [
-              ...getConfigWarnings(rawYml),
-              ...findIncompleteTargets(rawYml),
-            ];
+            const warnings = [...getConfigWarnings(rawYml), ...findIncompleteTargets(rawYml)];
             for (const w of warnings) {
               pinoLogger.warn(w);
             }
@@ -485,26 +580,34 @@ export function torqueCommand(): Command {
         if (options.sweep) {
           // Sweep mode: use a synthetic target representing the whole codebase
           target = {
-            name: 'sweep', path: '.', description: 'Sweep mode — fix one issue type across the entire codebase',
+            name: 'sweep',
+            path: '.',
+            description: 'Sweep mode — fix one issue type across the entire codebase',
           };
         } else if (featureMode && !options.target) {
           // Feature mode without explicit target: use a synthetic target
-          target = { name: 'feature', path: '.', description: 'Feature mode — build from specification' };
+          target = {
+            name: 'feature',
+            path: '.',
+            description: 'Feature mode — build from specification',
+          };
         } else if (options.target) {
           target = findTarget(config, options.target);
           if (!target) {
             if (config.targets.length === 0) {
               exitWithError(
                 `  Target "${options.target}" not found — .ratchet.yml has no targets defined.\n\n` +
-                `  Add a target to .ratchet.yml:\n` +
-                chalk.dim(
-                  '    targets:\n      - name: my-target\n        path: src/\n' +
-                  '        description: "Improve code quality in src/"',
-                ),
+                  `  Add a target to .ratchet.yml:\n` +
+                  chalk.dim(
+                    '    targets:\n      - name: my-target\n        path: src/\n' +
+                      '        description: "Improve code quality in src/"',
+                  ),
               );
             }
             const available = config.targets.map((t) => chalk.cyan(t.name)).join(', ');
-            exitWithError(`  Target "${options.target}" not found in .ratchet.yml.\n  Available: ${available}`);
+            exitWithError(
+              `  Target "${options.target}" not found in .ratchet.yml.\n  Available: ${available}`,
+            );
           }
         } else {
           // No --target flag: use first auto-detected target
@@ -512,7 +615,7 @@ export function torqueCommand(): Command {
           if (!target) {
             exitWithError(
               `  No target specified and none could be auto-detected.\n` +
-              `  Use ${chalk.cyan('--target <name>')} or run ${chalk.cyan('ratchet init')} to create a .ratchet.yml.`,
+                `  Use ${chalk.cyan('--target <name>')} or run ${chalk.cyan('ratchet init')} to create a .ratchet.yml.`,
             );
           }
         }
@@ -520,19 +623,21 @@ export function torqueCommand(): Command {
         // Resolve click count (sweep mode defaults to 5); may be overridden by --resume
         let clickCount = options.clicks
           ? parseInt(options.clicks, 10)
-          : options.sweep ? 5 : config.defaults.clicks;
+          : options.sweep
+            ? 5
+            : config.defaults.clicks;
 
         if (isNaN(clickCount) || clickCount < 1) {
           exitWithError(
             `  Invalid --clicks value: ${chalk.bold(String(options.clicks ?? ''))}\n` +
-            `  Must be a positive integer (e.g. ${chalk.cyan('--clicks 5')}).`,
+              `  Must be a positive integer (e.g. ${chalk.cyan('--clicks 5')}).`,
           );
         }
 
         if (options.clicks && options.clicks.includes('.')) {
           exitWithError(
             `  Invalid --clicks value: ${chalk.bold(options.clicks)}\n` +
-            `  Fractional clicks are not allowed — must be a whole number (e.g. ${chalk.cyan('--clicks 5')}).`,
+              `  Fractional clicks are not allowed — must be a whole number (e.g. ${chalk.cyan('--clicks 5')}).`,
           );
         }
 
@@ -541,12 +646,17 @@ export function torqueCommand(): Command {
         const VALID_PROFILES: GuardProfileName[] = ['tight', 'refactor', 'broad', 'atomic'];
         if (options.maxLines || options.maxFiles) {
           // Explicit per-dimension override takes highest priority
-          const base = options.guards && VALID_PROFILES.includes(options.guards as GuardProfileName)
-            ? GUARD_PROFILES[options.guards as GuardProfileName] ?? GUARD_PROFILES.tight!
-            : GUARD_PROFILES.tight!;
+          const base =
+            options.guards && VALID_PROFILES.includes(options.guards as GuardProfileName)
+              ? (GUARD_PROFILES[options.guards as GuardProfileName] ?? GUARD_PROFILES.tight!)
+              : GUARD_PROFILES.tight!;
           config.guards = {
-            maxLinesChanged: options.maxLines ? parseInt(options.maxLines, 10) : base.maxLinesChanged,
-            maxFilesChanged: options.maxFiles ? parseInt(options.maxFiles, 10) : base.maxFilesChanged,
+            maxLinesChanged: options.maxLines
+              ? parseInt(options.maxLines, 10)
+              : base.maxLinesChanged,
+            maxFilesChanged: options.maxFiles
+              ? parseInt(options.maxFiles, 10)
+              : base.maxFilesChanged,
           };
         } else if (options.guards) {
           if (!VALID_PROFILES.includes(options.guards as GuardProfileName)) {
@@ -565,36 +675,68 @@ export function torqueCommand(): Command {
           scopeFiles = await resolveScope(scopeSpec, cwd);
           if (scopeFiles.length === 0) {
             process.stdout.write(
-              chalk.yellow(`  ⚠  Scope "${options.scope}" matched no files — no restriction applied.\n\n`),
+              chalk.yellow(
+                `  ⚠  Scope "${options.scope}" matched no files — no restriction applied.\n\n`,
+              ),
             );
           }
         }
 
         // Print run summary
         const fields: Array<[string, string]> = options.sweep
-          ? [['Mode', chalk.yellow('sweep') + (options.category ? chalk.dim(` (${options.category})`) : '')]]
-          : featureMode
           ? [
-              ['Mode', chalk.yellow('feature')],
-              ['Spec', chalk.dim((options.spec ?? '').slice(0, 60) + ((options.spec ?? '').length > 60 ? '…' : ''))],
+              [
+                'Mode',
+                chalk.yellow('sweep') +
+                  (options.category ? chalk.dim(` (${options.category})`) : ''),
+              ],
             ]
-          : [['Target', chalk.cyan(target.name)], ['Path', chalk.dim(target.path)]];
+          : featureMode
+            ? [
+                ['Mode', chalk.yellow('feature')],
+                [
+                  'Spec',
+                  chalk.dim(
+                    (options.spec ?? '').slice(0, 60) +
+                      ((options.spec ?? '').length > 60 ? '…' : ''),
+                  ),
+                ],
+              ]
+            : [
+                ['Target', chalk.cyan(target.name)],
+                ['Path', chalk.dim(target.path)],
+              ];
         fields.push(
-          ['Agent',  chalk.dim(config.agent)],
+          ['Agent', chalk.dim(config.agent)],
           ['Clicks', chalk.yellow(String(clickCount))],
-          ['Tests',  chalk.dim(config.defaults.testCommand)],
-          ['Guards', (() => {
-            if (config.guards === undefined) return chalk.dim('mode defaults');
-            if (config.guards === 'atomic') return chalk.yellow('atomic (no limits)');
-            if (typeof config.guards === 'string') {
-              const g = GUARD_PROFILES[config.guards as GuardProfileName];
-              return chalk.dim(`${config.guards} (≤${g!.maxLinesChanged} lines, ≤${g!.maxFilesChanged} files)`);
-            }
-            return chalk.dim(`≤${config.guards.maxLinesChanged} lines, ≤${config.guards.maxFilesChanged} files`);
-          })()],
-          ['Mode',   featureMode ? chalk.yellow('feature') : hardenMode ? chalk.yellow('harden') : chalk.dim('normal')],
+          ['Tests', chalk.dim(config.defaults.testCommand)],
+          [
+            'Guards',
+            (() => {
+              if (config.guards === undefined) return chalk.dim('mode defaults');
+              if (config.guards === 'atomic') return chalk.yellow('atomic (no limits)');
+              if (typeof config.guards === 'string') {
+                const g = GUARD_PROFILES[config.guards as GuardProfileName];
+                return chalk.dim(
+                  `${config.guards} (≤${g!.maxLinesChanged} lines, ≤${g!.maxFilesChanged} files)`,
+                );
+              }
+              return chalk.dim(
+                `≤${config.guards.maxLinesChanged} lines, ≤${config.guards.maxFilesChanged} files`,
+              );
+            })(),
+          ],
+          [
+            'Mode',
+            featureMode
+              ? chalk.yellow('feature')
+              : hardenMode
+                ? chalk.yellow('harden')
+                : chalk.dim('normal'),
+          ],
         );
-        if (options.scope) fields.push(['Scope', chalk.cyan(formatScopeForDisplay(options.scope, scopeFiles, cwd))]);
+        if (options.scope)
+          fields.push(['Scope', chalk.cyan(formatScopeForDisplay(options.scope, scopeFiles, cwd))]);
         if (options.local) {
           const port = options.localPort ?? String(LOCAL_MLX_DEFAULT_PORT);
           fields.push(['Model', chalk.green(`local MLX :${port}`)]);
@@ -610,7 +752,10 @@ export function torqueCommand(): Command {
         if (options.adversarial) fields.push(['QA', chalk.yellow('adversarial')]);
         if (config.swarm?.enabled) {
           const specs = config.swarm.specializations.join(', ');
-          fields.push(['Swarm', `${chalk.yellow(`${config.swarm.agentCount} agents`)} ${chalk.dim(`(${specs})`)}`]);
+          fields.push([
+            'Swarm',
+            `${chalk.yellow(`${config.swarm.agentCount} agents`)} ${chalk.dim(`(${specs})`)}`,
+          ]);
         }
         printFields(fields, !options.dryRun);
         if (options.dryRun) {
@@ -634,21 +779,24 @@ export function torqueCommand(): Command {
           if (!running) {
             exitWithError(
               `  Local MLX server not reachable on port ${port}.\n\n` +
-              `  Start it with:\n` +
-              `    mlx_lm.server --model training-data/ratchet-fix-fused-v2 --port ${port}\n\n` +
-              `  Or install mlx-lm:\n` +
-              `    pip install mlx-lm`,
+                `  Start it with:\n` +
+                `    mlx_lm.server --model training-data/ratchet-fix-fused-v2 --port ${port}\n\n` +
+                `  Or install mlx-lm:\n` +
+                `    pip install mlx-lm`,
             );
           }
           process.stdout.write(
-            chalk.dim('  🔒 Local mode: using on-device model (best for console, catch, N+1 fixes)\n') + '\n',
+            chalk.dim(
+              '  🔒 Local mode: using on-device model (best for console, catch, N+1 fixes)\n',
+            ) + '\n',
           );
           agent = new APIAgent({ provider: localProvider });
         } else {
           // Build explicit provider config from CLI flags
           const explicitConfig = options.provider
             ? {
-                provider: options.provider as import('../core/providers/index.js').ProviderConfig['provider'],
+                provider:
+                  options.provider as import('../core/providers/index.js').ProviderConfig['provider'],
                 apiKey: undefined as string | undefined,
                 model: options.model,
               }
@@ -677,11 +825,14 @@ export function torqueCommand(): Command {
 
           // Detect provider first (uses env keys), then resolve model for that provider
           const baseProvider = explicitConfig
-            ? detectProvider(explicitConfig as import('../core/providers/index.js').ProviderConfig, options.model)
+            ? detectProvider(
+                explicitConfig as import('../core/providers/index.js').ProviderConfig,
+                options.model,
+              )
             : detectProvider(undefined, options.model);
 
           const useProEngine = options.pro || baseProvider.name === 'Anthropic';
-          const tier: import('../types.js').CapabilityTier = useProEngine ? 'best' : 'standard';
+          const tier: 'cheap' | 'standard' | 'best' = useProEngine ? 'best' : 'standard';
           const fixModel = options.model ?? modelRegistry.getModelForTier(tier, baseProvider.name);
 
           if (baseProvider.name === 'Anthropic') {
@@ -727,7 +878,9 @@ export function torqueCommand(): Command {
           try {
             await saveRun(cwd, liveRun);
             process.stdout.write(
-              chalk.dim(`\n  Run saved. Resume with: ${chalk.cyan(`ratchet improve --resume ${liveRun.id}`)}\n`) + '\n',
+              chalk.dim(
+                `\n  Run saved. Resume with: ${chalk.cyan(`ratchet improve --resume ${liveRun.id}`)}\n`,
+              ) + '\n',
             );
           } catch {
             // Non-fatal
@@ -736,8 +889,14 @@ export function torqueCommand(): Command {
 
         // Graceful Ctrl+C and SIGTERM handlers
         const makeHandler = (msg: string, code: number) => () => {
-          if (spinner) { spinner.fail(chalk.yellow(msg)); spinner = null; } else { process.stdout.write('\n'); }
-          releaseLock(cwd); void saveInterruptedRun(clickCount).then(() => process.exit(code));
+          if (spinner) {
+            spinner.fail(chalk.yellow(msg));
+            spinner = null;
+          } else {
+            process.stdout.write('\n');
+          }
+          releaseLock(cwd);
+          void saveInterruptedRun(clickCount).then(() => process.exit(code));
         };
         const sigintHandler = makeHandler('  Interrupted by user (Ctrl+C)', 130);
         const sigtermHandler = makeHandler('  Terminated (SIGTERM)', 143);
@@ -769,7 +928,9 @@ export function torqueCommand(): Command {
           }
           const rs = entry!.run.resumeState;
           if (!rs) {
-            exitWithError(`  Run "${options.resume}" has no resume state — it was not interrupted.`);
+            exitWithError(
+              `  Run "${options.resume}" has no resume state — it was not interrupted.`,
+            );
           }
           const remainingClicks = rs.totalClicks - rs.completedClicks;
           if (remainingClicks <= 0) {
@@ -782,10 +943,12 @@ export function torqueCommand(): Command {
               (target as Target) = resumedTarget;
             }
           }
-          process.stdout.write(chalk.cyan(
-            `\n  Resuming run ${chalk.bold(options.resume)} ` +
-            `from click ${rs.completedClicks + 1}/${rs.totalClicks}\n\n`,
-          ));
+          process.stdout.write(
+            chalk.cyan(
+              `\n  Resuming run ${chalk.bold(options.resume)} ` +
+                `from click ${rs.completedClicks + 1}/${rs.totalClicks}\n\n`,
+            ),
+          );
           // Override click count with remaining clicks
           clickCount = remainingClicks;
         }
@@ -794,22 +957,28 @@ export function torqueCommand(): Command {
         if (!options.resume && !options.target && options.autoResume !== false) {
           try {
             const allRuns = await listRuns(cwd);
-            const interrupted = allRuns.find(e => e.run.status === 'interrupted');
+            const interrupted = allRuns.find((e) => e.run.status === 'interrupted');
             if (interrupted) {
               options.resume = interrupted.run.id;
               const resumedAt = (interrupted.run.resumeState?.completedClicks ?? 0) + 1;
               const resumeTotal = interrupted.run.resumeState?.totalClicks ?? '?';
-              process.stdout.write(chalk.cyan(
-                `  ⚡ Auto-resuming interrupted run ${chalk.bold(interrupted.run.id)} ` +
-                `(click ${resumedAt}/${resumeTotal})...\n\n`,
-              ));
+              process.stdout.write(
+                chalk.cyan(
+                  `  ⚡ Auto-resuming interrupted run ${chalk.bold(interrupted.run.id)} ` +
+                    `(click ${resumedAt}/${resumeTotal})...\n\n`,
+                ),
+              );
             }
           } catch {
             // Non-fatal
           }
         }
 
-        const engineFn = options.sweep ? runSweepEngine : options.architect ? runArchitectEngine : runEngine;
+        const engineFn = options.sweep
+          ? runSweepEngine
+          : options.architect
+            ? runArchitectEngine
+            : runEngine;
 
         // Feature mode: resolve spec and run feature engine
         if (featureMode) {
@@ -817,7 +986,9 @@ export function torqueCommand(): Command {
           try {
             resolvedSpec = await resolveSpec(options.spec!);
           } catch (err) {
-            exitWithError(`  Could not read spec file: ${err instanceof Error ? err.message : String(err)}`);
+            exitWithError(
+              `  Could not read spec file: ${err instanceof Error ? err.message : String(err)}`,
+            );
           }
 
           let featureRun: RatchetRun;
@@ -834,24 +1005,27 @@ export function torqueCommand(): Command {
               callbacks: {
                 onClickStart: async (clickNumber: number, total: number) => {
                   clickStartTime = Date.now();
-                  const label = clickNumber === 0 ? 'planning…' : `implementing step ${clickNumber}/${total - 1}…`;
+                  const label =
+                    clickNumber === 0
+                      ? 'planning…'
+                      : `implementing step ${clickNumber}/${total - 1}…`;
                   spinner = ora(`  Click ${chalk.bold(String(clickNumber))} — ${label}`).start();
                 },
                 onClickPhase: (phase, clickNumber) => {
                   if (!spinner) return;
                   spinner.text = `  Click ${chalk.bold(String(clickNumber))} — ${CLICK_PHASE_LABELS[phase]}`;
                 },
-                onClickComplete: async (click, rolledBack) => {
+                onClickComplete: async (click, _rolledBack) => {
                   if (spinner) {
                     if (click.testsPassed) {
                       spinner.succeed(
                         `  Click ${chalk.bold(String(click.number))} — ${chalk.green('✓ passed')}` +
-                        (click.commitHash ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`) : ''),
+                          (click.commitHash ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`) : ''),
                       );
                     } else {
                       spinner.warn(
                         `  Click ${chalk.bold(String(click.number))} — ${chalk.yellow('✗ rolled back')}` +
-                        (click.rollbackReason ? chalk.dim(` — ${click.rollbackReason}`) : ''),
+                          (click.rollbackReason ? chalk.dim(` — ${click.rollbackReason}`) : ''),
                       );
                     }
                     spinner = null;
@@ -882,7 +1056,7 @@ export function torqueCommand(): Command {
 
           await logger.finalizeLog(featureRun!).catch(() => {});
 
-          const passedFeatureClicks = featureRun!.clicks.filter(c => c.testsPassed).length;
+          const passedFeatureClicks = featureRun!.clicks.filter((c) => c.testsPassed).length;
           const rolledBackFeature = featureRun!.clicks.length - passedFeatureClicks;
           const duration = formatDuration(Date.now() - runStart);
 
@@ -890,13 +1064,15 @@ export function torqueCommand(): Command {
           process.stdout.write('\n' + chalk.bold('  ' + '─'.repeat(46)) + '\n');
           process.stdout.write(
             `\n  ${chalk.bold('Done.')} ` +
-            `${chalk.green(String(passedFeatureClicks))} landed` +
-            (rolledBackFeature > 0 ? ` · ${chalk.yellow(String(rolledBackFeature))} rolled back` : '') +
-            ` · ${chalk.dim(duration)}\n`,
+              `${chalk.green(String(passedFeatureClicks))} landed` +
+              (rolledBackFeature > 0
+                ? ` · ${chalk.yellow(String(rolledBackFeature))} rolled back`
+                : '') +
+              ` · ${chalk.dim(duration)}\n`,
           );
           process.stdout.write(
             `\n  Plan: ${chalk.dim(`docs/${target.name}-feature-plan.md`)}\n` +
-            `  Run ${chalk.green('ratchet ship --pr')} to open a pull request.\n\n`,
+              `  Run ${chalk.green('ratchet ship --pr')} to open a pull request.\n\n`,
           );
 
           await saveRun(cwd, featureRun!).catch(() => {});
@@ -910,7 +1086,7 @@ export function torqueCommand(): Command {
         // Run DeepEngine for full semantic analysis before the fix loop.
         // Used as the initial scanResult for better issue prioritization.
         // When using standard runEngine: re-runs every 3 clicks (segment loop).
-        const deepBudget = options.budget ? parseFloat(options.budget) : 5.00;
+        const deepBudget = options.budget ? parseFloat(options.budget) : 5.0;
         let scanForFix: ScanResult | undefined = scoreBefore;
 
         if (options.deep) {
@@ -922,7 +1098,7 @@ export function torqueCommand(): Command {
             deepTotalCost += deepBudget * 0.1; // rough estimate for first scan
             deepSpinner.succeed(
               `  Deep analysis: ${chalk.bold(String(scanForFix.totalIssuesFound))} findings ` +
-              chalk.dim(`· Deep analysis cost: $${deepTotalCost.toFixed(2)} total`),
+                chalk.dim(`· Deep analysis cost: $${deepTotalCost.toFixed(2)} total`),
             );
           } catch (err) {
             deepSpinner.fail('  Deep analysis failed — using classic scan');
@@ -955,7 +1131,7 @@ export function torqueCommand(): Command {
                     deepTotalCost += budgetLeft * 0.1; // rough per-segment estimate
                     reDeepSpinner.succeed(
                       `  Deep reassessment: ${segScan.totalIssuesFound} findings ` +
-                      chalk.dim(`· Deep analysis cost: $${deepTotalCost.toFixed(2)} total`),
+                        chalk.dim(`· Deep analysis cost: $${deepTotalCost.toFixed(2)} total`),
                     );
                   } else {
                     reDeepSpinner.warn('  Deep budget exhausted — using last scan result');
@@ -1005,19 +1181,30 @@ export function torqueCommand(): Command {
                     void total;
                     if (displayN === 1) {
                       const partialRun: RatchetRun = {
-                        id: 'pending', target, clicks: [], startedAt: new Date(), status: 'running',
+                        id: 'pending',
+                        target,
+                        clicks: [],
+                        startedAt: new Date(),
+                        status: 'running',
                       };
                       await logger.initLog(partialRun).catch(() => {});
                     }
                   },
                   onClickPhase: (phase: ClickPhase, clickNumber: number) => {
                     if (!spinner) return;
-                    const phaseTag = currentHardenPhase ? chalk.dim(` [${currentHardenPhase}]`) : '';
+                    const phaseTag = currentHardenPhase
+                      ? chalk.dim(` [${currentHardenPhase}]`)
+                      : '';
                     spinner.text =
                       `  Click ${chalk.bold(String(clickNumber + deepClickOffset))}/${clickCount}${phaseTag} — ` +
                       `${CLICK_PHASE_LABELS[phase]}`;
                   },
-                  onClickScoreUpdate: (_n: number, _b: number, scoreAfter: number, delta: number) => {
+                  onClickScoreUpdate: (
+                    _n: number,
+                    _b: number,
+                    scoreAfter: number,
+                    delta: number,
+                  ) => {
                     lastKnownScore = scoreAfter;
                     lastKnownDelta = delta;
                   },
@@ -1035,13 +1222,15 @@ export function torqueCommand(): Command {
                         }
                         spinner.succeed(
                           `  Click ${chalk.bold(String(displayN))} — ${chalk.green('✓ passed')}` +
-                          (click.commitHash ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`) : '') +
-                          scoreSuffix,
+                            (click.commitHash
+                              ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`)
+                              : '') +
+                            scoreSuffix,
                         );
                       } else {
                         spinner.warn(
                           `  Click ${chalk.bold(String(displayN))} — ${chalk.yellow('✗ rolled back')}` +
-                          (click.rollbackReason ? chalk.dim(` — ${click.rollbackReason}`) : ''),
+                            (click.rollbackReason ? chalk.dim(` — ${click.rollbackReason}`) : ''),
                         );
                       }
                       spinner = null;
@@ -1052,7 +1241,7 @@ export function torqueCommand(): Command {
                     if (spinner) {
                       spinner.fail(
                         `  Click ${chalk.bold(String(clickNumber + deepClickOffset))} — ` +
-                        `${chalk.red('error')}: ${err.message}`,
+                          `${chalk.red('error')}: ${err.message}`,
                       );
                       spinner = null;
                     }
@@ -1060,25 +1249,41 @@ export function torqueCommand(): Command {
                   onRunEconomics: (economics: RunEconomics) => {
                     capturedEconomics = economics;
                   },
-                  onRunInit: (r: RatchetRun) => { liveRun = r; },
+                  onRunInit: (r: RatchetRun) => {
+                    liveRun = r;
+                  },
                   onCheckpoint: async (r: RatchetRun) => {
                     await saveRun(cwd, r).catch(() => {});
                   },
                   onEscalate: (reason: string) => {
                     if (spinner) {
-                      spinner.warn(chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep`));
+                      spinner.warn(
+                        chalk.yellow(
+                          `  ⚠   Stall detected (${reason}) — switching to cross-file sweep`,
+                        ),
+                      );
                       spinner = null;
                     } else {
-                      process.stdout.write(chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep\n`));
+                      process.stdout.write(
+                        chalk.yellow(
+                          `  ⚠   Stall detected (${reason}) — switching to cross-file sweep\n`,
+                        ),
+                      );
                     }
                   },
                   onArchitectEscalate: (reason: string) => {
                     if (spinner) {
-                      spinner.warn(chalk.yellow(`  ⚡ Standard clicks stalled — escalating to architect mode (${reason})`));
+                      spinner.warn(
+                        chalk.yellow(
+                          `  ⚡ Standard clicks stalled — escalating to architect mode (${reason})`,
+                        ),
+                      );
                       spinner = null;
                     } else {
                       process.stdout.write(
-                        chalk.yellow(`  ⚡ Standard clicks stalled — escalating to architect mode (${reason})\n`),
+                        chalk.yellow(
+                          `  ⚡ Standard clicks stalled — escalating to architect mode (${reason})\n`,
+                        ),
                       );
                     }
                   },
@@ -1105,267 +1310,299 @@ export function torqueCommand(): Command {
               startedAt: firstSeg.startedAt,
               clicks: allClicks,
             };
-
           } else {
             run = await engineFn({
               target,
               clicks: clickCount,
-            config,
-            cwd,
-            agent,
-            createBranch: options.branch && !options.dryRun,
-            hardenMode,
-            adversarial: options.adversarial,
-            // Pass the pre-run scan to avoid a redundant re-scan
-            scanResult: options.deep ? scanForFix : scoreBefore,
-            deepScanResult: options.deep ? scanForFix : undefined,
-            category: options.category,
-            escalate: options.escalate,
-            architectEscalation: options.escalate !== false,
-            guardEscalation: options.guardEscalation !== false,
-            planFirst: options.planFirst,
-            contextPruning: options.fast,
-            scoreOptimized: true,
-            timeoutMs: options.timeout ? parseFloat(options.timeout) * 60 * 1000 : undefined,
-            budgetUsd: options.budget ? parseFloat(options.budget) : undefined,
-            stopOnRegression: options.stopOnRegression,
-            noStrategy: (options as Record<string, unknown>)['strategy'] === false,
-            focusCategory: options.focusCategory,
-            deepAnalyze: options.deepAnalyze,
-            scope: scopeFiles,
-            scopeArg: options.scope,
-            callbacks: {
-              onScanComplete: (scan: ScanResult) => {
-                const topIssues = scan.issuesByType.slice(0, 3);
-                const targetStr = topIssues
-                  .map((t) => `${t.subcategory} (${t.count}/${t.count + 1})`)
-                  .join(', ');
-                process.stdout.write(
-                  `  📊 Initial scan: ${chalk.bold(`${scan.total}/${scan.maxTotal}`)} ` +
-                  `(${scan.totalIssuesFound} issues found)\n`,
-                );
-                if (targetStr) {
-                  process.stdout.write(`     Targeting: ${chalk.dim(targetStr)}\n`);
-                }
-                // Score ceiling detection
-                const gaps = analyzeScoreGaps(scan);
-                const sweepableGaps = gaps.filter(g => g.sweepable);
-                const nonSweepableGaps = gaps.filter(g => !g.sweepable);
-                const reachablePoints = sweepableGaps.reduce((sum, g) => sum + g.pointsAvailable, 0);
-                const allPoints = gaps.reduce((sum, g) => sum + g.pointsAvailable, 0);
-                const reachableScore = Math.min(100, scan.total + reachablePoints);
-                const ceilingScore = Math.min(100, scan.total + allPoints);
-                if (reachablePoints > 0) {
+              config,
+              cwd,
+              agent,
+              createBranch: options.branch && !options.dryRun,
+              hardenMode,
+              adversarial: options.adversarial,
+              // Pass the pre-run scan to avoid a redundant re-scan
+              scanResult: options.deep ? scanForFix : scoreBefore,
+              deepScanResult: options.deep ? scanForFix : undefined,
+              category: options.category,
+              escalate: options.escalate,
+              architectEscalation: options.escalate !== false,
+              guardEscalation: options.guardEscalation !== false,
+              planFirst: options.planFirst,
+              contextPruning: options.fast,
+              scoreOptimized: true,
+              timeoutMs: options.timeout ? parseFloat(options.timeout) * 60 * 1000 : undefined,
+              budgetUsd: options.budget ? parseFloat(options.budget) : undefined,
+              stopOnRegression: options.stopOnRegression,
+              noStrategy: (options as Record<string, unknown>)['strategy'] === false,
+              focusCategory: options.focusCategory,
+              deepAnalyze: options.deepAnalyze,
+              scope: scopeFiles,
+              scopeArg: options.scope,
+              callbacks: {
+                onScanComplete: (scan: ScanResult) => {
+                  const topIssues = scan.issuesByType.slice(0, 3);
+                  const targetStr = topIssues
+                    .map((t) => `${t.subcategory} (${t.count}/${t.count + 1})`)
+                    .join(', ');
                   process.stdout.write(
-                    `  📈 Reachable by torque: ~${reachableScore}/100 ` +
-                    `(+${reachablePoints}pts from ${sweepableGaps.length} fixable categories)\n`,
+                    `  📊 Initial scan: ${chalk.bold(`${scan.total}/${scan.maxTotal}`)} ` +
+                      `(${scan.totalIssuesFound} issues found)\n`,
                   );
-                }
-                if (nonSweepableGaps.length > 0) {
-                  const archNames = nonSweepableGaps.slice(0, 2).map(g => g.subcategory).join(', ');
-                  const etcSuffix = nonSweepableGaps.length > 2 ? ', etc.' : '';
-                  process.stdout.write(
-                    `     Ceiling: ${ceilingScore}/100 — ${nonSweepableGaps.length} categories need architect mode ` +
-                    `(${archNames}${etcSuffix})\n`,
+                  if (targetStr) {
+                    process.stdout.write(`     Targeting: ${chalk.dim(targetStr)}\n`);
+                  }
+                  // Score ceiling detection
+                  const gaps = analyzeScoreGaps(scan);
+                  const sweepableGaps = gaps.filter((g) => g.sweepable);
+                  const nonSweepableGaps = gaps.filter((g) => !g.sweepable);
+                  const reachablePoints = sweepableGaps.reduce(
+                    (sum, g) => sum + g.pointsAvailable,
+                    0,
                   );
-                }
-
-                // Proactive --architect recommendation when structural issues dominate
-                if (!options.architect) {
-                  const structuralPoints = nonSweepableGaps.reduce((sum, g) => sum + g.pointsAvailable, 0);
-                  const structuralDominant =
-                    structuralPoints >= reachablePoints ||
-                    (nonSweepableGaps.length > 0 && reachablePoints <= 2);
-                  if (structuralDominant && nonSweepableGaps.length > 0) {
-                    const details = nonSweepableGaps
-                      .slice(0, 3)
-                      .map(g => `${g.subcategory}: ${g.currentCount} issues (+${g.pointsAvailable}pts)`)
+                  const allPoints = gaps.reduce((sum, g) => sum + g.pointsAvailable, 0);
+                  const reachableScore = Math.min(100, scan.total + reachablePoints);
+                  const ceilingScore = Math.min(100, scan.total + allPoints);
+                  if (reachablePoints > 0) {
+                    process.stdout.write(
+                      `  📈 Reachable by torque: ~${reachableScore}/100 ` +
+                        `(+${reachablePoints}pts from ${sweepableGaps.length} fixable categories)\n`,
+                    );
+                  }
+                  if (nonSweepableGaps.length > 0) {
+                    const archNames = nonSweepableGaps
+                      .slice(0, 2)
+                      .map((g) => g.subcategory)
                       .join(', ');
-                    const architectHint = chalk.bold('--architect');
+                    const etcSuffix = nonSweepableGaps.length > 2 ? ', etc.' : '';
                     process.stdout.write(
-                      chalk.yellow(`\n  ⚠️  Structural issues detected — ${architectHint} recommended\n`) +
-                      chalk.dim(`     ${details}\n`) +
-                      chalk.dim(`     Run: ${chalk.green('ratchet improve --architect')}\n`),
+                      `     Ceiling: ${ceilingScore}/100 — ${nonSweepableGaps.length} categories need architect mode ` +
+                        `(${archNames}${etcSuffix})\n`,
                     );
                   }
-                }
-                process.stdout.write('\n');
-                lastKnownScore = scan.total;
-              },
 
-              onPlanStart: () => {
-                spinner = ora('  📋 Click 0 — Planning…').start();
-              },
-
-              onPlanComplete: (plan) => {
-                if (spinner) {
-                  spinner.succeed(
-                    `  📋 Click 0 — Plan ready: ${plan.filesToTouch.length} files, ` +
-                    `~${plan.estimatedClicks} clicks estimated`,
-                  );
-                  spinner = null;
-                }
-                process.stdout.write(
-                  chalk.dim(
-                    `     Files to touch: ${plan.filesToTouch.slice(0, 5).join(', ')}` +
-                    `${plan.filesToTouch.length > 5 ? `, +${plan.filesToTouch.length - 5} more` : ''}\n`,
-                  ) + '\n',
-                );
-              },
-
-              onClickStart: async (clickNumber, total, hardenPhase?: HardenPhase) => {
-                clickStartTime = Date.now();
-                currentHardenPhase = hardenPhase;
-                const phaseTag = hardenPhase ? chalk.dim(` [${hardenPhase}]`) : '';
-                spinner = ora(
-                  `  Click ${chalk.bold(String(clickNumber))}/${total}${phaseTag} — analyzing…`,
-                ).start();
-
-                // Init log on first click
-                if (clickNumber === 1) {
-                  const partialRun: RatchetRun = {
-                    id: 'pending',
-                    target,
-                    clicks: [],
-                    startedAt: new Date(),
-                    status: 'running',
-                  };
-                  await logger.initLog(partialRun).catch(() => {});
-                }
-              },
-
-              onClickPhase: (phase: ClickPhase, clickNumber: number) => {
-                if (!spinner) return;
-                const phaseTag = currentHardenPhase ? chalk.dim(` [${currentHardenPhase}]`) : '';
-                spinner.text =
-                  `  Click ${chalk.bold(String(clickNumber))}/${clickCount}${phaseTag} — ` +
-                  `${CLICK_PHASE_LABELS[phase]}`;
-              },
-
-              onClickScoreUpdate: (_clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number) => {
-                lastKnownScore = scoreAfter;
-                lastKnownDelta = delta;
-                // Store for use in onClickComplete
-                void scoreBefore; // used via lastKnownScore tracking
-              },
-
-              onClickComplete: async (click: Click, rolledBack: boolean) => {
-                const clickDelta = lastKnownDelta;
-                if (spinner) {
-                  if (click.testsPassed) {
-                    // Build score suffix if we have data
-                    let scoreSuffix = '';
-                    if (click.scoreAfterClick !== undefined && lastKnownScore !== undefined) {
-                      const before = lastKnownScore - (lastKnownDelta ?? 0);
-                      const after = click.scoreAfterClick;
-                      scoreSuffix = ` — Score: ${before} → ${after} (${formatScoreDelta(before, after)})`;
-                      if (click.issuesFixedCount && click.issuesFixedCount > 0) {
-                        scoreSuffix += chalk.dim(` — ${click.issuesFixedCount} issues fixed`);
-                      }
+                  // Proactive --architect recommendation when structural issues dominate
+                  if (!options.architect) {
+                    const structuralPoints = nonSweepableGaps.reduce(
+                      (sum, g) => sum + g.pointsAvailable,
+                      0,
+                    );
+                    const structuralDominant =
+                      structuralPoints >= reachablePoints ||
+                      (nonSweepableGaps.length > 0 && reachablePoints <= 2);
+                    if (structuralDominant && nonSweepableGaps.length > 0) {
+                      const details = nonSweepableGaps
+                        .slice(0, 3)
+                        .map(
+                          (g) =>
+                            `${g.subcategory}: ${g.currentCount} issues (+${g.pointsAvailable}pts)`,
+                        )
+                        .join(', ');
+                      const architectHint = chalk.bold('--architect');
+                      process.stdout.write(
+                        chalk.yellow(
+                          `\n  ⚠️  Structural issues detected — ${architectHint} recommended\n`,
+                        ) +
+                          chalk.dim(`     ${details}\n`) +
+                          chalk.dim(`     Run: ${chalk.green('ratchet improve --architect')}\n`),
+                      );
                     }
+                  }
+                  process.stdout.write('\n');
+                  lastKnownScore = scan.total;
+                },
+
+                onPlanStart: () => {
+                  spinner = ora('  📋 Click 0 — Planning…').start();
+                },
+
+                onPlanComplete: (plan) => {
+                  if (spinner) {
                     spinner.succeed(
-                      `  Click ${chalk.bold(String(click.number))} — ${chalk.green('✓ passed')}` +
-                        (click.commitHash
-                          ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`)
-                          : '') +
-                        scoreSuffix,
+                      `  📋 Click 0 — Plan ready: ${plan.filesToTouch.length} files, ` +
+                        `~${plan.estimatedClicks} clicks estimated`,
                     );
-                  } else {
-                    spinner.warn(
-                      `  Click ${chalk.bold(String(click.number))} — ${chalk.yellow('✗ rolled back')}` +
-                        (click.rollbackReason ? chalk.dim(` — ${click.rollbackReason}`) : ''),
-                    );
+                    spinner = null;
                   }
-                  spinner = null;
-                }
-                // Tip: suggest --pro when click failed or had 0 score delta
-                if (!options.pro && (rolledBack || (clickDelta !== undefined && clickDelta <= 0))) {
                   process.stdout.write(
-                    chalk.dim('  ⚡ Tip: Use --pro for the best model tier\n'),
+                    chalk.dim(
+                      `     Files to touch: ${plan.filesToTouch.slice(0, 5).join(', ')}` +
+                        `${plan.filesToTouch.length > 5 ? `, +${plan.filesToTouch.length - 5} more` : ''}\n`,
+                    ) + '\n',
                   );
-                }
-                // Reset per-click tracking
-                lastKnownDelta = undefined;
+                },
 
-                if (options.verbose) {
-                  const elapsed = formatDuration(Date.now() - clickStartTime);
-                  process.stdout.write(chalk.dim(`     time: ${elapsed}`) + '\n');
-                  if (click.proposal) {
-                    const preview = click.proposal.length > 120
-                      ? click.proposal.slice(0, 120) + '…'
-                      : click.proposal;
-                    process.stdout.write(chalk.dim(`     proposal: ${preview}`) + '\n');
+                onClickStart: async (clickNumber, total, hardenPhase?: HardenPhase) => {
+                  clickStartTime = Date.now();
+                  currentHardenPhase = hardenPhase;
+                  const phaseTag = hardenPhase ? chalk.dim(` [${hardenPhase}]`) : '';
+                  spinner = ora(
+                    `  Click ${chalk.bold(String(clickNumber))}/${total}${phaseTag} — analyzing…`,
+                  ).start();
+
+                  // Init log on first click
+                  if (clickNumber === 1) {
+                    const partialRun: RatchetRun = {
+                      id: 'pending',
+                      target,
+                      clicks: [],
+                      startedAt: new Date(),
+                      status: 'running',
+                    };
+                    await logger.initLog(partialRun).catch(() => {});
                   }
-                  if (click.filesModified.length > 0) {
+                },
+
+                onClickPhase: (phase: ClickPhase, clickNumber: number) => {
+                  if (!spinner) return;
+                  const phaseTag = currentHardenPhase ? chalk.dim(` [${currentHardenPhase}]`) : '';
+                  spinner.text =
+                    `  Click ${chalk.bold(String(clickNumber))}/${clickCount}${phaseTag} — ` +
+                    `${CLICK_PHASE_LABELS[phase]}`;
+                },
+
+                onClickScoreUpdate: (
+                  _clickNumber: number,
+                  scoreBefore: number,
+                  scoreAfter: number,
+                  delta: number,
+                ) => {
+                  lastKnownScore = scoreAfter;
+                  lastKnownDelta = delta;
+                  // Store for use in onClickComplete
+                  void scoreBefore; // used via lastKnownScore tracking
+                },
+
+                onClickComplete: async (click: Click, rolledBack: boolean) => {
+                  const clickDelta = lastKnownDelta;
+                  if (spinner) {
+                    if (click.testsPassed) {
+                      // Build score suffix if we have data
+                      let scoreSuffix = '';
+                      if (click.scoreAfterClick !== undefined && lastKnownScore !== undefined) {
+                        const before = lastKnownScore - (lastKnownDelta ?? 0);
+                        const after = click.scoreAfterClick;
+                        scoreSuffix = ` — Score: ${before} → ${after} (${formatScoreDelta(before, after)})`;
+                        if (click.issuesFixedCount && click.issuesFixedCount > 0) {
+                          scoreSuffix += chalk.dim(` — ${click.issuesFixedCount} issues fixed`);
+                        }
+                      }
+                      spinner.succeed(
+                        `  Click ${chalk.bold(String(click.number))} — ${chalk.green('✓ passed')}` +
+                          (click.commitHash
+                            ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`)
+                            : '') +
+                          scoreSuffix,
+                      );
+                    } else {
+                      spinner.warn(
+                        `  Click ${chalk.bold(String(click.number))} — ${chalk.yellow('✗ rolled back')}` +
+                          (click.rollbackReason ? chalk.dim(` — ${click.rollbackReason}`) : ''),
+                      );
+                    }
+                    spinner = null;
+                  }
+                  // Tip: suggest --pro when click failed or had 0 score delta
+                  if (
+                    !options.pro &&
+                    (rolledBack || (clickDelta !== undefined && clickDelta <= 0))
+                  ) {
                     process.stdout.write(
-                      chalk.dim(
-                        `     files: ${click.filesModified.join(', ')}`,
-                      ) + '\n',
+                      chalk.dim('  ⚡ Tip: Use --pro for the best model tier\n'),
                     );
                   }
-                }
-              },
+                  // Reset per-click tracking
+                  lastKnownDelta = undefined;
 
-              onError: (err: Error, clickNumber: number) => {
-                if (spinner) {
-                  spinner.fail(
-                    `  Click ${chalk.bold(String(clickNumber))} — ${chalk.red('error')}: ${err.message}`,
-                  );
-                  spinner = null;
-                }
-              },
+                  if (options.verbose) {
+                    const elapsed = formatDuration(Date.now() - clickStartTime);
+                    process.stdout.write(chalk.dim(`     time: ${elapsed}`) + '\n');
+                    if (click.proposal) {
+                      const preview =
+                        click.proposal.length > 120
+                          ? click.proposal.slice(0, 120) + '…'
+                          : click.proposal;
+                      process.stdout.write(chalk.dim(`     proposal: ${preview}`) + '\n');
+                    }
+                    if (click.filesModified.length > 0) {
+                      process.stdout.write(
+                        chalk.dim(`     files: ${click.filesModified.join(', ')}`) + '\n',
+                      );
+                    }
+                  }
+                },
 
-              onRunEconomics: (economics: RunEconomics) => {
-                capturedEconomics = economics;
-              },
+                onError: (err: Error, clickNumber: number) => {
+                  if (spinner) {
+                    spinner.fail(
+                      `  Click ${chalk.bold(String(clickNumber))} — ${chalk.red('error')}: ${err.message}`,
+                    );
+                    spinner = null;
+                  }
+                },
 
-              onRunInit: (run: RatchetRun) => {
-                liveRun = run;
-              },
+                onRunEconomics: (economics: RunEconomics) => {
+                  capturedEconomics = economics;
+                },
 
-              onCheckpoint: async (run: RatchetRun) => {
-                try {
-                  await saveRun(cwd, run);
-                } catch {
-                  // Non-fatal
-                }
-                // Update background progress.json if running detached
-                const bgRunId = process.env['RATCHET_BG_RUN_ID'];
-                if (bgRunId) {
-                  const passedSoFar = run.clicks.filter(c => c.testsPassed).length;
-                  const latestScore = run.clicks.at(-1)?.scoreAfterClick;
-                  await updateProgress(cwd, bgRunId, {
-                    clicksCompleted: run.clicks.length,
-                    clicksTotal: clickCount,
-                    score: latestScore,
-                    status: run.status === 'running' ? 'running' : run.status,
-                  }).catch(() => {});
-                  void passedSoFar;
-                }
-              },
+                onRunInit: (run: RatchetRun) => {
+                  liveRun = run;
+                },
 
-              onEscalate: (reason: string) => {
-                if (spinner) {
-                  spinner.warn(chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep`));
-                  spinner = null;
-                } else {
-                  process.stdout.write(
-                    chalk.yellow(`  ⚠   Stall detected (${reason}) — switching to cross-file sweep\n`),
-                  );
-                }
+                onCheckpoint: async (run: RatchetRun) => {
+                  try {
+                    await saveRun(cwd, run);
+                  } catch {
+                    // Non-fatal
+                  }
+                  // Update background progress.json if running detached
+                  const bgRunId = process.env['RATCHET_BG_RUN_ID'];
+                  if (bgRunId) {
+                    const passedSoFar = run.clicks.filter((c) => c.testsPassed).length;
+                    const latestScore = run.clicks.at(-1)?.scoreAfterClick;
+                    await updateProgress(cwd, bgRunId, {
+                      clicksCompleted: run.clicks.length,
+                      clicksTotal: clickCount,
+                      score: latestScore,
+                      status: run.status === 'running' ? 'running' : run.status,
+                    }).catch(() => {});
+                    void passedSoFar;
+                  }
+                },
+
+                onEscalate: (reason: string) => {
+                  if (spinner) {
+                    spinner.warn(
+                      chalk.yellow(
+                        `  ⚠   Stall detected (${reason}) — switching to cross-file sweep`,
+                      ),
+                    );
+                    spinner = null;
+                  } else {
+                    process.stdout.write(
+                      chalk.yellow(
+                        `  ⚠   Stall detected (${reason}) — switching to cross-file sweep\n`,
+                      ),
+                    );
+                  }
+                },
+                onArchitectEscalate: (reason: string) => {
+                  if (spinner) {
+                    spinner.warn(
+                      chalk.yellow(
+                        `  ⚡ Standard clicks stalled — escalating to architect mode (${reason})`,
+                      ),
+                    );
+                    spinner = null;
+                  } else {
+                    process.stdout.write(
+                      chalk.yellow(
+                        `  ⚡ Standard clicks stalled — escalating to architect mode (${reason})\n`,
+                      ),
+                    );
+                  }
+                },
               },
-              onArchitectEscalate: (reason: string) => {
-                if (spinner) {
-                  spinner.warn(chalk.yellow(`  ⚡ Standard clicks stalled — escalating to architect mode (${reason})`));
-                  spinner = null;
-                } else {
-                  process.stdout.write(
-                    chalk.yellow(`  ⚡ Standard clicks stalled — escalating to architect mode (${reason})\n`),
-                  );
-                }
-              },
-            },
-          });
+            });
           } // end else (non-deep or non-standard engine path)
         } catch (err) {
           if (spinner) (spinner as ReturnType<typeof ora>).fail();
@@ -1406,23 +1643,32 @@ export function torqueCommand(): Command {
 
         // Generate and display PR score card if enabled and we have both scores
         if (options.prComment && scoreBefore && scoreAfter && passedClicks > 0 && !options.dryRun) {
-          const scoreCard = generateScoreCard(scoreBefore, scoreAfter, { footer: options.prCommentFooter });
+          const scoreCard = generateScoreCard(scoreBefore, scoreAfter, {
+            footer: options.prCommentFooter,
+          });
           process.stdout.write('\n' + chalk.dim('  ─'.repeat(23)) + '\n\n');
-          process.stdout.write(scoreCard.split('\n').map((l) => '  ' + l).join('\n') + '\n');
+          process.stdout.write(
+            scoreCard
+              .split('\n')
+              .map((l) => '  ' + l)
+              .join('\n') + '\n',
+          );
 
           // Write PR description to file for use with `ratchet ship --pr`
           const changedFiles = run.clicks
             .filter((c) => c.testsPassed)
             .flatMap((c) => c.filesModified)
             .filter((f, i, arr) => arr.indexOf(f) === i);
-          const prDesc = generatePRDescription(
-            scoreBefore, scoreAfter, changedFiles, { footer: options.prCommentFooter },
-          );
+          const prDesc = generatePRDescription(scoreBefore, scoreAfter, changedFiles, {
+            footer: options.prCommentFooter,
+          });
           const prDescPath = join(cwd, `docs/${target.name}-pr-description.md`);
           await writeFile(prDescPath, prDesc, 'utf-8').catch(() => {});
         }
 
-        const reportPath = await writeReport({ run, cwd, scoreBefore, scoreAfter }).catch(() => null);
+        const reportPath = await writeReport({ run, cwd, scoreBefore, scoreAfter }).catch(
+          () => null,
+        );
         await writePDF({ run, cwd, scoreBefore, scoreAfter }).catch(() => null);
 
         // Persist run state for `ratchet status` / `ratchet ship` / regen-pdf
@@ -1442,9 +1688,8 @@ export function torqueCommand(): Command {
         const duration = formatDuration(Date.now() - runStart);
 
         const landedPart = `${chalk.green(String(passedClicks))} landed`;
-        const rolledPart = rolledBack > 0
-          ? ` · ${chalk.yellow(String(rolledBack))} rolled back`
-          : '';
+        const rolledPart =
+          rolledBack > 0 ? ` · ${chalk.yellow(String(rolledBack))} rolled back` : '';
 
         // Per-click result table
         renderClickTable(run.clicks);
@@ -1460,19 +1705,23 @@ export function torqueCommand(): Command {
           const returned = clickCount - run.clicks.length;
           process.stdout.write(
             `\n  💰 Cycles: ${passedClicks} used, ${returned} returned to balance\n` +
-            `  ⏹ Stopped early: ${run.earlyStopReason}\n`,
+              `  ⏹ Stopped early: ${run.earlyStopReason}\n`,
           );
         }
 
         if (run.architectEscalated) {
           if (run.architectEscalatedAtClick !== undefined) {
-            const stdClicks = run.clicks.filter(c => c.number <= run.architectEscalatedAtClick!);
-            const archClicks = run.clicks.filter(c => c.number > run.architectEscalatedAtClick!);
-            const stdLanded = stdClicks.filter(c => c.testsPassed).length;
-            const archLanded = archClicks.filter(c => c.testsPassed).length;
+            const stdClicks = run.clicks.filter((c) => c.number <= run.architectEscalatedAtClick!);
+            const archClicks = run.clicks.filter((c) => c.number > run.architectEscalatedAtClick!);
+            const stdLanded = stdClicks.filter((c) => c.testsPassed).length;
+            const archLanded = archClicks.filter((c) => c.testsPassed).length;
             process.stdout.write(
-              chalk.yellow(`\n  ⚡ Escalated to architect mode after click ${run.architectEscalatedAtClick}`) +
-              chalk.dim(` (${stdLanded}/${stdClicks.length} standard · ${archLanded}/${archClicks.length} architect)\n`),
+              chalk.yellow(
+                `\n  ⚡ Escalated to architect mode after click ${run.architectEscalatedAtClick}`,
+              ) +
+                chalk.dim(
+                  ` (${stdLanded}/${stdClicks.length} standard · ${archLanded}/${archClicks.length} architect)\n`,
+                ),
             );
           } else {
             process.stdout.write(chalk.yellow(`\n  🏗️  Escalated to architect mode mid-run.\n`));
@@ -1480,9 +1729,7 @@ export function torqueCommand(): Command {
         }
 
         if (passedClicks > 0) {
-          process.stdout.write(
-            `\n  Log: ${chalk.dim(`docs/${target.name}-ratchet.md`)}\n`,
-          );
+          process.stdout.write(`\n  Log: ${chalk.dim(`docs/${target.name}-ratchet.md`)}\n`);
           if (reportPath) {
             process.stdout.write(
               `  Report: ${chalk.dim(`docs/${target.name}-ratchet-report.md`)}\n`,
@@ -1497,7 +1744,9 @@ export function torqueCommand(): Command {
           process.stdout.write('\n');
           if (fps > 0 || skipped > 0) {
             process.stdout.write(
-              chalk.yellow('  No clicks landed — scanner issues were filtered as false positives.\n'),
+              chalk.yellow(
+                '  No clicks landed — scanner issues were filtered as false positives.\n',
+              ),
             );
             if (fps > 0) {
               process.stdout.write(
@@ -1508,15 +1757,19 @@ export function torqueCommand(): Command {
             }
             if (skipped > 0) {
               process.stdout.write(
-                chalk.dim(`  • ${skipped} click(s) skipped — no real issues to fix after filtering\n`),
+                chalk.dim(
+                  `  • ${skipped} click(s) skipped — no real issues to fix after filtering\n`,
+                ),
               );
             }
             process.stdout.write('\n');
             process.stdout.write('  Next steps:\n');
-            process.stdout.write(`  • Run ${chalk.green('ratchet scan')} to review remaining issues manually\n`);
+            process.stdout.write(
+              `  • Run ${chalk.green('ratchet scan')} to review remaining issues manually\n`,
+            );
             process.stdout.write(
               `  • Use ${chalk.green('ratchet improve --architect')}` +
-              ` for structural issues that need multi-file refactors\n`,
+                ` for structural issues that need multi-file refactors\n`,
             );
             process.stdout.write(
               `  • Review flagged files directly — the scanner found patterns in non-code contexts\n`,
@@ -1527,11 +1780,11 @@ export function torqueCommand(): Command {
             process.stdout.write('  Next steps:\n');
             process.stdout.write(
               `  • Try ${chalk.green('ratchet improve --architect')}` +
-              ` for structural issues requiring larger refactors\n`,
+                ` for structural issues requiring larger refactors\n`,
             );
             process.stdout.write(
               `  • Try ${chalk.green('ratchet improve --plan-first')}` +
-              ` to generate a multi-step plan before executing\n`,
+                ` to generate a multi-step plan before executing\n`,
             );
             process.stdout.write(
               `  • Run ${chalk.green('ratchet scan')} to review remaining issues and adjust your target\n`,
@@ -1561,11 +1814,15 @@ export function torqueCommand(): Command {
             const { loadStrategy } = await import('../core/strategy.js');
             const updatedStrategy = await loadStrategy(cwd);
             if (updatedStrategy && updatedStrategy.runSummaries.length > 0) {
-              const lastSummary = updatedStrategy.runSummaries[updatedStrategy.runSummaries.length - 1];
+              const lastSummary =
+                updatedStrategy.runSummaries[updatedStrategy.runSummaries.length - 1];
               const prevVersion = updatedStrategy.version - 1;
               process.stdout.write(
-                chalk.dim(`  📝 Strategy updated (v${prevVersion} → v${updatedStrategy.version}): `) +
-                chalk.dim(lastSummary.keyInsight) + '\n\n',
+                chalk.dim(
+                  `  📝 Strategy updated (v${prevVersion} → v${updatedStrategy.version}): `,
+                ) +
+                  chalk.dim(lastSummary.keyInsight) +
+                  '\n\n',
               );
             }
           } catch {
