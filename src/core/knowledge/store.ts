@@ -5,7 +5,7 @@
  * The caller is responsible for constructing the KnowledgeBase from seed data.
  */
 
-import type { KnowledgeBase, KnowledgeEntry, KnowledgeCategory, KnowledgeQuery, KnowledgeSeverity } from './types.js';
+import type { KnowledgeBase, KnowledgeEntry, KnowledgeCategory, KnowledgeQuery, KnowledgeSeverity } from "./types.js";
 
 /**
  * Construct a KnowledgeBase from a flat list of entries.

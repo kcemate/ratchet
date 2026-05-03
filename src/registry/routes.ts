@@ -9,26 +9,26 @@
  * POST   /api/v1/keys                        — Create API key (master secret auth)
  */
 
-import { Router, type Request, type Response } from 'express';
-import { rateLimit } from 'express-rate-limit';
-import { getDb } from './db.js';
-import { verifyApiKey, createApiKey } from './api-keys.js';
+import { Router, type Request, type Response } from "express";
+import { rateLimit } from "express-rate-limit";
+import { getDb } from "./db.js";
+import { verifyApiKey, createApiKey } from "./api-keys.js";
 
-const SPEC_VERSION = '1.0';
+const SPEC_VERSION = "1.0";
 
 // ── API key auth middleware ────────────────────────────────────────────────
 
 function requireApiKey(req: Request, res: Response, next: () => void): void {
   const authHeader = req.headers.authorization;
-  const raw = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const raw = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   if (!raw) {
-    res.status(401).json({ error: 'Missing API key', ratchet_spec_version: SPEC_VERSION });
+    res.status(401).json({ error: "Missing API key", ratchet_spec_version: SPEC_VERSION });
     return;
   }
   const db = getDb();
   const record = verifyApiKey(db, raw);
   if (!record) {
-    res.status(401).json({ error: 'Invalid API key', ratchet_spec_version: SPEC_VERSION });
+    res.status(401).json({ error: "Invalid API key", ratchet_spec_version: SPEC_VERSION });
     return;
   }
   (req as Request & { apiKeyId: string }).apiKeyId = record.id;
@@ -38,9 +38,9 @@ function requireApiKey(req: Request, res: Response, next: () => void): void {
 /** Master secret auth — for admin operations like key creation. */
 function requireMasterSecret(req: Request, res: Response, next: () => void): void {
   const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-  if (!token || token !== process.env['RATCHET_API_SECRET']) {
-    res.status(401).json({ error: 'Unauthorized', ratchet_spec_version: SPEC_VERSION });
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (!token || token !== process.env["RATCHET_API_SECRET"]) {
+    res.status(401).json({ error: "Unauthorized", ratchet_spec_version: SPEC_VERSION });
     return;
   }
   next();
@@ -49,29 +49,29 @@ function requireMasterSecret(req: Request, res: Response, next: () => void): voi
 // ── Badge SVG generation ───────────────────────────────────────────────────
 
 function badgeColor(score: number): string {
-  if (score > 80) return '#44cc11'; // green
-  if (score > 60) return '#dfb317'; // yellow
-  return '#e05d44';                 // red
+  if (score > 80) return "#44cc11"; // green
+  if (score > 60) return "#dfb317"; // yellow
+  return "#e05d44"; // red
 }
 
 function textWidth(text: string): number {
-  return text.split('').reduce((sum, ch) => {
-    if ('filj|:;.,/!r1t'.includes(ch)) return sum + 5;
-    if ('mwMW'.includes(ch)) return sum + 10;
+  return text.split("").reduce((sum, ch) => {
+    if ("filj|:;.,/!r1t".includes(ch)) return sum + 5;
+    if ("mwMW".includes(ch)) return sum + 10;
     return sum + 7;
   }, 0);
 }
 
 function scoreBadgeSvg(score: number): string {
   const color = badgeColor(score);
-  const label = 'ratchet';
+  const label = "ratchet";
   const value = `${score}/100`;
   const pad = 10;
   const ltw = textWidth(label);
   const vtw = textWidth(value);
-  const lw  = ltw + pad * 2;
-  const vw  = vtw + pad * 2;
-  const tw  = lw + vw;
+  const lw = ltw + pad * 2;
+  const vw = vtw + pad * 2;
+  const tw = lw + vw;
   const lmx = Math.round(lw / 2);
   const vmx = lw + Math.round(vw / 2);
 
@@ -102,13 +102,13 @@ function scoreBadgeSvg(score: number): string {
 }
 
 function unknownBadgeSvg(): string {
-  return scoreBadgeSvg(0).replace('0/100', 'unknown').replace('#e05d44', '#9f9f9f');
+  return scoreBadgeSvg(0).replace("0/100", "unknown").replace("#e05d44", "#9f9f9f");
 }
 
 // ── Validation helpers ─────────────────────────────────────────────────────
 
 function isValidScore(v: unknown): v is number {
-  return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 100;
+  return typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 100;
 }
 
 // ── Row types (what SQLite returns) ───────────────────────────────────────
@@ -151,12 +151,12 @@ export function createRegistryRouter(): Router {
   const router = Router();
 
   // Rate limiters created fresh per router instance so tests don't share state.
-  const writeLimit = rateLimit({ windowMs: 60_000, max: 30,  standardHeaders: true, legacyHeaders: false });
-  const readLimit  = rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false });
+  const writeLimit = rateLimit({ windowMs: 60_000, max: 30, standardHeaders: true, legacyHeaders: false });
+  const readLimit = rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false });
   const badgeLimit = rateLimit({ windowMs: 60_000, max: 300, standardHeaders: true, legacyHeaders: false });
 
   // ── POST /api/v1/scores ─────────────────────────────────────────────────
-  router.post('/scores', writeLimit, requireApiKey, (req: Request, res: Response) => {
+  router.post("/scores", writeLimit, requireApiKey, (req: Request, res: Response) => {
     const body = req.body as Record<string, unknown>;
     const {
       repo_owner,
@@ -174,16 +174,16 @@ export function createRegistryRouter(): Router {
       metadata,
     } = body;
 
-    if (typeof repo_owner !== 'string' || !repo_owner.trim()) {
-      res.status(400).json({ error: 'repo_owner is required', ratchet_spec_version: SPEC_VERSION });
+    if (typeof repo_owner !== "string" || !repo_owner.trim()) {
+      res.status(400).json({ error: "repo_owner is required", ratchet_spec_version: SPEC_VERSION });
       return;
     }
-    if (typeof repo_name !== 'string' || !repo_name.trim()) {
-      res.status(400).json({ error: 'repo_name is required', ratchet_spec_version: SPEC_VERSION });
+    if (typeof repo_name !== "string" || !repo_name.trim()) {
+      res.status(400).json({ error: "repo_name is required", ratchet_spec_version: SPEC_VERSION });
       return;
     }
     if (!isValidScore(overall_score)) {
-      res.status(400).json({ error: 'overall_score must be an integer 0–100', ratchet_spec_version: SPEC_VERSION });
+      res.status(400).json({ error: "overall_score must be an integer 0–100", ratchet_spec_version: SPEC_VERSION });
       return;
     }
 
@@ -203,15 +203,21 @@ export function createRegistryRouter(): Router {
     `);
 
     const result = insert.run(
-      repo_owner, repo_name, repo_url ?? null, language ?? null, overall_score,
+      repo_owner,
+      repo_name,
+      repo_url ?? null,
+      language ?? null,
+      overall_score,
       isValidScore(testing_score) ? testing_score : null,
       isValidScore(security_score) ? security_score : null,
       isValidScore(type_safety_score) ? type_safety_score : null,
       isValidScore(error_handling_score) ? error_handling_score : null,
       isValidScore(performance_score) ? performance_score : null,
       isValidScore(code_quality_score) ? code_quality_score : null,
-      typeof ratchet_version === 'string' ? ratchet_version : null,
-      now, keyId, metadataStr,
+      typeof ratchet_version === "string" ? ratchet_version : null,
+      now,
+      keyId,
+      metadataStr
     );
 
     const submissionId = result.lastInsertRowid as number;
@@ -222,14 +228,16 @@ export function createRegistryRouter(): Router {
       .get(repo_owner, repo_name) as ProfileRow | undefined;
 
     if (!profile) {
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO repo_profiles
           (owner, name, first_scanned, latest_score, scan_count, language, best_score, worst_score, latest_submission_id)
         VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
-      `).run(repo_owner, repo_name, now, overall_score, language ?? null,
-             overall_score, overall_score, submissionId);
+      `
+      ).run(repo_owner, repo_name, now, overall_score, language ?? null, overall_score, overall_score, submissionId);
     } else {
-      db.prepare(`
+      db.prepare(
+        `
         UPDATE repo_profiles SET
           latest_score         = ?,
           scan_count           = scan_count + 1,
@@ -238,29 +246,30 @@ export function createRegistryRouter(): Router {
           worst_score          = MIN(COALESCE(worst_score, 100), ?),
           latest_submission_id = ?
         WHERE owner = ? AND name = ?
-      `).run(overall_score, language ?? null, overall_score, overall_score,
-             submissionId, repo_owner, repo_name);
+      `
+      ).run(overall_score, language ?? null, overall_score, overall_score, submissionId, repo_owner, repo_name);
     }
 
     res.status(201).json({ ratchet_spec_version: SPEC_VERSION, ok: true, submission_id: submissionId });
   });
 
   // ── GET /api/v1/scores/:owner/:repo ────────────────────────────────────
-  router.get('/scores/:owner/:repo', readLimit, (req: Request, res: Response) => {
+  router.get("/scores/:owner/:repo", readLimit, (req: Request, res: Response) => {
     const { owner, repo } = req.params;
     const db = getDb();
 
-    const profile = db
-      .prepare(`SELECT * FROM repo_profiles WHERE owner = ? AND name = ?`)
-      .get(owner, repo) as ProfileRow | undefined;
+    const profile = db.prepare(`SELECT * FROM repo_profiles WHERE owner = ? AND name = ?`).get(owner, repo) as
+      | ProfileRow
+      | undefined;
 
     if (!profile) {
-      res.status(404).json({ error: 'Repo not found', ratchet_spec_version: SPEC_VERSION });
+      res.status(404).json({ error: "Repo not found", ratchet_spec_version: SPEC_VERSION });
       return;
     }
 
     const history = db
-      .prepare(`
+      .prepare(
+        `
         SELECT id, overall_score, testing_score, security_score, type_safety_score,
                error_handling_score, performance_score, code_quality_score,
                ratchet_version, submitted_at, language
@@ -268,7 +277,8 @@ export function createRegistryRouter(): Router {
         WHERE repo_owner = ? AND repo_name = ?
         ORDER BY submitted_at DESC
         LIMIT 50
-      `)
+      `
+      )
       .all(owner, repo) as SubmissionRow[];
 
     res.json({
@@ -287,7 +297,7 @@ export function createRegistryRouter(): Router {
   });
 
   // ── GET /api/v1/scores/:owner/:repo/badge.svg ──────────────────────────
-  router.get('/scores/:owner/:repo/badge.svg', badgeLimit, (req: Request, res: Response) => {
+  router.get("/scores/:owner/:repo/badge.svg", badgeLimit, (req: Request, res: Response) => {
     const { owner, repo } = req.params;
     const db = getDb();
 
@@ -295,8 +305,8 @@ export function createRegistryRouter(): Router {
       .prepare(`SELECT latest_score FROM repo_profiles WHERE owner = ? AND name = ?`)
       .get(owner, repo) as { latest_score: number | null } | undefined;
 
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'public, max-age=300'); // 5 min cache
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=300"); // 5 min cache
 
     if (!profile || profile.latest_score == null) {
       res.send(unknownBadgeSvg());
@@ -307,33 +317,45 @@ export function createRegistryRouter(): Router {
   });
 
   // ── GET /api/v1/leaderboard ────────────────────────────────────────────
-  router.get('/leaderboard', readLimit, (req: Request, res: Response) => {
-    const language = typeof req.query['language'] === 'string' ? req.query['language'] : null;
-    const limitRaw = parseInt(String(req.query['limit'] ?? '20'), 10);
+  router.get("/leaderboard", readLimit, (req: Request, res: Response) => {
+    const language = typeof req.query["language"] === "string" ? req.query["language"] : null;
+    const limitRaw = parseInt(String(req.query["limit"] ?? "20"), 10);
     const limit = isNaN(limitRaw) || limitRaw < 1 ? 20 : Math.min(limitRaw, 100);
 
     const db = getDb();
 
     const rows = language
-      ? (db.prepare(`
+      ? (db
+          .prepare(
+            `
           SELECT owner, name, latest_score, language, scan_count,
                  best_score, worst_score
           FROM repo_profiles
           WHERE latest_score IS NOT NULL AND language = ?
           ORDER BY latest_score DESC
           LIMIT ?
-        `).all(language, limit) as ProfileRow[])
-      : (db.prepare(`
+        `
+          )
+          .all(language, limit) as ProfileRow[])
+      : (db
+          .prepare(
+            `
           SELECT owner, name, latest_score, language, scan_count,
                  best_score, worst_score
           FROM repo_profiles
           WHERE latest_score IS NOT NULL
           ORDER BY latest_score DESC
           LIMIT ?
-        `).all(limit) as ProfileRow[]);
+        `
+          )
+          .all(limit) as ProfileRow[]);
 
     const total = language
-      ? (db.prepare(`SELECT COUNT(*) as n FROM repo_profiles WHERE language = ? AND latest_score IS NOT NULL`).get(language) as { n: number }).n
+      ? (
+          db
+            .prepare(`SELECT COUNT(*) as n FROM repo_profiles WHERE language = ? AND latest_score IS NOT NULL`)
+            .get(language) as { n: number }
+        ).n
       : (db.prepare(`SELECT COUNT(*) as n FROM repo_profiles WHERE latest_score IS NOT NULL`).get() as { n: number }).n;
 
     res.json({
@@ -354,29 +376,31 @@ export function createRegistryRouter(): Router {
   });
 
   // ── GET /api/v1/stats ──────────────────────────────────────────────────
-  router.get('/stats', readLimit, (_req: Request, res: Response) => {
+  router.get("/stats", readLimit, (_req: Request, res: Response) => {
     const db = getDb();
 
-    const { total_repos } = db
-      .prepare(`SELECT COUNT(*) as total_repos FROM repo_profiles`)
-      .get() as { total_repos: number };
+    const { total_repos } = db.prepare(`SELECT COUNT(*) as total_repos FROM repo_profiles`).get() as {
+      total_repos: number;
+    };
 
-    const { total_scans } = db
-      .prepare(`SELECT COUNT(*) as total_scans FROM score_submissions`)
-      .get() as { total_scans: number };
+    const { total_scans } = db.prepare(`SELECT COUNT(*) as total_scans FROM score_submissions`).get() as {
+      total_scans: number;
+    };
 
-    const { avg_score } = db
-      .prepare(`SELECT AVG(overall_score) as avg_score FROM score_submissions`)
-      .get() as { avg_score: number | null };
+    const { avg_score } = db.prepare(`SELECT AVG(overall_score) as avg_score FROM score_submissions`).get() as {
+      avg_score: number | null;
+    };
 
     const byLanguage = db
-      .prepare(`
+      .prepare(
+        `
         SELECT language, COUNT(*) as count, AVG(latest_score) as avg
         FROM repo_profiles
         WHERE language IS NOT NULL AND latest_score IS NOT NULL
         GROUP BY language
         ORDER BY count DESC
-      `)
+      `
+      )
       .all() as Array<{ language: string; count: number; avg: number }>;
 
     res.json({
@@ -385,16 +409,17 @@ export function createRegistryRouter(): Router {
       total_scans,
       average_score: avg_score != null ? Math.round(avg_score * 10) / 10 : null,
       by_language: Object.fromEntries(
-        byLanguage.map(r => [r.language, { count: r.count, avg: Math.round(r.avg * 10) / 10 }]),
+        byLanguage.map(r => [r.language, { count: r.count, avg: Math.round(r.avg * 10) / 10 }])
       ),
     });
   });
 
   // ── POST /api/v1/keys — admin: create API key ─────────────────────────
-  router.post('/keys', writeLimit, requireMasterSecret, (req: Request, res: Response) => {
-    const name = typeof (req.body as Record<string, unknown>)['name'] === 'string'
-      ? (req.body as Record<string, unknown>)['name'] as string
-      : undefined;
+  router.post("/keys", writeLimit, requireMasterSecret, (req: Request, res: Response) => {
+    const name =
+      typeof (req.body as Record<string, unknown>)["name"] === "string"
+        ? ((req.body as Record<string, unknown>)["name"] as string)
+        : undefined;
 
     const db = getDb();
     const { key, id } = createApiKey(db, name);
@@ -404,7 +429,7 @@ export function createRegistryRouter(): Router {
       ok: true,
       key,
       key_id: id,
-      message: 'Store this key securely — it will not be shown again.',
+      message: "Store this key securely — it will not be shown again.",
     });
   });
 

@@ -1,21 +1,21 @@
-import { mkdir, readFile, writeFile } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
-import { logger } from '../lib/logger.js';
+import { mkdir, readFile, writeFile } from "fs/promises";
+import { join } from "path";
+import { existsSync } from "fs";
+import { logger } from "../lib/logger.js";
 
-export const SCAN_HISTORY_FILE = '.ratchet/history.json';
+export const SCAN_HISTORY_FILE = ".ratchet/history.json";
 
 export interface ScanHistoryEntry {
   score: number;
   maxScore: number;
   categories: Record<string, number>; // category name → score
-  timestamp: string;                  // ISO 8601
+  timestamp: string; // ISO 8601
   branch: string;
 }
 
 export interface ScoreDelta {
-  delta: number;       // positive = improvement, negative = regression
-  direction: 'up' | 'down' | 'same';
+  delta: number; // positive = improvement, negative = regression
+  direction: "up" | "down" | "same";
   before: number;
   after: number;
 }
@@ -25,19 +25,19 @@ export async function loadScanHistory(cwd: string): Promise<ScanHistoryEntry[]> 
   if (!existsSync(filePath)) return [];
 
   try {
-    const raw = await readFile(filePath, 'utf-8');
+    const raw = await readFile(filePath, "utf-8");
     return JSON.parse(raw) as ScanHistoryEntry[];
   } catch (err) {
-    logger.warn({ err, filePath }, 'Failed to parse scan history file');
+    logger.warn({ err, filePath }, "Failed to parse scan history file");
     return [];
   }
 }
 
 export async function appendScanHistory(cwd: string, entry: ScanHistoryEntry): Promise<void> {
-  await mkdir(join(cwd, '.ratchet'), { recursive: true });
+  await mkdir(join(cwd, ".ratchet"), { recursive: true });
   const history = await loadScanHistory(cwd);
   history.push(entry);
-  await writeFile(join(cwd, SCAN_HISTORY_FILE), JSON.stringify(history, null, 2), 'utf-8');
+  await writeFile(join(cwd, SCAN_HISTORY_FILE), JSON.stringify(history, null, 2), "utf-8");
 }
 
 export async function calculateDelta(cwd: string): Promise<ScoreDelta | null> {
@@ -50,7 +50,7 @@ export async function calculateDelta(cwd: string): Promise<ScoreDelta | null> {
 
   return {
     delta,
-    direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'same',
+    direction: delta > 0 ? "up" : delta < 0 ? "down" : "same",
     before: previous.score,
     after: latest.score,
   };
@@ -77,5 +77,5 @@ export async function getHistory(cwd: string, days?: number): Promise<ScanHistor
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
-  return history.filter((entry) => new Date(entry.timestamp) >= cutoff);
+  return history.filter(entry => new Date(entry.timestamp) >= cutoff);
 }

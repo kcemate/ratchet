@@ -1,7 +1,7 @@
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { logger } from '../lib/logger.js';
-import { selectModel } from '../lib/model-router.js';
+import { execFile } from "child_process";
+import { promisify } from "util";
+import { logger } from "../lib/logger.js";
+import { selectModel } from "../lib/model-router.js";
 
 const execFileAsync = promisify(execFile);
 const log = logger;
@@ -23,7 +23,7 @@ export interface DebateArgument {
   /** Name of the agent whose proposal is being critiqued */
   aboutProposal: string;
   argument: string;
-  stance: 'support' | 'oppose' | 'neutral';
+  stance: "support" | "oppose" | "neutral";
 }
 
 export interface DebateVerdict {
@@ -60,8 +60,8 @@ export interface DebateConfig {
 export function shouldDebate(proposals: AgentProposal[]): boolean {
   if (proposals.length <= 1) return false;
 
-  const deltas = proposals.map((p) => p.scoreDelta);
-  const allSame = deltas.every((d) => d === deltas[0]);
+  const deltas = proposals.map(p => p.scoreDelta);
+  const allSame = deltas.every(d => d === deltas[0]);
   if (allSame) return false;
 
   return true;
@@ -70,59 +70,56 @@ export function shouldDebate(proposals: AgentProposal[]): boolean {
 /**
  * Build the judge prompt with all proposals and optional strategy context.
  */
-export function buildJudgePrompt(
-  proposals: AgentProposal[],
-  strategyContext?: string,
-): string {
+export function buildJudgePrompt(proposals: AgentProposal[], strategyContext?: string): string {
   const lines: string[] = [];
 
-  lines.push('You are a CODE REVIEW JUDGE evaluating competing agent proposals in a swarm code improvement system.');
-  lines.push('Each agent made independent changes to the same codebase. Your job: pick the best one.');
-  lines.push('');
+  lines.push("You are a CODE REVIEW JUDGE evaluating competing agent proposals in a swarm code improvement system.");
+  lines.push("Each agent made independent changes to the same codebase. Your job: pick the best one.");
+  lines.push("");
 
   if (strategyContext) {
-    lines.push('## Project Context');
+    lines.push("## Project Context");
     lines.push(strategyContext);
-    lines.push('');
+    lines.push("");
   }
 
-  lines.push('## Proposals');
-  lines.push('');
+  lines.push("## Proposals");
+  lines.push("");
 
   for (const p of proposals) {
     lines.push(`### Agent: ${p.agentName}`);
     lines.push(`- **Personality:** ${p.personality}`);
     lines.push(`- **Specialization:** ${p.specialization}`);
-    lines.push(`- **Score delta:** ${p.scoreDelta > 0 ? '+' : ''}${p.scoreDelta}`);
-    lines.push(`- **Files changed:** ${p.filesChanged.length > 0 ? p.filesChanged.join(', ') : 'none'}`);
+    lines.push(`- **Score delta:** ${p.scoreDelta > 0 ? "+" : ""}${p.scoreDelta}`);
+    lines.push(`- **Files changed:** ${p.filesChanged.length > 0 ? p.filesChanged.join(", ") : "none"}`);
     lines.push(`- **Diff stats:** +${p.diffStats.additions} / -${p.diffStats.deletions}`);
     lines.push(`- **Summary:** ${p.summary}`);
-    lines.push('');
+    lines.push("");
   }
 
-  lines.push('## Evaluation Criteria');
-  lines.push('Consider in order:');
-  lines.push('1. **Safety** — does the change introduce risk? (lower diff stats = lower risk)');
-  lines.push('2. **Impact** — does the change genuinely improve the codebase? (score delta is one signal)');
-  lines.push('3. **Precision** — is the change targeted and purposeful?');
-  lines.push('4. **Completeness** — does it fix the root cause or just the symptom?');
-  lines.push('');
-  lines.push('## Instructions');
-  lines.push('');
-  lines.push('Respond in this EXACT JSON format (no markdown, no extra text):');
-  lines.push('');
-  lines.push('{');
+  lines.push("## Evaluation Criteria");
+  lines.push("Consider in order:");
+  lines.push("1. **Safety** — does the change introduce risk? (lower diff stats = lower risk)");
+  lines.push("2. **Impact** — does the change genuinely improve the codebase? (score delta is one signal)");
+  lines.push("3. **Precision** — is the change targeted and purposeful?");
+  lines.push("4. **Completeness** — does it fix the root cause or just the symptom?");
+  lines.push("");
+  lines.push("## Instructions");
+  lines.push("");
+  lines.push("Respond in this EXACT JSON format (no markdown, no extra text):");
+  lines.push("");
+  lines.push("{");
   lines.push('  "winner": "<agentName>",');
   lines.push('  "reasoning": "<1-2 sentences explaining why this proposal wins>",');
   lines.push('  "dissent": ["<agentName>", ...],');
   lines.push('  "confidence": <0.0-1.0>');
-  lines.push('}');
-  lines.push('');
-  lines.push('- winner: must exactly match one of the agent names listed above');
-  lines.push('- dissent: agents whose proposals were competitive but lost (can be empty [])');
-  lines.push('- confidence: 1.0 = clear winner, 0.5 = toss-up, < 0.6 = fall back to score-based');
+  lines.push("}");
+  lines.push("");
+  lines.push("- winner: must exactly match one of the agent names listed above");
+  lines.push("- dissent: agents whose proposals were competitive but lost (can be empty [])");
+  lines.push("- confidence: 1.0 = clear winner, 0.5 = toss-up, < 0.6 = fall back to score-based");
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -133,7 +130,7 @@ export function parseVerdict(response: string, proposals: AgentProposal[]): Deba
   // Extract JSON block — handle cases where the model wraps in markdown
   const jsonMatch = response.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    log.warn({ response }, 'debate: could not extract JSON from judge response');
+    log.warn({ response }, "debate: could not extract JSON from judge response");
     return buildFallbackVerdict(proposals);
   }
 
@@ -145,23 +142,23 @@ export function parseVerdict(response: string, proposals: AgentProposal[]): Deba
       confidence?: number;
     };
 
-    const winner = parsed.winner ?? '';
-    const agentNames = proposals.map((p) => p.agentName);
+    const winner = parsed.winner ?? "";
+    const agentNames = proposals.map(p => p.agentName);
 
     // Validate winner exists
     if (!agentNames.includes(winner)) {
-      log.warn({ winner, agentNames }, 'debate: judge picked unknown agent, falling back');
+      log.warn({ winner, agentNames }, "debate: judge picked unknown agent, falling back");
       return buildFallbackVerdict(proposals);
     }
 
     return {
       winner,
-      reasoning: parsed.reasoning ?? 'No reasoning provided.',
-      dissent: (parsed.dissent ?? []).filter((n) => agentNames.includes(n)),
+      reasoning: parsed.reasoning ?? "No reasoning provided.",
+      dissent: (parsed.dissent ?? []).filter(n => agentNames.includes(n)),
       confidence: clamp(parsed.confidence ?? 0.5, 0, 1),
     };
   } catch (err) {
-    log.warn({ err }, 'debate: failed to parse judge JSON');
+    log.warn({ err }, "debate: failed to parse judge JSON");
     return buildFallbackVerdict(proposals);
   }
 }
@@ -171,8 +168,8 @@ function buildFallbackVerdict(proposals: AgentProposal[]): DebateVerdict {
   const sorted = [...proposals].sort((a, b) => b.scoreDelta - a.scoreDelta);
   const winner = sorted[0];
   return {
-    winner: winner?.agentName ?? '',
-    reasoning: 'Judge response could not be parsed. Fell back to highest score delta.',
+    winner: winner?.agentName ?? "",
+    reasoning: "Judge response could not be parsed. Fell back to highest score delta.",
     dissent: [],
     confidence: 0.4, // below threshold — will trigger score-based fallback
   };
@@ -185,27 +182,24 @@ function clamp(n: number, min: number, max: number): number {
 /**
  * Run the full debate: call judge, parse verdict, return DebateRound.
  */
-export async function runDebate(
-  proposals: AgentProposal[],
-  config: DebateConfig = {},
-): Promise<DebateRound> {
-  const command = config.command ?? 'claude';
-  const baseArgs = config.extraArgs ?? ['--print', '--permission-mode', 'bypassPermissions'];
+export async function runDebate(proposals: AgentProposal[], config: DebateConfig = {}): Promise<DebateRound> {
+  const command = config.command ?? "claude";
+  const baseArgs = config.extraArgs ?? ["--print", "--permission-mode", "bypassPermissions"];
 
   // Debate judging is a complex reasoning task — default to the premium model tier
-  const judgeModel = config.model ?? selectModel('complex');
-  if (!baseArgs.some((a) => a.startsWith('--model'))) {
-    baseArgs.push('--model', judgeModel);
+  const judgeModel = config.model ?? selectModel("complex");
+  if (!baseArgs.some(a => a.startsWith("--model"))) {
+    baseArgs.push("--model", judgeModel);
   }
 
   const judgePrompt = buildJudgePrompt(proposals, config.strategyContext);
 
   log.info(
-    { agentCount: proposals.length, agents: proposals.map((p) => p.agentName) },
-    'debate: starting judge evaluation',
+    { agentCount: proposals.length, agents: proposals.map(p => p.agentName) },
+    "debate: starting judge evaluation"
   );
 
-  let judgeResponse = '';
+  let judgeResponse = "";
   let verdict: DebateVerdict;
 
   try {
@@ -216,7 +210,7 @@ export async function runDebate(
     judgeResponse = stdout.trim();
     verdict = parseVerdict(judgeResponse, proposals);
   } catch (err) {
-    log.warn({ err }, 'debate: judge call failed, using fallback verdict');
+    log.warn({ err }, "debate: judge call failed, using fallback verdict");
     verdict = buildFallbackVerdict(proposals);
   }
 
@@ -225,11 +219,10 @@ export async function runDebate(
   //  here we synthesize them from the personality's known debate style)
   const arguments_: DebateArgument[] = [];
   for (const proposal of proposals) {
-    const otherProposals = proposals.filter((p) => p.agentName !== proposal.agentName);
+    const otherProposals = proposals.filter(p => p.agentName !== proposal.agentName);
     for (const other of otherProposals) {
       // Winning proposal gets "neutral" stances from others; losing proposals get "oppose"
-      const stance: 'support' | 'oppose' | 'neutral' =
-        proposal.agentName === verdict.winner ? 'support' : 'neutral';
+      const stance: "support" | "oppose" | "neutral" = proposal.agentName === verdict.winner ? "support" : "neutral";
       arguments_.push({
         fromAgent: proposal.agentName,
         aboutProposal: other.agentName,
@@ -245,7 +238,7 @@ export async function runDebate(
       confidence: verdict.confidence,
       reasoning: verdict.reasoning,
     },
-    'debate: verdict reached',
+    "debate: verdict reached"
   );
 
   return {

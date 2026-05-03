@@ -1,7 +1,7 @@
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { join, dirname } from 'path';
-import type { Specialization } from './agents/specialized.js';
-import type { AsyncWriter } from './async-writer.js';
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { join, dirname } from "path";
+import type { Specialization } from "./agents/specialized.js";
+import type { AsyncWriter } from "./async-writer.js";
 
 // ── Types
 export interface IssueTypeRecord {
@@ -54,7 +54,7 @@ export interface LearningData {
 
 export interface Recommendation {
   preferredSpecialization: string | null;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   reason: string;
 }
 
@@ -67,7 +67,7 @@ export interface SpecializationRanking {
 }
 
 // ── Constants
-const LEARNING_FILE = '.ratchet/learning.json';
+const LEARNING_FILE = ".ratchet/learning.json";
 const SKIP_FAILURE_THRESHOLD = 3;
 
 // ── Helpers
@@ -110,7 +110,7 @@ export class LearningStore {
   /** Load learning data from disk. Creates empty data if file doesn't exist. */
   async load(): Promise<void> {
     try {
-      const raw = await readFile(this.filePath, 'utf-8');
+      const raw = await readFile(this.filePath, "utf-8");
       const parsed = JSON.parse(raw) as LearningData;
       if (parsed.version === 1) {
         this.data = parsed;
@@ -126,7 +126,7 @@ export class LearningStore {
   async save(): Promise<void> {
     this.data.updatedAt = new Date().toISOString();
     await mkdir(dirname(this.filePath), { recursive: true });
-    await writeFile(this.filePath, JSON.stringify(this.data, null, 2), 'utf-8');
+    await writeFile(this.filePath, JSON.stringify(this.data, null, 2), "utf-8");
   }
 
   /** Ensure data is loaded before accessing it. */
@@ -197,7 +197,7 @@ export class LearningStore {
         successes: 0,
         failures: 0,
         failureReasons: [],
-        lastAttemptAt: '',
+        lastAttemptAt: "",
       };
     }
     const file = this.data.files[filePath]!;
@@ -266,29 +266,29 @@ export class LearningStore {
     if (!issue || issue.attempts < 2) {
       return {
         preferredSpecialization: null,
-        confidence: 'low',
-        reason: 'Not enough data — fewer than 2 attempts recorded for this issue type.',
+        confidence: "low",
+        reason: "Not enough data — fewer than 2 attempts recorded for this issue type.",
       };
     }
 
     if (issue.bestSpecialization) {
       const spec = this.data.specializations[issue.bestSpecialization];
       const winRate = spec && spec.totalRuns > 0 ? spec.wins / spec.totalRuns : 0;
-      const confidence: Recommendation['confidence'] =
-        issue.attempts >= 5 && winRate >= 0.6 ? 'high' :
-        issue.attempts >= 3 ? 'medium' : 'low';
+      const confidence: Recommendation["confidence"] =
+        issue.attempts >= 5 && winRate >= 0.6 ? "high" : issue.attempts >= 3 ? "medium" : "low";
 
       return {
         preferredSpecialization: issue.bestSpecialization,
         confidence,
-        reason: `"${issue.bestSpecialization}" has the best track record for "${issueType}" issues ` +
+        reason:
+          `"${issue.bestSpecialization}" has the best track record for "${issueType}" issues ` +
           `(${issue.successes}/${issue.attempts} success rate)`,
       };
     }
 
     return {
       preferredSpecialization: null,
-      confidence: 'low',
+      confidence: "low",
       reason: `No successful specialization recorded for "${issueType}" yet.`,
     };
   }
@@ -300,7 +300,7 @@ export class LearningStore {
     this.ensureLoaded();
 
     return Object.values(this.data.specializations)
-      .map((s) => ({
+      .map(s => ({
         specialization: s.specialization,
         winRate: s.totalRuns > 0 ? s.wins / s.totalRuns : 0,
         wins: s.wins,

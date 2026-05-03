@@ -1,6 +1,6 @@
-import type { HighRiskChange } from '../types.js';
-import { detectChanges } from './gitnexus.js';
-import { logger } from '../lib/logger.js';
+import type { HighRiskChange } from "../types.js";
+import { detectChanges } from "./gitnexus.js";
+import { logger } from "../lib/logger.js";
 
 // ── Scoring algorithms and validation ────────────────────────────────────
 
@@ -11,7 +11,7 @@ import { logger } from '../lib/logger.js';
  */
 export function checkTotalScoreRegression(
   newTotal: number,
-  prevTotal: number,
+  prevTotal: number
 ): { shouldRollback: boolean; reason?: string } {
   if (newTotal < prevTotal) {
     return {
@@ -26,7 +26,7 @@ export function checkTotalScoreRegression(
 export function checkTimeoutStop(
   startedAt: Date,
   timeoutMs: number,
-  clickNumber: number,
+  clickNumber: number
 ): { stop: boolean; earlyStopReason?: string } {
   const elapsed = Date.now() - startedAt.getTime();
   if (elapsed > timeoutMs) {
@@ -39,7 +39,7 @@ export function checkTimeoutStop(
 /** Returns stop=true when cumulative cost has reached or exceeded the budget. */
 export function checkBudgetStop(
   cumulativeCost: number,
-  budgetUsd: number,
+  budgetUsd: number
 ): { stop: boolean; earlyStopReason?: string } {
   if (cumulativeCost >= budgetUsd) {
     return { stop: true, earlyStopReason: `Budget limit reached ($${cumulativeCost.toFixed(2)})` };
@@ -55,15 +55,15 @@ export function checkBudgetStop(
  */
 export function checkDiminishingReturns(
   recentScoreDeltas: number[],
-  totalClicks: number,
+  totalClicks: number
 ): { stop: boolean; earlyStopReason?: string } {
   if (totalClicks < 3) return { stop: false };
   if (recentScoreDeltas.length < 3) return { stop: false };
   const lastThree = recentScoreDeltas.slice(-3);
-  if (lastThree.every((d) => d === 0)) {
+  if (lastThree.every(d => d === 0)) {
     return {
       stop: true,
-      earlyStopReason: 'diminishing returns — 3 consecutive zero-delta clicks',
+      earlyStopReason: "diminishing returns — 3 consecutive zero-delta clicks",
     };
   }
   return { stop: false };
@@ -72,10 +72,10 @@ export function checkDiminishingReturns(
 /** Returns stop=true when N consecutive clicks all had zero score delta (plateau). */
 export function checkPlateauStop(
   consecutiveZeroDeltaClicks: number,
-  totalClicks: number,
+  totalClicks: number
 ): { stop: boolean; earlyStopReason?: string } {
   if (totalClicks > 3 && consecutiveZeroDeltaClicks >= 3) {
-    return { stop: true, earlyStopReason: 'Score plateau detected (3 consecutive zero-delta clicks)' };
+    return { stop: true, earlyStopReason: "Score plateau detected (3 consecutive zero-delta clicks)" };
   }
   return { stop: false };
 }
@@ -83,11 +83,11 @@ export function checkPlateauStop(
 /** Returns stop=true when a score regression was detected and --stop-on-regression is active. */
 export function checkRegressionStop(
   regressionDetected: boolean,
-  rollbackReason?: string,
+  rollbackReason?: string
 ): { stop: boolean; earlyStopReason?: string } {
   if (!regressionDetected) return { stop: false };
   const match = rollbackReason?.match(/(\d+) → (\d+)/);
-  const detail = match ? `${match[1]} → ${match[2]}` : '';
+  const detail = match ? `${match[1]} → ${match[2]}` : "";
   return { stop: true, earlyStopReason: `Score regression detected (${detail})` };
 }
 
@@ -97,7 +97,7 @@ export function checkRegressionStop(
  * HIGH_RISK_LEVELS — these risk levels trigger confidence gating.
  * If confidence > CONFIDENCE_THRESHOLD, the click is flagged for warning/rollback.
  */
-const HIGH_RISK_LEVELS = new Set(['HIGH', 'CRITICAL', 'high', 'critical']);
+const HIGH_RISK_LEVELS = new Set(["HIGH", "CRITICAL", "high", "critical"]);
 const CONFIDENCE_THRESHOLD = 0.7;
 
 /**
@@ -105,10 +105,7 @@ const CONFIDENCE_THRESHOLD = 0.7;
  * Returns high-risk changes that exceed the confidence threshold.
  * Non-blocking async — called before committing.
  */
-export async function runConfidenceGating(
-  filesModified: string[],
-  cwd: string,
-): Promise<HighRiskChange[]> {
+export async function runConfidenceGating(filesModified: string[], cwd: string): Promise<HighRiskChange[]> {
   if (filesModified.length === 0) return [];
 
   try {

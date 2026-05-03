@@ -1,9 +1,9 @@
-import { readFile } from 'fs/promises';
-import { existsSync } from 'fs';
-import { resolve, relative, basename } from 'path';
-import type { IssueTask } from './issue-backlog.js';
-import { logger } from '../lib/logger.js';
-import { stripCommentsAndStrings } from './code-context.js';
+import { readFile } from "fs/promises";
+import { existsSync } from "fs";
+import { resolve, relative, basename } from "path";
+import type { IssueTask } from "./issue-backlog.js";
+import { logger } from "../lib/logger.js";
+import { stripCommentsAndStrings } from "./code-context.js";
 
 export interface PrevalidationResult {
   validIssues: IssueTask[];
@@ -25,7 +25,7 @@ function isDocFile(absPath: string, cwd: string): boolean {
   return DOC_FILE_PATTERNS.some(p => p.test(rel) || p.test(basename(absPath)));
 }
 
-export { stripCommentsAndStrings } from './code-context.js';
+export { stripCommentsAndStrings } from "./code-context.js";
 
 /**
  * Issue description / subcategory → regex that, when matched against
@@ -70,7 +70,7 @@ function getValidationPattern(issue: IssueTask): RegExp | null {
 
 async function fileHasRealOccurrences(absPath: string, pattern: RegExp): Promise<boolean> {
   try {
-    const source = await readFile(absPath, 'utf8');
+    const source = await readFile(absPath, "utf8");
     const stripped = stripCommentsAndStrings(source);
     pattern.lastIndex = 0;
     return pattern.test(stripped);
@@ -91,10 +91,7 @@ async function fileHasRealOccurrences(absPath: string, pattern: RegExp): Promise
  * Issues without a validation pattern are always treated as valid (we don't
  * know how to check them, so we err on the side of running the agent).
  */
-export async function prevalidateIssues(
-  issues: IssueTask[],
-  cwd: string,
-): Promise<PrevalidationResult> {
+export async function prevalidateIssues(issues: IssueTask[], cwd: string): Promise<PrevalidationResult> {
   const validIssues: IssueTask[] = [];
   const falsePositives: IssueTask[] = [];
   const skippedFilesSet = new Set<string>();
@@ -143,7 +140,7 @@ export async function prevalidateIssues(
       falsePositives.push(issue);
       logger.debug(
         `[prevalidation] "${issue.description}" (${issue.subcategory}) — ` +
-        `no real occurrences after filtering comments/strings/docs → false positive`,
+          `no real occurrences after filtering comments/strings/docs → false positive`
       );
     }
   }

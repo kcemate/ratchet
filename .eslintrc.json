@@ -1,31 +1,29 @@
 {
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module"
   },
-  "plugins": [
-    "@typescript-eslint"
-  ],
+  "plugins": ["@typescript-eslint"],
   "rules": {
-    "no-console": "warn",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      {
-        "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_",
-        "caughtErrorsIgnorePattern": "^_"
+    "no-console": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-require-imports": "error",
+    "no-useless-escape": "error",
+    "prefer-const": "error",
+    "@typescript-eslint/no-unsafe-function-type": "error",
+    "no-irregular-whitespace": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/__tests__/**/*.ts", "**/*.test.ts", "tests/**/*.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unsafe-function-type": "off",
+        "@typescript-eslint/no-require-imports": "off"
       }
-    ],
-    "@typescript-eslint/no-require-imports": "warn",
-    "no-useless-escape": "warn",
-    "prefer-const": "warn",
-    "@typescript-eslint/no-unsafe-function-type": "warn",
-    "no-irregular-whitespace": "warn"
-  }
+    }
+  ]
 }

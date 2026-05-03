@@ -2,4 +2,6 @@
 export function requireLicense(): void {
   // no-op in public build
 }
-export function loadLicense(): null { return null; }
+export function loadLicense(): null {
+  return null;
+}

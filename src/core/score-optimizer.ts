@@ -10,8 +10,8 @@
  * hard the fix is. Then it ranks by points_available / estimated_effort.
  */
 
-import type { ScanResult, CategoryResult } from '../core/scanner';
-import type { IssueTask } from './issue-backlog.js';
+import type { ScanResult, CategoryResult } from "../core/scanner";
+import type { IssueTask } from "./issue-backlog.js";
 
 // ─── Tier Definitions
 // Each tier: [maxIssueCount, scoreAtOrBelow]
@@ -40,7 +40,7 @@ export interface SubcategoryTiers {
    * - 'sweep': batch mechanical fix across files
    * - 'architect': requires structural redesign
    */
-  fixMode: 'torque' | 'sweep' | 'architect';
+  fixMode: "torque" | "sweep" | "architect";
   /** Fix description template for agent prompts */
   fixInstruction: string;
 }
@@ -52,7 +52,7 @@ export interface SubcategoryTiers {
 export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
   // ── Error Handling
   {
-    name: 'Structured logging',
+    name: "Structured logging",
     maxScore: 7,
     tiers: [
       // 7 = structured logger only (0 console errors)
@@ -60,18 +60,19 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
       // 3 = structured logger + many console calls
       // 1 = console.error/warn only
       // 0 = nothing
-      { threshold: 0, score: 7 },  // structured only
-      { threshold: 5, score: 5 },  // logger + few console
+      { threshold: 0, score: 7 }, // structured only
+      { threshold: 5, score: 5 }, // logger + few console
       { threshold: 999, score: 3 }, // logger + many console
     ],
     effortPerFix: 2,
     sweepable: true,
-    fixMode: 'sweep',
-    fixInstruction: 'Replace console.log/warn/error calls with the structured logger ' +
-      '(import from src/core/logger.ts). Ensure logger is the ONLY error/log interface.',
+    fixMode: "sweep",
+    fixInstruction:
+      "Replace console.log/warn/error calls with the structured logger " +
+      "(import from src/core/logger.ts). Ensure logger is the ONLY error/log interface.",
   },
   {
-    name: 'Empty catches',
+    name: "Empty catches",
     maxScore: 5,
     tiers: [
       { threshold: 0, score: 5 },
@@ -84,12 +85,12 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 1,
     sweepable: true,
-    fixMode: 'torque',
-    fixInstruction: 'Add meaningful error handling to empty catch blocks. ' +
-      'At minimum, log the error with the structured logger.',
+    fixMode: "torque",
+    fixInstruction:
+      "Add meaningful error handling to empty catch blocks. " + "At minimum, log the error with the structured logger.",
   },
   {
-    name: 'Coverage',
+    name: "Coverage",
     maxScore: 8,
     tiers: [
       { threshold: 0, score: 8 },
@@ -102,14 +103,14 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 3,
     sweepable: true,
-    fixMode: 'torque',
-    fixInstruction: 'Add try/catch error handling to async functions that lack it. ' +
-      'Use structured logger for caught errors.',
+    fixMode: "torque",
+    fixInstruction:
+      "Add try/catch error handling to async functions that lack it. " + "Use structured logger for caught errors.",
   },
 
   // ── Performance
   {
-    name: 'Console cleanup',
+    name: "Console cleanup",
     maxScore: 5,
     tiers: [
       { threshold: 0, score: 5 },
@@ -121,12 +122,13 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 1,
     sweepable: true,
-    fixMode: 'torque',
-    fixInstruction: 'Remove or replace console.log calls with the structured logger. ' +
-      'For debug-only logs, remove entirely. For operational logs, use logger.info/debug.',
+    fixMode: "torque",
+    fixInstruction:
+      "Remove or replace console.log calls with the structured logger. " +
+      "For debug-only logs, remove entirely. For operational logs, use logger.info/debug.",
   },
   {
-    name: 'Async patterns',
+    name: "Async patterns",
     maxScore: 3,
     tiers: [
       { threshold: 0, score: 5 },
@@ -137,12 +139,13 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 3,
     sweepable: false,
-    fixMode: 'sweep',
-    fixInstruction: 'Refactor await-in-loop patterns to use Promise.all or batch operations instead of sequential ' +
-      'awaits inside for/while loops.',
+    fixMode: "sweep",
+    fixInstruction:
+      "Refactor await-in-loop patterns to use Promise.all or batch operations instead of sequential " +
+      "awaits inside for/while loops.",
   },
   {
-    name: 'Import hygiene',
+    name: "Import hygiene",
     maxScore: 2,
     tiers: [
       { threshold: 0, score: 4 },
@@ -151,13 +154,13 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 2,
     sweepable: false,
-    fixMode: 'sweep',
-    fixInstruction: 'Fix self-imports and barrel file wildcard re-exports.',
+    fixMode: "sweep",
+    fixInstruction: "Fix self-imports and barrel file wildcard re-exports.",
   },
 
   // ── Code Quality
   {
-    name: 'Line length',
+    name: "Line length",
     maxScore: 4,
     tiers: [
       { threshold: 0, score: 6 },
@@ -170,28 +173,30 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 1,
     sweepable: true,
-    fixMode: 'sweep',
-    fixInstruction: 'Break lines >120 characters. Use intermediate variables, multi-line function calls, ' +
-      'or destructuring. Do NOT change logic, only formatting.',
+    fixMode: "sweep",
+    fixInstruction:
+      "Break lines >120 characters. Use intermediate variables, multi-line function calls, " +
+      "or destructuring. Do NOT change logic, only formatting.",
   },
   {
-    name: 'Dead code',
+    name: "Dead code",
     maxScore: 4,
     tiers: [
       { threshold: 0, score: 6 },
-      { threshold: 3, score: 5 },  // only TODOs, no commented code
+      { threshold: 3, score: 5 }, // only TODOs, no commented code
       { threshold: 8, score: 4 },
       { threshold: 10, score: 2 },
       { threshold: 999, score: 0 },
     ],
     effortPerFix: 1,
     sweepable: true,
-    fixMode: 'torque',
-    fixInstruction: 'Resolve or remove TODO comments and commented-out code blocks. ' +
-      'Either implement the TODO or delete it with a brief explanation.',
+    fixMode: "torque",
+    fixInstruction:
+      "Resolve or remove TODO comments and commented-out code blocks. " +
+      "Either implement the TODO or delete it with a brief explanation.",
   },
   {
-    name: 'Duplication',
+    name: "Duplication",
     maxScore: 3,
     tiers: [
       { threshold: 0, score: 6 },
@@ -204,12 +209,13 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 5,
     sweepable: false,
-    fixMode: 'architect',
-    fixInstruction: 'Extract duplicated code into shared utility functions. ' +
-      'Look for repeated patterns across files and consolidate into a common module.',
+    fixMode: "architect",
+    fixInstruction:
+      "Extract duplicated code into shared utility functions. " +
+      "Look for repeated patterns across files and consolidate into a common module.",
   },
   {
-    name: 'Function length',
+    name: "Function length",
     maxScore: 4,
     tiers: [
       { threshold: 0, score: 4 },
@@ -218,14 +224,15 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 4,
     sweepable: false,
-    fixMode: 'torque',
-    fixInstruction: 'Split functions >50 lines into smaller, focused helper functions. ' +
-      'Extract logical blocks into named functions.',
+    fixMode: "torque",
+    fixInstruction:
+      "Split functions >50 lines into smaller, focused helper functions. " +
+      "Extract logical blocks into named functions.",
   },
 
   // ── Security
   {
-    name: 'Auth & rate limiting',
+    name: "Auth & rate limiting",
     maxScore: 6,
     tiers: [
       { threshold: 0, score: 6 },
@@ -235,11 +242,11 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 3,
     sweepable: false,
-    fixMode: 'architect',
-    fixInstruction: 'Add authentication middleware or rate limiting to unprotected routes/endpoints.',
+    fixMode: "architect",
+    fixInstruction: "Add authentication middleware or rate limiting to unprotected routes/endpoints.",
   },
   {
-    name: 'Input validation',
+    name: "Input validation",
     maxScore: 6,
     tiers: [
       { threshold: 0, score: 6 },
@@ -249,13 +256,13 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 3,
     sweepable: false,
-    fixMode: 'torque',
-    fixInstruction: 'Add input validation (e.g., zod schemas) to route handlers that accept user input.',
+    fixMode: "torque",
+    fixInstruction: "Add input validation (e.g., zod schemas) to route handlers that accept user input.",
   },
 
   // ── Testing
   {
-    name: 'Test quality',
+    name: "Test quality",
     maxScore: 8,
     tiers: [
       // Assertions per test ratio thresholds
@@ -267,21 +274,22 @@ export const SUBCATEGORY_TIERS: SubcategoryTiers[] = [
     ],
     effortPerFix: 2,
     sweepable: true,
-    fixMode: 'torque',
-    fixInstruction: 'Add more assertions to test cases. Each test should have at least 2-3 meaningful assertions ' +
-      'checking different aspects of the behavior.',
+    fixMode: "torque",
+    fixInstruction:
+      "Add more assertions to test cases. Each test should have at least 2-3 meaningful assertions " +
+      "checking different aspects of the behavior.",
   },
 ];
 
 // ─── Category → Subcategory Mapping
 
 export const CATEGORY_SUBCATEGORY_MAP: Record<string, string[]> = {
-  testing: ['Coverage ratio', 'Edge case depth', 'Test quality'],
-  security: ['Secrets & env vars', 'Input validation', 'Auth & rate limiting'],
-  'type-safety': ['Strict config', 'Any type count'],
-  'error-handling': ['Coverage', 'Empty catches', 'Structured logging'],
-  performance: ['Async patterns', 'Console cleanup', 'Import hygiene'],
-  'code-quality': ['Function length', 'Line length', 'Dead code', 'Duplication'],
+  testing: ["Coverage ratio", "Edge case depth", "Test quality"],
+  security: ["Secrets & env vars", "Input validation", "Auth & rate limiting"],
+  "type-safety": ["Strict config", "Any type count"],
+  "error-handling": ["Coverage", "Empty catches", "Structured logging"],
+  performance: ["Async patterns", "Console cleanup", "Import hygiene"],
+  "code-quality": ["Function length", "Line length", "Dead code", "Duplication"],
 };
 
 /**
@@ -334,7 +342,7 @@ export interface TierGap {
   /** Whether this is sweepable */
   sweepable: boolean;
   /** Mode required to fix this subcategory */
-  fixMode: 'torque' | 'sweep' | 'architect';
+  fixMode: "torque" | "sweep" | "architect";
   /** Fix instruction for agent */
   fixInstruction: string;
   /** Files affected (if available) */
@@ -401,9 +409,7 @@ export function analyzeScoreGaps(scan: ScanResult): TierGap[] {
       const roiToMax = pointsAvailable / effortToMax;
 
       // Get affected files from the scan issue list
-      const issueEntry = scan.issuesByType?.find(
-        i => i.subcategory === sub.name
-      );
+      const issueEntry = scan.issuesByType?.find(i => i.subcategory === sub.name);
       const files = issueEntry?.locations ?? sub.locations ?? [];
 
       gaps.push({
@@ -450,18 +456,18 @@ export function buildScoreOptimizedBacklog(scan: ScanResult, focusCategory?: str
 
   for (const gap of gaps) {
     // Map effort to severity for display purposes
-    const severity: 'high' | 'medium' | 'low' =
-      gap.pointsAvailable >= 3 ? 'high' :
-      gap.pointsAvailable >= 2 ? 'medium' : 'low';
+    const severity: "high" | "medium" | "low" =
+      gap.pointsAvailable >= 3 ? "high" : gap.pointsAvailable >= 2 ? "medium" : "low";
 
     // Penalize cross-cutting issues (>10 files): these can't be fixed in a single click.
     // Also penalize sweep-mode issues when using APIAgent (no filesystem access for multi-file changes).
     const crossCuttingPenalty = gap.files.length > 10 ? 10 / gap.files.length : 1;
-    const sweepPenalty = gap.fixMode === 'sweep' ? 0.3 : 1;
+    const sweepPenalty = gap.fixMode === "sweep" ? 0.3 : 1;
     tasks.push({
       category: findCategoryForSubcategory(scan, gap.subcategory),
       subcategory: gap.subcategory,
-      description: `${gap.fixInstruction} ` +
+      description:
+        `${gap.fixInstruction} ` +
         `[ROI: ${gap.roi.toFixed(2)}, +${gap.pointsAtNextTier}pt next tier, +${gap.pointsAvailable}pt max]`,
       count: gap.currentCount,
       severity,
@@ -486,13 +492,18 @@ function buildArchitectPromptForGap(gap: TierGap): string {
     `Current: ${gap.currentScore}/${gap.maxScore} (${gap.currentCount} issues)`,
     `Goal: Reduce to ${gap.currentCount - gap.issuesToNextTier} issues for +${gap.pointsAtNextTier} points`,
     `Max: Reduce to ${gap.currentCount - gap.issuesToMax} issues for +${gap.pointsAvailable} points`,
-    '',
+    "",
     `INSTRUCTION: ${gap.fixInstruction}`,
-    '',
+    "",
     gap.files.length > 0
-      ? `FILES TO FIX:\n${gap.files.slice(0, 15).map(f => `  - ${f}`).join('\n')}`
-      : '',
-  ].filter(Boolean).join('\n');
+      ? `FILES TO FIX:\n${gap.files
+          .slice(0, 15)
+          .map(f => `  - ${f}`)
+          .join("\n")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function findCategoryForSubcategory(scan: ScanResult, subcategory: string): string {
@@ -501,7 +512,7 @@ function findCategoryForSubcategory(scan: ScanResult, subcategory: string): stri
       if (sub.name === subcategory) return cat.name;
     }
   }
-  return 'Unknown';
+  return "Unknown";
 }
 
 /**
@@ -519,14 +530,14 @@ export function generateNextMoveRecommendation(scan: ScanResult): string {
   if (actionableGaps.length === 0) {
     return (
       `\n  💡 Next best move:\n` +
-      `     Only small gaps remain — run ${chalk_green('ratchet improve')} for incremental polish.\n`
+      `     Only small gaps remain — run ${chalk_green("ratchet improve")} for incremental polish.\n`
     );
   }
 
   const top = actionableGaps[0]!;
 
   // Find parent category name for --focus-category flag
-  let category = 'general';
+  let category = "general";
   for (const cat of scan.categories) {
     for (const sub of cat.subcategories) {
       if (sub.name === top.subcategory) {
@@ -539,21 +550,23 @@ export function generateNextMoveRecommendation(scan: ScanResult): string {
   // Determine architect mode: many hits spread across many files
   const needsArchitect = top.currentCount > 10 && top.files.length > 5;
 
-  const modePart = needsArchitect ? ' --mode architect' : '';
+  const modePart = needsArchitect ? " --mode architect" : "";
   const cmd = `ratchet torque --focus-category ${category}${modePart} -n 5`;
 
   const scoreRange = `${top.currentScore}/${top.maxScore}`;
   const fileCount = top.files.length;
-  const fileLabel = fileCount > 0 ? `across ${fileCount} file${fileCount !== 1 ? 's' : ''}` : '';
+  const fileLabel = fileCount > 0 ? `across ${fileCount} file${fileCount !== 1 ? "s" : ""}` : "";
 
   return [
-    '',
+    "",
     `  💡 Next best move:`,
-    (`     ${top.subcategory} (${scoreRange}) has ${top.pointsAvailable}` +
-      ` recoverable point${top.pointsAvailable !== 1 ? 's' : ''} ${fileLabel}`).trimEnd(),
+    (
+      `     ${top.subcategory} (${scoreRange}) has ${top.pointsAvailable}` +
+      ` recoverable point${top.pointsAvailable !== 1 ? "s" : ""} ${fileLabel}`
+    ).trimEnd(),
     `     → ${chalk_green(cmd)}`,
-    '',
-  ].join('\n');
+    "",
+  ].join("\n");
 }
 
 // Minimal chalk-free green escape for the recommendation output.
@@ -567,26 +580,27 @@ function chalk_green(s: string): string {
  */
 export function generateScorePlan(scan: ScanResult): string {
   const gaps = analyzeScoreGaps(scan);
-  if (gaps.length === 0) return '✅ Already at 100/100!';
+  if (gaps.length === 0) return "✅ Already at 100/100!";
 
   const totalPointsAvailable = gaps.reduce((sum, g) => sum + g.pointsAvailable, 0);
   const lines: string[] = [
     `📊 Score Optimization Plan: ${scan.total}/100 → ${scan.total + totalPointsAvailable}/100`,
     `   ${gaps.length} subcategories to improve, ${totalPointsAvailable} points available`,
-    '',
-    '   Priority (by ROI — cheapest points first):',
+    "",
+    "   Priority (by ROI — cheapest points first):",
   ];
 
   for (let i = 0; i < gaps.length; i++) {
     const g = gaps[i]!;
-    const tierInfo = g.issuesToNextTier > 0
-      ? `fix ${g.issuesToNextTier} issues → +${g.pointsAtNextTier}pt`
-      : `fix ${g.issuesToMax} issues → +${g.pointsAvailable}pt`;
+    const tierInfo =
+      g.issuesToNextTier > 0
+        ? `fix ${g.issuesToNextTier} issues → +${g.pointsAtNextTier}pt`
+        : `fix ${g.issuesToMax} issues → +${g.pointsAvailable}pt`;
     lines.push(
       `   ${i + 1}. ${g.subcategory} (${g.currentScore}/${g.maxScore}) — ${tierInfo} ` +
-      `[ROI: ${g.roi.toFixed(2)}, effort: ${g.effortPerFix}/5${g.sweepable ? ', sweepable' : ''}]`
+        `[ROI: ${g.roi.toFixed(2)}, effort: ${g.effortPerFix}/5${g.sweepable ? ", sweepable" : ""}]`
     );
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }

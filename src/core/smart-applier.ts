@@ -13,9 +13,9 @@
  *   6. Return { success, modifiedSource, error }
  */
 
-import { readFile } from 'node:fs/promises';
-import { renderFromIntent } from './fix-templates.js';
-import type { TemplateContext } from './fix-templates.js';
+import { readFile } from "node:fs/promises";
+import { renderFromIntent } from "./fix-templates.js";
+import type { TemplateContext } from "./fix-templates.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,7 +23,7 @@ import type { TemplateContext } from './fix-templates.js';
 
 export interface IntentPlan {
   /** What kind of edit to make */
-  action: 'insert' | 'replace' | 'delete' | 'wrap';
+  action: "insert" | "replace" | "delete" | "wrap";
   /** 1-indexed, inclusive [startLine, endLine] */
   targetLines: [number, number];
   /** Human-readable description of the change */
@@ -52,18 +52,15 @@ export interface ApplyResult {
  * Read a file from disk and apply the intent plan to it.
  * Returns { success: false } on any error — never throws.
  */
-export async function applyIntentPlan(
-  filePath: string,
-  plan: IntentPlan,
-): Promise<ApplyResult> {
+export async function applyIntentPlan(filePath: string, plan: IntentPlan): Promise<ApplyResult> {
   let source: string;
   try {
     const buf = await readFile(filePath);
     // Reject binary files (null bytes present)
     if (buf.includes(0x00)) {
-      return { success: false, modifiedSource: null, error: 'Binary file — skipped' };
+      return { success: false, modifiedSource: null, error: "Binary file — skipped" };
     }
-    source = buf.toString('utf8');
+    source = buf.toString("utf8");
   } catch (err) {
     return {
       success: false,
@@ -82,7 +79,7 @@ export async function applyIntentPlan(
 export function applyIntentPlanToSource(
   source: string,
   plan: IntentPlan,
-  overrideImportStyle?: 'esm' | 'cjs',
+  overrideImportStyle?: "esm" | "cjs"
 ): ApplyResult {
   try {
     return _apply(source, plan, overrideImportStyle);
@@ -99,20 +96,16 @@ export function applyIntentPlanToSource(
 // Core implementation
 // ---------------------------------------------------------------------------
 
-function _apply(
-  source: string,
-  plan: IntentPlan,
-  overrideImportStyle?: 'esm' | 'cjs',
-): ApplyResult {
+function _apply(source: string, plan: IntentPlan, overrideImportStyle?: "esm" | "cjs"): ApplyResult {
   if (source.length === 0) {
     // Empty file: only insert is valid
-    if (plan.action !== 'insert') {
-      return { success: false, modifiedSource: null, error: 'Empty file — only insert is valid' };
+    if (plan.action !== "insert") {
+      return { success: false, modifiedSource: null, error: "Empty file — only insert is valid" };
     }
   }
 
   const importStyle = overrideImportStyle ?? detectImportStyle(source);
-  const lines = source.split('\n');
+  const lines = source.split("\n");
 
   // ── 1. Find the target region ──────────────────────────────────────────
   const region = findTargetRegion(lines, plan);
@@ -127,7 +120,7 @@ function _apply(
   const { startIdx, endIdx } = region;
 
   // Detect indentation from the first target line (fall back to 2 spaces)
-  const indent = detectIndent(lines[startIdx] ?? '');
+  const indent = detectIndent(lines[startIdx] ?? "");
 
   // ── 2. Apply the action ────────────────────────────────────────────────
   let newLines: string[];
@@ -146,14 +139,14 @@ function _apply(
     newLines = insertImports(newLines, plan.imports_needed, importStyle);
   }
 
-  const modifiedSource = newLines.join('\n');
+  const modifiedSource = newLines.join("\n");
 
   // ── 4. Validate syntax ─────────────────────────────────────────────────
   if (!isBracketsBalanced(modifiedSource)) {
     return {
       success: false,
       modifiedSource: null,
-      error: 'Syntax validation failed: unbalanced brackets after applying fix',
+      error: "Syntax validation failed: unbalanced brackets after applying fix",
     };
   }
 
@@ -166,7 +159,7 @@ function _apply(
 
 interface Region {
   startIdx: number; // 0-indexed
-  endIdx: number;   // 0-indexed, inclusive
+  endIdx: number; // 0-indexed, inclusive
 }
 
 /**
@@ -221,13 +214,11 @@ function findTargetRegion(lines: string[], plan: IntentPlan): Region | null {
   return null;
 }
 
-function regionMatchesPattern(
-  lines: string[],
-  startIdx: number,
-  endIdx: number,
-  pattern: string,
-): boolean {
-  const regionText = lines.slice(startIdx, endIdx + 1).join('\n').toLowerCase();
+function regionMatchesPattern(lines: string[], startIdx: number, endIdx: number, pattern: string): boolean {
+  const regionText = lines
+    .slice(startIdx, endIdx + 1)
+    .join("\n")
+    .toLowerCase();
   const key = firstMeaningfulLine(pattern).toLowerCase();
   return key.length === 0 || regionText.includes(key);
 }
@@ -239,12 +230,12 @@ function lineMatchesPattern(line: string, patternLine: string): boolean {
 
 /** Returns the first non-empty, non-whitespace line of a (possibly multi-line) pattern. */
 function firstMeaningfulLine(pattern: string): string {
-  const lines = pattern.split('\n');
+  const lines = pattern.split("\n");
   for (const l of lines) {
     const t = l.trim();
     if (t.length > 0) return t;
   }
-  return '';
+  return "";
 }
 
 // ---------------------------------------------------------------------------
@@ -257,41 +248,33 @@ function applyAction(
   endIdx: number,
   indent: string,
   plan: IntentPlan,
-  importStyle: 'esm' | 'cjs',
+  importStyle: "esm" | "cjs"
 ): string[] {
   switch (plan.action) {
-    case 'delete':
+    case "delete":
       return [...lines.slice(0, startIdx), ...lines.slice(endIdx + 1)];
 
-    case 'insert': {
+    case "insert": {
       const ctx = buildTemplateContext(indent, plan, importStyle);
       const generated = renderFromIntent(plan.replacement_intent, ctx);
       if (generated === null) {
         throw new Error(`No template matches intent: "${plan.replacement_intent}"`);
       }
-      const insertLines = generated.split('\n');
-      return [
-        ...lines.slice(0, startIdx),
-        ...insertLines,
-        ...lines.slice(startIdx),
-      ];
+      const insertLines = generated.split("\n");
+      return [...lines.slice(0, startIdx), ...insertLines, ...lines.slice(startIdx)];
     }
 
-    case 'replace': {
+    case "replace": {
       const ctx = buildTemplateContext(indent, plan, importStyle);
       const generated = renderFromIntent(plan.replacement_intent, ctx);
       if (generated === null) {
         throw new Error(`No template matches intent: "${plan.replacement_intent}"`);
       }
-      const replaceLines = generated.split('\n');
-      return [
-        ...lines.slice(0, startIdx),
-        ...replaceLines,
-        ...lines.slice(endIdx + 1),
-      ];
+      const replaceLines = generated.split("\n");
+      return [...lines.slice(0, startIdx), ...replaceLines, ...lines.slice(endIdx + 1)];
     }
 
-    case 'wrap': {
+    case "wrap": {
       const targetLines = lines.slice(startIdx, endIdx + 1);
       return wrapInTryCatch(lines, startIdx, endIdx, targetLines, indent, plan.replacement_intent);
     }
@@ -307,31 +290,29 @@ function wrapInTryCatch(
   endIdx: number,
   targetLines: string[],
   indent: string,
-  intent: string,
+  intent: string
 ): string[] {
-  const inner = indent + '  ';
+  const inner = indent + "  ";
   const intentLower = intent.toLowerCase();
 
   // Determine what kind of wrap based on intent
   const isValidation =
-    intentLower.includes('validat') ||
-    intentLower.includes('null check') ||
-    intentLower.includes('guard');
+    intentLower.includes("validat") || intentLower.includes("null check") || intentLower.includes("guard");
 
   let wrapped: string[];
   if (isValidation) {
     // Wrap in a validation if-block
     wrapped = [
       `${indent}if (true) { // TODO: replace condition`,
-      ...targetLines.map((l) => (l.startsWith(indent) ? l : inner + l.trimStart())),
+      ...targetLines.map(l => (l.startsWith(indent) ? l : inner + l.trimStart())),
       `${indent}}`,
     ];
   } else {
     // Default: try/catch
-    const errHandler = intentLower.includes('logger') ? 'logger' : 'console';
+    const errHandler = intentLower.includes("logger") ? "logger" : "console";
     wrapped = [
       `${indent}try {`,
-      ...targetLines.map((l) => (l.startsWith(indent) ? l : inner + l.trimStart())),
+      ...targetLines.map(l => (l.startsWith(indent) ? l : inner + l.trimStart())),
       `${indent}} catch (error) {`,
       `${inner}${errHandler}.error('Caught error', error);`,
       `${indent}}`,
@@ -341,15 +322,11 @@ function wrapInTryCatch(
   return [...lines.slice(0, startIdx), ...wrapped, ...lines.slice(endIdx + 1)];
 }
 
-function buildTemplateContext(
-  indent: string,
-  plan: IntentPlan,
-  importStyle: 'esm' | 'cjs',
-): TemplateContext {
+function buildTemplateContext(indent: string, plan: IntentPlan, importStyle: "esm" | "cjs"): TemplateContext {
   return {
     indent,
     variableNames: extractVariableNames(plan.pattern),
-    errorHandler: 'console',
+    errorHandler: "console",
     importStyle,
   };
 }
@@ -359,24 +336,39 @@ function extractVariableNames(pattern: string): string[] {
   // Match identifiers that look like variable/param names (camelCase, snake_case)
   const matches = pattern.match(/\b([a-z][a-zA-Z0-9_]*)\b/g) ?? [];
   // Deduplicate and filter out keywords
-  const keywords = new Set(['if', 'for', 'while', 'return', 'const', 'let', 'var', 'function', 'async', 'await', 'new', 'this', 'null', 'undefined', 'true', 'false']);
-  return [...new Set(matches)].filter((n) => !keywords.has(n)).slice(0, 3);
+  const keywords = new Set([
+    "if",
+    "for",
+    "while",
+    "return",
+    "const",
+    "let",
+    "var",
+    "function",
+    "async",
+    "await",
+    "new",
+    "this",
+    "null",
+    "undefined",
+    "true",
+    "false",
+  ]);
+  return [...new Set(matches)].filter(n => !keywords.has(n)).slice(0, 3);
 }
 
 // ---------------------------------------------------------------------------
 // Import insertion
 // ---------------------------------------------------------------------------
 
-function insertImports(lines: string[], imports: string[], importStyle: 'esm' | 'cjs'): string[] {
+function insertImports(lines: string[], imports: string[], importStyle: "esm" | "cjs"): string[] {
   const lastImportIdx = findLastImportLine(lines);
 
   const toInsert: string[] = [];
   for (const imp of imports) {
     const importLine = formatImport(imp, importStyle);
     // Skip if already present (exact match or contains the module path)
-    const alreadyPresent = lines.some(
-      (l) => l.trim() === importLine.trim() || (imp.length > 3 && l.includes(imp)),
-    );
+    const alreadyPresent = lines.some(l => l.trim() === importLine.trim() || (imp.length > 3 && l.includes(imp)));
     if (!alreadyPresent) {
       toInsert.push(importLine);
     }
@@ -388,13 +380,13 @@ function insertImports(lines: string[], imports: string[], importStyle: 'esm' | 
   return [...lines.slice(0, insertAt), ...toInsert, ...lines.slice(insertAt)];
 }
 
-function formatImport(modulePath: string, style: 'esm' | 'cjs'): string {
+function formatImport(modulePath: string, style: "esm" | "cjs"): string {
   // If the caller already wrote a full import statement, preserve it
-  if (modulePath.trim().startsWith('import ') || modulePath.trim().startsWith('const ')) {
+  if (modulePath.trim().startsWith("import ") || modulePath.trim().startsWith("const ")) {
     return modulePath;
   }
   const name = moduleToVarName(modulePath);
-  if (style === 'cjs') {
+  if (style === "cjs") {
     return `const { ${name} } = require('${modulePath}');`;
   }
   return `import { ${name} } from '${modulePath}';`;
@@ -402,7 +394,7 @@ function formatImport(modulePath: string, style: 'esm' | 'cjs'): string {
 
 function moduleToVarName(modulePath: string): string {
   // e.g. './logger' → 'logger', 'some-package' → 'somePackage'
-  const base = modulePath.replace(/^.*\//, '').replace(/\.[jt]sx?$/, '');
+  const base = modulePath.replace(/^.*\//, "").replace(/\.[jt]sx?$/, "");
   return base.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 }
 
@@ -412,9 +404,9 @@ function findLastImportLine(lines: string[]): number {
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim();
     if (
-      trimmed.startsWith('import ') ||
-      (trimmed.startsWith('const ') && trimmed.includes('require(')) ||
-      (trimmed.startsWith('var ') && trimmed.includes('require('))
+      trimmed.startsWith("import ") ||
+      (trimmed.startsWith("const ") && trimmed.includes("require(")) ||
+      (trimmed.startsWith("var ") && trimmed.includes("require("))
     ) {
       lastIdx = i;
     }
@@ -436,45 +428,63 @@ export function isBracketsBalanced(source: string): boolean {
   let parens = 0;
   let brackets = 0;
   let inString = false;
-  let stringChar = '';
+  let stringChar = "";
   let inLineComment = false;
   let inBlockComment = false;
 
   for (let i = 0; i < source.length; i++) {
     const ch = source[i];
-    const next = source[i + 1] ?? '';
+    const next = source[i + 1] ?? "";
 
     if (inLineComment) {
-      if (ch === '\n') inLineComment = false;
+      if (ch === "\n") inLineComment = false;
       continue;
     }
     if (inBlockComment) {
-      if (ch === '*' && next === '/') {
+      if (ch === "*" && next === "/") {
         inBlockComment = false;
         i++;
       }
       continue;
     }
     if (inString) {
-      if (ch === '\\') { i++; continue; }
+      if (ch === "\\") {
+        i++;
+        continue;
+      }
       if (ch === stringChar) inString = false;
       continue;
     }
 
-    if (ch === '/' && next === '/') { inLineComment = true; i++; continue; }
-    if (ch === '/' && next === '*') { inBlockComment = true; i++; continue; }
-    if (ch === '"' || ch === "'" || ch === '`') {
+    if (ch === "/" && next === "/") {
+      inLineComment = true;
+      i++;
+      continue;
+    }
+    if (ch === "/" && next === "*") {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
       inString = true;
       stringChar = ch;
       continue;
     }
 
-    if (ch === '{') braces++;
-    else if (ch === '}') { braces--; if (braces < 0) return false; }
-    else if (ch === '(') parens++;
-    else if (ch === ')') { parens--; if (parens < 0) return false; }
-    else if (ch === '[') brackets++;
-    else if (ch === ']') { brackets--; if (brackets < 0) return false; }
+    if (ch === "{") braces++;
+    else if (ch === "}") {
+      braces--;
+      if (braces < 0) return false;
+    } else if (ch === "(") parens++;
+    else if (ch === ")") {
+      parens--;
+      if (parens < 0) return false;
+    } else if (ch === "[") brackets++;
+    else if (ch === "]") {
+      brackets--;
+      if (brackets < 0) return false;
+    }
   }
 
   return braces === 0 && parens === 0 && brackets === 0;
@@ -486,11 +496,11 @@ export function isBracketsBalanced(source: string): boolean {
 
 function detectIndent(line: string): string {
   const match = line.match(/^(\s+)/);
-  return match ? match[1] : '';
+  return match ? match[1] : "";
 }
 
-function detectImportStyle(source: string): 'esm' | 'cjs' {
-  if (/^import\s+/m.test(source)) return 'esm';
-  if (/require\s*\(/.test(source)) return 'cjs';
-  return 'esm';
+function detectImportStyle(source: string): "esm" | "cjs" {
+  if (/^import\s+/m.test(source)) return "esm";
+  if (/require\s*\(/.test(source)) return "cjs";
+  return "esm";
 }

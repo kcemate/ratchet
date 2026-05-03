@@ -14,7 +14,7 @@
  * though we only care about presence, not position).
  */
 export function stripCommentsAndStrings(source: string): string {
-  let result = '';
+  let result = "";
   let i = 0;
   const len = source.length;
 
@@ -23,61 +23,61 @@ export function stripCommentsAndStrings(source: string): string {
     const next = source[i + 1];
 
     // Single-line comment: // …
-    if (ch === '/' && next === '/') {
+    if (ch === "/" && next === "/") {
       i += 2;
-      while (i < len && source[i] !== '\n') i++;
-      result += ' ';
+      while (i < len && source[i] !== "\n") i++;
+      result += " ";
       continue;
     }
 
     // Multi-line comment: /* … */
-    if (ch === '/' && next === '*') {
+    if (ch === "/" && next === "*") {
       i += 2;
-      while (i < len - 1 && !(source[i] === '*' && source[i + 1] === '/')) {
-        result += source[i] === '\n' ? '\n' : ' '; // preserve newlines for line count
+      while (i < len - 1 && !(source[i] === "*" && source[i + 1] === "/")) {
+        result += source[i] === "\n" ? "\n" : " "; // preserve newlines for line count
         i++;
       }
       i += 2; // skip closing */
-      result += ' ';
+      result += " ";
       continue;
     }
 
     // Template literal: ` … `
-    if (ch === '`') {
+    if (ch === "`") {
       i++;
-      while (i < len && source[i] !== '`') {
-        if (source[i] === '\\') i++; // skip escaped char
-        result += source[i] === '\n' ? '\n' : ' ';
+      while (i < len && source[i] !== "`") {
+        if (source[i] === "\\") i++; // skip escaped char
+        result += source[i] === "\n" ? "\n" : " ";
         i++;
       }
       i++; // skip closing `
-      result += ' ';
+      result += " ";
       continue;
     }
 
     // Single-quoted string: ' … '
     if (ch === "'") {
       i++;
-      while (i < len && source[i] !== "'" && source[i] !== '\n') {
-        if (source[i] === '\\') i++;
-        result += ' ';
+      while (i < len && source[i] !== "'" && source[i] !== "\n") {
+        if (source[i] === "\\") i++;
+        result += " ";
         i++;
       }
       i++; // skip closing '
-      result += ' ';
+      result += " ";
       continue;
     }
 
     // Double-quoted string: " … "
     if (ch === '"') {
       i++;
-      while (i < len && source[i] !== '"' && source[i] !== '\n') {
-        if (source[i] === '\\') i++;
-        result += ' ';
+      while (i < len && source[i] !== '"' && source[i] !== "\n") {
+        if (source[i] === "\\") i++;
+        result += " ";
         i++;
       }
       i++; // skip closing "
-      result += ' ';
+      result += " ";
       continue;
     }
 

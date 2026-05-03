@@ -6,16 +6,16 @@
  * from engine-architect.ts and engine-sweep.ts, so helpers must live outside engine.ts.
  */
 
-import { randomUUID } from 'crypto';
-import type { RatchetRun, Target, Click, ClickGuards, ClickEconomics } from '../types.js';
-import type { IssueTask } from './issue-backlog.js';
-import type { ScanResult } from './scanner/index.js';
-import type { LearningStore } from './learning.js';
-import type { Agent } from './agents/base.js';
-import type { RunEconomics, CircuitBreakerState, ClickPhase } from './engine-core.js';
-import type { HardenPhase } from '../types.js';
-import * as git from './git.js';
-import { runTests } from './runner.js';
+import { randomUUID } from "crypto";
+import type { RatchetRun, Target, Click, ClickGuards, ClickEconomics } from "../types.js";
+import type { IssueTask } from "./issue-backlog.js";
+import type { ScanResult } from "./scanner/index.js";
+import type { LearningStore } from "./learning.js";
+import type { Agent } from "./agents/base.js";
+import type { RunEconomics, CircuitBreakerState, ClickPhase } from "./engine-core.js";
+import type { HardenPhase } from "../types.js";
+import * as git from "./git.js";
+import { runTests } from "./runner.js";
 
 /**
  * Create the initial RatchetRun object for a new engine invocation.
@@ -27,7 +27,7 @@ export function createInitialRun(target: Target): RatchetRun {
     target,
     clicks: [],
     startedAt: new Date(),
-    status: 'running',
+    status: "running",
   };
 }
 
@@ -37,7 +37,7 @@ export function createInitialRun(target: Target): RatchetRun {
  */
 export async function requireNamedBranch(cwd: string): Promise<void> {
   if (await git.isDetachedHead(cwd)) {
-    throw new Error('Git repository is in detached HEAD state. Ratchet requires a named branch.');
+    throw new Error("Git repository is in detached HEAD state. Ratchet requires a named branch.");
   }
 }
 
@@ -51,13 +51,16 @@ export interface EngineCallbacks {
   onError?: (err: Error, clickNumber: number) => Promise<void> | void;
   onScanComplete?: (scan: ScanResult) => Promise<void> | void;
   onClickScoreUpdate?: (
-    clickNumber: number, scoreBefore: number, scoreAfter: number, delta: number,
+    clickNumber: number,
+    scoreBefore: number,
+    scoreAfter: number,
+    delta: number
   ) => Promise<void> | void;
   onEscalate?: (reason: string) => Promise<void> | void;
   onArchitectEscalate?: (reason: string) => Promise<void> | void;
   onSweepEscalate?: (reason: string, subcategory: string) => Promise<void> | void;
   onPlanStart?: () => Promise<void> | void;
-  onPlanComplete?: (plan: import('../types.js').PlanResult) => Promise<void> | void;
+  onPlanComplete?: (plan: import("../types.js").PlanResult) => Promise<void> | void;
   onRunEconomics?: (economics: RunEconomics) => Promise<void> | void;
   /** Fires immediately after the run object is created, before any clicks run. */
   onRunInit?: (run: RatchetRun) => void;
@@ -68,7 +71,7 @@ export interface EngineCallbacks {
 export interface EngineRunOptions {
   target: Target;
   clicks: number;
-  config: import('../types.js').RatchetConfig;
+  config: import("../types.js").RatchetConfig;
   cwd: string;
   agent: Agent;
   createBranch?: boolean;
@@ -187,11 +190,11 @@ export function formatRollbackMessage(
   clickNumber: number,
   reason: string | undefined,
   elapsedSec?: string,
-  detail?: string,
+  detail?: string
 ): string {
-  const timeStr = elapsedSec ? ` (${elapsedSec}s)` : '';
-  const reasonStr = reason ? ` — ${reason}` : ' — tests failed or build errored';
-  const detailStr = detail ? `\n  ${detail}` : '';
+  const timeStr = elapsedSec ? ` (${elapsedSec}s)` : "";
+  const reasonStr = reason ? ` — ${reason}` : " — tests failed or build errored";
+  const detailStr = detail ? `\n  ${detail}` : "";
   return `[ratchet] click ${clickNumber} ROLLED BACK${timeStr}${reasonStr}${detailStr}`;
 }
 
@@ -211,19 +214,19 @@ export async function preflightTestCommand(testCommand: string, cwd: string): Pr
   const result = await runTests({ command: testCommand, cwd, timeout: 30_000 });
   if (result.passed) return;
 
-  const output = (result.output ?? '') + '\n' + (result.error ?? '');
+  const output = (result.output ?? "") + "\n" + (result.error ?? "");
 
   // 1. Missing test script in package.json
   const isMissingScript =
     /Missing script[:\s]/i.test(output) ||
     /npm error Missing script/i.test(output) ||
     /no test specified/i.test(output) ||
-    (result.error?.includes('Missing script') ?? false);
+    (result.error?.includes("Missing script") ?? false);
   if (isMissingScript) {
     throw new Error(
       `No working test command — add a test script to package.json before running ratchet improve.\n` +
-      `  Current command: ${testCommand}\n` +
-      `  Fix: add a "test" script to package.json (e.g. "vitest run" or "jest")`,
+        `  Current command: ${testCommand}\n` +
+        `  Fix: add a "test" script to package.json (e.g. "vitest run" or "jest")`
     );
   }
 
@@ -234,31 +237,29 @@ export async function preflightTestCommand(testCommand: string, cwd: string): Pr
     /MODULE_NOT_FOUND/i.test(output) ||
     /Error: Cannot find package/i.test(output) ||
     /command not found.*node_modules/i.test(output) ||
-    /sh: .*: command not found/i.test(output) && /node_modules|vitest|jest|mocha/i.test(testCommand) ||
-    /ModuleNotFoundError/i.test(output) ||                       // Python
-    /No module named/i.test(output) ||                            // Python
-    /could not find `Cargo\.lock`/i.test(output) ||              // Rust
-    /go: .* no required module provides/i.test(output);          // Go
+    (/sh: .*: command not found/i.test(output) && /node_modules|vitest|jest|mocha/i.test(testCommand)) ||
+    /ModuleNotFoundError/i.test(output) || // Python
+    /No module named/i.test(output) || // Python
+    /could not find `Cargo\.lock`/i.test(output) || // Rust
+    /go: .* no required module provides/i.test(output); // Go
   if (isMissingDeps) {
     const installHint = detectInstallHint(testCommand, cwd);
     throw new Error(
       `Dependencies are not installed — ratchet improve needs a working test suite to gate clicks.\n` +
-      `  Current command: ${testCommand}\n` +
-      `  Fix: ${installHint}\n` +
-      `  Then re-run "ratchet improve".`,
+        `  Current command: ${testCommand}\n` +
+        `  Fix: ${installHint}\n` +
+        `  Then re-run "ratchet improve".`
     );
   }
 
   // 3. Test runner binary itself is missing (ENOENT from runner.ts already returns a friendly
   //    message — re-throw so improve doesn't silently roll back the first click).
-  const isBinaryMissing =
-    /Test command not found:/i.test(output) ||
-    /ENOENT/i.test(output);
+  const isBinaryMissing = /Test command not found:/i.test(output) || /ENOENT/i.test(output);
   if (isBinaryMissing) {
     throw new Error(
       `Test runner not on PATH — cannot run "${testCommand}".\n` +
-      `  Fix: install the test runner, or update test_command in .ratchet.yml to a binary that exists.\n` +
-      `  Tip: run "${testCommand}" yourself first to confirm it works before retrying ratchet improve.`,
+        `  Fix: install the test runner, or update test_command in .ratchet.yml to a binary that exists.\n` +
+        `  Tip: run "${testCommand}" yourself first to confirm it works before retrying ratchet improve.`
     );
   }
 
@@ -272,21 +273,23 @@ export async function preflightTestCommand(testCommand: string, cwd: string): Pr
 function detectInstallHint(testCommand: string, cwd: string): string {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { existsSync } = require('fs');
+    const { existsSync } = require("fs");
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { join } = require('path');
-    if (existsSync(join(cwd, 'pnpm-lock.yaml'))) return 'run "pnpm install" to install dependencies';
-    if (existsSync(join(cwd, 'yarn.lock'))) return 'run "yarn install" to install dependencies';
-    if (existsSync(join(cwd, 'bun.lock')) || existsSync(join(cwd, 'bun.lockb'))) {
+    const { join } = require("path");
+    if (existsSync(join(cwd, "pnpm-lock.yaml"))) return 'run "pnpm install" to install dependencies';
+    if (existsSync(join(cwd, "yarn.lock"))) return 'run "yarn install" to install dependencies';
+    if (existsSync(join(cwd, "bun.lock")) || existsSync(join(cwd, "bun.lockb"))) {
       return 'run "bun install" to install dependencies';
     }
-    if (existsSync(join(cwd, 'package-lock.json')) || existsSync(join(cwd, 'package.json'))) {
+    if (existsSync(join(cwd, "package-lock.json")) || existsSync(join(cwd, "package.json"))) {
       return 'run "npm install" to install dependencies';
     }
-    if (existsSync(join(cwd, 'pyproject.toml'))) return 'run "pip install -e ." or "poetry install" to install dependencies';
-    if (existsSync(join(cwd, 'requirements.txt'))) return 'run "pip install -r requirements.txt" to install dependencies';
-    if (existsSync(join(cwd, 'Cargo.toml'))) return 'run "cargo build" to fetch dependencies';
-    if (existsSync(join(cwd, 'go.mod'))) return 'run "go mod download" to fetch dependencies';
+    if (existsSync(join(cwd, "pyproject.toml")))
+      return 'run "pip install -e ." or "poetry install" to install dependencies';
+    if (existsSync(join(cwd, "requirements.txt")))
+      return 'run "pip install -r requirements.txt" to install dependencies';
+    if (existsSync(join(cwd, "Cargo.toml"))) return 'run "cargo build" to fetch dependencies';
+    if (existsSync(join(cwd, "go.mod"))) return 'run "go mod download" to fetch dependencies';
   } catch {
     /* ignore — fall through to generic hint */
   }
@@ -294,6 +297,6 @@ function detectInstallHint(testCommand: string, cwd: string): string {
   if (/npm/i.test(testCommand)) return 'run "npm install" to install dependencies';
   if (/pnpm/i.test(testCommand)) return 'run "pnpm install" to install dependencies';
   if (/yarn/i.test(testCommand)) return 'run "yarn install" to install dependencies';
-  if (/pytest|python/i.test(testCommand)) return 'install your project dependencies (pip / poetry / uv) and try again';
-  return 'install your project dependencies and try again';
+  if (/pytest|python/i.test(testCommand)) return "install your project dependencies (pip / poetry / uv) and try again";
+  return "install your project dependencies and try again";
 }

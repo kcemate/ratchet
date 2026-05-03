@@ -1,20 +1,20 @@
-import type { RatchetConfig } from '../types.js';
-import { modelRegistry } from '../core/model-registry.js';
-import type { CapabilityTier } from '../core/model-registry.js';
+import type { RatchetConfig } from "../types.js";
+import { modelRegistry } from "../core/model-registry.js";
+import type { CapabilityTier } from "../core/model-registry.js";
 
-export type TaskType = 'mechanical' | 'standard' | 'complex';
+export type TaskType = "mechanical" | "standard" | "complex";
 
 /** Original short-form defaults preserved for backward compatibility. */
 const DEFAULTS: Record<TaskType, string> = {
-  mechanical: 'claude-haiku',
-  standard:   'claude-sonnet',
-  complex:    'claude-opus',
+  mechanical: "claude-haiku",
+  standard: "claude-sonnet",
+  complex: "claude-opus",
 };
 
 const TIER_MAP: Record<TaskType, CapabilityTier> = {
-  mechanical: 'cheap',
-  standard: 'standard',
-  complex: 'best',
+  mechanical: "cheap",
+  standard: "standard",
+  complex: "best",
 };
 
 /**
@@ -31,10 +31,10 @@ export function selectModel(taskType: TaskType, config?: RatchetConfig): string 
   const tier = TIER_MAP[taskType];
 
   // 1. Direct config overrides (backward compat for callers passing config directly)
-  if (tier === 'cheap' && tiers?.cheap) return tiers.cheap;
-  if (tier === 'standard' && tiers?.default) return tiers.default;
-  if (tier === 'best' && tiers?.premium) return tiers.premium;
-  if (tier === 'standard' && config?.model) return config.model;
+  if (tier === "cheap" && tiers?.cheap) return tiers.cheap;
+  if (tier === "standard" && tiers?.default) return tiers.default;
+  if (tier === "best" && tiers?.premium) return tiers.premium;
+  if (tier === "standard" && config?.model) return config.model;
 
   // 2. Registry tier override (populated from loadConfig)
   const registryOverride = modelRegistry.getTierOverride(tier);

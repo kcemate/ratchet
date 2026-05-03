@@ -1,12 +1,12 @@
-import type { ScanResult, IssueType } from '../core/scanner';
-import type { ClickGuards } from '../types.js';
+import type { ScanResult, IssueType } from "../core/scanner";
+import type { ClickGuards } from "../types.js";
 
 export interface IssueClassification {
   category: string;
   subcategory: string;
   hitCount: number;
   fileCount: number;
-  type: 'single-file' | 'cross-cutting' | 'architectural';
+  type: "single-file" | "cross-cutting" | "architectural";
   files: string[];
   recommendation?: string;
 }
@@ -20,16 +20,10 @@ export interface ClassificationSummary {
 }
 
 // Subcategories that inherently require architectural changes when cross-cutting
-const ARCHITECTURAL_SUBCATEGORIES = new Set([
-  'Structured logging',
-  'Duplication',
-  'Strict config',
-]);
+const ARCHITECTURAL_SUBCATEGORIES = new Set(["Structured logging", "Duplication", "Strict config"]);
 
 function uniqueFiles(locations: string[]): string[] {
-  return [...new Set(
-    locations.map(f => (f.includes(':') ? f.split(':')[0]! : f)),
-  )];
+  return [...new Set(locations.map(f => (f.includes(":") ? f.split(":")[0]! : f)))];
 }
 
 function classifyOne(issue: IssueType, guards: ClickGuards): IssueClassification {
@@ -38,23 +32,23 @@ function classifyOne(issue: IssueType, guards: ClickGuards): IssueClassification
 
   const isCrossCutting = fileCount > guards.maxFilesChanged;
 
-  let type: 'single-file' | 'cross-cutting' | 'architectural';
+  let type: "single-file" | "cross-cutting" | "architectural";
   let recommendation: string | undefined;
 
   if (!isCrossCutting) {
-    type = 'single-file';
+    type = "single-file";
   } else if (ARCHITECTURAL_SUBCATEGORIES.has(issue.subcategory)) {
-    type = 'architectural';
-    if (issue.subcategory === 'Structured logging') {
-      recommendation = 'needs --guards refactor or --architect';
-    } else if (issue.subcategory === 'Duplication') {
-      recommendation = 'needs extract-then-propagate plan';
+    type = "architectural";
+    if (issue.subcategory === "Structured logging") {
+      recommendation = "needs --guards refactor or --architect";
+    } else if (issue.subcategory === "Duplication") {
+      recommendation = "needs extract-then-propagate plan";
     } else {
-      recommendation = 'needs --architect';
+      recommendation = "needs --architect";
     }
   } else {
-    type = 'cross-cutting';
-    recommendation = 'needs --guards refactor or --architect';
+    type = "cross-cutting";
+    recommendation = "needs --guards refactor or --architect";
   }
 
   return {
@@ -69,20 +63,18 @@ function classifyOne(issue: IssueType, guards: ClickGuards): IssueClassification
 }
 
 export function classifyIssues(scanResult: ScanResult, guards: ClickGuards): IssueClassification[] {
-  return scanResult.issuesByType
-    .filter(issue => issue.count > 0)
-    .map(issue => classifyOne(issue, guards));
+  return scanResult.issuesByType.filter(issue => issue.count > 0).map(issue => classifyOne(issue, guards));
 }
 
 export function summarizeClassifications(classifications: IssueClassification[]): ClassificationSummary {
-  const crossCutting = classifications.filter(c => c.type === 'cross-cutting');
-  const architectural = classifications.filter(c => c.type === 'architectural');
-  const singleFile = classifications.filter(c => c.type === 'single-file');
+  const crossCutting = classifications.filter(c => c.type === "cross-cutting");
+  const architectural = classifications.filter(c => c.type === "architectural");
+  const singleFile = classifications.filter(c => c.type === "single-file");
   const hasAnyCrossCutting = crossCutting.length > 0 || architectural.length > 0;
 
   const recommendedCommand = hasAnyCrossCutting
-    ? 'ratchet torque --plan-first --guards refactor -c 5'
-    : 'ratchet torque -c 5';
+    ? "ratchet torque --plan-first --guards refactor -c 5"
+    : "ratchet torque -c 5";
 
   return { crossCutting, architectural, singleFile, hasAnyCrossCutting, recommendedCommand };
 }

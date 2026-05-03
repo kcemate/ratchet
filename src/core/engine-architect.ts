@@ -1,16 +1,16 @@
-import type { RatchetRun } from '../types.js';
-import type { IssueTask } from './issue-backlog.js';
-import { buildArchitectPrompt } from './agents/shell.js';
-import { executeClick } from './click.js';
-import * as git from './git.js';
-import { runScan } from '../core/scanner';
-import { clearCache as clearGitNexusCache, renameSymbol } from './gitnexus.js';
-import { buildGraphToolInstructions } from './gitnexus-tools.js';
-import { resolveGuards } from './engine-guards.js';
-import type { EngineRunOptions, ClickPhase } from './engine.js';
-import { createInitialRun, requireNamedBranch } from './engine-utils.js';
-import { logger } from '../lib/logger.js';
-import { selectModel } from '../lib/model-router.js';
+import type { RatchetRun } from "../types.js";
+import type { IssueTask } from "./issue-backlog.js";
+import { buildArchitectPrompt } from "./agents/shell.js";
+import { executeClick } from "./click.js";
+import * as git from "./git.js";
+import { runScan } from "../core/scanner";
+import { clearCache as clearGitNexusCache, renameSymbol } from "./gitnexus.js";
+import { buildGraphToolInstructions } from "./gitnexus-tools.js";
+import { resolveGuards } from "./engine-guards.js";
+import type { EngineRunOptions, ClickPhase } from "./engine.js";
+import { createInitialRun, requireNamedBranch } from "./engine-utils.js";
+import { logger } from "../lib/logger.js";
+import { selectModel } from "../lib/model-router.js";
 
 /**
  * Architect engine: make high-leverage structural improvements that eliminate many issues at once.
@@ -29,12 +29,12 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
     // 1. Create branch (if requested)
     if (createBranch) {
       await requireNamedBranch(cwd);
-      const branch = git.branchName(options.target.name + '-architect');
+      const branch = git.branchName(options.target.name + "-architect");
       await git.createBranch(branch, cwd);
     }
 
     // 2. Run scan (or use provided)
-    const scanResult = options.scanResult ?? await runScan(cwd);
+    const scanResult = options.scanResult ?? (await runScan(cwd));
     await callbacks.onScanComplete?.(scanResult);
 
     // Clear GitNexus cache for fresh data
@@ -44,8 +44,10 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
     let previousTotal = scanResult.total;
     // buildGraphToolInstructions includes rename — available to architect agent via GITNEXUS_QUERY
     const graphTools = buildGraphToolInstructions(cwd);
-    logger.debug({ hasGraphTools: graphTools.length > 0, renameAvailable: typeof renameSymbol === 'function' },
-      'architect engine: graph-aware rename wired');
+    logger.debug(
+      { hasGraphTools: graphTools.length > 0, renameAvailable: typeof renameSymbol === "function" },
+      "architect engine: graph-aware rename wired"
+    );
     let architectPrompt = buildArchitectPrompt(currentScan, cwd);
 
     const clickOffset = options.clickOffset ?? 0;
@@ -56,11 +58,11 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
 
       // Synthetic architect task — carries the pre-built prompt verbatim
       const architectTask: IssueTask = {
-        category: 'architecture',
-        subcategory: 'structural',
-        description: 'High-leverage architectural refactoring',
+        category: "architecture",
+        subcategory: "structural",
+        description: "High-leverage architectural refactoring",
         count: currentScan.totalIssuesFound,
-        severity: 'high',
+        severity: "high",
         priority: 100,
         architectPrompt,
       };
@@ -69,7 +71,7 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
         const clickStartMs = Date.now();
 
         // Architect mode uses the complex (premium) model tier
-        const architectConfig = { ...config, model: selectModel('complex', config) };
+        const architectConfig = { ...config, model: selectModel("complex", config) };
 
         const result = await executeClick({
           clickNumber,
@@ -78,7 +80,7 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
           agent,
           cwd,
           architectMode: true,
-          resolvedGuards: resolveGuards(options.target, config, 'architect'),
+          resolvedGuards: resolveGuards(options.target, config, "architect"),
           adversarial: options.adversarial,
           issues: [architectTask],
           onPhase: callbacks.onClickPhase
@@ -92,9 +94,9 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
 
         if (rolled_back) {
-          logger.error({ clickNumber, elapsedSec }, 'architect click ROLLED BACK');
+          logger.error({ clickNumber, elapsedSec }, "architect click ROLLED BACK");
         } else {
-          logger.info({ clickNumber, elapsedSec, commitHash: click.commitHash?.slice(0, 7) }, 'architect click LANDED');
+          logger.info({ clickNumber, elapsedSec, commitHash: click.commitHash?.slice(0, 7) }, "architect click LANDED");
         }
 
         // Re-scan after successful click to measure impact and refresh the prompt
@@ -108,7 +110,7 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
               const regressionDelta = previousTotal - newTotal;
               logger.error(
                 { clickNumber, before: previousTotal, after: newTotal, delta: regressionDelta },
-                'architect click ROLLED BACK — score regression',
+                "architect click ROLLED BACK — score regression"
               );
               await git.revertLastCommit(cwd).catch(() => {});
               click.testsPassed = false;
@@ -138,9 +140,9 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
       }
     }
 
-    run.status = 'completed';
+    run.status = "completed";
   } catch (err: unknown) {
-    run.status = 'failed';
+    run.status = "failed";
     throw err;
   } finally {
     run.finishedAt = new Date();

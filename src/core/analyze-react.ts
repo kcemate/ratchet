@@ -1,16 +1,16 @@
-import { readFile } from 'fs/promises';
-import { existsSync } from 'fs';
-import { join, relative } from 'path';
-import { logger } from '../lib/logger.js';
-import { getImpact, getContext, queryFlows, isIndexed } from './gitnexus.js';
-import type { ScanResult } from '../core/scanner';
-import type { Target } from '../types.js';
+import { readFile } from "fs/promises";
+import { existsSync } from "fs";
+import { join, relative } from "path";
+import { logger } from "../lib/logger.js";
+import { getImpact, getContext, queryFlows, isIndexed } from "./gitnexus.js";
+import type { ScanResult } from "../core/scanner";
+import type { Target } from "../types.js";
 
 // ── Types
 
 export interface ReactTurn {
   index: number;
-  phase: 'read' | 'investigate' | 'plan';
+  phase: "read" | "investigate" | "plan";
   reasoning: string;
   actions: string[];
   observations: string[];
@@ -19,14 +19,14 @@ export interface ReactTurn {
 export interface ProposedChange {
   filePath: string;
   description: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
 }
 
 export interface ReactAnalysis {
   /** 0–1 overall confidence that the proposed changes will improve the score. */
   confidence: number;
   /** Risk level derived from blast-radius analysis. */
-  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  riskLevel: "low" | "medium" | "high" | "critical";
   /** Ordered list of proposed changes. */
   proposedChanges: ProposedChange[];
   /** Execution order — files to touch and in what sequence. */
@@ -52,10 +52,12 @@ const MAX_FILE_BYTES = 8_000; // read first 8 KB of each file
 export async function safeReadFile(absPath: string): Promise<string> {
   try {
     const buf = await readFile(absPath);
-    const text = buf.toString('utf-8');
-    return text.length > MAX_FILE_BYTES ? text.slice(0, MAX_FILE_BYTES - '...[truncated]'.length) + '...[truncated]' : text;
+    const text = buf.toString("utf-8");
+    return text.length > MAX_FILE_BYTES
+      ? text.slice(0, MAX_FILE_BYTES - "...[truncated]".length) + "...[truncated]"
+      : text;
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -64,7 +66,7 @@ function topIssueFiles(scan: ScanResult, limit: number): string[] {
   const files: string[] = [];
 
   for (const issue of scan.issuesByType) {
-    for (const loc of (issue.locations ?? [])) {
+    for (const loc of issue.locations ?? []) {
       const f = loc;
       if (f && !seen.has(f)) {
         seen.add(f);
@@ -81,20 +83,20 @@ export function computeConfidence(
   blastConcerns: string[],
   riskLevel: string,
   proposedChanges: ProposedChange[],
-  toolCallsUsed: number,
+  toolCallsUsed: number
 ): number {
   let score = 0.7; // base
 
   // More proposed changes with clear priority = higher confidence
-  const highPri = proposedChanges.filter(c => c.priority === 'high').length;
+  const highPri = proposedChanges.filter(c => c.priority === "high").length;
   score += Math.min(highPri * 0.05, 0.15);
 
   // Blast radius concerns reduce confidence
   score -= Math.min(blastConcerns.length * 0.05, 0.2);
 
   // High/critical risk reduces confidence
-  if (riskLevel === 'high') score -= 0.1;
-  if (riskLevel === 'critical') score -= 0.2;
+  if (riskLevel === "high") score -= 0.1;
+  if (riskLevel === "critical") score -= 0.2;
 
   // More tool calls = more thorough analysis = slightly higher confidence
   score += Math.min(toolCallsUsed * 0.01, 0.05);
@@ -102,11 +104,11 @@ export function computeConfidence(
   return Math.round(Math.max(0.1, Math.min(1.0, score)) * 100) / 100;
 }
 
-export function deriveRiskLevel(blastConcerns: string[], maxDirectCallers: number): ReactAnalysis['riskLevel'] {
-  if (maxDirectCallers >= 10 || blastConcerns.length >= 5) return 'critical';
-  if (maxDirectCallers >= 5 || blastConcerns.length >= 2) return 'high';
-  if (maxDirectCallers >= 2 || blastConcerns.length >= 1) return 'medium';
-  return 'low';
+export function deriveRiskLevel(blastConcerns: string[], maxDirectCallers: number): ReactAnalysis["riskLevel"] {
+  if (maxDirectCallers >= 10 || blastConcerns.length >= 5) return "critical";
+  if (maxDirectCallers >= 5 || blastConcerns.length >= 2) return "high";
+  if (maxDirectCallers >= 2 || blastConcerns.length >= 1) return "medium";
+  return "low";
 }
 
 // ── Turn Executors
@@ -118,7 +120,7 @@ export function deriveRiskLevel(blastConcerns: string[], maxDirectCallers: numbe
 export async function runReadTurn(
   scan: ScanResult,
   target: Target,
-  cwd: string,
+  cwd: string
 ): Promise<{ turn: ReactTurn; topFiles: string[]; toolCalls: number }> {
   const actions: string[] = [];
   const observations: string[] = [];
@@ -139,7 +141,7 @@ export async function runReadTurn(
     toolCalls++;
     actions.push(`read:${relative(cwd, absPath)}`);
     const content = await safeReadFile(absPath);
-    const lineCount = content.split('\n').length;
+    const lineCount = content.split("\n").length;
     observations.push(`${relative(cwd, absPath)}: ${lineCount} lines read`);
   }
 
@@ -147,11 +149,11 @@ export async function runReadTurn(
 
   const reasoning =
     `Target: ${target.path} | Score: ${scan.total}/${scan.maxTotal} | ` +
-    `Top issues: ${issueTypes.join(', ')}. ` +
+    `Top issues: ${issueTypes.join(", ")}. ` +
     `Read ${topFiles.length} file(s) to understand current state.`;
 
   return {
-    turn: { index: 1, phase: 'read', reasoning, actions, observations },
+    turn: { index: 1, phase: "read", reasoning, actions, observations },
     topFiles,
     toolCalls,
   };
@@ -164,7 +166,7 @@ export async function runReadTurn(
 function runInvestigateTurn(
   topFiles: string[],
   target: Target,
-  cwd: string,
+  cwd: string
 ): { turn: ReactTurn; blastConcerns: string[]; maxDirectCallers: number; toolCalls: number } {
   const actions: string[] = [];
   const observations: string[] = [];
@@ -176,10 +178,10 @@ function runInvestigateTurn(
     return {
       turn: {
         index: 2,
-        phase: 'investigate',
-        reasoning: 'GitNexus index not found — skipping blast-radius analysis.',
+        phase: "investigate",
+        reasoning: "GitNexus index not found — skipping blast-radius analysis.",
         actions: [],
-        observations: ['GitNexus not indexed for this repo'],
+        observations: ["GitNexus not indexed for this repo"],
       },
       blastConcerns: [],
       maxDirectCallers: 0,
@@ -228,7 +230,7 @@ function runInvestigateTurn(
     actions.push(`queryFlows:${concept}`);
     const flows = queryFlows(concept, cwd, 3);
     if (flows.length > 0) {
-      observations.push(`Flows for "${concept}": ${flows.slice(0, 3).join(', ')}`);
+      observations.push(`Flows for "${concept}": ${flows.slice(0, 3).join(", ")}`);
     } else {
       observations.push(`No execution flows indexed for "${concept}"`);
     }
@@ -237,10 +239,10 @@ function runInvestigateTurn(
   const reasoning =
     `Blast-radius analysis: ${blastConcerns.length} high-risk file(s), ` +
     `max direct callers = ${maxDirectCallers}. ` +
-    (blastConcerns.length > 0 ? `Concerns: ${blastConcerns.join(', ')}.` : 'No major concerns found.');
+    (blastConcerns.length > 0 ? `Concerns: ${blastConcerns.join(", ")}.` : "No major concerns found.");
 
   return {
-    turn: { index: 2, phase: 'investigate', reasoning, actions, observations },
+    turn: { index: 2, phase: "investigate", reasoning, actions, observations },
     blastConcerns,
     maxDirectCallers,
     toolCalls,
@@ -255,15 +257,15 @@ function runPlanTurn(
   scan: ScanResult,
   topFiles: string[],
   blastConcerns: string[],
-  riskLevel: ReactAnalysis['riskLevel'],
-  confidence: number,
+  riskLevel: ReactAnalysis["riskLevel"],
+  confidence: number
 ): { turn: ReactTurn; proposedChanges: ProposedChange[]; executionOrder: string[] } {
   const proposedChanges: ProposedChange[] = [];
 
   // Build proposed changes from top issue types + affected files
   const issuesByFile = new Map<string, string[]>();
   for (const issue of scan.issuesByType.slice(0, 6)) {
-    for (const loc of (issue.locations ?? [])) {
+    for (const loc of issue.locations ?? []) {
       const f = loc;
       if (!f) continue;
       if (!issuesByFile.has(f)) issuesByFile.set(f, []);
@@ -275,8 +277,8 @@ function runPlanTurn(
     const isHighRisk = blastConcerns.includes(file);
     proposedChanges.push({
       filePath: file,
-      description: `Fix ${issues.join(', ')} in ${file}`,
-      priority: isHighRisk ? 'medium' : 'high',
+      description: `Fix ${issues.join(", ")} in ${file}`,
+      priority: isHighRisk ? "medium" : "high",
     });
     if (proposedChanges.length >= MAX_TOOL_CALLS_PER_TURN) break;
   }
@@ -287,7 +289,7 @@ function runPlanTurn(
       proposedChanges.push({
         filePath: file,
         description: `Fix issues in ${file}`,
-        priority: 'medium',
+        priority: "medium",
       });
     }
   }
@@ -307,7 +309,7 @@ function runPlanTurn(
   const observations = proposedChanges.map(c => `→ [${c.priority}] ${c.description}`);
 
   return {
-    turn: { index: 3, phase: 'plan', reasoning, actions: [], observations },
+    turn: { index: 3, phase: "plan", reasoning, actions: [], observations },
     proposedChanges,
     executionOrder: [...new Set(executionOrder)],
   };
@@ -326,12 +328,8 @@ function runPlanTurn(
  * Constraints: max 3 tool calls per turn, max 6 total iterations.
  * Non-fatal — returns a best-effort analysis even if individual turns fail.
  */
-export async function runDeepAnalyze(
-  scan: ScanResult,
-  target: Target,
-  cwd: string,
-): Promise<ReactAnalysis> {
-  logger.info({ target: target.name }, '[react] Starting deep analysis');
+export async function runDeepAnalyze(scan: ScanResult, target: Target, cwd: string): Promise<ReactAnalysis> {
+  logger.info({ target: target.name }, "[react] Starting deep analysis");
 
   const turns: ReactTurn[] = [];
   let totalToolCalls = 0;
@@ -346,13 +344,15 @@ export async function runDeepAnalyze(
       turns.push(result.turn);
       topFiles = result.topFiles;
       totalToolCalls += result.toolCalls;
-      logger.debug({ toolCalls: result.toolCalls }, '[react] Turn 1 complete');
+      logger.debug({ toolCalls: result.toolCalls }, "[react] Turn 1 complete");
     } catch (err) {
-      logger.warn({ err }, '[react] Turn 1 failed');
+      logger.warn({ err }, "[react] Turn 1 failed");
       turns.push({
-        index: 1, phase: 'read',
-        reasoning: 'Read turn failed — falling back to scan data only.',
-        actions: [], observations: ['Error during file reads'],
+        index: 1,
+        phase: "read",
+        reasoning: "Read turn failed — falling back to scan data only.",
+        actions: [],
+        observations: ["Error during file reads"],
       });
     }
   }
@@ -365,13 +365,15 @@ export async function runDeepAnalyze(
       blastConcerns = result.blastConcerns;
       maxDirectCallers = result.maxDirectCallers;
       totalToolCalls += result.toolCalls;
-      logger.debug({ toolCalls: result.toolCalls }, '[react] Turn 2 complete');
+      logger.debug({ toolCalls: result.toolCalls }, "[react] Turn 2 complete");
     } catch (err) {
-      logger.warn({ err }, '[react] Turn 2 failed');
+      logger.warn({ err }, "[react] Turn 2 failed");
       turns.push({
-        index: 2, phase: 'investigate',
-        reasoning: 'Investigation turn failed.',
-        actions: [], observations: ['Error during GitNexus queries'],
+        index: 2,
+        phase: "investigate",
+        reasoning: "Investigation turn failed.",
+        actions: [],
+        observations: ["Error during GitNexus queries"],
       });
     }
   }
@@ -390,27 +392,27 @@ export async function runDeepAnalyze(
       turns.push(result.turn);
       proposedChanges = result.proposedChanges;
       executionOrder = result.executionOrder;
-      logger.debug({ changes: proposedChanges.length }, '[react] Turn 3 complete');
+      logger.debug({ changes: proposedChanges.length }, "[react] Turn 3 complete");
     } catch (err) {
-      logger.warn({ err }, '[react] Turn 3 failed');
+      logger.warn({ err }, "[react] Turn 3 failed");
       turns.push({
-        index: 3, phase: 'plan',
-        reasoning: 'Planning turn failed.',
-        actions: [], observations: ['Error during plan synthesis'],
+        index: 3,
+        phase: "plan",
+        reasoning: "Planning turn failed.",
+        actions: [],
+        observations: ["Error during plan synthesis"],
       });
     }
   }
 
-  const finalConfidence = computeConfidence(
-    blastConcerns, riskLevel, proposedChanges, totalToolCalls,
-  );
+  const finalConfidence = computeConfidence(blastConcerns, riskLevel, proposedChanges, totalToolCalls);
 
   const summary =
     `Deep analysis: ${turns.length} turns, ${totalToolCalls} tool calls, ` +
     `${proposedChanges.length} proposed changes, ` +
     `risk=${riskLevel}, confidence=${Math.round(finalConfidence * 100)}%`;
 
-  logger.info({ summary }, '[react] Analysis complete');
+  logger.info({ summary }, "[react] Analysis complete");
 
   return {
     confidence: finalConfidence,

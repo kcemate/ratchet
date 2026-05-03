@@ -11,10 +11,10 @@
  * and try the next issue rather than waste a click on a broken plan.
  */
 
-import { access, readFile } from 'node:fs/promises';
-import { resolve, join, isAbsolute } from 'node:path';
-import { createRequire } from 'node:module';
-import type { IntentPlan } from './smart-applier.js';
+import { access, readFile } from "node:fs/promises";
+import { resolve, join, isAbsolute } from "node:path";
+import { createRequire } from "node:module";
+import type { IntentPlan } from "./smart-applier.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,11 +38,7 @@ export interface PlanValidation {
  * @param cwd   Working directory for resolving relative paths.
  * @param filePath  Absolute or cwd-relative path to the target file.
  */
-export async function validatePlan(
-  plan: IntentPlan,
-  cwd: string,
-  filePath?: string,
-): Promise<PlanValidation> {
+export async function validatePlan(plan: IntentPlan, cwd: string, filePath?: string): Promise<PlanValidation> {
   const errors: string[] = [];
   const resolvedPaths: string[] = [];
 
@@ -59,7 +55,7 @@ export async function validatePlan(
       try {
         await access(absPath);
         resolvedPaths.push(absPath);
-        source = await readFile(absPath, 'utf8');
+        source = await readFile(absPath, "utf8");
       } catch {
         errors.push(`Target file not found: ${filePath}`);
       }
@@ -67,7 +63,7 @@ export async function validatePlan(
 
     // ── 3. Target lines exist ───────────────────────────────────────────────
     if (source !== null) {
-      const lineCount = source.split('\n').length;
+      const lineCount = source.split("\n").length;
       const [startLine, endLine] = plan.targetLines;
       if (startLine > lineCount) {
         errors.push(`Target start line ${startLine} exceeds file length (${lineCount} lines)`);
@@ -77,11 +73,11 @@ export async function validatePlan(
 
       // ── 4. Pattern appears in file ────────────────────────────────────────
       if (plan.pattern && plan.pattern.trim().length > 0) {
-        const normalised = source.replace(/\r\n/g, '\n');
+        const normalised = source.replace(/\r\n/g, "\n");
         if (!normalised.includes(plan.pattern)) {
           // Try a whitespace-normalised comparison before failing
-          const sourceWs = normalised.replace(/\s+/g, ' ');
-          const patternWs = plan.pattern.replace(/\s+/g, ' ').trim();
+          const sourceWs = normalised.replace(/\s+/g, " ");
+          const patternWs = plan.pattern.replace(/\s+/g, " ").trim();
           if (!sourceWs.includes(patternWs)) {
             errors.push(`Pattern not found in file: "${plan.pattern.slice(0, 60)}..."`);
           }
@@ -93,17 +89,15 @@ export async function validatePlan(
     for (const importPath of plan.imports_needed) {
       if (!importPath || importPath.trim().length === 0) continue;
 
-      if (importPath.startsWith('.')) {
+      if (importPath.startsWith(".")) {
         // Relative import — check if the file exists
-        const base = filePath
-          ? resolve(cwd, filePath, '..')
-          : cwd;
+        const base = filePath ? resolve(cwd, filePath, "..") : cwd;
         const candidates = [
           resolve(base, importPath),
-          resolve(base, importPath + '.ts'),
-          resolve(base, importPath + '.js'),
-          resolve(base, importPath, 'index.ts'),
-          resolve(base, importPath, 'index.js'),
+          resolve(base, importPath + ".ts"),
+          resolve(base, importPath + ".js"),
+          resolve(base, importPath, "index.ts"),
+          resolve(base, importPath, "index.js"),
         ];
         let found = false;
         for (const candidate of candidates) {
@@ -122,7 +116,7 @@ export async function validatePlan(
       } else {
         // Package or builtin — try require.resolve from cwd
         try {
-          const req = createRequire(join(cwd, '_dummy_.js'));
+          const req = createRequire(join(cwd, "_dummy_.js"));
           const resolved = req.resolve(importPath);
           resolvedPaths.push(resolved);
         } catch {

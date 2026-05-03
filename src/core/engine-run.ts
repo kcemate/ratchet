@@ -4,42 +4,42 @@
  * Extracted from engine.ts to keep engine.ts as a thin re-export facade.
  */
 
-import { randomUUID } from 'crypto';
-import { join } from 'path';
-import type {
-  RatchetRun, Target, RatchetConfig, Click, HardenPhase, ClickEconomics, ClickGuards,
-} from '../types.js';
-import { loadStrategy, initStrategy, evolveStrategy, buildStrategyContext } from './strategy.js';
-import type { Agent } from './agents/base.js';
-import type { IssueTask } from './issue-backlog.js';
+import { randomUUID } from "crypto";
+import { join } from "path";
+import type { RatchetRun, Target, RatchetConfig, Click, HardenPhase, ClickEconomics, ClickGuards } from "../types.js";
+import { loadStrategy, initStrategy, evolveStrategy, buildStrategyContext } from "./strategy.js";
+import type { Agent } from "./agents/base.js";
+import type { IssueTask } from "./issue-backlog.js";
 import {
-  buildBacklog, groupBacklogBySubcategory, enrichBacklogWithRisk,
+  buildBacklog,
+  groupBacklogBySubcategory,
+  enrichBacklogWithRisk,
   filterBacklogByMode,
-} from './issue-backlog.js';
-import { buildScoreOptimizedBacklog, isSweepable } from './score-optimizer.js';
-import { routeIssues, hasASTTransformMatch } from './issue-router.js';
-import { executeClick } from './click.js';
-import { SwarmExecutor } from './swarm.js';
-import * as git from './git.js';
-import type { ScanResult } from '../core/scanner';
-import { runScan } from '../core/scanner';
-import type { LearningStore } from './learning.js';
-import { clearCache as clearGitNexusCache, reindex } from './gitnexus.js';
-import { mergeResults, removeResolvedFindings } from './normalize.js';
-import { IncrementalScanner } from './scan-cache.js';
-import { resolveGuards, nextGuardProfile, isGuardRejection } from './engine-guards.js';
-import { validateScope } from './scope.js';
-import { captureBaseline } from './test-isolation.js';
-import { runPlanFirst } from './engine-plan.js';
-import { runArchitectEngine } from './engine-architect.js';
-import { runSweepEngine } from './engine-sweep.js';
-import { runDeepAnalyze } from './analyze-react.js';
-import type { ReactAnalysis } from './analyze-react.js';
-import { countTestFiles } from './detect.js';
-import { logger } from '../lib/logger.js';
-import { prevalidateIssues } from './issue-prevalidation.js';
-import { familiarize, buildFamiliarizationContext } from './familiarize.js';
-import { probeRepo } from './repo-probe.js';
+} from "./issue-backlog.js";
+import { buildScoreOptimizedBacklog, isSweepable } from "./score-optimizer.js";
+import { routeIssues, hasASTTransformMatch } from "./issue-router.js";
+import { executeClick } from "./click.js";
+import { SwarmExecutor } from "./swarm.js";
+import * as git from "./git.js";
+import type { ScanResult } from "../core/scanner";
+import { runScan } from "../core/scanner";
+import type { LearningStore } from "./learning.js";
+import { clearCache as clearGitNexusCache, reindex } from "./gitnexus.js";
+import { mergeResults, removeResolvedFindings } from "./normalize.js";
+import { IncrementalScanner } from "./scan-cache.js";
+import { resolveGuards, nextGuardProfile, isGuardRejection } from "./engine-guards.js";
+import { validateScope } from "./scope.js";
+import { captureBaseline } from "./test-isolation.js";
+import { runPlanFirst } from "./engine-plan.js";
+import { runArchitectEngine } from "./engine-architect.js";
+import { runSweepEngine } from "./engine-sweep.js";
+import { runDeepAnalyze } from "./analyze-react.js";
+import type { ReactAnalysis } from "./analyze-react.js";
+import { countTestFiles } from "./detect.js";
+import { logger } from "../lib/logger.js";
+import { prevalidateIssues } from "./issue-prevalidation.js";
+import { familiarize, buildFamiliarizationContext } from "./familiarize.js";
+import { probeRepo } from "./repo-probe.js";
 import {
   diffCategories,
   computeRunEconomics,
@@ -53,13 +53,10 @@ import {
   checkPlateauStop,
   checkRegressionStop,
   runConfidenceGating,
-} from './engine-core.js';
-import type { CircuitBreakerState, ClickPhase } from './engine-core.js';
-import {
-  formatRollbackMessage,
-  preflightTestCommand,
-} from './engine-utils.js';
-import type { EngineCallbacks, EngineRunOptions, RunState } from './engine-utils.js';
+} from "./engine-core.js";
+import type { CircuitBreakerState, ClickPhase } from "./engine-core.js";
+import { formatRollbackMessage, preflightTestCommand } from "./engine-utils.js";
+import type { EngineCallbacks, EngineRunOptions, RunState } from "./engine-utils.js";
 
 // ── initializeRun ──────────────────────────────────────────────────────────
 
@@ -74,7 +71,13 @@ export async function initializeRun(options: EngineRunOptions): Promise<{
   baselineFailures: string[];
 }> {
   const {
-    config, cwd, createBranch = true, scoreOptimized = true, scope: scopeFiles = [], scopeArg, focusCategory,
+    config,
+    cwd,
+    createBranch = true,
+    scoreOptimized = true,
+    scope: scopeFiles = [],
+    scopeArg,
+    focusCategory,
   } = options;
   const callbacks = options.callbacks ?? {};
 
@@ -83,7 +86,7 @@ export async function initializeRun(options: EngineRunOptions): Promise<{
     target: options.target,
     clicks: [],
     startedAt: new Date(),
-    status: 'running',
+    status: "running",
     ...(scopeFiles.length > 0 && { scope: scopeFiles, scopeArg }),
   };
 
@@ -94,7 +97,7 @@ export async function initializeRun(options: EngineRunOptions): Promise<{
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     // Only abort for "missing script" errors — other failures (existing test failures) are OK
-    if (msg.includes('No working test command')) throw err;
+    if (msg.includes("No working test command")) throw err;
     // Otherwise non-fatal (e.g. existing test failures are handled by baseline capture)
   }
 
@@ -102,9 +105,9 @@ export async function initializeRun(options: EngineRunOptions): Promise<{
   // Ratchet can still run, but it's likely unintentional — emit a clear error.
   if (await git.isDetachedHead(cwd)) {
     throw new Error(
-      'Git repository is in detached HEAD state.\n' +
-        '  Ratchet requires a named branch to track changes safely.\n' +
-        '  Fix: git checkout -b my-branch',
+      "Git repository is in detached HEAD state.\n" +
+        "  Ratchet requires a named branch to track changes safely.\n" +
+        "  Fix: git checkout -b my-branch"
     );
   }
 
@@ -136,20 +139,18 @@ export async function initializeRun(options: EngineRunOptions): Promise<{
   if (currentScan) {
     await callbacks.onScanComplete?.(currentScan);
     previousTotal = currentScan.total;
-    const backlog = scoreOptimized
-      ? buildScoreOptimizedBacklog(currentScan, focusCategory)
-      : buildBacklog(currentScan);
+    const backlog = scoreOptimized ? buildScoreOptimizedBacklog(currentScan, focusCategory) : buildBacklog(currentScan);
     // Enrich backlog with blast-radius risk scores from GitNexus
     enrichBacklogWithRisk(backlog, cwd);
     backlogGroups = groupBacklogBySubcategory(backlog);
   }
 
   // Smart guard escalation: mutable guards that can be bumped mid-run
-  const currentGuards = resolveGuards(options.target, config, 'normal', focusCategory);
+  const currentGuards = resolveGuards(options.target, config, "normal", focusCategory);
   const currentGuardProfileName: string = (() => {
     const source = config.guards ?? options.target.guards;
-    if (typeof source === 'string') return source;
-    return 'tight';
+    if (typeof source === "string") return source;
+    return "tight";
   })();
 
   // --- Baseline test capture: record pre-existing failures to exempt them from rollback ---
@@ -170,7 +171,7 @@ export async function initializeRun(options: EngineRunOptions): Promise<{
     const ctx = await familiarize(cwd, profile, currentScan);
     repoContext = buildFamiliarizationContext(ctx);
   } catch (err) {
-    logger.warn({ err }, 'Repo familiarization failed — continuing without context');
+    logger.warn({ err }, "Repo familiarization failed — continuing without context");
   }
 
   const state: RunState = {
@@ -199,7 +200,7 @@ export async function initializeRun(options: EngineRunOptions): Promise<{
     repoContext,
     circuitBreaker: {
       consecutiveFailures: 0,
-      currentStrategy: 'standard',
+      currentStrategy: "standard",
       strategiesExhausted: [],
       totalFailures: 0,
       maxTotalFailures: 12,
@@ -222,14 +223,14 @@ export async function processClickOutcome(
   elapsedSec: string,
   state: RunState,
   guardEscalationEnabled: boolean,
-  callbacks: EngineCallbacks,
+  callbacks: EngineCallbacks
 ): Promise<void> {
   state.prevConsecutiveRollbacks = state.consecutiveRollbacks;
 
   if (rolled_back) {
     logger.error(
       { clickNumber, elapsedSec, reason: click.rollbackReason },
-      formatRollbackMessage(clickNumber, click.rollbackReason, elapsedSec),
+      formatRollbackMessage(clickNumber, click.rollbackReason, elapsedSec)
     );
     state.consecutiveRollbacks++;
     state.totalRolled++;
@@ -249,12 +250,12 @@ export async function processClickOutcome(
         state.currentGuards = next.guards;
         state.currentGuardProfileName = next.name;
         state.consecutiveGuardRejections = 0;
-        logger.info({ from: prevName, to: next.name }, 'Guard escalation');
+        logger.info({ from: prevName, to: next.name }, "Guard escalation");
         await callbacks.onEscalate?.(`guard escalation: ${prevName} → ${next.name}`);
       }
     }
   } else {
-    logger.info({ clickNumber, elapsedSec, commitHash: click.commitHash?.slice(0, 7) }, 'click LANDED');
+    logger.info({ clickNumber, elapsedSec, commitHash: click.commitHash?.slice(0, 7) }, "click LANDED");
     state.consecutiveRollbacks = 0;
     state.consecutiveGuardRejections = 0;
     state.totalLanded++;
@@ -263,7 +264,7 @@ export async function processClickOutcome(
   }
 
   // Keep circuit breaker in sync with the standard-mode consecutive rollback count
-  if (rolled_back && state.circuitBreaker.currentStrategy === 'standard') {
+  if (rolled_back && state.circuitBreaker.currentStrategy === "standard") {
     state.circuitBreaker.consecutiveFailures = state.consecutiveRollbacks;
     state.circuitBreaker.totalFailures++;
   }
@@ -285,7 +286,7 @@ export async function postClickRescan(
   cwd: string,
   incrementalScanner: IncrementalScanner,
   callbacks: EngineCallbacks,
-  focusCategory?: string,
+  focusCategory?: string
 ): Promise<{ rolled_back: boolean; regressionDetected: boolean }> {
   if (!click.testsPassed || rolled_back || !state.currentScan) {
     return { rolled_back, regressionDetected: false };
@@ -305,7 +306,7 @@ export async function postClickRescan(
       state.deepScanResult = updatedDeep;
       logger.debug(
         { filesModified: click.filesModified.length, deepTotal: updatedDeep.total, mergedTotal: newScan.total },
-        'Deep merge after click',
+        "Deep merge after click"
       );
     }
 
@@ -370,11 +371,11 @@ export async function postClickRescan(
       // Print per-category breakdown for non-zero or wasted-effort categories
       for (const cd of categoryDeltas) {
         if (cd.delta !== 0) {
-          logger.info({ category: cd.category, before: cd.before, after: cd.after, delta: cd.delta }, 'Category delta');
+          logger.info({ category: cd.category, before: cd.before, after: cd.after, delta: cd.delta }, "Category delta");
         } else if (cd.wastedEffort) {
           logger.warn(
             { category: cd.category, before: cd.before, after: cd.after, issuesFixed: cd.issuesFixed },
-            'Category already maxed',
+            "Category already maxed"
           );
         }
       }
@@ -382,22 +383,20 @@ export async function postClickRescan(
       await callbacks.onClickScoreUpdate?.(clickNumber, state.previousTotal, newTotal, delta);
 
       // Free-tier reframe: when score delta is 0 but AST transforms ran, surface concrete fixes
-      if (delta === 0 && click.proposal?.startsWith('ast:') && click.filesModified.length > 0) {
+      if (delta === 0 && click.proposal?.startsWith("ast:") && click.filesModified.length > 0) {
         const astMatch = click.proposal.match(/applied (\d+) deterministic fixes to (\d+) file/);
         const fixCount = astMatch ? parseInt(astMatch[1]!, 10) : click.filesModified.length;
         logger.info(
           `[ratchet] Score: ${state.previousTotal} \u2192 ${newTotal} | ` +
-          `\ud83d\udd27 Applied ${fixCount} deterministic fix${fixCount !== 1 ? 'es' : ''} ` +
-          `(${click.filesModified.length} file${click.filesModified.length !== 1 ? 's' : ''} modified)`,
+            `\ud83d\udd27 Applied ${fixCount} deterministic fix${fixCount !== 1 ? "es" : ""} ` +
+            `(${click.filesModified.length} file${click.filesModified.length !== 1 ? "s" : ""} modified)`
         );
       }
 
       // Update backlog from fresh scan
       state.previousTotal = newTotal;
       state.currentScan = newScan;
-      const newBacklog = scoreOptimized
-        ? buildScoreOptimizedBacklog(newScan, focusCategory)
-        : buildBacklog(newScan);
+      const newBacklog = scoreOptimized ? buildScoreOptimizedBacklog(newScan, focusCategory) : buildBacklog(newScan);
       state.backlogGroups = groupBacklogBySubcategory(newBacklog);
     }
   } catch {
@@ -420,7 +419,7 @@ export async function checkStallAndEscalate(
   hardenMode: boolean,
   escalateEnabled: boolean,
   callbacks: EngineCallbacks,
-  focusCategory?: string,
+  focusCategory?: string
 ): Promise<void> {
   // Capture midpoint score for stall detection
   if (clickNumber === Math.floor(clicks / 2) && state.scoreAtMidpoint === undefined) {
@@ -435,17 +434,19 @@ export async function checkStallAndEscalate(
 
   let escalateReason: string | undefined;
   if (state.consecutiveRollbacks >= 3) {
-    escalateReason = '3 consecutive rollbacks';
+    escalateReason = "3 consecutive rollbacks";
   } else if (clickNumber >= Math.floor(clicks / 2) && scoreDelta === 0 && rollbackRate > 0.4) {
-    escalateReason = 'no score progress at midpoint';
+    escalateReason = "no score progress at midpoint";
   } else if (backlogExhausted && clickNumber < clicks) {
-    escalateReason = 'backlog exhausted';
+    escalateReason = "backlog exhausted";
   }
 
   if (escalateReason) {
     // Rebuild full backlog and find the best sweepable target
     const fullBacklog = buildScoreOptimizedBacklog(state.currentScan, focusCategory);
-    const sweepableBacklog = fullBacklog.filter((task) => task.sweepFiles && task.sweepFiles.length > 0 && isSweepable(task.subcategory ?? ''));
+    const sweepableBacklog = fullBacklog.filter(
+      task => task.sweepFiles && task.sweepFiles.length > 0 && isSweepable(task.subcategory ?? "")
+    );
 
     if (sweepableBacklog.length > 0) {
       // Sort by points available descending — target highest-impact sweepable category
@@ -453,24 +454,24 @@ export async function checkStallAndEscalate(
       const topSweepable = sweepableBacklog[0]!;
       logger.warn(
         { reason: escalateReason, category: topSweepable.subcategory, files: topSweepable.sweepFiles?.length },
-        'Stall detected — escalating to cross-file sweep on sweepable category',
+        "Stall detected — escalating to cross-file sweep on sweepable category"
       );
       await callbacks.onEscalate?.(escalateReason);
 
       // Replace backlog with ONLY sweepable items so standard clicks target them
       state.backlogGroups = groupBacklogBySubcategory(sweepableBacklog);
-      state.target = { name: 'sweep', path: '.', description: `auto-escalated sweep: ${topSweepable.subcategory}` };
+      state.target = { name: "sweep", path: ".", description: `auto-escalated sweep: ${topSweepable.subcategory}` };
       state.escalated = true;
       // Use sweep guards (50 files) instead of standard guards (3-6 files)
-      state.currentGuards = resolveGuards(state.target, {} as any, 'sweep');
+      state.currentGuards = resolveGuards(state.target, {}, "sweep");
     } else {
       // No sweepable items — fall back to architect-filtered backlog
-      logger.warn('Stall detected — no sweepable categories available, filtering to architect backlog');
+      logger.warn("Stall detected — no sweepable categories available, filtering to architect backlog");
       await callbacks.onEscalate?.(escalateReason);
-      const architectBacklog = fullBacklog.filter((task) => !!task.architectPrompt);
+      const architectBacklog = fullBacklog.filter(task => !!task.architectPrompt);
       if (architectBacklog.length > 0) {
         state.backlogGroups = groupBacklogBySubcategory(architectBacklog);
-        state.target = { name: 'architect', path: '.', description: 'auto-escalated architect mode' };
+        state.target = { name: "architect", path: ".", description: "auto-escalated architect mode" };
         state.escalated = true;
       }
     }
@@ -487,7 +488,7 @@ export async function checkSmartStop(
   clickNumber: number,
   run: RatchetRun,
   state: RunState,
-  options: EngineRunOptions,
+  options: EngineRunOptions
 ): Promise<{ shouldStop: boolean }> {
   const { clicks, architectEscalation: architectEscalationEnabled = true } = options;
   const remainingClicks = clicks - clickNumber;
@@ -498,10 +499,10 @@ export async function checkSmartStop(
       state.consecutiveRollbacks,
       state.totalLanded,
       state.totalRolled,
-      architectEscalationEnabled,
+      architectEscalationEnabled
     );
     if (rollbackEscalation.shouldEscalate) {
-      const reason = rollbackEscalation.reason ?? 'stall detected';
+      const reason = rollbackEscalation.reason ?? "stall detected";
 
       // Scan the FULL backlog for the best sweepable category — not just the top task.
       // The top task may be non-sweepable (e.g. auth) while sweepable items with more
@@ -510,14 +511,14 @@ export async function checkSmartStop(
         ? buildScoreOptimizedBacklog(state.currentScan)
         : state.backlogGroups.flat();
       const bestSweepable = fullBacklog.find(
-        (task) => task.subcategory && isSweepable(task.subcategory) && (task.sweepFiles?.length ?? 0) > 0,
+        task => task.subcategory && isSweepable(task.subcategory) && (task.sweepFiles?.length ?? 0) > 0
       );
 
       if (bestSweepable?.subcategory) {
         const sweepCategory = bestSweepable.subcategory;
         logger.info(
           { remainingClicks, reason, subcategory: sweepCategory, files: bestSweepable.sweepFiles?.length },
-          '⚡ Standard clicks stalled — escalating to sweep mode on best sweepable category',
+          "⚡ Standard clicks stalled — escalating to sweep mode on best sweepable category"
         );
         await options.callbacks?.onSweepEscalate?.(reason, sweepCategory);
         const sweepRun = await runSweepEngine({
@@ -536,7 +537,7 @@ export async function checkSmartStop(
       }
 
       // No sweepable categories available — fall through to architect
-      logger.info({ remainingClicks, reason }, '⚡ Standard clicks stalled — escalating to architect mode');
+      logger.info({ remainingClicks, reason }, "⚡ Standard clicks stalled — escalating to architect mode");
       await options.callbacks?.onArchitectEscalate?.(reason);
       const architectRun = await runArchitectEngine({
         ...options,
@@ -557,7 +558,7 @@ export async function checkSmartStop(
     const allArchitect = state.backlogGroups.every(group => group.every(task => !!task.architectPrompt));
     if (allArchitect) {
       if (architectEscalationEnabled && remainingClicks > 0) {
-        logger.info({ remainingClicks }, 'Escalating to architect mode');
+        logger.info({ remainingClicks }, "Escalating to architect mode");
         const architectRun = await runArchitectEngine({
           ...options,
           clicks: remainingClicks,
@@ -569,10 +570,10 @@ export async function checkSmartStop(
         run.architectEscalated = true;
         run.architectEscalatedAtClick = clickNumber;
       } else {
-        run.earlyStopReason = 'remaining issues need architect mode';
+        run.earlyStopReason = "remaining issues need architect mode";
         logger.info(
           { landed: state.totalLanded, returned: clicks - clickNumber },
-          'Smart stop: remaining issues need architect mode',
+          "Smart stop: remaining issues need architect mode"
         );
       }
       return { shouldStop: true };
@@ -588,7 +589,7 @@ export async function checkSmartStop(
       run.earlyStopReason = `high rollback rate (${ratePct}%) — remaining issues may need manual intervention`;
       logger.info(
         { reason: run.earlyStopReason, landed: state.totalLanded, returned: clicks - clickNumber },
-        'Smart stop',
+        "Smart stop"
       );
       return { shouldStop: true };
     }
@@ -609,8 +610,12 @@ export async function checkSmartStop(
  */
 export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> {
   const {
-    clicks, config, cwd, agent,
-    hardenMode = false, adversarial = false,
+    clicks,
+    config,
+    cwd,
+    agent,
+    hardenMode = false,
+    adversarial = false,
     callbacks = {},
     learningStore,
     scoreOptimized = false,
@@ -627,14 +632,14 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
   // Feasibility gate: for APIAgent, filter the initial backlog to only issues it can handle.
   // APIAgent budget: 1 file, 20 lines per click — skip anything larger.
-  const isAPIAgent = 'clickGuards' in agent;
+  const isAPIAgent = "clickGuards" in agent;
   if (isAPIAgent && state.backlogGroups.length > 0) {
     const flatBacklog = state.backlogGroups.flat();
-    const feasibility = routeIssues(flatBacklog, 'api');
+    const feasibility = routeIssues(flatBacklog, "api");
     if (feasibility.skipped.length > 0) {
       logger.info(
         `[ratchet] 🚦 Feasibility gate: ${feasibility.eligible.length} eligible, ` +
-        `${feasibility.skipped.length} skipped (exceed APIAgent budget)`,
+          `${feasibility.skipped.length} skipped (exceed APIAgent budget)`
       );
     }
     state.backlogGroups = groupBacklogBySubcategory(feasibility.eligible);
@@ -650,21 +655,21 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
       let strategy = await loadStrategy(cwd);
       if (!strategy && scanForStrategy) {
         strategy = initStrategy(cwd, scanForStrategy);
-        logger.info({ project: strategy.profile.name }, 'Strategy initialized for first run');
+        logger.info({ project: strategy.profile.name }, "Strategy initialized for first run");
       }
       if (strategy) {
         const ctx = buildStrategyContext(strategy);
-        if (ctx && 'strategyContext' in agent) {
+        if (ctx && "strategyContext" in agent) {
           (agent as { strategyContext: string }).strategyContext = ctx;
         }
       }
     } catch (err) {
-      logger.warn({ err }, 'Failed to load/init strategy — continuing without it');
+      logger.warn({ err }, "Failed to load/init strategy — continuing without it");
     }
   }
 
   // --- Repo context: inject familiarization context into agent prompts ---
-  if (state.repoContext && 'repoContext' in agent) {
+  if (state.repoContext && "repoContext" in agent) {
     (agent as { repoContext: string }).repoContext = state.repoContext;
   }
 
@@ -691,10 +696,10 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
       run.reactAnalysis = reactAnalysis;
       logger.info(
         { confidence: reactAnalysis.confidence, risk: reactAnalysis.riskLevel },
-        '[react] Deep analysis complete',
+        "[react] Deep analysis complete"
       );
     } catch (err) {
-      logger.warn({ err }, '[react] Deep analysis failed — continuing without it');
+      logger.warn({ err }, "[react] Deep analysis failed — continuing without it");
     }
   }
 
@@ -704,9 +709,9 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
       let hardenPhase: HardenPhase | undefined;
       if (hardenMode) {
         if (!phaseTransitioned && i <= 3) {
-          hardenPhase = 'harden:tests';
+          hardenPhase = "harden:tests";
         } else {
-          hardenPhase = 'improve';
+          hardenPhase = "improve";
         }
       }
 
@@ -717,15 +722,15 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         // Skip blacklisted subcategories and architect-mode groups (in normal torque mode)
         while (state.backlogGroups.length > 0) {
           const nextGroup = state.backlogGroups[0]!;
-          const subcat = nextGroup[0]?.subcategory ?? '';
-          const allBlacklisted = nextGroup.every(t => state.blacklistedSubcategories.has(t.subcategory ?? ''));
+          const subcat = nextGroup[0]?.subcategory ?? "";
+          const allBlacklisted = nextGroup.every(t => state.blacklistedSubcategories.has(t.subcategory ?? ""));
           if (allBlacklisted) {
-            logger.info({ subcategory: subcat }, 'Skipping blacklisted subcategory');
+            logger.info({ subcategory: subcat }, "Skipping blacklisted subcategory");
             state.backlogGroups.shift();
             continue;
           }
           // In normal torque mode (not sweep-escalated), skip architect-mode groups
-          const isArchitectGroup = nextGroup.some(t => t.fixMode === 'architect');
+          const isArchitectGroup = nextGroup.some(t => t.fixMode === "architect");
           if (isArchitectGroup && !options.sweep && !state.escalated) {
             logger.info({ subcategory: subcat }, `⏭ Skipping ${subcat} — requires --architect mode`);
             state.backlogGroups.shift();
@@ -736,14 +741,14 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 
         // Soft-skip: if front group has 2+ zero-delta lands, prefer a better alternative
         if (state.backlogGroups.length > 1) {
-          const frontSubcat = state.backlogGroups[0]?.[0]?.subcategory ?? '';
+          const frontSubcat = state.backlogGroups[0]?.[0]?.subcategory ?? "";
           const frontZeroDelta = state.subcategoryStats.get(frontSubcat)?.zeroDeltaLands ?? 0;
           if (shouldSoftSkipSubcategory(frontZeroDelta)) {
             const betterIdx = state.backlogGroups.findIndex((g, idx) => {
               if (idx === 0) return false;
-              const subcat = g[0]?.subcategory ?? '';
-              if (g.every(t => state.blacklistedSubcategories.has(t.subcategory ?? ''))) return false;
-              if (g.some(t => t.fixMode === 'architect') && !options.sweep && !state.escalated) return false;
+              const subcat = g[0]?.subcategory ?? "";
+              if (g.every(t => state.blacklistedSubcategories.has(t.subcategory ?? ""))) return false;
+              if (g.some(t => t.fixMode === "architect") && !options.sweep && !state.escalated) return false;
               return (state.subcategoryStats.get(subcat)?.zeroDeltaLands ?? 0) < 2;
             });
             if (betterIdx !== -1) {
@@ -751,7 +756,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
               state.backlogGroups.unshift(betterGroup!);
               logger.info(
                 { from: frontSubcat, to: betterGroup![0]?.subcategory },
-                `Soft-skipping ${frontSubcat} (2 zero-delta lands) — trying ${betterGroup![0]?.subcategory ?? 'alternative'} first`,
+                `Soft-skipping ${frontSubcat} (2 zero-delta lands) — trying ${betterGroup![0]?.subcategory ?? "alternative"} first`
               );
             }
           }
@@ -787,7 +792,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         if (!hasAnyAst) {
           run.skippedClicks = (run.skippedClicks ?? 0) + 1;
           logger.info(
-            `[ratchet] ⏭ Zero-delta gate: skipping click — no scoreable AST transforms available for free engine`,
+            `[ratchet] ⏭ Zero-delta gate: skipping click — no scoreable AST transforms available for free engine`
           );
           i--;
           continue;
@@ -813,12 +818,10 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             agent,
             cwd,
             hardenPhase,
-            resolvedGuards: state.escalated ? resolveGuards(state.target, config, 'sweep') : state.currentGuards,
+            resolvedGuards: state.escalated ? resolveGuards(state.target, config, "sweep") : state.currentGuards,
             issues: clickIssues,
             planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
-            onPhase: callbacks.onClickPhase
-              ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
-              : undefined,
+            onPhase: callbacks.onClickPhase ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i) : undefined,
           };
           const swarmResult = await swarm.execute(clickCtx, cwd);
 
@@ -826,9 +829,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             click = swarmResult.winner.click;
             rolled_back = swarmResult.winner.rolled_back;
             // Attach winning specialization metadata
-            const winnerAgent = swarmResult.allResults.find(
-              r => !r.outcome.rolled_back && r.outcome.click.testsPassed,
-            );
+            const winnerAgent = swarmResult.allResults.find(r => !r.outcome.rolled_back && r.outcome.click.testsPassed);
             if (winnerAgent) {
               click.swarmSpecialization = winnerAgent.specialization;
             }
@@ -837,8 +838,8 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             click = {
               number: i,
               target: state.target.name,
-              analysis: '',
-              proposal: 'swarm: all agents failed',
+              analysis: "",
+              proposal: "swarm: all agents failed",
               filesModified: [],
               testsPassed: false,
               timestamp: new Date(),
@@ -852,7 +853,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             agentTimeMs: Date.now() - clickStartMs,
             testTimeMs: 0,
             estimatedCost: 0,
-            outcome: rolled_back ? 'rolled-back' : 'landed',
+            outcome: rolled_back ? "rolled-back" : "landed",
             issuesFixed: 0,
             scoreDelta: 0,
           };
@@ -867,29 +868,33 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             hardenPhase,
             adversarial,
             sweepMode: state.escalated,
-            resolvedGuards: state.escalated ? resolveGuards(state.target, config, 'sweep') : state.currentGuards,
+            resolvedGuards: state.escalated ? resolveGuards(state.target, config, "sweep") : state.currentGuards,
             issues: clickIssues,
             baselineFailures,
             planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
             contextPruning: options.contextPruning,
             scanResult: state.currentScan,
-            onPhase: callbacks.onClickPhase
-              ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
-              : undefined,
+            onPhase: callbacks.onClickPhase ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i) : undefined,
           });
 
           // Risk gate escalation: if single-agent was blocked, retry with swarm
           if (result.requiresSwarm) {
-            logger.info({ click: i }, 'Escalating to swarm mode');
+            logger.info({ click: i }, "Escalating to swarm mode");
             const swarm = new SwarmExecutor({ agentCount: 3, parallel: true }, learningStore);
-            const swarmResult = await swarm.execute({
-              clickNumber: i, target: state.target, config, agent, cwd, hardenPhase,
-              issues: clickIssues,
-              planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
-              onPhase: callbacks.onClickPhase
-                ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i)
-                : undefined,
-            }, cwd);
+            const swarmResult = await swarm.execute(
+              {
+                clickNumber: i,
+                target: state.target,
+                config,
+                agent,
+                cwd,
+                hardenPhase,
+                issues: clickIssues,
+                planContext: run.planResult ? JSON.stringify(run.planResult, null, 2) : undefined,
+                onPhase: callbacks.onClickPhase ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, i) : undefined,
+              },
+              cwd
+            );
 
             if (swarmResult.winner) {
               click = swarmResult.winner.click;
@@ -910,14 +915,12 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         if (scopeFiles.length > 0 && !rolled_back) {
           const scopeValidation = validateScope(click.filesModified, scopeFiles, cwd);
           if (!scopeValidation.valid) {
-            logger.error(
-              `click ${i} ROLLED BACK — scope violation: ${scopeValidation.scopeViolations.join(', ')}`,
-            );
+            logger.error(`click ${i} ROLLED BACK — scope violation: ${scopeValidation.scopeViolations.join(", ")}`);
             if (click.commitHash) {
               await git.revertLastCommit(cwd).catch(() => {});
             }
             click.testsPassed = false;
-            click.rollbackReason = `scope-exceeded: ${scopeValidation.scopeViolations.join(', ')}`;
+            click.rollbackReason = `scope-exceeded: ${scopeValidation.scopeViolations.join(", ")}`;
             click.commitHash = undefined;
             rolled_back = true;
           }
@@ -934,29 +937,46 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             click.highRiskChanges = highRiskChanges;
             const riskSummary = highRiskChanges
               .map(r => `${r.file} (${r.risk}, ${(r.confidence * 100).toFixed(0)}%)`)
-              .join(', ');
+              .join(", ");
             logger.warn({ highRiskChanges }, `[ratchet] ⚠ High-risk changes detected: ${riskSummary}`);
           }
         }
 
-        let regressionDetected: boolean;
-        ({ rolled_back, regressionDetected } = await postClickRescan(
-          i, click, rolled_back, clickEconomics, state,
-          scoreOptimized, cwd, incrementalScanner, callbacks, focusCategory,
-        ));
+        const rescanResult = await postClickRescan(
+          i,
+          click,
+          rolled_back,
+          clickEconomics,
+          state,
+          scoreOptimized,
+          cwd,
+          incrementalScanner,
+          callbacks,
+          focusCategory
+        );
+        rolled_back = rescanResult.rolled_back;
+        const { regressionDetected } = rescanResult;
 
         // APIAgent (non-Anthropic) can only do tight/atomic edits — never escalate to sweep/architect
-        const isAPIAgentLocal = 'clickGuards' in agent;
-        await checkStallAndEscalate(i, clicks, state, hardenMode, escalateEnabled && !isAPIAgentLocal, callbacks, focusCategory);
+        const isAPIAgentLocal = "clickGuards" in agent;
+        await checkStallAndEscalate(
+          i,
+          clicks,
+          state,
+          hardenMode,
+          escalateEnabled && !isAPIAgentLocal,
+          callbacks,
+          focusCategory
+        );
 
         // Re-apply feasibility gate after backlog refresh so APIAgent never sees over-budget issues
         if (isAPIAgentLocal && state.backlogGroups.length > 0) {
           const flatBacklog = state.backlogGroups.flat();
-          const feasibility = routeIssues(flatBacklog, 'api');
+          const feasibility = routeIssues(flatBacklog, "api");
           if (feasibility.skipped.length > 0) {
             logger.info(
               `[ratchet] 🚦 Feasibility gate (post-rescan): ${feasibility.eligible.length} eligible, ` +
-              `${feasibility.skipped.length} skipped`,
+                `${feasibility.skipped.length} skipped`
             );
           }
           state.backlogGroups = groupBacklogBySubcategory(feasibility.eligible);
@@ -977,7 +997,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         if (clickEconomics) {
           state.cumulativeCost += clickEconomics.estimatedCost;
         }
-        const clickDelta = (click.testsPassed && !rolled_back && clickEconomics) ? clickEconomics.scoreDelta : 0;
+        const clickDelta = click.testsPassed && !rolled_back && clickEconomics ? clickEconomics.scoreDelta : 0;
         if (clickDelta !== 0) {
           state.consecutiveZeroDeltaClicks = 0;
         } else {
@@ -1012,12 +1032,12 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
               state.blacklistedSubcategories.add(targetSubcategory);
               logger.warn(
                 { subcategory: targetSubcategory, rollbacks: stats.rollbacks, zeroDeltaLands: stats.zeroDeltaLands },
-                'Subcategory blacklisted — skipping in future clicks',
+                "Subcategory blacklisted — skipping in future clicks"
               );
             } else if (stats.zeroDeltaLands === 2) {
               logger.info(
                 { subcategory: targetSubcategory, zeroDeltaLands: stats.zeroDeltaLands },
-                'Subcategory soft-skipped (2 zero-delta lands) — will try alternatives next click',
+                "Subcategory soft-skipped (2 zero-delta lands) — will try alternatives next click"
               );
             }
           }
@@ -1025,12 +1045,13 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           // If total zero-delta lands across all subcategories reaches threshold,
           // log a hint so the plateau detection can escalate to sweep mode.
           const totalZeroDeltaLands = [...state.subcategoryStats.values()].reduce(
-            (sum, s) => sum + s.zeroDeltaLands, 0,
+            (sum, s) => sum + s.zeroDeltaLands,
+            0
           );
           if (shouldEscalateOnTotalZeroDelta(totalZeroDeltaLands) && !rolled_back && !run.sweepEscalated) {
             logger.info(
               { totalZeroDeltaLands, subcategory: targetSubcategory },
-              'Total zero-delta lands reached threshold — sweep escalation may trigger on next plateau check',
+              "Total zero-delta lands reached threshold — sweep escalation may trigger on next plateau check"
             );
           }
         }
@@ -1049,9 +1070,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         await callbacks.onClickComplete?.(click, rolled_back);
 
         // APIAgent cannot handle sweep/architect mode — skip smart escalation entirely
-        const { shouldStop } = isAPIAgent
-          ? { shouldStop: false }
-          : await checkSmartStop(i, run, state, options);
+        const { shouldStop } = isAPIAgent ? { shouldStop: false } : await checkSmartStop(i, run, state, options);
         if (shouldStop) break;
 
         // ── Stop-condition checks (between clicks)
@@ -1061,7 +1080,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           const regressionStop = checkRegressionStop(regressionDetected, click.rollbackReason);
           if (regressionStop.stop) {
             run.earlyStopReason = regressionStop.earlyStopReason;
-            logger.info({ reason: regressionStop.earlyStopReason }, 'Stop-on-regression');
+            logger.info({ reason: regressionStop.earlyStopReason }, "Stop-on-regression");
             break;
           }
         }
@@ -1078,14 +1097,19 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             if (!run.sweepEscalated && remainingClicks > 0 && state.currentScan) {
               const fullBacklog = buildScoreOptimizedBacklog(state.currentScan);
               const bestSweepable = fullBacklog.find(
-                (task) => task.subcategory && isSweepable(task.subcategory) && (task.sweepFiles?.length ?? 0) > 0,
+                task => task.subcategory && isSweepable(task.subcategory) && (task.sweepFiles?.length ?? 0) > 0
               );
               if (bestSweepable?.subcategory) {
                 logger.info(
-                  { reason: 'plateau → sweep', subcategory: bestSweepable.subcategory, files: bestSweepable.sweepFiles?.length, remainingClicks },
-                  '⚡ Plateau detected — escalating to sweep mode on best sweepable category',
+                  {
+                    reason: "plateau → sweep",
+                    subcategory: bestSweepable.subcategory,
+                    files: bestSweepable.sweepFiles?.length,
+                    remainingClicks,
+                  },
+                  "⚡ Plateau detected — escalating to sweep mode on best sweepable category"
                 );
-                await options.callbacks?.onSweepEscalate?.('plateau', bestSweepable.subcategory);
+                await options.callbacks?.onSweepEscalate?.("plateau", bestSweepable.subcategory);
                 const sweepRun = await runSweepEngine({
                   ...options,
                   clicks: remainingClicks,
@@ -1103,7 +1127,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             }
             // No sweepable categories — fall through to stop
             run.earlyStopReason = plateauStop.earlyStopReason;
-            logger.info({ reason: plateauStop.earlyStopReason }, 'Plateau detected');
+            logger.info({ reason: plateauStop.earlyStopReason }, "Plateau detected");
             break;
           }
         }
@@ -1114,7 +1138,10 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           const drStop = checkDiminishingReturns(state.recentScoreDeltas, i + 1);
           if (drStop.stop && !run.earlyStopReason) {
             run.earlyStopReason = drStop.earlyStopReason;
-            logger.info({ reason: drStop.earlyStopReason, recentDeltas: state.recentScoreDeltas }, 'Diminishing returns stop');
+            logger.info(
+              { reason: drStop.earlyStopReason, recentDeltas: state.recentScoreDeltas },
+              "Diminishing returns stop"
+            );
             break;
           }
         }
@@ -1126,7 +1153,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
             run.earlyStopReason = timeoutStop.earlyStopReason;
             run.timeoutReached = true;
             process.stdout.write(`  ⏱ ${timeoutStop.earlyStopReason} — stopping after click ${i}\n`);
-            logger.info({ reason: timeoutStop.earlyStopReason }, 'Timeout stop');
+            logger.info({ reason: timeoutStop.earlyStopReason }, "Timeout stop");
             break;
           }
         }
@@ -1137,7 +1164,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
           if (budgetStop.stop) {
             run.earlyStopReason = budgetStop.earlyStopReason;
             run.budgetReached = true;
-            logger.info({ reason: budgetStop.earlyStopReason }, 'Budget stop');
+            logger.info({ reason: budgetStop.earlyStopReason }, "Budget stop");
             break;
           }
         }
@@ -1146,25 +1173,25 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         if (learningStore && clickIssues && clickIssues.length > 0) {
           const elapsedMs = Date.now() - clickStartMs;
           const scoreDelta = click.scoreAfterClick != null ? click.scoreAfterClick - state.previousTotal : 0;
-          const specName = config.swarm?.enabled
-            ? (config.swarm.specializations?.[0] ?? 'default')
-            : 'default';
+          const specName = config.swarm?.enabled ? (config.swarm.specializations?.[0] ?? "default") : "default";
           await Promise.all(
-            clickIssues.flatMap((issue) =>
-              (issue.sweepFiles ?? click.filesModified).map((file) =>
-                learningStore.recordOutcome({
-                  issueType: issue.subcategory || issue.category,
-                  filePath: file,
-                  specialization: specName,
-                  success: click.testsPassed && !rolled_back,
-                  fixTimeMs: elapsedMs,
-                  scoreDelta,
-                  failureReason: rolled_back ? 'click rolled back' : undefined,
-                }).catch(() => {
-                  // Non-fatal — don't let learning failures break the engine
-                }),
-              ),
-            ),
+            clickIssues.flatMap(issue =>
+              (issue.sweepFiles ?? click.filesModified).map(file =>
+                learningStore
+                  .recordOutcome({
+                    issueType: issue.subcategory || issue.category,
+                    filePath: file,
+                    specialization: specName,
+                    success: click.testsPassed && !rolled_back,
+                    fixTimeMs: elapsedMs,
+                    scoreDelta,
+                    failureReason: rolled_back ? "click rolled back" : undefined,
+                  })
+                  .catch(() => {
+                    // Non-fatal — don't let learning failures break the engine
+                  })
+              )
+            )
           );
         }
       } catch (err: unknown) {
@@ -1188,17 +1215,17 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
       }
     }
 
-    run.status = 'completed';
+    run.status = "completed";
 
     // Diagnostic: if every click rolled back, surface a hint
-    if (run.clicks.length > 0 && run.clicks.every((c) => !c.testsPassed)) {
+    if (run.clicks.length > 0 && run.clicks.every(c => !c.testsPassed)) {
       logger.error(
-        'All clicks rolled back. Possible causes: tests failing before ratchet starts, ' +
-        'agent not making changes, or flaky test suite',
+        "All clicks rolled back. Possible causes: tests failing before ratchet starts, " +
+          "agent not making changes, or flaky test suite"
       );
     }
   } catch (err: unknown) {
-    run.status = 'failed';
+    run.status = "failed";
     throw err;
   } finally {
     run.finishedAt = new Date();
@@ -1216,7 +1243,7 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
         const finalScan = state.currentScan;
         await evolveStrategy(cwd, run, scanForStrategy, finalScan);
       } catch (err) {
-        logger.warn({ err }, 'Failed to evolve strategy — non-fatal');
+        logger.warn({ err }, "Failed to evolve strategy — non-fatal");
       }
     }
   }
@@ -1225,4 +1252,4 @@ export async function runEngine(options: EngineRunOptions): Promise<RatchetRun> 
 }
 
 // Re-export ClickPhase for consumers of engine-run.ts
-export type { ClickPhase } from './engine-core.js';
+export type { ClickPhase } from "./engine-core.js";

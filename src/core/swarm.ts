@@ -1,40 +1,35 @@
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { join } from 'path';
-import { mkdirSync, existsSync, symlinkSync } from 'fs';
-import type { SwarmConfig, SwarmResult, SwarmAgentResult, RatchetConfig } from '../types.js';
-import type { LearningStore } from './learning.js';
-import type { ClickContext, ClickOutcome } from './click.js';
-import { executeClick } from './click.js';
-import { createSpecializedAgent } from './agents/specialized.js';
-import { toErrorMessage } from './utils.js';
-import type { Specialization } from './agents/specialized.js';
-import { DEFAULT_SPECIALIZATIONS, isValidSpecialization } from './agents/specialized.js';
+import { execFile } from "child_process";
+import { promisify } from "util";
+import { join } from "path";
+import { mkdirSync, existsSync, symlinkSync } from "fs";
+import type { SwarmConfig, SwarmResult, SwarmAgentResult, RatchetConfig } from "../types.js";
+import type { LearningStore } from "./learning.js";
+import type { ClickContext, ClickOutcome } from "./click.js";
+import { executeClick } from "./click.js";
+import { createSpecializedAgent } from "./agents/specialized.js";
+import { toErrorMessage } from "./utils.js";
+import type { Specialization } from "./agents/specialized.js";
+import { DEFAULT_SPECIALIZATIONS, isValidSpecialization } from "./agents/specialized.js";
 import {
   assignPersonalities,
   getPersonality,
   buildPersonalityPrompt,
   getAllPersonalities,
-} from './agents/personalities.js';
-import type { AgentPersonality } from './agents/personalities.js';
-import { runDebate, shouldDebate } from './swarm-debate.js';
-import type { AgentProposal, DebateConfig } from './swarm-debate.js';
-import {
-  loadSwarmMemory,
-  saveSwarmMemory,
-  recordSwarmOutcome,
-  recommendPersonalities,
-} from './swarm-memory.js';
-import { runTests } from './runner.js';
-import type { ScanResult } from '../core/scanner';
-import { runScan } from '../core/scanner';
-import { logger } from '../lib/logger.js';
+} from "./agents/personalities.js";
+import type { AgentPersonality } from "./agents/personalities.js";
+import { runDebate, shouldDebate } from "./swarm-debate.js";
+import type { AgentProposal, DebateConfig } from "./swarm-debate.js";
+import { loadSwarmMemory, saveSwarmMemory, recordSwarmOutcome, recommendPersonalities } from "./swarm-memory.js";
+import { runTests } from "./runner.js";
+import type { ScanResult } from "../core/scanner";
+import { runScan } from "../core/scanner";
+import { logger } from "../lib/logger.js";
 
 const execFileAsync = promisify(execFile);
 const log = logger;
 
 async function git(args: string[], cwd: string): Promise<string> {
-  const { stdout } = await execFileAsync('git', args, { cwd });
+  const { stdout } = await execFileAsync("git", args, { cwd });
   return stdout.trim();
 }
 
@@ -64,16 +59,15 @@ export class SwarmExecutor {
   constructor(config: Partial<SwarmConfig> = {}, learningStore?: LearningStore) {
     this.agentCount = config.agentCount ?? 3;
     this.parallel = config.parallel ?? true;
-    this.worktreeDir = config.worktreeDir ?? '/tmp/ratchet-swarm';
+    this.worktreeDir = config.worktreeDir ?? "/tmp/ratchet-swarm";
     this.debateEnabled = (config as { debate?: boolean }).debate !== false;
     this.model = (config as { model?: string }).model;
 
     // Resolve specializations — validate and fall back to defaults
     const specNames = config.specializations ?? [...DEFAULT_SPECIALIZATIONS];
     const valid = specNames.filter(isValidSpecialization);
-    this.specializations = valid.length > 0
-      ? valid.slice(0, this.agentCount)
-      : [...DEFAULT_SPECIALIZATIONS].slice(0, this.agentCount);
+    this.specializations =
+      valid.length > 0 ? valid.slice(0, this.agentCount) : [...DEFAULT_SPECIALIZATIONS].slice(0, this.agentCount);
 
     // Pad with defaults if fewer specializations than agents
     while (this.specializations.length < this.agentCount) {
@@ -96,7 +90,7 @@ export class SwarmExecutor {
     // Assign personalities (override from config or use intelligent defaults)
     const personalityOverrides = (config as { personalities?: string[] }).personalities;
     if (personalityOverrides && personalityOverrides.length > 0) {
-      const resolved = personalityOverrides.map((name) => getPersonality(name)).filter(Boolean) as AgentPersonality[];
+      const resolved = personalityOverrides.map(name => getPersonality(name)).filter(Boolean) as AgentPersonality[];
       this.personalities = resolved.length > 0 ? resolved : assignPersonalities(this.agentCount);
       while (this.personalities.length < this.agentCount) {
         this.personalities.push(...assignPersonalities(1));
@@ -122,9 +116,9 @@ export class SwarmExecutor {
     // Override personality assignments from memory if we have enough history
     const recommended = recommendPersonalities(memory, this.agentCount);
     if (recommended) {
-      const resolved = recommended.map((name) => getPersonality(name)).filter(Boolean) as AgentPersonality[];
+      const resolved = recommended.map(name => getPersonality(name)).filter(Boolean) as AgentPersonality[];
       if (resolved.length === this.agentCount) {
-        log.info({ personalities: recommended }, 'swarm: using memory-recommended personalities');
+        log.info({ personalities: recommended }, "swarm: using memory-recommended personalities");
         // Use recommended personalities (mutation-safe copy)
         this.personalities.splice(0, this.personalities.length, ...resolved);
       }
@@ -140,13 +134,13 @@ export class SwarmExecutor {
         const worktreePath = join(this.worktreeDir, `swarm-${timestamp}-${spec}-${i}`);
         const branchName = `ratchet-swarm-${timestamp}-${spec}-${i}`;
 
-        await git(['worktree', 'add', '-b', branchName, worktreePath, 'HEAD'], cwd);
+        await git(["worktree", "add", "-b", branchName, worktreePath, "HEAD"], cwd);
 
         // Symlink node_modules so test commands (vitest, jest, etc.) resolve
-        const srcModules = join(cwd, 'node_modules');
-        const dstModules = join(worktreePath, 'node_modules');
+        const srcModules = join(cwd, "node_modules");
+        const dstModules = join(worktreePath, "node_modules");
         if (existsSync(srcModules) && !existsSync(dstModules)) {
-          symlinkSync(srcModules, dstModules, 'junction');
+          symlinkSync(srcModules, dstModules, "junction");
         }
 
         worktrees.push(worktreePath);
@@ -170,14 +164,12 @@ export class SwarmExecutor {
 
       if (this.parallel) {
         const settled = await Promise.allSettled(
-          agentTasks.map((task) =>
-            this.runAgentInWorktree(task.spec, task.personality, task.worktree, clickCtx),
-          ),
+          agentTasks.map(task => this.runAgentInWorktree(task.spec, task.personality, task.worktree, clickCtx))
         );
 
         outcomes = settled.map((result, i) => {
           const task = agentTasks[i];
-          if (result.status === 'fulfilled') {
+          if (result.status === "fulfilled") {
             return {
               spec: task.spec,
               personality: task.personality,
@@ -198,12 +190,7 @@ export class SwarmExecutor {
         outcomes = [];
         for (const task of agentTasks) {
           try {
-            const outcome = await this.runAgentInWorktree(
-              task.spec,
-              task.personality,
-              task.worktree,
-              clickCtx,
-            );
+            const outcome = await this.runAgentInWorktree(task.spec, task.personality, task.worktree, clickCtx);
             outcomes.push({ spec: task.spec, personality: task.personality, worktree: task.worktree, outcome });
           } catch (err: unknown) {
             const error = toErrorMessage(err);
@@ -232,8 +219,8 @@ export class SwarmExecutor {
               click: {
                 number: clickCtx.clickNumber,
                 target: clickCtx.target.name,
-                analysis: '',
-                proposal: '',
+                analysis: "",
+                proposal: "",
                 filesModified: [],
                 testsPassed: false,
                 timestamp: new Date(),
@@ -268,30 +255,28 @@ export class SwarmExecutor {
       }
 
       // 4. Pick winner — via debate or raw score
-      const candidates = allResults.filter(
-        (r) => !r.outcome.rolled_back && r.outcome.click.testsPassed,
-      );
+      const candidates = allResults.filter(r => !r.outcome.rolled_back && r.outcome.click.testsPassed);
 
       let winner: SwarmAgentResultV2 | null = null;
 
       if (candidates.length > 0) {
         // Build proposals for potential debate
-        const proposals: AgentProposal[] = candidates.map((agent) => ({
+        const proposals: AgentProposal[] = candidates.map(agent => ({
           agentName: agent.agentName,
           personality: agent.personality,
           specialization: agent.specialization,
           filesChanged: agent.outcome.click.filesModified,
           scoreDelta: agent.scoreDelta,
-          summary: agent.outcome.click.proposal ?? agent.outcome.click.analysis ?? '',
+          summary: agent.outcome.click.proposal ?? agent.outcome.click.analysis ?? "",
           diffStats: { additions: 0, deletions: 0 }, // populated from git stats if available
         }));
 
         // Populate diff stats from git
         for (const proposal of proposals) {
-          const agent = candidates.find((a) => a.agentName === proposal.agentName);
+          const agent = candidates.find(a => a.agentName === proposal.agentName);
           if (agent) {
             try {
-              const diffStat = await git(['diff', '--shortstat', 'HEAD~1', 'HEAD'], agent.worktreePath).catch(() => '');
+              const diffStat = await git(["diff", "--shortstat", "HEAD~1", "HEAD"], agent.worktreePath).catch(() => "");
               const addMatch = diffStat.match(/(\d+) insertion/);
               const delMatch = diffStat.match(/(\d+) deletion/);
               proposal.diffStats.additions = addMatch ? parseInt(addMatch[1], 10) : 0;
@@ -313,20 +298,20 @@ export class SwarmExecutor {
 
             if (debate.verdict.confidence >= 0.6) {
               // Use debate winner
-              winner = candidates.find((c) => c.agentName === debate.verdict.winner) ?? null;
+              winner = candidates.find(c => c.agentName === debate.verdict.winner) ?? null;
               log.info(
                 {
                   winner: debate.verdict.winner,
                   confidence: debate.verdict.confidence,
                   reasoning: debate.verdict.reasoning,
                 },
-                'swarm: debate verdict applied',
+                "swarm: debate verdict applied"
               );
             } else {
               // Low confidence — fall back to score-based
               log.info(
                 { confidence: debate.verdict.confidence },
-                'swarm: debate confidence too low, using score-based winner',
+                "swarm: debate confidence too low, using score-based winner"
               );
               candidates.sort((a, b) => b.scoreDelta - a.scoreDelta);
               winner = candidates[0];
@@ -337,7 +322,7 @@ export class SwarmExecutor {
             const updatedMemory = recordSwarmOutcome(memory, result, debate);
             await saveSwarmMemory(cwd, updatedMemory);
           } catch (err) {
-            log.warn({ err }, 'swarm: debate failed, falling back to score-based winner');
+            log.warn({ err }, "swarm: debate failed, falling back to score-based winner");
             candidates.sort((a, b) => b.scoreDelta - a.scoreDelta);
             winner = candidates[0];
           }
@@ -376,7 +361,7 @@ export class SwarmExecutor {
     spec: Specialization,
     personality: AgentPersonality,
     worktreePath: string,
-    clickCtx: ClickContext,
+    clickCtx: ClickContext
   ): Promise<ClickOutcome> {
     const personalityPrompt = buildPersonalityPrompt(personality, spec);
 
@@ -407,17 +392,15 @@ export class SwarmExecutor {
     let changedFiles: string[] = [];
 
     try {
-      const committed = await git(['diff', '--name-only', 'HEAD~1', 'HEAD'], winnerWorktree).catch(() => '');
-      const unstaged = await git(['diff', '--name-only'], winnerWorktree).catch(() => '');
-      const staged = await git(['diff', '--name-only', '--cached'], winnerWorktree).catch(() => '');
+      const committed = await git(["diff", "--name-only", "HEAD~1", "HEAD"], winnerWorktree).catch(() => "");
+      const unstaged = await git(["diff", "--name-only"], winnerWorktree).catch(() => "");
+      const staged = await git(["diff", "--name-only", "--cached"], winnerWorktree).catch(() => "");
 
-      changedFiles = [...new Set([
-        ...committed.split('\n'),
-        ...unstaged.split('\n'),
-        ...staged.split('\n'),
-      ])].filter(Boolean);
+      changedFiles = [...new Set([...committed.split("\n"), ...unstaged.split("\n"), ...staged.split("\n")])].filter(
+        Boolean
+      );
     } catch {
-      const diff = await git(['diff', 'HEAD'], winnerWorktree).catch(() => '');
+      const diff = await git(["diff", "HEAD"], winnerWorktree).catch(() => "");
       if (!diff) return;
     }
 
@@ -425,12 +408,12 @@ export class SwarmExecutor {
       return;
     }
 
-    const { copyFile } = await import('fs/promises');
-    const { dirname } = await import('path');
-    const { mkdirSync: mkdirSyncFn } = await import('fs');
+    const { copyFile } = await import("fs/promises");
+    const { dirname } = await import("path");
+    const { mkdirSync: mkdirSyncFn } = await import("fs");
 
     await Promise.all(
-      changedFiles.map(async (file) => {
+      changedFiles.map(async file => {
         const src = join(winnerWorktree, file);
         const dst = join(mainCwd, file);
         try {
@@ -439,7 +422,7 @@ export class SwarmExecutor {
         } catch {
           // Skip files that don't exist in worktree (deleted files, etc.)
         }
-      }),
+      })
     );
   }
 
@@ -451,21 +434,21 @@ export class SwarmExecutor {
       try {
         let branchName: string | undefined;
         try {
-          branchName = await git(['rev-parse', '--abbrev-ref', 'HEAD'], wt);
+          branchName = await git(["rev-parse", "--abbrev-ref", "HEAD"], wt);
         } catch {
           // Worktree may already be gone
         }
 
-        await git(['worktree', 'remove', '--force', wt], mainCwd);
+        await git(["worktree", "remove", "--force", wt], mainCwd);
 
-        if (branchName && branchName.startsWith('ratchet-swarm-')) {
-          await git(['branch', '-D', branchName], mainCwd).catch(() => {});
+        if (branchName && branchName.startsWith("ratchet-swarm-")) {
+          await git(["branch", "-D", branchName], mainCwd).catch(() => {});
         }
       } catch {
         try {
-          const { rmSync } = await import('fs');
+          const { rmSync } = await import("fs");
           rmSync(wt, { recursive: true, force: true });
-          await git(['worktree', 'prune'], mainCwd).catch(() => {});
+          await git(["worktree", "prune"], mainCwd).catch(() => {});
         } catch {
           // Truly best-effort
         }
@@ -492,7 +475,7 @@ export function buildSwarmConfig(opts: {
     agentCount: opts.agents ?? 3,
     specializations: opts.focus ?? [...DEFAULT_SPECIALIZATIONS],
     parallel: true,
-    worktreeDir: '/tmp/ratchet-swarm',
+    worktreeDir: "/tmp/ratchet-swarm",
     // Extended fields (cast through as any to stay compatible with base SwarmConfig)
     ...({ debate: opts.debate ?? true } as object),
     ...({ personalities: opts.personalities } as object),

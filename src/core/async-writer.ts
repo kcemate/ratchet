@@ -1,6 +1,6 @@
-import { writeFile, mkdir } from 'fs/promises';
-import { dirname, join } from 'path';
-import { logger } from '../lib/logger.js';
+import { writeFile, mkdir } from "fs/promises";
+import { dirname, join } from "path";
+import { logger } from "../lib/logger.js";
 
 /** A single pending write — key is a relative path under cwd. */
 interface WriteEntry {
@@ -85,11 +85,11 @@ export class AsyncWriter {
           const absPath = join(this.cwd, key);
           await mkdir(dirname(absPath), { recursive: true });
           const content = raw ? String(data) : JSON.stringify(data, null, 2);
-          await writeFile(absPath, content, 'utf-8');
-        }),
+          await writeFile(absPath, content, "utf-8");
+        })
       );
     } catch (err) {
-      logger.warn({ err }, 'AsyncWriter: flush error');
+      logger.warn({ err }, "AsyncWriter: flush error");
       // Re-queue failed entries so they can be retried next flush
       this.queue.unshift(...batch);
     } finally {

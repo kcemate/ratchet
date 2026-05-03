@@ -1,19 +1,23 @@
-import { spawn } from 'child_process';
-import { join } from 'path';
-import type { Target, BuildResult, HardenPhase } from '../../types.js';
-import type { ScanResult } from '../../core/scanner';
-import type { Agent, AgentOptions } from './base.js';
-import { createAgentContext } from './base.js';
+import { spawn } from "child_process";
+import { join } from "path";
+import type { Target, BuildResult, HardenPhase } from "../../types.js";
+import type { ScanResult } from "../../core/scanner";
+import type { Agent, AgentOptions } from "./base.js";
+import { createAgentContext } from "./base.js";
 import {
-  parseModifiedFiles, buildAnalyzePrompt, buildHardenAnalyzePrompt, buildProposePrompt, buildHardenProposePrompt,
-} from './api.js';
-import type { IssueTask } from '../issue-backlog.js';
-import { formatIssuesForPrompt } from '../issue-backlog.js';
-import { buildIntelligenceBriefing, queryFlowsTargeted, getApiImpact } from '../gitnexus.js';
-import { SUBCATEGORY_TIERS } from '../score-optimizer.js';
-import { logger } from '../../lib/logger.js';
-import { buildGraphToolInstructions } from '../gitnexus-tools.js';
-import type { FeaturePlan, FeatureStep } from '../../types.js';
+  parseModifiedFiles,
+  buildAnalyzePrompt,
+  buildHardenAnalyzePrompt,
+  buildProposePrompt,
+  buildHardenProposePrompt,
+} from "./api.js";
+import type { IssueTask } from "../issue-backlog.js";
+import { formatIssuesForPrompt } from "../issue-backlog.js";
+import { buildIntelligenceBriefing, queryFlowsTargeted, getApiImpact } from "../gitnexus.js";
+import { SUBCATEGORY_TIERS } from "../score-optimizer.js";
+import { logger } from "../../lib/logger.js";
+import { buildGraphToolInstructions } from "../gitnexus-tools.js";
+import type { FeaturePlan, FeatureStep } from "../../types.js";
 
 export interface ShellAgentConfig extends AgentOptions {
   /** Command to run for analysis/proposal (defaults to: claude --print) */
@@ -40,11 +44,11 @@ export class ShellAgent implements Agent {
   priorRoundsContext?: string;
 
   constructor(config: ShellAgentConfig = {}) {
-    this.command = config.command ?? 'claude';
-    const baseArgs = config.extraArgs ?? ['--print', '--permission-mode', 'bypassPermissions'];
+    this.command = config.command ?? "claude";
+    const baseArgs = config.extraArgs ?? ["--print", "--permission-mode", "bypassPermissions"];
     // Wire up --model if provided and not already in extraArgs
-    if (config.model && !baseArgs.some((a) => a.startsWith('--model'))) {
-      baseArgs.push('--model', config.model);
+    if (config.model && !baseArgs.some(a => a.startsWith("--model"))) {
+      baseArgs.push("--model", config.model);
     }
     this.extraArgs = baseArgs;
     this.timeout = config.timeout ?? 1_200_000; // 20 minutes
@@ -55,11 +59,18 @@ export class ShellAgent implements Agent {
     // Shell agent collapses analyze+propose+build into a single call for issue-driven clicks
     if (issues && issues.length > 0) {
       this._issueDrivenClick = true;
-      return await buildIssuePlanPrompt(context, issues, this.gitnexusCwd ?? this._cwd, this.strategyContext, this.repoContext, this.priorRoundsContext);
+      return await buildIssuePlanPrompt(
+        context,
+        issues,
+        this.gitnexusCwd ?? this._cwd,
+        this.strategyContext,
+        this.repoContext,
+        this.priorRoundsContext
+      );
     }
     this._issueDrivenClick = false;
     let prompt: string;
-    if (hardenPhase === 'harden:tests') {
+    if (hardenPhase === "harden:tests") {
       prompt = buildHardenAnalyzePrompt(context);
     } else {
       prompt = buildAnalyzePrompt(context);
@@ -73,7 +84,7 @@ export class ShellAgent implements Agent {
       return analysis; // pass straight through to build
     }
     let prompt: string;
-    if (hardenPhase === 'harden:tests') {
+    if (hardenPhase === "harden:tests") {
       prompt = buildHardenProposePrompt(analysis, target);
     } else {
       prompt = buildProposePrompt(analysis, target);
@@ -99,7 +110,7 @@ export class ShellAgent implements Agent {
       const error = err as Error;
       return {
         success: false,
-        output: error.message ?? '',
+        output: error.message ?? "",
         filesModified: [],
         error: error.message,
       };
@@ -123,64 +134,68 @@ export class ShellAgent implements Agent {
       const child = spawn(this.command, args, {
         cwd,
         env: { ...process.env },
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: ["ignore", "pipe", "pipe"],
       });
 
-      let stdoutBuf = '';
-      let stderrBuf = '';
+      let stdoutBuf = "";
+      let stderrBuf = "";
       let totalBytes = 0;
       let timedOut = false;
 
       const timer = setTimeout(() => {
         timedOut = true;
-        child.kill('SIGTERM');
+        child.kill("SIGTERM");
       }, this.timeout);
 
-      child.stdout.on('data', (chunk: Buffer) => {
+      child.stdout.on("data", (chunk: Buffer) => {
         totalBytes += chunk.length;
         if (totalBytes > maxBuffer) {
-          child.kill('SIGTERM');
+          child.kill("SIGTERM");
           return;
         }
         stdoutBuf += chunk.toString();
       });
 
-      child.stderr.on('data', (chunk: Buffer) => {
+      child.stderr.on("data", (chunk: Buffer) => {
         totalBytes += chunk.length;
         if (totalBytes > maxBuffer) {
-          child.kill('SIGTERM');
+          child.kill("SIGTERM");
           return;
         }
         stderrBuf += chunk.toString();
       });
 
-      child.on('error', (err: NodeJS.ErrnoException) => {
+      child.on("error", (err: NodeJS.ErrnoException) => {
         clearTimeout(timer);
-        if (err.code === 'ENOENT') {
-          reject(new Error(
-            `Agent command not found: \`${this.command}\`\n` +
-            `  Make sure the agent CLI is installed and available in your PATH.\n` +
-            `  For the default shell agent: npm install -g @anthropic-ai/claude-code`,
-          ));
+        if (err.code === "ENOENT") {
+          reject(
+            new Error(
+              `Agent command not found: \`${this.command}\`\n` +
+                `  Make sure the agent CLI is installed and available in your PATH.\n` +
+                `  For the default shell agent: npm install -g @anthropic-ai/claude-code`
+            )
+          );
         } else {
           reject(err);
         }
       });
 
-      child.on('close', (code: number | null) => {
+      child.on("close", (code: number | null) => {
         clearTimeout(timer);
 
         if (timedOut || totalBytes > maxBuffer) {
           const timeoutSecs = Math.round(this.timeout / 1000);
-          reject(new Error(
-            `Agent timed out after ${timeoutSecs}s — the \`${this.command}\` process did not respond in time.\n` +
-            `  Possible causes: the agent is unresponsive, rate-limited, or the network is slow.\n` +
-            `  Try increasing the timeout or checking that \`${this.command}\` works from the command line.`,
-          ));
+          reject(
+            new Error(
+              `Agent timed out after ${timeoutSecs}s — the \`${this.command}\` process did not respond in time.\n` +
+                `  Possible causes: the agent is unresponsive, rate-limited, or the network is slow.\n` +
+                `  Try increasing the timeout or checking that \`${this.command}\` works from the command line.`
+            )
+          );
           return;
         }
 
-        const output = [stdoutBuf, stderrBuf].filter(Boolean).join('\n').trim();
+        const output = [stdoutBuf, stderrBuf].filter(Boolean).join("\n").trim();
 
         if (code === 0) {
           resolve(output);
@@ -198,10 +213,6 @@ export class ShellAgent implements Agent {
     });
   }
 }
-
-
-
-
 
 function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
   const issueList = formatIssuesForPrompt(issues);
@@ -226,8 +237,10 @@ function buildIssueAnalyzePrompt(context: string, issues: IssueTask[]): string {
  */
 /** Returns true if the file path looks like an API route file. */
 function isApiRouteFile(filePath: string): boolean {
-  return /\/(routes?|api|endpoints?|handlers?|controllers?)\//i.test(filePath) ||
-    /\.(route|api|endpoint|handler|controller)\.[jt]sx?$/.test(filePath);
+  return (
+    /\/(routes?|api|endpoints?|handlers?|controllers?)\//i.test(filePath) ||
+    /\.(route|api|endpoint|handler|controller)\.[jt]sx?$/.test(filePath)
+  );
 }
 
 /**
@@ -236,7 +249,8 @@ function isApiRouteFile(filePath: string): boolean {
  */
 export function buildConstraints(issues: IssueTask[]): string {
   const first = issues[0];
-  if (!first) return '- Change AT MOST 30 lines total (insertions + deletions combined)\n- Modify AT MOST 2 files\n- Do NOT refactor unrelated code. All existing tests MUST still pass.';
+  if (!first)
+    return "- Change AT MOST 30 lines total (insertions + deletions combined)\n- Modify AT MOST 2 files\n- Do NOT refactor unrelated code. All existing tests MUST still pass.";
 
   if (first.sweepFiles && first.sweepFiles.length > 0) {
     return (
@@ -266,10 +280,10 @@ export function buildConstraints(issues: IssueTask[]): string {
  */
 export function buildScoreContext(issues: IssueTask[]): string {
   const first = issues[0];
-  if (!first) return '';
+  if (!first) return "";
 
   const tierDef = SUBCATEGORY_TIERS.find(t => t.name === first.subcategory);
-  if (!tierDef) return '';
+  if (!tierDef) return "";
 
   const currentScore = first.currentScore ?? 0;
   const maxScore = tierDef.maxScore;
@@ -288,11 +302,11 @@ export function buildScoreContext(issues: IssueTask[]): string {
     }
   }
 
-  if (issuesNeeded === 0 || pointsGained === 0) return '';
+  if (issuesNeeded === 0 || pointsGained === 0) return "";
 
   return (
     `SCORE CONTEXT: ${first.subcategory} is at ${currentScore}/${maxScore}. ` +
-    `Fixing ${issuesNeeded} issue${issuesNeeded !== 1 ? 's' : ''} gains +${pointsGained} point${pointsGained !== 1 ? 's' : ''}. ` +
+    `Fixing ${issuesNeeded} issue${issuesNeeded !== 1 ? "s" : ""} gains +${pointsGained} point${pointsGained !== 1 ? "s" : ""}. ` +
     `Target the highest-severity issue first.`
   );
 }
@@ -303,7 +317,7 @@ export async function buildIssuePlanPrompt(
   cwd?: string,
   strategyContext?: string,
   repoContext?: string,
-  priorRoundsContext?: string,
+  priorRoundsContext?: string
 ): Promise<string> {
   // Architect mode: if the first issue carries a pre-built prompt, use it verbatim
   if (issues[0]?.architectPrompt) {
@@ -318,10 +332,10 @@ export async function buildIssuePlanPrompt(
   const issueList = formatIssuesForPrompt(issues);
   // Parse path from context (format: "Path: ./server/routes/groups.ts")
   const pathMatch = context.match(/^Path:\s*(.+)$/m);
-  const targetPath = pathMatch ? pathMatch[1].trim() : '';
+  const targetPath = pathMatch ? pathMatch[1].trim() : "";
 
   // GitNexus intelligence: dependency graph + blast radius + execution flows
-  let graphIntel = '';
+  let graphIntel = "";
   if (cwd && targetPath) {
     graphIntel = buildIntelligenceBriefing(targetPath, cwd);
     // Note: execution flows are now injected asynchronously via buildIssuePlanPromptAsync
@@ -329,26 +343,26 @@ export async function buildIssuePlanPrompt(
   }
 
   // API impact: inject route/handler context when working on API files
-  let apiIntel = '';
+  let apiIntel = "";
   if (cwd && targetPath && isApiRouteFile(targetPath)) {
     try {
       const apiImpact = await getApiImpact(targetPath, cwd);
       if (apiImpact) {
-        const lines: string[] = ['API IMPACT (affected routes):'];
+        const lines: string[] = ["API IMPACT (affected routes):"];
         for (const r of apiImpact.routes.slice(0, 8)) {
-          lines.push(`  ${r.methods.join(',')} ${r.path} → ${r.handler}`);
+          lines.push(`  ${r.methods.join(",")} ${r.path} → ${r.handler}`);
         }
         if (apiImpact.shapeIssues.length > 0) {
-          lines.push('  Shape issues:');
+          lines.push("  Shape issues:");
           for (const s of apiImpact.shapeIssues.slice(0, 4)) {
             lines.push(`    ${s.route}: expected ${s.expected}, got ${s.actual}`);
           }
         }
         lines.push(`  Risk: ${apiImpact.risk}`);
-        apiIntel = lines.join('\n');
+        apiIntel = lines.join("\n");
       }
     } catch (err) {
-      logger.debug({ err }, 'API impact briefing failed (non-fatal)');
+      logger.debug({ err }, "API impact briefing failed (non-fatal)");
     }
   }
 
@@ -367,13 +381,13 @@ export async function buildIssuePlanPrompt(
 
   return (
     `You are a code improvement assistant. Fix the top issue in ${targetPath}.\n\n` +
-    (repoContext ? `${repoContext}\n\n` : '') +
-    (graphIntel ? `${graphIntel}\n\n` : '') +
-    (apiIntel ? `${apiIntel}\n\n` : '') +
-    (strategyContext ? `${strategyContext}\n\n` : '') +
-    (scoreCtx ? `${scoreCtx}\n\n` : '') +
+    (repoContext ? `${repoContext}\n\n` : "") +
+    (graphIntel ? `${graphIntel}\n\n` : "") +
+    (apiIntel ? `${apiIntel}\n\n` : "") +
+    (strategyContext ? `${strategyContext}\n\n` : "") +
+    (scoreCtx ? `${scoreCtx}\n\n` : "") +
     `ISSUES FOUND:\n${issueList}\n\n` +
-    (fixGuidance ? `FIX GUIDANCE:\n${fixGuidance}\n\n` : '') +
+    (fixGuidance ? `FIX GUIDANCE:\n${fixGuidance}\n\n` : "") +
     `HARD CONSTRAINTS (violating these will cause rollback):\n` +
     `${constraints}\n` +
     `- Do NOT restructure, or rewrite functions\n` +
@@ -423,7 +437,6 @@ export async function buildIssuePlanPrompt(
   );
 }
 
-
 /**
  * Sweep prompt: fix one specific issue across a list of files.
  * Used in sweep mode where we target one issue type across the entire codebase.
@@ -434,7 +447,7 @@ export function buildSweepPrompt(issueDescription: string, filePaths: string[]):
 ISSUE: ${issueDescription}
 
 FILES TO FIX (touch ONLY these files, no others):
-${filePaths.map(f => `  - ${f}`).join('\n')}
+${filePaths.map(f => `  - ${f}`).join("\n")}
 
 HARD CONSTRAINTS:
 - Fix ONLY the described issue in ONLY the listed files
@@ -480,7 +493,6 @@ function buildBuildPrompt(proposal: string): string {
   );
 }
 
-
 /**
  * Build a single-shot architect prompt that instructs the agent to make ONE
  * high-leverage structural improvement — extracting shared modules, consolidating
@@ -490,11 +502,11 @@ function buildBuildPrompt(proposal: string): string {
  * can identify the highest-ROI architectural change.
  */
 export function buildArchitectPrompt(scanResult: ScanResult, cwd: string): string {
-  let intel = '';
+  let intel = "";
   try {
-    intel = buildIntelligenceBriefing('.', cwd);
+    intel = buildIntelligenceBriefing(".", cwd);
   } catch (err) {
-    logger.debug({ err }, 'GitNexus briefing unavailable for architect prompt');
+    logger.debug({ err }, "GitNexus briefing unavailable for architect prompt");
   }
 
   const graphTools = buildGraphToolInstructions(cwd);
@@ -504,16 +516,18 @@ export function buildArchitectPrompt(scanResult: ScanResult, cwd: string): strin
     .sort((a, b) => b.count - a.count)
     .slice(0, 12);
 
-  const issuesList = topIssues.map(i => {
-    const locs = i.locations?.slice(0, 4).join(', ') ?? '';
-    return `  - [${i.severity}] ${i.description}: ${i.count} occurrences${locs ? ` — in ${locs}` : ''}`;
-  }).join('\n');
+  const issuesList = topIssues
+    .map(i => {
+      const locs = i.locations?.slice(0, 4).join(", ") ?? "";
+      return `  - [${i.severity}] ${i.description}: ${i.count} occurrences${locs ? ` — in ${locs}` : ""}`;
+    })
+    .join("\n");
 
   return (
     `You are an expert software architect. Make ONE high-leverage structural improvement ` +
     `that eliminates as many issues as possible at once.\n\n` +
-    (intel ? `CODEBASE INTELLIGENCE:\n${intel}\n\n` : '') +
-    (graphTools ? `GRAPH QUERY TOOLS (use rename for graph-aware symbol renaming):\n${graphTools}\n\n` : '') +
+    (intel ? `CODEBASE INTELLIGENCE:\n${intel}\n\n` : "") +
+    (graphTools ? `GRAPH QUERY TOOLS (use rename for graph-aware symbol renaming):\n${graphTools}\n\n` : "") +
     `TOP ISSUES BY VOLUME (score: ${scanResult.total}/100, ${scanResult.totalIssuesFound} total issues):\n` +
     `${issuesList}\n\n` +
     `ARCHITECTURAL OPPORTUNITIES TO CONSIDER:\n` +
@@ -552,7 +566,7 @@ export function buildPlanPrompt(scanSummary: string, targetPath: string, targetD
     `You are a code planning assistant. Analyze the target and produce a structured execution plan.\n\n` +
     `TARGET: ${targetPath}\n` +
     `DESCRIPTION: ${targetDescription}\n\n` +
-    (scanSummary ? `SCAN SUMMARY:\n${scanSummary}\n\n` : '') +
+    (scanSummary ? `SCAN SUMMARY:\n${scanSummary}\n\n` : "") +
     `INSTRUCTIONS:\n` +
     `- Read the files in ${targetPath} to understand the current state\n` +
     `- Identify which files will need to be touched to improve this target\n` +
@@ -577,11 +591,11 @@ export function buildPlanPrompt(scanSummary: string, targetPath: string, targetD
  * a structured FeaturePlan JSON describing all implementation steps.
  */
 export function buildFeaturePlanPrompt(spec: string, cwd: string): string {
-  let graphIntel = '';
+  let graphIntel = "";
   try {
-    graphIntel = buildIntelligenceBriefing('.', cwd);
+    graphIntel = buildIntelligenceBriefing(".", cwd);
   } catch (err) {
-    logger.debug({ err }, 'GitNexus briefing unavailable for feature plan prompt');
+    logger.debug({ err }, "GitNexus briefing unavailable for feature plan prompt");
   }
 
   const graphTools = buildGraphToolInstructions(cwd);
@@ -589,8 +603,8 @@ export function buildFeaturePlanPrompt(spec: string, cwd: string): string {
   return (
     `You are an expert software architect. Your task is to plan the implementation of a new feature.\n\n` +
     `FEATURE SPECIFICATION:\n${spec}\n\n` +
-    (graphIntel ? `CODEBASE INTELLIGENCE:\n${graphIntel}\n\n` : '') +
-    (graphTools ? `GRAPH QUERY TOOLS (use these to explore the codebase before planning):\n${graphTools}\n\n` : '') +
+    (graphIntel ? `CODEBASE INTELLIGENCE:\n${graphIntel}\n\n` : "") +
+    (graphTools ? `GRAPH QUERY TOOLS (use these to explore the codebase before planning):\n${graphTools}\n\n` : "") +
     `INSTRUCTIONS:\n` +
     `- Explore the codebase to understand existing structure and patterns\n` +
     `- Identify which files need to be created or modified\n` +
@@ -630,21 +644,28 @@ export function buildFeaturePlanPrompt(spec: string, cwd: string): string {
  * knows what has been built and what to build next.
  */
 export function buildFeatureClickPrompt(
-  step: FeatureStep, plan: FeaturePlan, cwd: string, strategyContext?: string,
+  step: FeatureStep,
+  plan: FeaturePlan,
+  cwd: string,
+  strategyContext?: string
 ): string {
-  let graphIntel = '';
+  let graphIntel = "";
   try {
     // Get graph context for the files this step will touch
-    const filePaths = step.files.length > 0 ? step.files : ['.'];
-    graphIntel = filePaths.map(f => {
-      try {
-        return buildIntelligenceBriefing(f, cwd);
-      } catch (err) {
-        logger.debug({ err, f }, 'GitNexus briefing failed for file'); return '';
-      }
-    }).filter(Boolean).join('\n\n');
+    const filePaths = step.files.length > 0 ? step.files : ["."];
+    graphIntel = filePaths
+      .map(f => {
+        try {
+          return buildIntelligenceBriefing(f, cwd);
+        } catch (err) {
+          logger.debug({ err, f }, "GitNexus briefing failed for file");
+          return "";
+        }
+      })
+      .filter(Boolean)
+      .join("\n\n");
   } catch (err) {
-    logger.debug({ err }, 'GitNexus briefing failed for feature click prompt');
+    logger.debug({ err }, "GitNexus briefing failed for feature click prompt");
   }
 
   const graphTools = buildGraphToolInstructions(cwd);
@@ -652,35 +673,33 @@ export function buildFeatureClickPrompt(
   const completedSteps = plan.steps.filter(s => plan.completedSteps.includes(s.id));
   const remainingSteps = plan.steps.filter(s => !plan.completedSteps.includes(s.id) && s.id !== step.id);
 
-  const completedSummary = completedSteps.length > 0
-    ? completedSteps.map(s => `  ✓ Step ${s.id}: ${s.description}`).join('\n')
-    : '  (none yet)';
+  const completedSummary =
+    completedSteps.length > 0
+      ? completedSteps.map(s => `  ✓ Step ${s.id}: ${s.description}`).join("\n")
+      : "  (none yet)";
 
-  const remainingSummary = remainingSteps.length > 0
-    ? remainingSteps.map(s => `  • Step ${s.id}: ${s.description}`).join('\n')
-    : '  (this is the last step)';
+  const remainingSummary =
+    remainingSteps.length > 0
+      ? remainingSteps.map(s => `  • Step ${s.id}: ${s.description}`).join("\n")
+      : "  (this is the last step)";
 
-  const filesCreated = plan.filesCreated.length > 0
-    ? plan.filesCreated.join(', ')
-    : '(none yet)';
+  const filesCreated = plan.filesCreated.length > 0 ? plan.filesCreated.join(", ") : "(none yet)";
 
-  const filesModified = plan.filesModified.length > 0
-    ? plan.filesModified.join(', ')
-    : '(none yet)';
+  const filesModified = plan.filesModified.length > 0 ? plan.filesModified.join(", ") : "(none yet)";
 
   return (
     `You are implementing a feature. Implement ONLY the current step described below.\n\n` +
     `FEATURE SPEC:\n${plan.spec}\n\n` +
     `CURRENT STEP (Step ${step.id}):\n${step.description}\n` +
-    `Files to touch: ${step.files.length > 0 ? step.files.join(', ') : '(determine from context)'}\n\n` +
+    `Files to touch: ${step.files.length > 0 ? step.files.join(", ") : "(determine from context)"}\n\n` +
     `IMPLEMENTATION PROGRESS:\n` +
     `Completed steps:\n${completedSummary}\n\n` +
     `Files created so far: ${filesCreated}\n` +
     `Files modified so far: ${filesModified}\n\n` +
     `Remaining steps (do NOT implement these now):\n${remainingSummary}\n\n` +
-    (graphIntel ? `GRAPH CONTEXT FOR AFFECTED FILES:\n${graphIntel}\n\n` : '') +
-    (graphTools ? `GRAPH QUERY TOOLS (use to explore dependencies before implementing):\n${graphTools}\n\n` : '') +
-    (strategyContext ? `${strategyContext}\n\n` : '') +
+    (graphIntel ? `GRAPH CONTEXT FOR AFFECTED FILES:\n${graphIntel}\n\n` : "") +
+    (graphTools ? `GRAPH QUERY TOOLS (use to explore dependencies before implementing):\n${graphTools}\n\n` : "") +
+    (strategyContext ? `${strategyContext}\n\n` : "") +
     `CONSTRAINTS:\n` +
     `- Implement ONLY Step ${step.id}: "${step.description}"\n` +
     `- Do NOT implement other steps — they will be handled in subsequent clicks\n` +

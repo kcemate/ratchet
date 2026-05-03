@@ -1,11 +1,11 @@
-import { readFile, writeFile, mkdir, unlink } from 'fs/promises';
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
-import { randomUUID } from 'crypto';
-import { logger } from '../lib/logger.js';
-import type { ScanResult } from '../core/scanner';
-import type { RatchetRun, Click } from '../types.js';
-import type { AsyncWriter } from './async-writer.js';
+import { readFile, writeFile, mkdir, unlink } from "fs/promises";
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
+import { randomUUID } from "crypto";
+import { logger } from "../lib/logger.js";
+import type { ScanResult } from "../core/scanner";
+import type { RatchetRun, Click } from "../types.js";
+import type { AsyncWriter } from "./async-writer.js";
 
 // ── Types
 
@@ -20,7 +20,7 @@ export interface CodebaseProfile {
 
 export interface StrategyInsight {
   id: string;
-  type: 'what-works' | 'what-fails' | 'observation';
+  type: "what-works" | "what-fails" | "observation";
   description: string;
   evidence: string;
   confidence: number; // 0-1
@@ -69,7 +69,7 @@ export interface Strategy {
 
 // ── Constants
 
-const STRATEGY_FILE = '.ratchet/strategy.md';
+const STRATEGY_FILE = ".ratchet/strategy.md";
 const MAX_RUN_SUMMARIES = 20;
 const HOT_SPOT_MIN_ATTEMPTS = 3;
 const HOT_SPOT_ROLLBACK_THRESHOLD = 0.5;
@@ -79,23 +79,25 @@ const CONFIDENCE_DECAY = 0.1;
 
 function parseYamlValue(val: string): unknown {
   const trimmed = val.trim();
-  if (trimmed === 'true') return true;
-  if (trimmed === 'false') return false;
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
   const num = Number(trimmed);
-  if (!isNaN(num) && trimmed !== '') return num;
+  if (!isNaN(num) && trimmed !== "") return num;
   // Strip surrounding quotes
-  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-    return trimmed.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\");
   }
   return trimmed;
 }
 
 function parseInlineArray(val: string): string[] {
   const trimmed = val.trim();
-  if (!trimmed.startsWith('[')) return [trimmed].filter(Boolean);
+  if (!trimmed.startsWith("[")) return [trimmed].filter(Boolean);
   const inner = trimmed.slice(1, -1);
-  return inner.split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+  return inner
+    .split(",")
+    .map(s => s.trim().replace(/^["']|["']$/g, ""))
+    .filter(Boolean);
 }
 
 /**
@@ -107,25 +109,34 @@ function parseFrontmatter(content: string): { data: Record<string, unknown>; bod
   if (!match) return { data: {}, body: content };
 
   const yaml = match[1];
-  const body = match[2] ?? '';
+  const body = match[2] ?? "";
   const data: Record<string, unknown> = {};
 
-  const lines = yaml.split('\n');
+  const lines = yaml.split("\n");
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    const colonIdx = line.indexOf(':');
-    if (colonIdx === -1) { i++; continue; }
+    const colonIdx = line.indexOf(":");
+    if (colonIdx === -1) {
+      i++;
+      continue;
+    }
 
     const key = line.slice(0, colonIdx).trim();
     const rest = line.slice(colonIdx + 1).trim();
 
-    if (rest === '' || rest === '|' || rest === '>') {
+    if (rest === "" || rest === "|" || rest === ">") {
       // Check if next lines are a YAML list
       const list: string[] = [];
       i++;
-      while (i < lines.length && lines[i].trimStart().startsWith('-')) {
-        list.push(lines[i].trimStart().slice(1).trim().replace(/^["']|["']$/g, ''));
+      while (i < lines.length && lines[i].trimStart().startsWith("-")) {
+        list.push(
+          lines[i]
+            .trimStart()
+            .slice(1)
+            .trim()
+            .replace(/^["']|["']$/g, "")
+        );
         i++;
       }
       if (list.length > 0) {
@@ -134,7 +145,7 @@ function parseFrontmatter(content: string): { data: Record<string, unknown>; bod
       continue;
     }
 
-    if (rest.startsWith('[')) {
+    if (rest.startsWith("[")) {
       data[key] = parseInlineArray(rest);
     } else {
       data[key] = parseYamlValue(rest);
@@ -150,13 +161,13 @@ function parseFrontmatter(content: string): { data: Record<string, unknown>; bod
  */
 function toYamlValue(val: unknown): string {
   if (Array.isArray(val)) {
-    if (val.length === 0) return '[]';
-    return '[' + val.map(v => `"${String(v).replace(/"/g, '\\"')}"`).join(', ') + ']';
+    if (val.length === 0) return "[]";
+    return "[" + val.map(v => `"${String(v).replace(/"/g, '\\"')}"`).join(", ") + "]";
   }
-  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-  if (typeof val === 'string') {
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "string") {
     // Quote if contains special chars
-    if (/[:#\[\]{},]/.test(val) || val.includes('\n')) {
+    if (/[:#[\]{},]/.test(val) || val.includes("\n")) {
       return `"${val.replace(/"/g, '\\"')}"`;
     }
     return val;
@@ -168,20 +179,20 @@ function toYamlValue(val: unknown): string {
 
 function strategyToMarkdown(strategy: Strategy): string {
   const fm = [
-    '---',
+    "---",
     `version: ${strategy.version}`,
     `createdAt: ${strategy.createdAt}`,
     `updatedAt: ${strategy.updatedAt}`,
-    '',
-    '# Codebase Profile',
+    "",
+    "# Codebase Profile",
     `profile.name: ${toYamlValue(strategy.profile.name)}`,
     `profile.techStack: ${toYamlValue(strategy.profile.techStack)}`,
     `profile.patterns: ${toYamlValue(strategy.profile.patterns)}`,
     `profile.testFramework: ${toYamlValue(strategy.profile.testFramework)}`,
     `profile.totalFiles: ${strategy.profile.totalFiles}`,
     `profile.lastScanned: ${strategy.profile.lastScanned}`,
-    '---',
-  ].join('\n');
+    "---",
+  ].join("\n");
 
   const sections: string[] = [];
 
@@ -191,16 +202,16 @@ function strategyToMarkdown(strategy: Strategy): string {
   // Profile
   sections.push(`## Codebase Profile\n`);
   sections.push(`- **Name:** ${strategy.profile.name}`);
-  sections.push(`- **Tech stack:** ${strategy.profile.techStack.join(', ') || 'unknown'}`);
+  sections.push(`- **Tech stack:** ${strategy.profile.techStack.join(", ") || "unknown"}`);
   sections.push(`- **Test framework:** ${strategy.profile.testFramework}`);
   sections.push(`- **Total files:** ${strategy.profile.totalFiles}`);
-  sections.push(`- **Patterns:** ${strategy.profile.patterns.join(', ') || 'none detected'}`);
-  sections.push('');
+  sections.push(`- **Patterns:** ${strategy.profile.patterns.join(", ") || "none detected"}`);
+  sections.push("");
 
   // Insights
-  const works = strategy.insights.filter(i => i.type === 'what-works');
-  const fails = strategy.insights.filter(i => i.type === 'what-fails');
-  const obs = strategy.insights.filter(i => i.type === 'observation');
+  const works = strategy.insights.filter(i => i.type === "what-works");
+  const fails = strategy.insights.filter(i => i.type === "what-fails");
+  const obs = strategy.insights.filter(i => i.type === "observation");
 
   if (works.length > 0) {
     sections.push(`## What Works\n`);
@@ -210,7 +221,7 @@ function strategyToMarkdown(strategy: Strategy): string {
       sections.push(`- **Evidence:** ${ins.evidence}`);
       sections.push(`- **Confidence:** ${conf}%`);
       sections.push(`- **Run:** ${ins.runId} | **Added:** ${ins.createdAt}`);
-      sections.push('');
+      sections.push("");
     }
   }
 
@@ -222,7 +233,7 @@ function strategyToMarkdown(strategy: Strategy): string {
       sections.push(`- **Evidence:** ${ins.evidence}`);
       sections.push(`- **Confidence:** ${conf}%`);
       sections.push(`- **Run:** ${ins.runId} | **Added:** ${ins.createdAt}`);
-      sections.push('');
+      sections.push("");
     }
   }
 
@@ -231,7 +242,7 @@ function strategyToMarkdown(strategy: Strategy): string {
     for (const ins of obs) {
       sections.push(`- ${ins.description} _(${ins.evidence})_`);
     }
-    sections.push('');
+    sections.push("");
   }
 
   // Hot spots
@@ -243,7 +254,7 @@ function strategyToMarkdown(strategy: Strategy): string {
       sections.push(`- **${hs.filePath}** — ${pct}% rollback rate (${hs.attempts} attempts)`);
       if (hs.notes) sections.push(`  - ${hs.notes}`);
     }
-    sections.push('');
+    sections.push("");
   }
 
   // Anti-patterns
@@ -253,7 +264,7 @@ function strategyToMarkdown(strategy: Strategy): string {
       sections.push(`### ${ap.pattern} (seen ${ap.occurrences}x)`);
       sections.push(`- **Example:** ${ap.example}`);
       sections.push(`- **Last seen:** ${ap.lastSeen}`);
-      sections.push('');
+      sections.push("");
     }
   }
 
@@ -261,7 +272,7 @@ function strategyToMarkdown(strategy: Strategy): string {
   sections.push(`## Recommended Approach\n`);
   const rec = buildRecommendationText(strategy);
   sections.push(rec);
-  sections.push('');
+  sections.push("");
 
   // Run history
   if (strategy.runSummaries.length > 0) {
@@ -270,23 +281,23 @@ function strategyToMarkdown(strategy: Strategy): string {
     sections.push(`|------|------|--------|-------|---|--------|-------------|-------------|`);
     for (const rs of [...strategy.runSummaries].reverse()) {
       const delta = rs.scoreAfter - rs.scoreBefore;
-      const sign = delta > 0 ? '+' : '';
-      const date = rs.date.split('T')[0];
+      const sign = delta > 0 ? "+" : "";
+      const date = rs.date.split("T")[0];
       sections.push(
         `| ${date} | ${rs.mode} | ${rs.scoreBefore} | ${rs.scoreAfter} | ` +
-        `${sign}${delta} | ${rs.landed} | ${rs.rolledBack} | ${rs.keyInsight} |`,
+          `${sign}${delta} | ${rs.landed} | ${rs.rolledBack} | ${rs.keyInsight} |`
       );
     }
-    sections.push('');
+    sections.push("");
   }
 
-  return fm + '\n\n' + sections.join('\n');
+  return fm + "\n\n" + sections.join("\n");
 }
 
 function buildRecommendationText(strategy: Strategy): string {
   const lines: string[] = [];
 
-  const works = strategy.insights.filter(i => i.type === 'what-works' && i.confidence >= 0.6);
+  const works = strategy.insights.filter(i => i.type === "what-works" && i.confidence >= 0.6);
   if (works.length > 0) {
     lines.push(`**Based on ${strategy.runSummaries.length} run(s):**`);
     for (const ins of works.slice(0, 3)) {
@@ -310,27 +321,27 @@ function buildRecommendationText(strategy: Strategy): string {
   }
 
   if (lines.length === 0) {
-    lines.push('Not enough data yet. Run more clicks to build up strategy knowledge.');
+    lines.push("Not enough data yet. Run more clicks to build up strategy knowledge.");
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function markdownToStrategy(content: string): Strategy | null {
   try {
     const { data } = parseFrontmatter(content);
 
-    const version = Number(data['version'] ?? 1);
-    const createdAt = String(data['createdAt'] ?? new Date().toISOString());
-    const updatedAt = String(data['updatedAt'] ?? new Date().toISOString());
+    const version = Number(data["version"] ?? 1);
+    const createdAt = String(data["createdAt"] ?? new Date().toISOString());
+    const updatedAt = String(data["updatedAt"] ?? new Date().toISOString());
 
     const profile: CodebaseProfile = {
-      name: String(data['profile.name'] ?? ''),
-      techStack: Array.isArray(data['profile.techStack']) ? (data['profile.techStack'] as string[]) : [],
-      patterns: Array.isArray(data['profile.patterns']) ? (data['profile.patterns'] as string[]) : [],
-      testFramework: String(data['profile.testFramework'] ?? 'unknown'),
-      totalFiles: Number(data['profile.totalFiles'] ?? 0),
-      lastScanned: String(data['profile.lastScanned'] ?? createdAt),
+      name: String(data["profile.name"] ?? ""),
+      techStack: Array.isArray(data["profile.techStack"]) ? (data["profile.techStack"] as string[]) : [],
+      patterns: Array.isArray(data["profile.patterns"]) ? (data["profile.patterns"] as string[]) : [],
+      testFramework: String(data["profile.testFramework"] ?? "unknown"),
+      totalFiles: Number(data["profile.totalFiles"] ?? 0),
+      lastScanned: String(data["profile.lastScanned"] ?? createdAt),
     };
 
     // Parse insight/hotspot/antipattern/runSummary sections from markdown body
@@ -342,10 +353,10 @@ function markdownToStrategy(content: string): Strategy | null {
     // Insights etc. need to be stored in frontmatter too (extended)
 
     // Extended frontmatter fields for arrays — stored as JSON-encoded strings
-    const insights = parseJsonField<StrategyInsight[]>(data['insights'], []);
-    const hotSpots = parseJsonField<HotSpot[]>(data['hotSpots'], []);
-    const antiPatterns = parseJsonField<AntiPattern[]>(data['antiPatterns'], []);
-    const runSummaries = parseJsonField<RunSummary[]>(data['runSummaries'], []);
+    const insights = parseJsonField<StrategyInsight[]>(data["insights"], []);
+    const hotSpots = parseJsonField<HotSpot[]>(data["hotSpots"], []);
+    const antiPatterns = parseJsonField<AntiPattern[]>(data["antiPatterns"], []);
+    const runSummaries = parseJsonField<RunSummary[]>(data["runSummaries"], []);
 
     return {
       version,
@@ -358,18 +369,18 @@ function markdownToStrategy(content: string): Strategy | null {
       runSummaries,
     };
   } catch (err) {
-    logger.warn({ err }, 'Failed to parse strategy file');
+    logger.warn({ err }, "Failed to parse strategy file");
     return null;
   }
 }
 
 function parseJsonField<T>(val: unknown, fallback: T): T {
   if (val === undefined || val === null) return fallback;
-  if (typeof val === 'string') {
+  if (typeof val === "string") {
     try {
       return JSON.parse(val) as T;
     } catch (err) {
-      logger.debug({ err, val }, 'Failed to parse JSON field, using fallback');
+      logger.debug({ err, val }, "Failed to parse JSON field, using fallback");
       return fallback;
     }
   }
@@ -387,7 +398,7 @@ function serializeStrategy(strategy: Strategy): string {
   const runSummariesJson = JSON.stringify(strategy.runSummaries);
 
   const fm = [
-    '---',
+    "---",
     `version: ${strategy.version}`,
     `createdAt: ${strategy.createdAt}`,
     `updatedAt: ${strategy.updatedAt}`,
@@ -401,11 +412,11 @@ function serializeStrategy(strategy: Strategy): string {
     `hotSpots: ${toYamlValue(hotSpotsJson)}`,
     `antiPatterns: ${toYamlValue(antiPatternsJson)}`,
     `runSummaries: ${toYamlValue(runSummariesJson)}`,
-    '---',
-  ].join('\n');
+    "---",
+  ].join("\n");
 
   const body = buildMarkdownBody(strategy);
-  return fm + '\n\n' + body;
+  return fm + "\n\n" + body;
 }
 
 function buildMarkdownBody(strategy: Strategy): string {
@@ -413,7 +424,7 @@ function buildMarkdownBody(strategy: Strategy): string {
 
   sections.push(`# Ratchet Strategy — ${strategy.profile.name}\n`);
   sections.push(
-    `> Auto-generated by Ratchet (v${strategy.version}). Last updated: ${strategy.updatedAt.split('T')[0]}\n`,
+    `> Auto-generated by Ratchet (v${strategy.version}). Last updated: ${strategy.updatedAt.split("T")[0]}\n`
   );
   sections.push(`> This file is committed to git. Edit freely — ratchet will merge its updates.\n`);
 
@@ -422,15 +433,15 @@ function buildMarkdownBody(strategy: Strategy): string {
   sections.push(`| Field | Value |`);
   sections.push(`|-------|-------|`);
   sections.push(`| Name | ${strategy.profile.name} |`);
-  sections.push(`| Tech stack | ${strategy.profile.techStack.join(', ') || 'unknown'} |`);
+  sections.push(`| Tech stack | ${strategy.profile.techStack.join(", ") || "unknown"} |`);
   sections.push(`| Test framework | ${strategy.profile.testFramework} |`);
   sections.push(`| Total files | ${strategy.profile.totalFiles} |`);
-  sections.push(`| Patterns | ${strategy.profile.patterns.join(', ') || 'none detected'} |`);
-  sections.push(`| Last scanned | ${strategy.profile.lastScanned.split('T')[0]} |`);
-  sections.push('');
+  sections.push(`| Patterns | ${strategy.profile.patterns.join(", ") || "none detected"} |`);
+  sections.push(`| Last scanned | ${strategy.profile.lastScanned.split("T")[0]} |`);
+  sections.push("");
 
   // What works
-  const works = strategy.insights.filter(i => i.type === 'what-works').sort((a, b) => b.confidence - a.confidence);
+  const works = strategy.insights.filter(i => i.type === "what-works").sort((a, b) => b.confidence - a.confidence);
   if (works.length > 0) {
     sections.push(`## ✅ What Works\n`);
     for (const ins of works) {
@@ -439,14 +450,14 @@ function buildMarkdownBody(strategy: Strategy): string {
       sections.push(`- **Evidence:** ${ins.evidence}`);
       sections.push(
         `- **Confidence:** ${conf}% | **Run:** \`${ins.runId.slice(0, 8)}\` ` +
-        `| **Added:** ${ins.createdAt.split('T')[0]}`,
+          `| **Added:** ${ins.createdAt.split("T")[0]}`
       );
-      sections.push('');
+      sections.push("");
     }
   }
 
   // What fails
-  const fails = strategy.insights.filter(i => i.type === 'what-fails').sort((a, b) => b.confidence - a.confidence);
+  const fails = strategy.insights.filter(i => i.type === "what-fails").sort((a, b) => b.confidence - a.confidence);
   if (fails.length > 0) {
     sections.push(`## ❌ What Doesn't Work\n`);
     for (const ins of fails) {
@@ -455,20 +466,20 @@ function buildMarkdownBody(strategy: Strategy): string {
       sections.push(`- **Evidence:** ${ins.evidence}`);
       sections.push(
         `- **Confidence:** ${conf}% | **Run:** \`${ins.runId.slice(0, 8)}\` ` +
-        `| **Added:** ${ins.createdAt.split('T')[0]}`,
+          `| **Added:** ${ins.createdAt.split("T")[0]}`
       );
-      sections.push('');
+      sections.push("");
     }
   }
 
   // Observations
-  const obs = strategy.insights.filter(i => i.type === 'observation');
+  const obs = strategy.insights.filter(i => i.type === "observation");
   if (obs.length > 0) {
     sections.push(`## 👁 Observations\n`);
     for (const ins of obs) {
       sections.push(`- ${ins.description} _(${ins.evidence})_`);
     }
-    sections.push('');
+    sections.push("");
   }
 
   // Hot spots
@@ -481,7 +492,7 @@ function buildMarkdownBody(strategy: Strategy): string {
       sections.push(`- **\`${hs.filePath}\`** — ${pct}% rollback over ${hs.attempts} attempts`);
       if (hs.notes) sections.push(`  - _${hs.notes}_`);
     }
-    sections.push('');
+    sections.push("");
   }
 
   // Anti-patterns
@@ -490,15 +501,15 @@ function buildMarkdownBody(strategy: Strategy): string {
     for (const ap of strategy.antiPatterns) {
       sections.push(`### ${ap.pattern} _(seen ${ap.occurrences}x)_`);
       sections.push(`- **Example:** ${ap.example}`);
-      sections.push(`- **Last seen:** ${ap.lastSeen.split('T')[0]}`);
-      sections.push('');
+      sections.push(`- **Last seen:** ${ap.lastSeen.split("T")[0]}`);
+      sections.push("");
     }
   }
 
   // Recommendation
   sections.push(`## 💡 Recommended Approach\n`);
   sections.push(buildRecommendationText(strategy));
-  sections.push('');
+  sections.push("");
 
   // Run history
   if (strategy.runSummaries.length > 0) {
@@ -507,21 +518,19 @@ function buildMarkdownBody(strategy: Strategy): string {
     sections.push(`|------|------|-------|---|------|-----------|-------------|`);
     for (const rs of [...strategy.runSummaries].reverse()) {
       const delta = rs.scoreAfter - rs.scoreBefore;
-      const sign = delta > 0 ? '+' : '';
-      const date = rs.date.split('T')[0];
+      const sign = delta > 0 ? "+" : "";
+      const date = rs.date.split("T")[0];
       const total = rs.landed + rs.rolledBack;
-      const locPart = rs.avgLocDelta !== undefined
-        ? `${rs.avgLocDelta >= 0 ? '+' : ''}${rs.avgLocDelta}`
-        : '—';
+      const locPart = rs.avgLocDelta !== undefined ? `${rs.avgLocDelta >= 0 ? "+" : ""}${rs.avgLocDelta}` : "—";
       sections.push(
         `| ${date} | ${rs.mode} | ${rs.scoreBefore}→${rs.scoreAfter} | ` +
-        `${sign}${delta} | ${rs.landed}/${total} | ${locPart} | ${rs.keyInsight} |`,
+          `${sign}${delta} | ${rs.landed}/${total} | ${locPart} | ${rs.keyInsight} |`
       );
     }
-    sections.push('');
+    sections.push("");
   }
 
-  return sections.join('\n');
+  return sections.join("\n");
 }
 
 // ── Public API
@@ -534,14 +543,14 @@ export async function loadStrategy(cwd: string): Promise<Strategy | null> {
   if (!existsSync(filePath)) return null;
 
   try {
-    const content = await readFile(filePath, 'utf-8');
+    const content = await readFile(filePath, "utf-8");
     const strategy = markdownToStrategy(content);
     if (strategy) {
-      logger.debug({ version: strategy.version }, 'Strategy loaded');
+      logger.debug({ version: strategy.version }, "Strategy loaded");
     }
     return strategy;
   } catch (err) {
-    logger.warn({ err }, 'Failed to load strategy file');
+    logger.warn({ err }, "Failed to load strategy file");
     return null;
   }
 }
@@ -551,22 +560,18 @@ export async function loadStrategy(cwd: string): Promise<Strategy | null> {
  * When an AsyncWriter is provided, the write is enqueued instead of awaited
  * so it does not block the click loop.
  */
-export async function saveStrategy(
-  cwd: string,
-  strategy: Strategy,
-  writer?: AsyncWriter,
-): Promise<void> {
+export async function saveStrategy(cwd: string, strategy: Strategy, writer?: AsyncWriter): Promise<void> {
   const content = serializeStrategy(strategy);
   if (writer) {
     writer.enqueueRaw(STRATEGY_FILE, content);
-    logger.debug({ version: strategy.version }, 'Strategy enqueued for async write');
+    logger.debug({ version: strategy.version }, "Strategy enqueued for async write");
     return;
   }
-  const dir = join(cwd, '.ratchet');
+  const dir = join(cwd, ".ratchet");
   await mkdir(dir, { recursive: true });
   const filePath = join(cwd, STRATEGY_FILE);
-  await writeFile(filePath, content, 'utf-8');
-  logger.debug({ version: strategy.version, path: filePath }, 'Strategy saved');
+  await writeFile(filePath, content, "utf-8");
+  logger.debug({ version: strategy.version, path: filePath }, "Strategy saved");
 }
 
 /**
@@ -576,7 +581,7 @@ export async function resetStrategy(cwd: string): Promise<boolean> {
   const filePath = join(cwd, STRATEGY_FILE);
   if (!existsSync(filePath)) return false;
   await unlink(filePath);
-  logger.info({ path: filePath }, 'Strategy reset');
+  logger.info({ path: filePath }, "Strategy reset");
   return true;
 }
 
@@ -589,7 +594,7 @@ export function initStrategy(cwd: string, scan: ScanResult): Strategy {
   const testFramework = detectTestFramework(cwd);
 
   const profile: CodebaseProfile = {
-    name: scan.projectName || cwd.split('/').pop() || 'unknown',
+    name: scan.projectName || cwd.split("/").pop() || "unknown",
     techStack,
     patterns,
     testFramework,
@@ -618,7 +623,7 @@ export async function evolveStrategy(
   cwd: string,
   run: RatchetRun,
   scanBefore: ScanResult | undefined,
-  scanAfter: ScanResult | undefined,
+  scanAfter: ScanResult | undefined
 ): Promise<{ updated: Strategy; keyInsight: string }> {
   let strategy = await loadStrategy(cwd);
   if (!strategy) {
@@ -638,15 +643,17 @@ export async function evolveStrategy(
   const newInsights = extractInsights(run, landedClicks, rolledBackClicks);
 
   // Decay existing insight confidence
-  strategy.insights = strategy.insights.map(ins => ({
-    ...ins,
-    confidence: Math.max(0, ins.confidence - CONFIDENCE_DECAY),
-  })).filter(ins => ins.confidence > 0.05); // Prune very stale insights
+  strategy.insights = strategy.insights
+    .map(ins => ({
+      ...ins,
+      confidence: Math.max(0, ins.confidence - CONFIDENCE_DECAY),
+    }))
+    .filter(ins => ins.confidence > 0.05); // Prune very stale insights
 
   // Merge new insights (deduplicate by description similarity)
   for (const ins of newInsights) {
-    const existing = strategy.insights.find(i =>
-      i.type === ins.type && isSimilarDescription(i.description, ins.description)
+    const existing = strategy.insights.find(
+      i => i.type === ins.type && isSimilarDescription(i.description, ins.description)
     );
     if (existing) {
       // Reinforce confidence
@@ -667,10 +674,11 @@ export async function evolveStrategy(
   const keyInsight = deriveKeyInsight(landedClicks, rolledBackClicks, scoreBefore, scoreAfter);
 
   // Compute average LOC delta across landed clicks (clicks that provided locDelta)
-  const landedWithLoc = landedClicks.filter(c => typeof c.locDelta === 'number');
-  const avgLocDelta = landedWithLoc.length > 0
-    ? Math.round(landedWithLoc.reduce((sum, c) => sum + c.locDelta!, 0) / landedWithLoc.length)
-    : undefined;
+  const landedWithLoc = landedClicks.filter(c => typeof c.locDelta === "number");
+  const avgLocDelta =
+    landedWithLoc.length > 0
+      ? Math.round(landedWithLoc.reduce((sum, c) => sum + c.locDelta!, 0) / landedWithLoc.length)
+      : undefined;
 
   // Add run summary
   const runMode = detectRunMode(run);
@@ -712,7 +720,7 @@ export async function evolveStrategy(
       rolledBack: rolledBackClicks.length,
       avgLocDelta,
     },
-    'Strategy evolved'
+    "Strategy evolved"
   );
 
   return { updated: strategy, keyInsight };
@@ -723,16 +731,16 @@ export async function evolveStrategy(
  * Kept intentionally short (~500 tokens max).
  */
 export function buildStrategyContext(strategy: Strategy): string {
-  const lines: string[] = ['STRATEGY CONTEXT (from previous runs):'];
+  const lines: string[] = ["STRATEGY CONTEXT (from previous runs):"];
 
   // What works — top 3 high-confidence
   const works = strategy.insights
-    .filter(i => i.type === 'what-works' && i.confidence >= 0.5)
+    .filter(i => i.type === "what-works" && i.confidence >= 0.5)
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, 3);
 
   if (works.length > 0) {
-    lines.push('\nWhat works for this codebase:');
+    lines.push("\nWhat works for this codebase:");
     for (const ins of works) {
       lines.push(`  ✅ ${ins.description} (${ins.evidence})`);
     }
@@ -745,19 +753,17 @@ export function buildStrategyContext(strategy: Strategy): string {
     .slice(0, 3);
 
   if (hotFiles.length > 0) {
-    lines.push('\nHigh-risk files (avoid if possible):');
+    lines.push("\nHigh-risk files (avoid if possible):");
     for (const hs of hotFiles) {
       lines.push(`  ⚠️  ${hs.filePath} (${Math.round(hs.rollbackRate * 100)}% rollback rate)`);
     }
   }
 
   // Anti-patterns — top 3
-  const antiPats = strategy.antiPatterns
-    .sort((a, b) => b.occurrences - a.occurrences)
-    .slice(0, 3);
+  const antiPats = strategy.antiPatterns.sort((a, b) => b.occurrences - a.occurrences).slice(0, 3);
 
   if (antiPats.length > 0) {
-    lines.push('\nDo NOT repeat these patterns:');
+    lines.push("\nDo NOT repeat these patterns:");
     for (const ap of antiPats) {
       lines.push(`  ❌ ${ap.pattern}`);
     }
@@ -765,12 +771,12 @@ export function buildStrategyContext(strategy: Strategy): string {
 
   // What fails
   const fails = strategy.insights
-    .filter(i => i.type === 'what-fails' && i.confidence >= 0.5)
+    .filter(i => i.type === "what-fails" && i.confidence >= 0.5)
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, 2);
 
   if (fails.length > 0) {
-    lines.push('\nApproaches that cause rollbacks:');
+    lines.push("\nApproaches that cause rollbacks:");
     for (const ins of fails) {
       lines.push(`  ❌ ${ins.description} (${ins.evidence})`);
     }
@@ -780,19 +786,18 @@ export function buildStrategyContext(strategy: Strategy): string {
   if (strategy.runSummaries.length > 0) {
     const last = strategy.runSummaries[strategy.runSummaries.length - 1];
     const delta = last.scoreAfter - last.scoreBefore;
-    const sign = delta >= 0 ? '+' : '';
-    const locPart = last.avgLocDelta !== undefined
-      ? `, avg LOC delta: ${last.avgLocDelta >= 0 ? '+' : ''}${last.avgLocDelta}`
-      : '';
+    const sign = delta >= 0 ? "+" : "";
+    const locPart =
+      last.avgLocDelta !== undefined ? `, avg LOC delta: ${last.avgLocDelta >= 0 ? "+" : ""}${last.avgLocDelta}` : "";
     lines.push(`\nLast run: ${sign}${delta} score, ${last.landed} landed / ${last.rolledBack} rolled back${locPart}`);
   }
 
   if (lines.length === 1) {
     // No useful context yet
-    return '';
+    return "";
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -802,42 +807,38 @@ export function getRecommendation(strategy: Strategy, target: string): string {
   const lines: string[] = [];
 
   // Check if it's a known hot spot
-  const hotSpot = strategy.hotSpots.find(hs =>
-    hs.filePath === target || target.includes(hs.filePath) || hs.filePath.includes(target)
+  const hotSpot = strategy.hotSpots.find(
+    hs => hs.filePath === target || target.includes(hs.filePath) || hs.filePath.includes(target)
   );
 
   if (hotSpot && hotSpot.rollbackRate >= HOT_SPOT_ROLLBACK_THRESHOLD) {
     lines.push(
       `⚠️  This file has a ${Math.round(hotSpot.rollbackRate * 100)}% rollback rate ` +
-      `(${hotSpot.attempts} attempts).`,
+        `(${hotSpot.attempts} attempts).`
     );
     if (hotSpot.notes) lines.push(`   Note: ${hotSpot.notes}`);
-    lines.push('   Approach with extra caution. Make minimal, targeted changes.');
+    lines.push("   Approach with extra caution. Make minimal, targeted changes.");
   }
 
   // Top working approaches
   const works = strategy.insights
-    .filter(i => i.type === 'what-works' && i.confidence >= 0.5)
+    .filter(i => i.type === "what-works" && i.confidence >= 0.5)
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, 2);
 
   if (works.length > 0) {
-    lines.push('\nRecommended approaches:');
+    lines.push("\nRecommended approaches:");
     for (const ins of works) {
       lines.push(`  - ${ins.description}`);
     }
   }
 
-  return lines.length > 0 ? lines.join('\n') : 'No recommendation available yet.';
+  return lines.length > 0 ? lines.join("\n") : "No recommendation available yet.";
 }
 
 // ── Helper Functions
 
-function extractInsights(
-  run: RatchetRun,
-  landed: Click[],
-  rolledBack: Click[],
-): StrategyInsight[] {
+function extractInsights(run: RatchetRun, landed: Click[], rolledBack: Click[]): StrategyInsight[] {
   const insights: StrategyInsight[] = [];
   const now = new Date().toISOString();
   const total = run.clicks.length;
@@ -858,7 +859,7 @@ function extractInsights(
 
     insights.push({
       id: randomUUID(),
-      type: 'what-works',
+      type: "what-works",
       description: desc,
       evidence: `${landed.length}/${total} clicks landed in run ${run.id.slice(0, 8)}`,
       confidence: 0.6 + landRate * 0.2,
@@ -877,7 +878,7 @@ function extractInsights(
 
     insights.push({
       id: randomUUID(),
-      type: 'what-fails',
+      type: "what-fails",
       description: desc,
       evidence: `${rolledBack.length}/${total} clicks rolled back in run ${run.id.slice(0, 8)}`,
       confidence: 0.5 + rollRate * 0.3,
@@ -887,7 +888,7 @@ function extractInsights(
   }
 
   // Complexity-reducing clicks bonus: landed clicks that shed net lines while keeping score same/better
-  const reducingLanded = landed.filter(c => typeof c.locDelta === 'number' && c.locDelta < 0);
+  const reducingLanded = landed.filter(c => typeof c.locDelta === "number" && c.locDelta < 0);
   if (reducingLanded.length >= 1) {
     const totalReduced = reducingLanded.reduce((sum, c) => sum + Math.abs(c.locDelta!), 0);
     const avgReduced = Math.round(totalReduced / reducingLanded.length);
@@ -897,7 +898,7 @@ function extractInsights(
     const conf = Math.min(0.9, 0.55 + frequencyBonus + sizeBonus);
     insights.push({
       id: randomUUID(),
-      type: 'what-works',
+      type: "what-works",
       description: `Line-reducing changes land cleanly (avg -${avgReduced} LOC)`,
       evidence: `${reducingLanded.length}/${total} clicks reduced net LOC in run ${run.id.slice(0, 8)}`,
       confidence: conf,
@@ -918,7 +919,7 @@ function extractInsights(
     if (topSpec) {
       insights.push({
         id: randomUUID(),
-        type: 'observation',
+        type: "observation",
         description: `The "${topSpec[0]}" specialization wins swarm competitions most often`,
         evidence: `${topSpec[1]} wins in this run`,
         confidence: 0.5,
@@ -984,7 +985,7 @@ function generateHotSpotNote(rollbackRate: number, attempts: number): string {
   }
   if (rollbackRate >= 0.6) return `Frequently causes test failures. Make minimal changes only.`;
   if (rollbackRate >= 0.4) return `Moderate difficulty. Test thoroughly before committing.`;
-  return '';
+  return "";
 }
 
 function updateAntiPatterns(existing: AntiPattern[], rolledBack: Click[], now: string): AntiPattern[] {
@@ -996,16 +997,16 @@ function updateAntiPatterns(existing: AntiPattern[], rolledBack: Click[], now: s
     const reason = click.rollbackReason.toLowerCase();
     let pattern: string | null = null;
 
-    if (reason.includes('too many files') || reason.includes('max-files')) {
-      pattern = 'Touching too many files in one click';
-    } else if (reason.includes('too many lines') || reason.includes('max-lines')) {
-      pattern = 'Making too many line changes at once';
-    } else if (reason.includes('test') && reason.includes('fail')) {
-      pattern = 'Changes that break existing tests';
-    } else if (reason.includes('scope')) {
-      pattern = 'Modifying files outside the target scope';
-    } else if (reason.includes('timeout')) {
-      pattern = 'Operations that time out (too complex)';
+    if (reason.includes("too many files") || reason.includes("max-files")) {
+      pattern = "Touching too many files in one click";
+    } else if (reason.includes("too many lines") || reason.includes("max-lines")) {
+      pattern = "Making too many line changes at once";
+    } else if (reason.includes("test") && reason.includes("fail")) {
+      pattern = "Changes that break existing tests";
+    } else if (reason.includes("scope")) {
+      pattern = "Modifying files outside the target scope";
+    } else if (reason.includes("timeout")) {
+      pattern = "Operations that time out (too complex)";
     }
 
     if (!pattern) continue;
@@ -1031,21 +1032,16 @@ function updateAntiPatterns(existing: AntiPattern[], rolledBack: Click[], now: s
   return updated.sort((a, b) => b.occurrences - a.occurrences);
 }
 
-function deriveKeyInsight(
-  landed: Click[],
-  rolledBack: Click[],
-  scoreBefore: number,
-  scoreAfter: number,
-): string {
+function deriveKeyInsight(landed: Click[], rolledBack: Click[], scoreBefore: number, scoreAfter: number): string {
   const total = landed.length + rolledBack.length;
   const delta = scoreAfter - scoreBefore;
 
-  if (total === 0) return 'No clicks completed';
+  if (total === 0) return "No clicks completed";
 
   if (delta > 5) return `Strong run: +${delta} score, ${landed.length}/${total} landed`;
   if (delta > 0) return `Incremental improvement: +${delta} score`;
   if (delta === 0 && landed.length > 0) return `${landed.length} landed but no score change`;
-  if (rolledBack.length === total) return 'All clicks rolled back — check constraints';
+  if (rolledBack.length === total) return "All clicks rolled back — check constraints";
 
   const topReason = rolledBack
     .filter(c => c.rollbackReason)
@@ -1053,13 +1049,13 @@ function deriveKeyInsight(
     .slice(0, 1)[0];
 
   if (topReason) return `Most rollbacks: ${topReason.slice(0, 60)}`;
-  return `${landed.length}/${total} landed, ${delta >= 0 ? '+' : ''}${delta} score`;
+  return `${landed.length}/${total} landed, ${delta >= 0 ? "+" : ""}${delta} score`;
 }
 
 function detectRunMode(run: RatchetRun): string {
-  if (run.planResult) return 'plan-first';
-  if (run.resumeState) return 'resumed';
-  return 'normal';
+  if (run.planResult) return "plan-first";
+  if (run.resumeState) return "resumed";
+  return "normal";
 }
 
 function dominantExtension(files: string[]): string | null {
@@ -1081,15 +1077,15 @@ function isSimilarDescription(a: string, b: string): boolean {
 function detectTechStack(cwd: string): string[] {
   const stack: string[] = [];
   const checks: [string, string][] = [
-    ['package.json', 'Node.js'],
-    ['tsconfig.json', 'TypeScript'],
-    ['pyproject.toml', 'Python'],
-    ['Cargo.toml', 'Rust'],
-    ['go.mod', 'Go'],
-    ['pom.xml', 'Java/Maven'],
-    ['build.gradle', 'Java/Gradle'],
-    ['Gemfile', 'Ruby'],
-    ['composer.json', 'PHP'],
+    ["package.json", "Node.js"],
+    ["tsconfig.json", "TypeScript"],
+    ["pyproject.toml", "Python"],
+    ["Cargo.toml", "Rust"],
+    ["go.mod", "Go"],
+    ["pom.xml", "Java/Maven"],
+    ["build.gradle", "Java/Gradle"],
+    ["Gemfile", "Ruby"],
+    ["composer.json", "PHP"],
   ];
   for (const [file, name] of checks) {
     if (existsSync(join(cwd, file))) stack.push(name);
@@ -1098,32 +1094,32 @@ function detectTechStack(cwd: string): string[] {
 }
 
 function detectTestFramework(cwd: string): string {
-  if (existsSync(join(cwd, 'vitest.config.ts')) || existsSync(join(cwd, 'vitest.config.js'))) return 'vitest';
-  if (existsSync(join(cwd, 'jest.config.ts')) || existsSync(join(cwd, 'jest.config.js'))) return 'jest';
-  if (existsSync(join(cwd, 'pytest.ini')) || existsSync(join(cwd, 'pyproject.toml'))) return 'pytest';
-  if (existsSync(join(cwd, 'package.json'))) {
+  if (existsSync(join(cwd, "vitest.config.ts")) || existsSync(join(cwd, "vitest.config.js"))) return "vitest";
+  if (existsSync(join(cwd, "jest.config.ts")) || existsSync(join(cwd, "jest.config.js"))) return "jest";
+  if (existsSync(join(cwd, "pytest.ini")) || existsSync(join(cwd, "pyproject.toml"))) return "pytest";
+  if (existsSync(join(cwd, "package.json"))) {
     try {
       type PkgJson = { devDependencies?: Record<string, string>; scripts?: Record<string, string> };
-      const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf-8')) as PkgJson;
-      if (pkg.devDependencies?.vitest) return 'vitest';
-      if (pkg.devDependencies?.jest || pkg.devDependencies?.['@jest/core']) return 'jest';
-      if (pkg.devDependencies?.mocha) return 'mocha';
+      const pkg = JSON.parse(readFileSync(join(cwd, "package.json"), "utf-8")) as PkgJson;
+      if (pkg.devDependencies?.vitest) return "vitest";
+      if (pkg.devDependencies?.jest || pkg.devDependencies?.["@jest/core"]) return "jest";
+      if (pkg.devDependencies?.mocha) return "mocha";
     } catch (err) {
-      logger.debug({ err }, 'Failed to read package.json for test framework detection');
+      logger.debug({ err }, "Failed to read package.json for test framework detection");
     }
   }
-  return 'unknown';
+  return "unknown";
 }
 
 function detectPatterns(cwd: string, scan: ScanResult): string[] {
   const patterns: string[] = [];
-  if (existsSync(join(cwd, 'src'))) patterns.push('src/ layout');
-  if (existsSync(join(cwd, 'tests')) || existsSync(join(cwd, 'test'))) patterns.push('dedicated test directory');
-  if (existsSync(join(cwd, '.ratchet'))) patterns.push('ratchet-enabled');
+  if (existsSync(join(cwd, "src"))) patterns.push("src/ layout");
+  if (existsSync(join(cwd, "tests")) || existsSync(join(cwd, "test"))) patterns.push("dedicated test directory");
+  if (existsSync(join(cwd, ".ratchet"))) patterns.push("ratchet-enabled");
   // Infer from scan categories
   const cats = scan.categories.map(c => c.name);
-  if (cats.includes('Type Safety')) patterns.push('typed');
-  if (cats.includes('Testing')) patterns.push('tested');
+  if (cats.includes("Type Safety")) patterns.push("typed");
+  if (cats.includes("Testing")) patterns.push("tested");
   return patterns;
 }
 
@@ -1133,7 +1129,7 @@ function estimateTotalFiles(scan: ScanResult): number {
 }
 
 function makeFallbackScan(cwd: string): ScanResult {
-  const name = cwd.split('/').pop() ?? 'unknown';
+  const name = cwd.split("/").pop() ?? "unknown";
   return {
     projectName: name,
     total: 0,

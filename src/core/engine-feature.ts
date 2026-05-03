@@ -1,16 +1,16 @@
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { join, dirname } from 'path';
-import { existsSync } from 'fs';
-import type { RatchetRun, FeaturePlan, FeatureStep } from '../types.js';
-import type { IssueTask } from './issue-backlog.js';
-import { buildFeaturePlanPrompt, buildFeatureClickPrompt } from './agents/shell.js';
-import { executeClick } from './click.js';
-import * as git from './git.js';
-import { clearCache as clearGitNexusCache } from './gitnexus.js';
-import { resolveGuards } from './engine-guards.js';
-import type { EngineRunOptions } from './engine.js';
-import { createInitialRun, requireNamedBranch } from './engine-utils.js';
-import { logger } from '../lib/logger.js';
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { join, dirname } from "path";
+import { existsSync } from "fs";
+import type { RatchetRun, FeaturePlan, FeatureStep } from "../types.js";
+import type { IssueTask } from "./issue-backlog.js";
+import { buildFeaturePlanPrompt, buildFeatureClickPrompt } from "./agents/shell.js";
+import { executeClick } from "./click.js";
+import * as git from "./git.js";
+import { clearCache as clearGitNexusCache } from "./gitnexus.js";
+import { resolveGuards } from "./engine-guards.js";
+import type { EngineRunOptions } from "./engine.js";
+import { createInitialRun, requireNamedBranch } from "./engine-utils.js";
+import { logger } from "../lib/logger.js";
 
 export interface FeatureEngineOptions extends EngineRunOptions {
   /** Feature specification — either inline text or file contents already loaded */
@@ -23,7 +23,10 @@ export interface FeatureEngineOptions extends EngineRunOptions {
  */
 export function parseFeaturePlan(output: string): FeaturePlan | null {
   // Strip markdown code fences if present
-  const stripped = output.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
+  const stripped = output
+    .replace(/^```(?:json)?\s*/m, "")
+    .replace(/\s*```\s*$/m, "")
+    .trim();
 
   // Find JSON object in output
   const jsonMatch = stripped.match(/\{[\s\S]*\}/);
@@ -39,13 +42,13 @@ export function parseFeaturePlan(output: string): FeaturePlan | null {
 }
 
 function isFeaturePlan(value: unknown): value is FeaturePlan {
-  if (typeof value !== 'object' || value === null) return false;
+  if (typeof value !== "object" || value === null) return false;
   const obj = value as Record<string, unknown>;
-  if (typeof obj['spec'] !== 'string') return false;
-  if (!Array.isArray(obj['steps'])) return false;
-  if (!Array.isArray(obj['completedSteps'])) return false;
-  if (!Array.isArray(obj['filesCreated'])) return false;
-  if (!Array.isArray(obj['filesModified'])) return false;
+  if (typeof obj["spec"] !== "string") return false;
+  if (!Array.isArray(obj["steps"])) return false;
+  if (!Array.isArray(obj["completedSteps"])) return false;
+  if (!Array.isArray(obj["filesCreated"])) return false;
+  if (!Array.isArray(obj["filesModified"])) return false;
   return true;
 }
 
@@ -55,8 +58,8 @@ function isFeaturePlan(value: unknown): value is FeaturePlan {
 export function getReadySteps(plan: FeaturePlan): FeatureStep[] {
   const completed = new Set(plan.completedSteps);
   return plan.steps.filter(step => {
-    if (step.status === 'completed' || step.status === 'in-progress') return false;
-    if (step.status === 'failed') return false;
+    if (step.status === "completed" || step.status === "in-progress") return false;
+    if (step.status === "failed") return false;
     return step.dependencies.every(dep => completed.has(dep));
   });
 }
@@ -65,62 +68,66 @@ export function getReadySteps(plan: FeaturePlan): FeatureStep[] {
  * Check if all steps in the plan are resolved (completed or failed).
  */
 export function isPlanComplete(plan: FeaturePlan): boolean {
-  return plan.steps.every(s => s.status === 'completed' || s.status === 'failed');
+  return plan.steps.every(s => s.status === "completed" || s.status === "failed");
 }
 
 /**
  * Generate a markdown progress document for docs/<target>-feature-plan.md
  */
 export function renderFeaturePlanMarkdown(plan: FeaturePlan, targetName: string): string {
-  const completedCount = plan.steps.filter(s => s.status === 'completed').length;
+  const completedCount = plan.steps.filter(s => s.status === "completed").length;
   const totalCount = plan.steps.length;
   const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   const lines: string[] = [
     `# ${targetName} — Feature Plan`,
-    '',
+    "",
     `> **Spec:** ${plan.spec}`,
-    '',
+    "",
     `**Progress:** ${completedCount}/${totalCount} steps (${progressPct}%)`,
-    '',
-    '## Steps',
-    '',
+    "",
+    "## Steps",
+    "",
   ];
 
   for (const step of plan.steps) {
-    const icon = step.status === 'completed' ? '✅'
-      : step.status === 'failed' ? '❌'
-      : step.status === 'in-progress' ? '🔄'
-      : '⬜';
+    const icon =
+      step.status === "completed"
+        ? "✅"
+        : step.status === "failed"
+          ? "❌"
+          : step.status === "in-progress"
+            ? "🔄"
+            : "⬜";
     lines.push(`### ${icon} Step ${step.id}: ${step.description}`);
-    lines.push('');
+    lines.push("");
     if (step.files.length > 0) {
-      lines.push(`**Files:** ${step.files.join(', ')}`);
-      lines.push('');
+      lines.push(`**Files:** ${step.files.join(", ")}`);
+      lines.push("");
     }
     if (step.dependencies.length > 0) {
-      lines.push(`**Depends on:** Steps ${step.dependencies.join(', ')}`);
-      lines.push('');
+      lines.push(`**Depends on:** Steps ${step.dependencies.join(", ")}`);
+      lines.push("");
     }
     lines.push(`**Status:** ${step.status}`);
-    lines.push('');
+    lines.push("");
   }
 
   if (plan.filesCreated.length > 0) {
-    lines.push('## Files Created');
-    lines.push('');
+    lines.push("## Files Created");
+    lines.push("");
     for (const f of plan.filesCreated) lines.push(`- ${f}`);
-    lines.push('');
+    lines.push("");
   }
 
   if (plan.filesModified.length > 0) {
-    lines.push('## Files Modified');
-    lines.push('');
+    lines.push("## Files Modified");
+    lines.push("");
     for (const f of plan.filesModified) lines.push(`- ${f}`);
-    lines.push('');
+    lines.push("");
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -130,7 +137,7 @@ function extractModifiedFiles(output: string): { modified: string[]; created: st
   const modified: string[] = [];
   const created: string[] = [];
 
-  for (const line of output.split('\n')) {
+  for (const line of output.split("\n")) {
     const modMatch = line.match(/^MODIFIED:\s*(.+)$/);
     if (modMatch) modified.push(modMatch[1].trim());
     const createdMatch = line.match(/^CREATED:\s*(.+)$/);
@@ -161,17 +168,17 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
 
   // Use refactor guard profile by default for feature mode
   if (!config.guards) {
-    config.guards = 'refactor';
+    config.guards = "refactor";
   }
 
-  const docsDir = join(cwd, 'docs');
+  const docsDir = join(cwd, "docs");
   const planPath = join(docsDir, `${options.target.name}-feature-plan.md`);
 
   try {
     // Create branch if requested
     if (createBranch) {
       await requireNamedBranch(cwd);
-      const branch = git.branchName(options.target.name + '-feature');
+      const branch = git.branchName(options.target.name + "-feature");
       await git.createBranch(branch, cwd);
     }
 
@@ -179,19 +186,19 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
     clearGitNexusCache();
 
     // ── Click 0: Plan
-    logger.info('[feature] Starting plan click (click 0)');
+    logger.info("[feature] Starting plan click (click 0)");
     await callbacks.onClickStart?.(0, clicks + 1);
 
     const planPrompt = buildFeaturePlanPrompt(spec, cwd);
 
     // Use the agent to generate the plan via a synthetic "analyze" call
     // We pass the plan prompt as a single-shot issue-free analyze
-    let planOutput = '';
+    let planOutput = "";
     try {
       planOutput = await agent.analyze(planPrompt);
     } catch (err) {
-      logger.warn({ err }, '[feature] Plan click failed — agent error');
-      run.status = 'failed';
+      logger.warn({ err }, "[feature] Plan click failed — agent error");
+      run.status = "failed";
       run.finishedAt = new Date();
       await callbacks.onRunComplete?.(run);
       return run;
@@ -199,9 +206,9 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
 
     const plan = parseFeaturePlan(planOutput);
     if (!plan) {
-      logger.warn('[feature] Could not parse feature plan from agent output');
-      logger.warn('[feature] Raw output: ' + planOutput.slice(0, 500));
-      run.status = 'failed';
+      logger.warn("[feature] Could not parse feature plan from agent output");
+      logger.warn("[feature] Raw output: " + planOutput.slice(0, 500));
+      run.status = "failed";
       run.finishedAt = new Date();
       await callbacks.onRunComplete?.(run);
       return run;
@@ -216,7 +223,7 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
     // Write initial plan document
     try {
       await mkdir(docsDir, { recursive: true });
-      await writeFile(planPath, renderFeaturePlanMarkdown(plan, options.target.name), 'utf-8');
+      await writeFile(planPath, renderFeaturePlanMarkdown(plan, options.target.name), "utf-8");
     } catch {
       // Non-fatal
     }
@@ -228,7 +235,7 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
     while (clickNumber <= maxBuildClicks && !isPlanComplete(plan)) {
       const readySteps = getReadySteps(plan);
       if (readySteps.length === 0) {
-        logger.info('[feature] No ready steps — all steps have unmet dependencies or are done');
+        logger.info("[feature] No ready steps — all steps have unmet dependencies or are done");
         break;
       }
 
@@ -238,18 +245,18 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
       await callbacks.onClickStart?.(clickNumber, clicks + 1);
 
       // Mark step as in-progress
-      step.status = 'in-progress';
+      step.status = "in-progress";
 
       // Build the click prompt for this step
       const clickPrompt = buildFeatureClickPrompt(step, plan, cwd);
 
       // Create a synthetic IssueTask that carries the feature click prompt
       const featureTask: IssueTask = {
-        category: 'feature',
-        subcategory: 'implementation',
+        category: "feature",
+        subcategory: "implementation",
         description: `Step ${step.id}: ${step.description}`,
         count: 1,
-        severity: 'high',
+        severity: "high",
         priority: 100,
         // Use architectPrompt field to pass the pre-built prompt verbatim
         architectPrompt: clickPrompt,
@@ -265,12 +272,10 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
           agent,
           cwd,
           architectMode: true, // Use architect mode to pass the prompt verbatim
-          resolvedGuards: resolveGuards(options.target, config, 'architect'),
+          resolvedGuards: resolveGuards(options.target, config, "architect"),
           adversarial: options.adversarial,
           issues: [featureTask],
-          onPhase: callbacks.onClickPhase
-            ? (phase) => callbacks.onClickPhase!(phase, clickNumber)
-            : undefined,
+          onPhase: callbacks.onClickPhase ? phase => callbacks.onClickPhase!(phase, clickNumber) : undefined,
         });
 
         const { click } = result;
@@ -279,19 +284,19 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
 
         if (rolled_back) {
           process.stderr.write(
-            `[ratchet] feature click ${clickNumber} (step ${step.id}) ROLLED BACK (${elapsedSec}s)\n`,
+            `[ratchet] feature click ${clickNumber} (step ${step.id}) ROLLED BACK (${elapsedSec}s)\n`
           );
-          step.status = 'failed';
+          step.status = "failed";
         } else {
           process.stderr.write(
             `[ratchet] feature click ${clickNumber} (step ${step.id}) LANDED (${elapsedSec}s)` +
-            `${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ''}\n`,
+              `${click.commitHash ? ` — commit ${click.commitHash.slice(0, 7)}` : ""}\n`
           );
-          step.status = 'completed';
+          step.status = "completed";
           plan.completedSteps.push(step.id);
 
           // Extract modified/created files from click output
-          const analysisOutput = click.analysis + '\n' + (click.proposal ?? '');
+          const analysisOutput = click.analysis + "\n" + (click.proposal ?? "");
           const { modified, created } = extractModifiedFiles(analysisOutput);
 
           // Also check filesModified from the click itself
@@ -311,23 +316,23 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
 
         // Update plan document after each click
         try {
-          await writeFile(planPath, renderFeaturePlanMarkdown(plan, options.target.name), 'utf-8');
+          await writeFile(planPath, renderFeaturePlanMarkdown(plan, options.target.name), "utf-8");
         } catch {
           // Non-fatal
         }
 
         clickNumber++;
       } catch (err: unknown) {
-        step.status = 'failed';
+        step.status = "failed";
         const error = err instanceof Error ? err : new Error(String(err));
         await callbacks.onError?.(error, clickNumber);
         clickNumber++;
       }
     }
 
-    run.status = 'completed';
+    run.status = "completed";
   } catch (err: unknown) {
-    run.status = 'failed';
+    run.status = "failed";
     throw err;
   } finally {
     run.finishedAt = new Date();
@@ -344,11 +349,11 @@ export async function runFeatureEngine(options: FeatureEngineOptions): Promise<R
  */
 export async function resolveSpec(specArg: string): Promise<string> {
   // Heuristic: if it ends with .md, .txt, or contains a path separator, try to read as file
-  const looksLikeFile = specArg.includes('/') || specArg.includes('\\') ||
-    specArg.endsWith('.md') || specArg.endsWith('.txt');
+  const looksLikeFile =
+    specArg.includes("/") || specArg.includes("\\") || specArg.endsWith(".md") || specArg.endsWith(".txt");
 
   if (looksLikeFile && existsSync(specArg)) {
-    const contents = await readFile(specArg, 'utf-8');
+    const contents = await readFile(specArg, "utf-8");
     return contents.trim();
   }
 
