@@ -30,9 +30,7 @@ Thumbs.db
 .env.local
 .env.*.local
 *.pem
-*.key
 stripe-config.json
-secrets.json
 
 # === Test & coverage ===
 coverage/
@@ -42,11 +40,12 @@ coverage/
 # === Ratchet self files ===
 .ratchet/
 .ratchet-state.json
+.ratchetignore
 training-data/
 prompt-optimization/
 docs/architecture-review-*.md
 
-# === AI / LLM tooling artifacts ===
+# === AI / LLM tooling artifacts (CRITICAL - these were committed before) ===
 .claude/
 .gitnexus/
 .brv/
@@ -55,7 +54,7 @@ docs/architecture-review-*.md
 .aider/
 .zed/
 
-# === Data generation & ephemeral results ===
+# === Data generation & ephemeral results (CRITICAL) ===
 datagen-scans/
 knowledge/
 results/
@@ -64,15 +63,15 @@ Documents/
 *.bak
 *.orig
 
-# === Scratch scripts (move to scripts/ if keeping) ===
+# === QA / test generators (move to scripts/ if you want to keep them) ===
 fix_*.js
 fix_*.py
 qa-generator*.py
 generate_qa.*
 run_qa_generator.*
-simple_qa_generator.py
 
 # === Misc junk ===
 something.txt
+CLAUDE.md
 REPO-SPLIT-PLAN.md
 notes.md
