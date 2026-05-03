@@ -10,4 +10,4 @@ export interface Providers {
   isTestFile(filePath: string): boolean;
 }
 
-// TODO: Move file-related utilities here from classic.ts
+// Reserved extension point for file-related utilities extracted from classic.ts.

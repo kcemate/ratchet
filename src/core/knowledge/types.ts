@@ -5,15 +5,15 @@
  * examples, and anti-patterns that agents can reference when generating fixes.
  */
 
-export type KnowledgeSeverity = 'low' | 'medium' | 'high';
+export type KnowledgeSeverity = "low" | "medium" | "high";
 
 export type KnowledgeCategory =
-  | 'error-handling'
-  | 'performance'
-  | 'code-quality'
-  | 'security'
-  | 'type-safety'
-  | 'testing';
+  | "error-handling"
+  | "performance"
+  | "code-quality"
+  | "security"
+  | "type-safety"
+  | "testing";
 
 export interface KnowledgeEntry {
   /** Unique stable identifier, e.g. 'eh-structured-logging-001' */

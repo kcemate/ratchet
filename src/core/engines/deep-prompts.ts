@@ -14,12 +14,12 @@ export interface FileContent {
 
 /** All six Ratchet categories, in the order they should be analysed. */
 export const CATEGORIES = [
-  'Security',
-  'Testing',
-  'Type Safety',
-  'Error Handling',
-  'Performance',
-  'Code Quality',
+  "Security",
+  "Testing",
+  "Type Safety",
+  "Error Handling",
+  "Performance",
+  "Code Quality",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
@@ -29,9 +29,7 @@ export type Category = (typeof CATEGORIES)[number];
 // ---------------------------------------------------------------------------
 
 function formatFiles(files: FileContent[]): string {
-  return files
-    .map(f => `=== ${f.path} ===\n${f.content}`)
-    .join('\n\n');
+  return files.map(f => `=== ${f.path} ===\n${f.content}`).join("\n\n");
 }
 
 const FINDING_SCHEMA = `[
@@ -264,11 +262,17 @@ ${formatFiles(files)}`;
 /** Return the appropriate prompt builder for a given category. */
 export function buildPromptForCategory(category: Category, files: FileContent[]): string {
   switch (category) {
-    case 'Security':      return buildSecurityPrompt(files);
-    case 'Testing':       return buildTestingPrompt(files);
-    case 'Type Safety':   return buildTypeSafetyPrompt(files);
-    case 'Error Handling':return buildErrorHandlingPrompt(files);
-    case 'Performance':   return buildPerformancePrompt(files);
-    case 'Code Quality':  return buildCodeQualityPrompt(files);
+    case "Security":
+      return buildSecurityPrompt(files);
+    case "Testing":
+      return buildTestingPrompt(files);
+    case "Type Safety":
+      return buildTypeSafetyPrompt(files);
+    case "Error Handling":
+      return buildErrorHandlingPrompt(files);
+    case "Performance":
+      return buildPerformancePrompt(files);
+    case "Code Quality":
+      return buildCodeQualityPrompt(files);
   }
 }

@@ -4,7 +4,7 @@
  * TypeScript/JavaScript rules. All TS/JS behavior is unchanged.
  */
 
-export type SupportedLanguage = 'ts' | 'js' | 'python' | 'go' | 'rust' | 'java' | 'kotlin' | 'csharp' | 'php';
+export type SupportedLanguage = "ts" | "js" | "python" | "go" | "rust" | "java" | "kotlin" | "csharp" | "php";
 
 // ---------------------------------------------------------------------------
 // Test file detection
@@ -16,21 +16,21 @@ export type SupportedLanguage = 'ts' | 'js' | 'python' | 'go' | 'rust' | 'java' 
  * (Python: test_*.py at the filename start; Go/Rust: already caught by _test. pattern)
  */
 export function isLangTestFile(filePath: string, lang: SupportedLanguage): boolean {
-  const basename = filePath.replace(/\\/g, '/').split('/').pop() ?? '';
-  if (lang === 'python') {
-    return basename.startsWith('test_') && basename.endsWith('.py');
+  const basename = filePath.replace(/\\/g, "/").split("/").pop() ?? "";
+  if (lang === "python") {
+    return basename.startsWith("test_") && basename.endsWith(".py");
   }
-  if (lang === 'java') {
-    return (basename.endsWith('Test.java') || basename.endsWith('Tests.java') || basename.endsWith('IT.java'));
+  if (lang === "java") {
+    return basename.endsWith("Test.java") || basename.endsWith("Tests.java") || basename.endsWith("IT.java");
   }
-  if (lang === 'kotlin') {
-    return (basename.endsWith('Test.kt') || basename.endsWith('Tests.kt'));
+  if (lang === "kotlin") {
+    return basename.endsWith("Test.kt") || basename.endsWith("Tests.kt");
   }
-  if (lang === 'csharp') {
-    return (basename.endsWith('Test.cs') || basename.endsWith('Tests.cs'));
+  if (lang === "csharp") {
+    return basename.endsWith("Test.cs") || basename.endsWith("Tests.cs");
   }
-  if (lang === 'php') {
-    return basename.endsWith('Test.php');
+  if (lang === "php") {
+    return basename.endsWith("Test.php");
   }
   return false;
 }

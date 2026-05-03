@@ -11,9 +11,9 @@
  * ShellAgent (pro tier) handles everything.
  */
 
-import type { IssueTask } from './issue-backlog.js';
-import { SUBCATEGORY_TIERS } from './score-optimizer.js';
-import { transformRegistry } from './transforms/registry.js';
+import type { IssueTask } from "./issue-backlog.js";
+import { SUBCATEGORY_TIERS } from "./score-optimizer.js";
+import { transformRegistry } from "./transforms/registry.js";
 
 // ---------------------------------------------------------------------------
 // Budget constants
@@ -39,14 +39,12 @@ export interface FeasibilityResult {
 // ---------------------------------------------------------------------------
 
 /** Subcategory/category patterns that indicate test-related issues APIAgent can't fix */
-const TEST_PATTERNS = [
-  'test', 'coverage', 'spec', 'assertion', 'mock', 'stub', 'e2e', 'integration test',
-];
+const TEST_PATTERNS = ["test", "coverage", "spec", "assertion", "mock", "stub", "e2e", "integration test"];
 
 function isTestRelated(issue: IssueTask): boolean {
   const cat = issue.category.toLowerCase();
   const sub = issue.subcategory.toLowerCase();
-  if (cat === 'testing') return true;
+  if (cat === "testing") return true;
   return TEST_PATTERNS.some(p => sub.includes(p));
 }
 
@@ -75,7 +73,7 @@ export function hasASTTransformMatch(issue: IssueTask): boolean {
     const matched = transform.matchesFindings.some(
       pattern =>
         issue.subcategory.toLowerCase().includes(pattern.toLowerCase()) ||
-        issue.description.toLowerCase().includes(pattern.toLowerCase()),
+        issue.description.toLowerCase().includes(pattern.toLowerCase())
     );
     if (matched) return true;
   }
@@ -95,12 +93,12 @@ export function hasASTTransformMatch(issue: IssueTask): boolean {
  *   - must have specific file locations (no project-wide issues)
  *   - must not be test/coverage-related
  */
-export function canFixWithAgent(issue: IssueTask, agentType: 'api' | 'shell'): boolean {
-  if (agentType === 'shell') return true;
+export function canFixWithAgent(issue: IssueTask, agentType: "api" | "shell"): boolean {
+  if (agentType === "shell") return true;
 
   // APIAgent hard constraints
   if (isTestRelated(issue)) return false;
-  if (issue.fixMode !== 'torque') return false;
+  if (issue.fixMode !== "torque") return false;
   if (getEffortPerFix(issue) > 2) return false;
   if ((issue.sweepFiles?.length ?? 0) === 0) return false;
 
@@ -117,8 +115,8 @@ export function canFixWithAgent(issue: IssueTask, agentType: 'api' | 'shell'): b
  *
  * Returns a FeasibilityResult with eligible, skipped, and per-issue skip reasons.
  */
-export function routeIssues(backlog: IssueTask[], agentType: 'api' | 'shell'): FeasibilityResult {
-  if (agentType === 'shell') {
+export function routeIssues(backlog: IssueTask[], agentType: "api" | "shell"): FeasibilityResult {
+  if (agentType === "shell") {
     return { eligible: [...backlog], skipped: [], reasons: new Map() };
   }
 
@@ -133,12 +131,12 @@ export function routeIssues(backlog: IssueTask[], agentType: 'api' | 'shell'): F
     if (!canFixWithAgent(issue, agentType)) {
       skipped.push(issue);
       const reason = isTestRelated(issue)
-        ? 'test-related issue'
-        : issue.fixMode !== 'torque'
+        ? "test-related issue"
+        : issue.fixMode !== "torque"
           ? `fixMode=${issue.fixMode} requires shell agent`
           : (issue.sweepFiles?.length ?? 0) === 0
-            ? 'no file locations'
-            : 'effort too high';
+            ? "no file locations"
+            : "effort too high";
       reasons.set(issueKey(issue), `SKIP_FREE: ${reason}`);
       continue;
     }
@@ -149,7 +147,7 @@ export function routeIssues(backlog: IssueTask[], agentType: 'api' | 'shell'): F
       skipped.push(issue);
       reasons.set(
         issueKey(issue),
-        `SKIP_FREE: estimated effort too large (${filesNeeded} files, ${linesNeeded} lines > budget ${APIAGENT_MAX_FILES}/${APIAGENT_MAX_LINES})`,
+        `SKIP_FREE: estimated effort too large (${filesNeeded} files, ${linesNeeded} lines > budget ${APIAGENT_MAX_FILES}/${APIAGENT_MAX_LINES})`
       );
       continue;
     }

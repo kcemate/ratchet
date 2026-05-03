@@ -9,16 +9,16 @@
  *   graph clusters         — show dependency clusters for all files
  */
 
-import { Command } from 'commander';
-import chalk from 'chalk';
-import { statSync } from 'fs';
-import { join } from 'path';
-import { isIndexed, reindex, runCypher, getImpactDetailed, getDependencyClusters } from '../core/gitnexus.js';
-import { tryOr, wrapAction } from '../lib/cli.js';
+import { Command } from "commander";
+import chalk from "chalk";
+import { statSync } from "fs";
+import { join } from "path";
+import { isIndexed, reindex, runCypher, getImpactDetailed, getDependencyClusters } from "../core/gitnexus.js";
+import { tryOr, wrapAction } from "../lib/cli.js";
 
 function requireIndexed(cwd: string): void {
   if (!isIndexed(cwd)) {
-    process.stdout.write(chalk.yellow('  ⚠ GitNexus is not indexed. Run: ratchet graph index\n'));
+    process.stdout.write(chalk.yellow("  ⚠ GitNexus is not indexed. Run: ratchet graph index\n"));
     process.exit(1);
   }
 }
@@ -31,16 +31,16 @@ async function graphStatus(): Promise<void> {
   const indexed = isIndexed(cwd);
 
   if (!indexed) {
-    process.stdout.write(chalk.yellow('  ⚠ GitNexus is NOT indexed for this repo.\n'));
-    process.stdout.write(`  Run ${chalk.cyan('ratchet graph index')} to build the knowledge graph.\n`);
+    process.stdout.write(chalk.yellow("  ⚠ GitNexus is NOT indexed for this repo.\n"));
+    process.stdout.write(`  Run ${chalk.cyan("ratchet graph index")} to build the knowledge graph.\n`);
     return;
   }
 
-  const gitnexusDir = join(cwd, '.gitnexus');
+  const gitnexusDir = join(cwd, ".gitnexus");
   const stat = tryOr(() => statSync(gitnexusDir), null);
-  const lastIndexed = stat ? stat.mtime.toLocaleString() : 'unknown';
+  const lastIndexed = stat ? stat.mtime.toLocaleString() : "unknown";
 
-  process.stdout.write(chalk.green('  ✓ GitNexus is indexed\n'));
+  process.stdout.write(chalk.green("  ✓ GitNexus is indexed\n"));
   process.stdout.write(`  Last indexed: ${lastIndexed}\n`);
 }
 
@@ -49,14 +49,14 @@ async function graphStatus(): Promise<void> {
  */
 async function graphIndex(force: boolean): Promise<void> {
   const cwd = process.cwd();
-  process.stdout.write(chalk.cyan('  Indexing repository with GitNexus...\n'));
+  process.stdout.write(chalk.cyan("  Indexing repository with GitNexus...\n"));
 
   const ok = await reindex(cwd, force);
   if (ok) {
-    process.stdout.write(chalk.green('  ✓ Indexing complete\n'));
+    process.stdout.write(chalk.green("  ✓ Indexing complete\n"));
   } else {
-    process.stdout.write(chalk.red('  ✗ Indexing failed or timed out\n'));
-    process.stdout.write('  Make sure gitnexus is installed: npm install -g gitnexus\n');
+    process.stdout.write(chalk.red("  ✗ Indexing failed or timed out\n"));
+    process.stdout.write("  Make sure gitnexus is installed: npm install -g gitnexus\n");
     process.exit(1);
   }
 }
@@ -73,11 +73,11 @@ async function graphQuery(cypher: string): Promise<void> {
   const result = await runCypher(cypher, cwd);
 
   if (result === null) {
-    process.stdout.write(chalk.yellow('  No results (or GitNexus not available)\n'));
+    process.stdout.write(chalk.yellow("  No results (or GitNexus not available)\n"));
     return;
   }
 
-  process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+  process.stdout.write(JSON.stringify(result, null, 2) + "\n");
 }
 
 /**
@@ -91,20 +91,19 @@ async function graphImpact(target: string): Promise<void> {
   process.stdout.write(chalk.cyan(`  Analyzing blast radius for: ${target}\n\n`));
 
   const impact = await getImpactDetailed(target, cwd, {
-    direction: 'upstream',
+    direction: "upstream",
     includeTests: true,
   });
 
   if (!impact) {
     process.stdout.write(chalk.yellow(`  No impact data found for: ${target}\n`));
-    process.stdout.write('  Make sure the file is indexed and the name matches.\n');
+    process.stdout.write("  Make sure the file is indexed and the name matches.\n");
     return;
   }
 
   const dependentCount = impact.directCallers.length + impact.affectedFiles.length;
-  const riskColor = impact.riskLevel === 'CRITICAL' ? chalk.red
-    : impact.riskLevel === 'HIGH' ? chalk.yellow
-    : chalk.green;
+  const riskColor =
+    impact.riskLevel === "CRITICAL" ? chalk.red : impact.riskLevel === "HIGH" ? chalk.yellow : chalk.green;
 
   process.stdout.write(`  Risk Level:    ${riskColor(impact.riskLevel)}\n`);
   process.stdout.write(`  Confidence:    ${(impact.confidence * 100).toFixed(0)}%\n`);
@@ -140,23 +139,27 @@ async function graphClusters(): Promise<void> {
   requireIndexed(cwd);
 
   // Discover TypeScript/JavaScript files in src/
-  const { execSync } = await import('child_process');
+  const { execSync } = await import("child_process");
   const files = tryOr(
-    () => execSync('find src -name "*.ts" -not -name "*.d.ts" -not -path "*/node_modules/*"', {
-      cwd,
-      encoding: 'utf8',
-      timeout: 5000,
-    }).trim().split('\n').filter(Boolean),
-    null,
+    () =>
+      execSync('find src -name "*.ts" -not -name "*.d.ts" -not -path "*/node_modules/*"', {
+        cwd,
+        encoding: "utf8",
+        timeout: 5000,
+      })
+        .trim()
+        .split("\n")
+        .filter(Boolean),
+    null
   );
 
   if (files === null) {
-    process.stdout.write(chalk.yellow('  Could not enumerate source files.\n'));
+    process.stdout.write(chalk.yellow("  Could not enumerate source files.\n"));
     return;
   }
 
   if (files.length === 0) {
-    process.stdout.write(chalk.yellow('  No source files found in src/\n'));
+    process.stdout.write(chalk.yellow("  No source files found in src/\n"));
     return;
   }
 
@@ -173,7 +176,7 @@ async function graphClusters(): Promise<void> {
     if (cluster.length > 8) {
       process.stdout.write(`    ... and ${cluster.length - 8} more\n`);
     }
-    process.stdout.write('\n');
+    process.stdout.write("\n");
   }
 }
 
@@ -181,33 +184,31 @@ async function graphClusters(): Promise<void> {
  * Register the `graph` command with the CLI.
  */
 export function registerGraphCommand(program: Command): void {
-  const graph = program
-    .command('graph')
-    .description('GitNexus knowledge graph management');
+  const graph = program.command("graph").description("GitNexus knowledge graph management");
 
   graph
-    .command('status')
-    .description('Show if the repo is indexed by GitNexus')
-    .action(wrapAction(() => graphStatus(), 'graph status failed'));
+    .command("status")
+    .description("Show if the repo is indexed by GitNexus")
+    .action(wrapAction(() => graphStatus(), "graph status failed"));
 
   graph
-    .command('index')
-    .description('Run gitnexus analyze to build/refresh the knowledge graph')
-    .option('--force', 'Force full re-index even if already indexed', false)
-    .action(wrapAction((opts: { force: boolean }) => graphIndex(opts.force), 'graph index failed'));
+    .command("index")
+    .description("Run gitnexus analyze to build/refresh the knowledge graph")
+    .option("--force", "Force full re-index even if already indexed", false)
+    .action(wrapAction((opts: { force: boolean }) => graphIndex(opts.force), "graph index failed"));
 
   graph
-    .command('query <cypher>')
-    .description('Run a raw Cypher query against the knowledge graph')
-    .action(wrapAction((cypher: string) => graphQuery(cypher), 'graph query failed'));
+    .command("query <cypher>")
+    .description("Run a raw Cypher query against the knowledge graph")
+    .action(wrapAction((cypher: string) => graphQuery(cypher), "graph query failed"));
 
   graph
-    .command('impact <target>')
-    .description('Show detailed blast radius for a file or symbol')
-    .action(wrapAction((target: string) => graphImpact(target), 'graph impact failed'));
+    .command("impact <target>")
+    .description("Show detailed blast radius for a file or symbol")
+    .action(wrapAction((target: string) => graphImpact(target), "graph impact failed"));
 
   graph
-    .command('clusters')
-    .description('Show dependency clusters for source files')
-    .action(wrapAction(() => graphClusters(), 'graph clusters failed'));
+    .command("clusters")
+    .description("Show dependency clusters for source files")
+    .action(wrapAction(() => graphClusters(), "graph clusters failed"));
 }

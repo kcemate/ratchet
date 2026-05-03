@@ -6,8 +6,8 @@
  *   - DeepEngine     SI-powered semantic analysis (requires Pro subscription)
  */
 
-import type { SupportedLanguage } from './language-rules.js';
-import type { ScanResult } from '../core/scanner';
+import type { SupportedLanguage } from "./language-rules.js";
+import type { ScanResult } from "../core/scanner";
 
 export type { ScanResult };
 
@@ -35,7 +35,7 @@ export interface ScanEngine {
   /** Human-readable name of this engine. */
   name: string;
   /** Engine mode — 'classic' for heuristics, 'deep' for LLM-powered analysis. */
-  mode: 'classic' | 'deep';
+  mode: "classic" | "deep";
   /** Run the scan and return a normalised ScanResult. */
   analyze(cwd: string, options?: ScanEngineOptions): Promise<ScanResult>;
 }

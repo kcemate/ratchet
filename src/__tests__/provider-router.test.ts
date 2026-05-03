@@ -1,16 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import {
-  detectProvider,
-  createProvider,
-  getProviderPricing,
-} from '../../src/core/providers/index.js';
-import { AnthropicProvider } from '../../src/core/providers/anthropic.js';
-import { OpenAIProvider } from '../../src/core/providers/openai.js';
-import { OpenRouterProvider } from '../../src/core/providers/openrouter.js';
-import { LocalMLXProvider } from '../../src/core/providers/local.js';
-import { SIProvider } from '../../src/core/providers/si.js';
-import { routeTask } from '../../src/core/providers/router.js';
-import type { ProviderConfig } from '../../src/core/providers/base.js';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { detectProvider, createProvider, getProviderPricing } from "../../src/core/providers/index.js";
+import { AnthropicProvider } from "../../src/core/providers/anthropic.js";
+import { OpenAIProvider } from "../../src/core/providers/openai.js";
+import { OpenRouterProvider } from "../../src/core/providers/openrouter.js";
+import { LocalMLXProvider } from "../../src/core/providers/local.js";
+import { SIProvider } from "../../src/core/providers/si.js";
+import { routeTask } from "../../src/core/providers/router.js";
+import type { ProviderConfig } from "../../src/core/providers/base.js";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,50 +39,50 @@ const CLEAN_ENV = {
 
 // ── detectProvider priority chain ─────────────────────────────────────────────
 
-describe('detectProvider priority chain', () => {
-  it('explicit config overrides everything', () => {
-    withEnv({ ...CLEAN_ENV, ANTHROPIC_API_KEY: 'sk-ant' }, () => {
-      const provider = detectProvider({ provider: 'openai', apiKey: 'sk-oa' });
+describe("detectProvider priority chain", () => {
+  it("explicit config overrides everything", () => {
+    withEnv({ ...CLEAN_ENV, ANTHROPIC_API_KEY: "sk-ant" }, () => {
+      const provider = detectProvider({ provider: "openai", apiKey: "sk-oa" });
       expect(provider).toBeInstanceOf(OpenAIProvider);
     });
   });
 
-  it('RATCHET_PROVIDER env takes priority over key-based detection', () => {
-    withEnv({ ...CLEAN_ENV, RATCHET_PROVIDER: 'openai', OPENAI_API_KEY: 'sk-oa' }, () => {
+  it("RATCHET_PROVIDER env takes priority over key-based detection", () => {
+    withEnv({ ...CLEAN_ENV, RATCHET_PROVIDER: "openai", OPENAI_API_KEY: "sk-oa" }, () => {
       const provider = detectProvider();
       expect(provider).toBeInstanceOf(OpenAIProvider);
     });
   });
 
-  it('SI key detected before Anthropic key', () => {
-    withEnv({ ...CLEAN_ENV, RATCHET_SI_KEY: 'si-key', ANTHROPIC_API_KEY: 'sk-ant' }, () => {
+  it("SI key detected before Anthropic key", () => {
+    withEnv({ ...CLEAN_ENV, RATCHET_SI_KEY: "si-key", ANTHROPIC_API_KEY: "sk-ant" }, () => {
       const provider = detectProvider();
       expect(provider).toBeInstanceOf(SIProvider);
     });
   });
 
-  it('Anthropic key detected before OpenAI', () => {
-    withEnv({ ...CLEAN_ENV, ANTHROPIC_API_KEY: 'sk-ant', OPENAI_API_KEY: 'sk-oa' }, () => {
+  it("Anthropic key detected before OpenAI", () => {
+    withEnv({ ...CLEAN_ENV, ANTHROPIC_API_KEY: "sk-ant", OPENAI_API_KEY: "sk-oa" }, () => {
       const provider = detectProvider();
       expect(provider).toBeInstanceOf(AnthropicProvider);
     });
   });
 
-  it('OpenAI key detected before OpenRouter', () => {
-    withEnv({ ...CLEAN_ENV, OPENAI_API_KEY: 'sk-oa', OPENROUTER_API_KEY: 'sk-or' }, () => {
+  it("OpenAI key detected before OpenRouter", () => {
+    withEnv({ ...CLEAN_ENV, OPENAI_API_KEY: "sk-oa", OPENROUTER_API_KEY: "sk-or" }, () => {
       const provider = detectProvider();
       expect(provider).toBeInstanceOf(OpenAIProvider);
     });
   });
 
-  it('OpenRouter key detected before Local fallback', () => {
-    withEnv({ ...CLEAN_ENV, OPENROUTER_API_KEY: 'sk-or' }, () => {
+  it("OpenRouter key detected before Local fallback", () => {
+    withEnv({ ...CLEAN_ENV, OPENROUTER_API_KEY: "sk-or" }, () => {
       const provider = detectProvider();
       expect(provider).toBeInstanceOf(OpenRouterProvider);
     });
   });
 
-  it('falls back to Local when no keys are set', () => {
+  it("falls back to Local when no keys are set", () => {
     withEnv(CLEAN_ENV, () => {
       const provider = detectProvider();
       expect(provider).toBeInstanceOf(LocalMLXProvider);
@@ -96,53 +92,53 @@ describe('detectProvider priority chain', () => {
 
 // ── createProvider ────────────────────────────────────────────────────────────
 
-describe('createProvider', () => {
-  it('creates AnthropicProvider', () => {
-    const p = createProvider({ provider: 'anthropic', apiKey: 'k' });
+describe("createProvider", () => {
+  it("creates AnthropicProvider", () => {
+    const p = createProvider({ provider: "anthropic", apiKey: "k" });
     expect(p).toBeInstanceOf(AnthropicProvider);
-    expect(p.name).toBe('Anthropic');
+    expect(p.name).toBe("Anthropic");
   });
 
-  it('creates OpenAIProvider', () => {
-    const p = createProvider({ provider: 'openai', apiKey: 'k' });
+  it("creates OpenAIProvider", () => {
+    const p = createProvider({ provider: "openai", apiKey: "k" });
     expect(p).toBeInstanceOf(OpenAIProvider);
-    expect(p.name).toBe('OpenAI');
+    expect(p.name).toBe("OpenAI");
   });
 
-  it('creates OpenRouterProvider', () => {
-    const p = createProvider({ provider: 'openrouter', apiKey: 'k' });
+  it("creates OpenRouterProvider", () => {
+    const p = createProvider({ provider: "openrouter", apiKey: "k" });
     expect(p).toBeInstanceOf(OpenRouterProvider);
-    expect(p.name).toBe('OpenRouter');
+    expect(p.name).toBe("OpenRouter");
   });
 
-  it('creates LocalMLXProvider', () => {
-    const p = createProvider({ provider: 'local' });
+  it("creates LocalMLXProvider", () => {
+    const p = createProvider({ provider: "local" });
     expect(p).toBeInstanceOf(LocalMLXProvider);
-    expect(p.name).toBe('Local');
+    expect(p.name).toBe("Local");
   });
 
-  it('creates SIProvider', () => {
-    const p = createProvider({ provider: 'si', apiKey: 'si-key' });
+  it("creates SIProvider", () => {
+    const p = createProvider({ provider: "si", apiKey: "si-key" });
     expect(p).toBeInstanceOf(SIProvider);
-    expect(p.name).toBe('SI');
+    expect(p.name).toBe("SI");
   });
 });
 
 // ── SI provider ───────────────────────────────────────────────────────────────
 
-describe('SIProvider', () => {
-  it('has enterprise tier', () => {
-    const p = new SIProvider({ provider: 'si', apiKey: 'si-key' });
-    expect(p.tier).toBe('enterprise');
+describe("SIProvider", () => {
+  it("has enterprise tier", () => {
+    const p = new SIProvider({ provider: "si", apiKey: "si-key" });
+    expect(p.tier).toBe("enterprise");
   });
 
-  it('supports structured output', () => {
-    const p = new SIProvider({ provider: 'si' });
+  it("supports structured output", () => {
+    const p = new SIProvider({ provider: "si" });
     expect(p.supportsStructuredOutput()).toBe(true);
   });
 
-  it('estimates cost with placeholder rates', () => {
-    const p = new SIProvider({ provider: 'si' });
+  it("estimates cost with placeholder rates", () => {
+    const p = new SIProvider({ provider: "si" });
     // 1M input + 1M output → (10 + 30) = $40
     expect(p.estimateCost(1_000_000, 1_000_000)).toBeCloseTo(40);
   });
@@ -150,26 +146,26 @@ describe('SIProvider', () => {
 
 // ── estimateCost ──────────────────────────────────────────────────────────────
 
-describe('estimateCost', () => {
-  it('Anthropic: Sonnet pricing $3/$15 per M', () => {
-    const p = new AnthropicProvider('k');
+describe("estimateCost", () => {
+  it("Anthropic: Sonnet pricing $3/$15 per M", () => {
+    const p = new AnthropicProvider("k");
     expect(p.estimateCost(1_000_000, 0)).toBeCloseTo(3);
     expect(p.estimateCost(0, 1_000_000)).toBeCloseTo(15);
   });
 
-  it('OpenAI: GPT-4o pricing $2.50/$10 per M', () => {
-    const p = new OpenAIProvider('k');
+  it("OpenAI: GPT-4o pricing $2.50/$10 per M", () => {
+    const p = new OpenAIProvider("k");
     expect(p.estimateCost(1_000_000, 0)).toBeCloseTo(2.5);
     expect(p.estimateCost(0, 1_000_000)).toBeCloseTo(10);
   });
 
-  it('OpenRouter: Sonnet pricing $3/$15 per M', () => {
-    const p = new OpenRouterProvider('k');
+  it("OpenRouter: Sonnet pricing $3/$15 per M", () => {
+    const p = new OpenRouterProvider("k");
     expect(p.estimateCost(1_000_000, 0)).toBeCloseTo(3);
     expect(p.estimateCost(0, 1_000_000)).toBeCloseTo(15);
   });
 
-  it('Local: free (zero cost)', () => {
+  it("Local: free (zero cost)", () => {
     const p = new LocalMLXProvider();
     expect(p.estimateCost(1_000_000, 1_000_000)).toBe(0);
   });
@@ -177,15 +173,15 @@ describe('estimateCost', () => {
 
 // ── getProviderPricing ────────────────────────────────────────────────────────
 
-describe('getProviderPricing', () => {
-  it('returns correct pricing for Anthropic', () => {
-    const p = new AnthropicProvider('k');
+describe("getProviderPricing", () => {
+  it("returns correct pricing for Anthropic", () => {
+    const p = new AnthropicProvider("k");
     const pricing = getProviderPricing(p);
     expect(pricing.inputPerMToken).toBeCloseTo(3);
     expect(pricing.outputPerMToken).toBeCloseTo(15);
   });
 
-  it('returns zero for Local', () => {
+  it("returns zero for Local", () => {
     const p = new LocalMLXProvider();
     const pricing = getProviderPricing(p);
     expect(pricing.inputPerMToken).toBe(0);
@@ -195,43 +191,43 @@ describe('getProviderPricing', () => {
 
 // ── smart model routing ───────────────────────────────────────────────────────
 
-describe('routeTask', () => {
-  const anthropic = new AnthropicProvider('k');
-  const openai = new OpenAIProvider('k');
+describe("routeTask", () => {
+  const anthropic = new AnthropicProvider("k");
+  const openai = new OpenAIProvider("k");
   const local = new LocalMLXProvider();
 
-  it('sweep → cheap model (Haiku)', () => {
-    const opts = routeTask('sweep', anthropic);
-    expect(opts.model).toBe('claude-haiku-4-5-20251001');
+  it("sweep → cheap model (Haiku)", () => {
+    const opts = routeTask("sweep", anthropic);
+    expect(opts.model).toBe("claude-haiku-4-5-20251001");
   });
 
-  it('report → cheap model', () => {
-    const opts = routeTask('report', anthropic);
-    expect(opts.model).toBe('claude-haiku-4-5-20251001');
+  it("report → cheap model", () => {
+    const opts = routeTask("report", anthropic);
+    expect(opts.model).toBe("claude-haiku-4-5-20251001");
   });
 
-  it('analyze → standard model (Sonnet)', () => {
-    const opts = routeTask('analyze', anthropic);
-    expect(opts.model).toBe('claude-sonnet-4-6');
+  it("analyze → standard model (Sonnet)", () => {
+    const opts = routeTask("analyze", anthropic);
+    expect(opts.model).toBe("claude-sonnet-4-6");
   });
 
-  it('fix → standard model', () => {
-    const opts = routeTask('fix', anthropic);
-    expect(opts.model).toBe('claude-sonnet-4-6');
+  it("fix → standard model", () => {
+    const opts = routeTask("fix", anthropic);
+    expect(opts.model).toBe("claude-sonnet-4-6");
   });
 
-  it('architect → best model (Opus)', () => {
-    const opts = routeTask('architect', anthropic);
-    expect(opts.model).toBe('claude-opus-4-6');
+  it("architect → best model (Opus)", () => {
+    const opts = routeTask("architect", anthropic);
+    expect(opts.model).toBe("claude-opus-4-6");
   });
 
-  it('routes OpenAI tasks correctly', () => {
-    expect(routeTask('sweep', openai).model).toBe('gpt-4o-mini');
-    expect(routeTask('architect', openai).model).toBe('gpt-4o');
+  it("routes OpenAI tasks correctly", () => {
+    expect(routeTask("sweep", openai).model).toBe("gpt-4o-mini");
+    expect(routeTask("architect", openai).model).toBe("gpt-4o");
   });
 
-  it('returns empty options for Local (no model override)', () => {
-    const opts = routeTask('analyze', local);
+  it("returns empty options for Local (no model override)", () => {
+    const opts = routeTask("analyze", local);
     expect(opts.model).toBeUndefined();
   });
 });

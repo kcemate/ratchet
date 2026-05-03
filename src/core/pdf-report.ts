@@ -1,11 +1,11 @@
-import puppeteer from 'puppeteer';
-import { mkdir, writeFile } from 'fs/promises';
-import { dirname, join } from 'path';
-import type { Click } from '../types.js';
-import { formatDuration } from './utils.js';
+import puppeteer from "puppeteer";
+import { mkdir, writeFile } from "fs/promises";
+import { dirname, join } from "path";
+import type { Click } from "../types.js";
+import { formatDuration } from "./utils.js";
 
-export type { ReportOptions } from './report.js';
-import type { ReportOptions, ComplianceLevel } from './report.js';
+export type { ReportOptions } from "./report.js";
+import type { ReportOptions, ComplianceLevel } from "./report.js";
 
 /**
  * ─── Design Standard v2 (Locked 2026-03-26) ───
@@ -20,56 +20,56 @@ import type { ReportOptions, ComplianceLevel } from './report.js';
  */
 
 const COLORS = {
-  bgPrimary: '#0A0A0F',
-  bgSurface: '#141822',
-  bgRowAlt: '#0F1319',
-  border: '#1E242E',
-  accent: '#00D4AA',
-  accentBlue: '#00D4FF',
-  success: '#00FF88',
-  warning: '#FFB800',
-  error: '#FF4466',
-  textPrimary: '#E6EDF3',
-  textSecondary: '#8B949E',
-  textMuted: '#656C76',
+  bgPrimary: "#0A0A0F",
+  bgSurface: "#141822",
+  bgRowAlt: "#0F1319",
+  border: "#1E242E",
+  accent: "#00D4AA",
+  accentBlue: "#00D4FF",
+  success: "#00FF88",
+  warning: "#FFB800",
+  error: "#FF4466",
+  textPrimary: "#E6EDF3",
+  textSecondary: "#8B949E",
+  textMuted: "#656C76",
 } as const;
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Testing: '#3b82f6',
-  'Error Handling': '#f97316',
-  'Type Safety': '#a855f7',
-  Types: '#a855f7',
-  Security: '#ef4444',
-  Performance: '#eab308',
-  'Code Quality': '#22c55e',
-  Readability: '#22c55e',
+  Testing: "#3b82f6",
+  "Error Handling": "#f97316",
+  "Type Safety": "#a855f7",
+  Types: "#a855f7",
+  Security: "#ef4444",
+  Performance: "#eab308",
+  "Code Quality": "#22c55e",
+  Readability: "#22c55e",
 };
 
 function extractFilename(raw: string): string {
   const backtickMatch = raw.match(/`([^`]+)`/);
   const path = backtickMatch ? backtickMatch[1] : raw.split(/\s[—–-]\s/)[0].trim();
-  return path.split('/').pop() ?? path;
+  return path.split("/").pop() ?? path;
 }
 
 function filesSummary(click: Click): string {
-  if (!click.filesModified?.length) return 'Applied code improvements';
+  if (!click.filesModified?.length) return "Applied code improvements";
   const names = click.filesModified.map(extractFilename);
-  const shown = names.slice(0, 3).join(', ');
-  const extra = names.length > 3 ? '…' : '';
-  return `Modified ${names.length} file${names.length > 1 ? 's' : ''}: ${shown}${extra}`;
+  const shown = names.slice(0, 3).join(", ");
+  const extra = names.length > 3 ? "…" : "";
+  return `Modified ${names.length} file${names.length > 1 ? "s" : ""}: ${shown}${extra}`;
 }
 
 function plainEnglishSummary(click: Click): string {
   const files = filesSummary(click);
   const issuesFixed = (click as Click & { issuesFixedCount?: number }).issuesFixedCount;
-  let raw = click.proposal || click.analysis || '';
-  let proposalSummary = '';
+  const raw = click.proposal || click.analysis || "";
+  let proposalSummary = "";
   if (raw && !/^You are (a |an |the )/i.test(raw)) {
-    let clean = raw.split('\n')[0].trim();
-    clean = clean.replace(/`/g, '').replace(/\s{2,}/g, ' ');
+    let clean = raw.split("\n")[0].trim();
+    clean = clean.replace(/`/g, "").replace(/\s{2,}/g, " ");
     const codeLinePattern = /^(import |const |let |var |function |class |export |TOP ISSUES|ARCHITECTURAL)/;
     if (clean.length <= 100 && !codeLinePattern.test(clean)) {
-      const firstSentence = clean.split(/[.!]/)[0]?.trim() ?? '';
+      const firstSentence = clean.split(/[.!]/)[0]?.trim() ?? "";
       if (firstSentence.length > 0 && firstSentence.length <= 100) {
         proposalSummary = firstSentence;
       }
@@ -77,17 +77,13 @@ function plainEnglishSummary(click: Click): string {
   }
   const base = proposalSummary || files;
   if (issuesFixed && issuesFixed > 0) {
-    return `${base} — fixed ${issuesFixed} issue${issuesFixed > 1 ? 's' : ''}`;
+    return `${base} — fixed ${issuesFixed} issue${issuesFixed > 1 ? "s" : ""}`;
   }
   return base;
 }
 
 function esc(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 /** SVG score ring: circular progress indicator */
@@ -119,12 +115,16 @@ function scoreRingSVG(score: number, max: number, size: number, label?: string):
     <text x="${center}" y="${center - 4}" text-anchor="middle" dominant-baseline="central"
       font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="${fontSize}" font-weight="700"
       fill="${COLORS.textPrimary}">${score}</text>
-    <text x="${center}" y="${center + (fontSize / 2) + 4}" text-anchor="middle"
+    <text x="${center}" y="${center + fontSize / 2 + 4}" text-anchor="middle"
       font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="${subFontSize}" font-weight="400"
       fill="${COLORS.textSecondary}">/ ${max}</text>
-    ${label ? `<text x="${center}" y="${size - 2}" text-anchor="middle"
+    ${
+      label
+        ? `<text x="${center}" y="${size - 2}" text-anchor="middle"
       font-family="-apple-system, sans-serif" font-size="11" font-weight="500"
-      letter-spacing="0.5" fill="${COLORS.textSecondary}">${esc(label)}</text>` : ''}
+      letter-spacing="0.5" fill="${COLORS.textSecondary}">${esc(label)}</text>`
+        : ""
+    }
   </svg>`;
 }
 
@@ -134,26 +134,24 @@ function scoreRingSVG(score: number, max: number, size: number, label?: string):
 export function generateReportHTML(options: ReportOptions): string {
   const { run, scoreBefore, scoreAfter } = options;
   // Derive project name from cwd (actual directory), not target.name
-  const cwdBasename = options.cwd.split('/').filter(Boolean).pop() ?? 'Unknown';
+  const cwdBasename = options.cwd.split("/").filter(Boolean).pop() ?? "Unknown";
   const projectName = options.projectName ?? cwdBasename;
   const targetName = run.target.name;
 
   const totalClicks = run.clicks.length;
-  const landed = run.clicks.filter((c) => c.testsPassed);
-  const rolledBack = run.clicks.filter((c) => !c.testsPassed);
-  const durationMs = run.finishedAt
-    ? run.finishedAt.getTime() - run.startedAt.getTime()
-    : 0;
+  const landed = run.clicks.filter(c => c.testsPassed);
+  const rolledBack = run.clicks.filter(c => !c.testsPassed);
+  const durationMs = run.finishedAt ? run.finishedAt.getTime() - run.startedAt.getTime() : 0;
   const duration = formatDuration(durationMs);
-  const dateStr = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const dateStr = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   // --- Hero score section with rings ---
-  let heroHtml = '';
-  let categoryHtml = '';
+  let heroHtml = "";
+  let categoryHtml = "";
 
   if (scoreBefore && scoreAfter) {
     const beforePct = Math.round((scoreBefore.total / scoreBefore.maxTotal) * 100);
@@ -185,23 +183,23 @@ export function generateReportHTML(options: ReportOptions): string {
     const rows = scoreBefore.categories
       .map((before, i) => {
         const after = scoreAfter.categories[i];
-        if (!after) return '';
+        if (!after) return "";
         const catDelta = after.score - before.score;
         const catDeltaStr = catDelta > 0 ? `+${catDelta}` : String(catDelta);
-        const pillClass =
-          catDelta > 0 ? 'pill-pos' : catDelta < 0 ? 'pill-neg' : 'pill-neu';
-        const dotColor = CATEGORY_COLORS[after.name] ?? '#6b7280';
+        const pillClass = catDelta > 0 ? "pill-pos" : catDelta < 0 ? "pill-neg" : "pill-neu";
+        const dotColor = CATEGORY_COLORS[after.name] ?? "#6b7280";
         const aPct = after.max > 0 ? (after.score / after.max) * 100 : 0;
 
         type SubCategory = { name: string; score: number; max: number };
-        const subRows = (after.subcategories ?? []).map((subAfter: SubCategory, j: number) => {
-          const subBefore = (before.subcategories ?? [])[j] as SubCategory | undefined;
-          if (!subBefore) return '';
-          const subDelta = subAfter.score - subBefore.score;
-          const subDeltaStr = subDelta > 0 ? `+${subDelta}` : String(subDelta);
-          const subPillClass = subDelta > 0 ? 'pill-pos' : subDelta < 0 ? 'pill-neg' : 'pill-neu';
-          const saPct = subAfter.max > 0 ? (subAfter.score / subAfter.max) * 100 : 0;
-          return `
+        const subRows = (after.subcategories ?? [])
+          .map((subAfter: SubCategory, j: number) => {
+            const subBefore = (before.subcategories ?? [])[j] as SubCategory | undefined;
+            if (!subBefore) return "";
+            const subDelta = subAfter.score - subBefore.score;
+            const subDeltaStr = subDelta > 0 ? `+${subDelta}` : String(subDelta);
+            const subPillClass = subDelta > 0 ? "pill-pos" : subDelta < 0 ? "pill-neg" : "pill-neu";
+            const saPct = subAfter.max > 0 ? (subAfter.score / subAfter.max) * 100 : 0;
+            return `
           <div class="cat-row cat-sub">
             <div class="cat-dot-wrap"><div class="cat-dot-ring" style="border-color:${dotColor}"></div></div>
             <div class="cat-name sub">${esc(subAfter.name)}</div>
@@ -212,7 +210,8 @@ export function generateReportHTML(options: ReportOptions): string {
             <div class="cat-after">${subAfter.score}/${subAfter.max}</div>
             <div class="cat-chg"><span class="pill ${subPillClass}">${esc(subDeltaStr)}</span></div>
           </div>`;
-        }).join('');
+          })
+          .join("");
 
         return `
         <div class="cat-row">
@@ -226,7 +225,7 @@ export function generateReportHTML(options: ReportOptions): string {
           <div class="cat-chg"><span class="pill ${pillClass}">${esc(catDeltaStr)}</span></div>
         </div>${subRows}`;
       })
-      .join('');
+      .join("");
 
     categoryHtml = `
     <div class="section-title">Category Breakdown</div>
@@ -250,10 +249,11 @@ export function generateReportHTML(options: ReportOptions): string {
       </div>
     </div>`;
 
-    const rows = scoreAfter.categories.map((cat) => {
-      const pct = cat.max > 0 ? (cat.score / cat.max) * 100 : 0;
-      const dotColor = CATEGORY_COLORS[cat.name] ?? '#6b7280';
-      return `
+    const rows = scoreAfter.categories
+      .map(cat => {
+        const pct = cat.max > 0 ? (cat.score / cat.max) * 100 : 0;
+        const dotColor = CATEGORY_COLORS[cat.name] ?? "#6b7280";
+        return `
       <div class="cat-row">
         <div class="cat-dot-wrap"><div class="cat-dot" style="background:${dotColor}"></div></div>
         <div class="cat-name">${esc(cat.name)}</div>
@@ -262,7 +262,8 @@ export function generateReportHTML(options: ReportOptions): string {
         </div>
         <div class="cat-after">${cat.score}/${cat.max}</div>
       </div>`;
-    }).join('');
+      })
+      .join("");
 
     categoryHtml = `
     <div class="section-title">Category Breakdown</div>
@@ -270,27 +271,32 @@ export function generateReportHTML(options: ReportOptions): string {
   }
 
   // --- Click timeline ---
-  const clickTimelineItems = run.clicks.map((click) => {
-    const passed = click.testsPassed;
-    const dotColor = passed ? COLORS.success : COLORS.error;
-    const icon = passed ? '✓' : '✗';
-    const summary = plainEnglishSummary(click);
-    return `<div class="timeline-item">
+  const clickTimelineItems = run.clicks
+    .map(click => {
+      const passed = click.testsPassed;
+      const dotColor = passed ? COLORS.success : COLORS.error;
+      const icon = passed ? "✓" : "✗";
+      const summary = plainEnglishSummary(click);
+      return `<div class="timeline-item">
       <div class="timeline-dot" style="background:${dotColor}">${icon}</div>
       <div class="timeline-content">
         <span class="timeline-click">Click ${click.number}</span>
         <span class="timeline-desc">${esc(summary.slice(0, 100))}</span>
       </div>
     </div>`;
-  }).join('');
+    })
+    .join("");
 
-  const timelineHtml = run.clicks.length > 0 ? `
+  const timelineHtml =
+    run.clicks.length > 0
+      ? `
     <div class="section-title">Run Timeline</div>
-    <div class="timeline">${clickTimelineItems}</div>` : '';
+    <div class="timeline">${clickTimelineItems}</div>`
+      : "";
 
   // --- Deep Analysis sections ---
-  let execSummaryHtml = '';
-  let deepFindingsHtml = '';
+  let execSummaryHtml = "";
+  let deepFindingsHtml = "";
   const deep = options.deepAnalysis;
 
   if (deep) {
@@ -304,19 +310,21 @@ export function generateReportHTML(options: ReportOptions): string {
     </div>`;
 
     if (deep.findings.length > 0) {
-      const rows = deep.findings.map(f => {
-        const sevClass = `sev-${f.severity}`;
-        const sevLabel = f.severity.charAt(0).toUpperCase() + f.severity.slice(1);
-        const fileName = f.file ? (f.file.split('/').pop() ?? f.file) : '—';
-        const pct = Math.round(f.confidence * 100);
-        return `<div class="deep-row">
+      const rows = deep.findings
+        .map(f => {
+          const sevClass = `sev-${f.severity}`;
+          const sevLabel = f.severity.charAt(0).toUpperCase() + f.severity.slice(1);
+          const fileName = f.file ? (f.file.split("/").pop() ?? f.file) : "—";
+          const pct = Math.round(f.confidence * 100);
+          return `<div class="deep-row">
           <div class="deep-sev ${sevClass}">${esc(sevLabel)}</div>
           <div class="deep-cat">${esc(f.category)}</div>
           <div class="deep-msg">${esc(f.message.slice(0, 90))}</div>
           <div class="deep-file">${esc(fileName)}</div>
           <div class="deep-conf">${pct}%</div>
         </div>`;
-      }).join('');
+        })
+        .join("");
 
       deepFindingsHtml = `
     <div class="section-title">Deep Findings</div>
@@ -678,28 +686,26 @@ export async function generatePDF(options: ReportOptions): Promise<Buffer> {
   const html = generateReportHTML(options);
   // Debug: dump HTML to /tmp for inspection
   if (process.env.RATCHET_DEBUG_HTML) {
-    const { writeFileSync } = await import('fs');
-    writeFileSync('/tmp/ratchet-report-debug.html', html);
+    const { writeFileSync } = await import("fs");
+    writeFileSync("/tmp/ratchet-report-debug.html", html);
   }
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 2 });
-    await page.setContent(html, { waitUntil: ['load', 'networkidle0'] });
+    await page.setContent(html, { waitUntil: ["load", "networkidle0"] });
     type PageGlobal = { document: { body: { scrollHeight: number } } };
-    const contentHeight = await page.evaluate(
-      () => (globalThis as unknown as PageGlobal).document.body.scrollHeight,
-    );
+    const contentHeight = await page.evaluate(() => (globalThis as unknown as PageGlobal).document.body.scrollHeight);
     // Single-page PDF: set page height to exact content so no blank page 2
     const pdf = await page.pdf({
-      width: '794px',
+      width: "794px",
       height: `${contentHeight + 2}px`,
       printBackground: true,
-      margin: { top: '0', right: '0', bottom: '0', left: '0' },
-      pageRanges: '1',
+      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      pageRanges: "1",
     });
     return Buffer.from(pdf);
   } finally {
@@ -712,7 +718,7 @@ export async function generatePDF(options: ReportOptions): Promise<Buffer> {
  */
 export async function writePDF(options: ReportOptions): Promise<string> {
   const { run, cwd } = options;
-  const pdfPath = join(cwd, 'docs', `${run.target.name}-ratchet-report.pdf`);
+  const pdfPath = join(cwd, "docs", `${run.target.name}-ratchet-report.pdf`);
   const buffer = await generatePDF(options);
   await mkdir(dirname(pdfPath), { recursive: true });
   await writeFile(pdfPath, buffer);

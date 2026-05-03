@@ -2,29 +2,29 @@
  * Core logic for `ratchet vision` — builds a Cytoscape.js-compatible graph
  * by combining ratchet scan results with file-level import analysis.
  */
-import { readFileSync } from 'fs';
-import { join, relative, basename, dirname } from 'path';
-import { runScan } from '../core/scanner';
-import { findSourceFiles } from './scan-constants.js';
-import type { ScanResult } from '../core/scanner';
-import type { Provider } from './providers/base.js';
+import { readFileSync } from "fs";
+import { join, relative, basename, dirname } from "path";
+import { runScan } from "../core/scanner";
+import { findSourceFiles } from "./scan-constants.js";
+import type { ScanResult } from "../core/scanner";
+import type { Provider } from "./providers/base.js";
 
 // ── Types
 export interface VisionNode {
   id: string;
   label: string;
-  score: number;             // 0–100 estimated per-file quality score
-  issueCount: number;        // total issues touching this file
+  score: number; // 0–100 estimated per-file quality score
+  issueCount: number; // total issues touching this file
   issuesByCategory: Record<string, number>;
-  blastRadius: number;       // number of files that import this file
-  directory: string;         // relative directory path (for clustering)
+  blastRadius: number; // number of files that import this file
+  directory: string; // relative directory path (for clustering)
 }
 
 export interface VisionEdge {
   source: string;
   target: string;
-  type: 'import' | 'call' | 'semantic';
-  semanticReason?: string;  // LLM's reasoning for the semantic connection
+  type: "import" | "call" | "semantic";
+  semanticReason?: string; // LLM's reasoning for the semantic connection
 }
 
 export interface RiskCluster {
@@ -39,7 +39,7 @@ export interface VisionGraph {
   edges: VisionEdge[];
   projectName: string;
   totalScore: number;
-  totalNodes: number;   // total before any truncation/filter
+  totalNodes: number; // total before any truncation/filter
   truncated: boolean;
   riskClusters?: RiskCluster[];
   deepMode?: boolean;
@@ -47,12 +47,12 @@ export interface VisionGraph {
 
 export interface VisionOptions {
   cwd: string;
-  focus?: string;          // file path — show only N-hop neighborhood
-  filter?: string;         // issue category to filter by
-  maxNodes?: number;       // cap node count (default 500)
-  focusHops?: number;      // neighbourhood depth for focus mode (default 2)
-  deep?: boolean;          // enable LLM-powered semantic dependency analysis
-  provider?: Provider;     // provider for deep mode LLM calls
+  focus?: string; // file path — show only N-hop neighborhood
+  filter?: string; // issue category to filter by
+  maxNodes?: number; // cap node count (default 500)
+  focusHops?: number; // neighbourhood depth for focus mode (default 2)
+  deep?: boolean; // enable LLM-powered semantic dependency analysis
+  provider?: Provider; // provider for deep mode LLM calls
 }
 
 // ── Constants
@@ -71,24 +71,24 @@ const SEVERITY_WEIGHT: Record<string, number> = {
  * Map a 0–100 score to a hex colour (6-tier cyberpunk scale).
  */
 export function nodeColor(score: number): string {
-  if (score >= 90) return '#00ff88';
-  if (score >= 80) return '#22d3ee';
-  if (score >= 60) return '#fbbf24';
-  if (score >= 40) return '#f97316';
-  if (score >= 20) return '#ef4444';
-  return '#ff2d55';
+  if (score >= 90) return "#00ff88";
+  if (score >= 80) return "#22d3ee";
+  if (score >= 60) return "#fbbf24";
+  if (score >= 40) return "#f97316";
+  if (score >= 20) return "#ef4444";
+  return "#ff2d55";
 }
 
 /**
  * Map a 0–100 score to a glow rgba colour for cyberpunk node halos.
  */
 export function glowColor(score: number): string {
-  if (score >= 90) return 'rgba(0,255,136,0.5)';
-  if (score >= 80) return 'rgba(34,211,238,0.4)';
-  if (score >= 60) return 'rgba(251,191,36,0.35)';
-  if (score >= 40) return 'rgba(249,115,22,0.4)';
-  if (score >= 20) return 'rgba(239,68,68,0.45)';
-  return 'rgba(255,45,85,0.6)';
+  if (score >= 90) return "rgba(0,255,136,0.5)";
+  if (score >= 80) return "rgba(34,211,238,0.4)";
+  if (score >= 60) return "rgba(251,191,36,0.35)";
+  if (score >= 40) return "rgba(249,115,22,0.4)";
+  if (score >= 20) return "rgba(239,68,68,0.45)";
+  return "rgba(255,45,85,0.6)";
 }
 
 /**
@@ -105,11 +105,7 @@ export function computeFileScore(severityScore: number): number {
  * Only considers local imports (starts with '.'), skipping node_modules.
  * Tries several extensions to resolve to an actual file in `allFiles`.
  */
-export function parseLocalImports(
-  content: string,
-  filePath: string,
-  allFiles: Set<string>,
-): string[] {
+export function parseLocalImports(content: string, filePath: string, allFiles: Set<string>): string[] {
   const dir = dirname(filePath);
   const seen = new Set<string>();
   const results: string[] = [];
@@ -124,18 +120,18 @@ export function parseLocalImports(
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(content)) !== null) {
       const specifier = match[1]!;
-      if (!specifier.startsWith('.')) continue;
+      if (!specifier.startsWith(".")) continue;
 
       // Strip .js extension TypeScript emits for resolution
-      const base = specifier.replace(/\.js$/, '');
+      const base = specifier.replace(/\.js$/, "");
 
       const candidates = [
         join(dir, base),
-        join(dir, base + '.ts'),
-        join(dir, base + '.tsx'),
-        join(dir, base + '.js'),
-        join(dir, base + '/index.ts'),
-        join(dir, base + '/index.js'),
+        join(dir, base + ".ts"),
+        join(dir, base + ".tsx"),
+        join(dir, base + ".js"),
+        join(dir, base + "/index.ts"),
+        join(dir, base + "/index.js"),
       ];
 
       for (const candidate of candidates) {
@@ -156,11 +152,7 @@ export function parseLocalImports(
  * Given a focus file and a set of edges, return the set of file IDs that are
  * within `hops` steps of the focus file (bidirectional BFS).
  */
-export function getNeighborhood(
-  focusFile: string,
-  edges: VisionEdge[],
-  hops: number,
-): Set<string> {
+export function getNeighborhood(focusFile: string, edges: VisionEdge[], hops: number): Set<string> {
   const visited = new Set<string>();
   let frontier = new Set<string>([focusFile]);
 
@@ -211,7 +203,7 @@ export async function buildSemanticDependencies(
   files: string[],
   contents: Map<string, string>,
   cwd: string,
-  provider: Provider,
+  provider: Provider
 ): Promise<{ semanticEdges: VisionEdge[]; riskClusters: RiskCluster[] }> {
   // Select a representative sample — prefer smaller files to fit more context
   const sample = [...files]
@@ -221,10 +213,10 @@ export async function buildSemanticDependencies(
   const fileSnippets = sample
     .map(f => {
       const rel = relative(cwd, f);
-      const content = (contents.get(f) ?? '').slice(0, MAX_CONTENT_CHARS_PER_FILE);
+      const content = (contents.get(f) ?? "").slice(0, MAX_CONTENT_CHARS_PER_FILE);
       return `=== ${rel} ===\n${content}`;
     })
-    .join('\n\n');
+    .join("\n\n");
 
   const prompt = `You are a software architect analyzing a codebase for hidden runtime dependencies.
 
@@ -259,7 +251,10 @@ Keep it concise — max 20 semantic dependencies and 5 risk clusters. If none fo
   // Parse JSON — strip optional markdown fences
   let parsed: SemanticAnalysisResult;
   try {
-    const json = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+    const json = raw
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```\s*$/, "")
+      .trim();
     parsed = JSON.parse(json) as SemanticAnalysisResult;
   } catch {
     return { semanticEdges: [], riskClusters: [] };
@@ -280,7 +275,7 @@ Keep it concise — max 20 semantic dependencies and 5 risk clusters. If none fo
     const key = `${src}|${tgt}`;
     if (edgeSet.has(key)) continue;
     edgeSet.add(key);
-    semanticEdges.push({ source: src, target: tgt, type: 'semantic', semanticReason: dep.reason });
+    semanticEdges.push({ source: src, target: tgt, type: "semantic", semanticReason: dep.reason });
   }
 
   const riskClusters: RiskCluster[] = (parsed.riskClusters ?? []).map(c => ({
@@ -313,10 +308,7 @@ export async function buildVisionGraph(options: VisionOptions): Promise<VisionGr
   const allFileSet = new Set(allSourceFiles);
 
   // 3. Accumulate per-file issue data from scan locations
-  const fileIssues = new Map<
-    string,
-    { count: number; byCategory: Record<string, number>; severityScore: number }
-  >();
+  const fileIssues = new Map<string, { count: number; byCategory: Record<string, number>; severityScore: number }>();
 
   for (const issue of scanResult.issuesByType) {
     const weight = SEVERITY_WEIGHT[issue.severity] ?? 3;
@@ -335,7 +327,7 @@ export async function buildVisionGraph(options: VisionOptions): Promise<VisionGr
   const fileContents = new Map<string, string>();
   for (const file of allSourceFiles) {
     try {
-      fileContents.set(file, readFileSync(file, 'utf-8'));
+      fileContents.set(file, readFileSync(file, "utf-8"));
     } catch {
       // skip unreadable files
     }
@@ -353,7 +345,7 @@ export async function buildVisionGraph(options: VisionOptions): Promise<VisionGr
       const key = `${file}|${target}`;
       if (!edgeSet.has(key)) {
         edgeSet.add(key);
-        edges.push({ source: file, target, type: 'import' });
+        edges.push({ source: file, target, type: "import" });
         incomingCount.set(target, (incomingCount.get(target) ?? 0) + 1);
       }
     }
@@ -377,7 +369,7 @@ export async function buildVisionGraph(options: VisionOptions): Promise<VisionGr
 
   // 6. Apply focus mode — keep only N-hop neighborhood
   if (focus) {
-    const focusResolved = focus.startsWith('/') ? focus : join(cwd, focus);
+    const focusResolved = focus.startsWith("/") ? focus : join(cwd, focus);
     const neighborhood = getNeighborhood(focusResolved, edges, focusHops);
     nodes = nodes.filter(n => neighborhood.has(n.id));
   }
@@ -389,8 +381,7 @@ export async function buildVisionGraph(options: VisionOptions): Promise<VisionGr
 
     for (const issue of scanResult.issuesByType) {
       const matches =
-        issue.category.toLowerCase().includes(filterLower) ||
-        issue.subcategory.toLowerCase().includes(filterLower);
+        issue.category.toLowerCase().includes(filterLower) || issue.subcategory.toLowerCase().includes(filterLower);
       if (matches) {
         for (const loc of issue.locations ?? []) matchingFiles.add(loc);
       }
@@ -425,7 +416,7 @@ export async function buildVisionGraph(options: VisionOptions): Promise<VisionGr
       [...nodeIds],
       fileContents,
       cwd,
-      provider,
+      provider
     );
     // Dedup semantic edges against import edges
     const importEdgeKeys = new Set(filteredEdges.map(e => `${e.source}|${e.target}`));
@@ -434,10 +425,12 @@ export async function buildVisionGraph(options: VisionOptions): Promise<VisionGr
         filteredEdges.push(se);
       }
     }
-    riskClusters = clusters.map(c => ({
-      ...c,
-      files: c.files.filter(f => nodeIds.has(f)),
-    })).filter(c => c.files.length >= 2);
+    riskClusters = clusters
+      .map(c => ({
+        ...c,
+        files: c.files.filter(f => nodeIds.has(f)),
+      }))
+      .filter(c => c.files.length >= 2);
   }
 
   return {

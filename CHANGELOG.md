@@ -6,12 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [1.0.8] - 2025-03-23
 
 ### Fixed
+
 - AST-level detection for high false-positive scanner rules (empty catches, hardcoded secrets, console.log)
 - Comment-only catch bodies now treated as documented intent, not empty catches
 - Context-aware scanner strips comments and string literals before regex matching
 - Scanner false positives in `explanations.ts` and other internal files
 
 ### Added
+
 - Pre-validation gate: improve skips targets that fail pre-scan validation (reduces wasted clicks)
 - File classification: production / docs / test / config — code quality rules skip non-production files
 - Proactive `--architect` recommendation when structural/cross-cutting issues dominate scan output
@@ -19,6 +21,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [1.0.7] - 2025-02-XX
 
 ### Added
+
 - Swarm v2: MiroFish intelligence — agent personalities, debate rounds, social learning between agents
 - Self-evolving strategy: autoresearch meta-learning, agents adapt prompts based on prior click outcomes
 - `--mode feature`: graph-aware feature builder engine
@@ -39,6 +42,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [1.0.6] - 2025-01-XX
 
 ### Added
+
 - `ratchet improve` command: multi-sweep scan→fix→rescan→report loop
 - PDF report export with score hero, sparklines, top wins, and timeline
 - Scan cache: true incremental scanning with per-file baselines
@@ -51,6 +55,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `--scope` flag: git-aware scope locking
 
 ### Fixed
+
 - Granular scoring thresholds — proportional instead of binary
 - Regression guard in architect engine
 - Smart stop, ceiling detection, rollback transparency
@@ -58,6 +63,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [1.0.5] - 2024-12-XX
 
 ### Added
+
 - Quality gates: `--fail-on <score>` exits with code 1 below threshold
 - Per-category gates: `--fail-on-category Security=12`
 - `--explain` flag: human-readable why/fix explanations per subcategory
@@ -68,18 +74,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [1.0.4] - 2024-11-XX
 
 ### Added
+
 - Stripe license validation: tier enforcement via license key
 - `ratchet auth login` / `ratchet auth logout` commands
 - Welcome page with license key delivery
 - Cloudflare Worker API for license delivery and Stripe webhook
 
 ### Fixed
+
 - Tier mapping from Stripe metadata
 - License validation endpoint (POST→GET)
 
 ## [1.0.3] - 2024-11-XX
 
 ### Fixed
+
 - npm package name corrected (`ratchet-run`)
 - License key references and welcome page flags
 - Version bump and lockfile sync
@@ -87,11 +96,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [1.0.2] - 2024-11-XX
 
 ### Changed
+
 - Package renamed from `ratchet-cli` to `ratchet-run` for npm publish
 
 ## [1.0.1] - 2024-10-XX
 
 ### Added
+
 - GitHub Action (`action.yml`): quality gate scans in CI
 - Composite action with bash entrypoint, PR comment posting, badge URL output
 - `ratchet report` command: run history and summary
@@ -100,6 +111,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [1.0.0] - 2024-10-XX
 
 ### Added
+
 - `ratchet scan`: production readiness score (0–100) across 6 categories
   - Testing (25 pts): coverage ratio, edge cases, test quality
   - Security (15 pts): secrets, input validation, auth & rate limiting
@@ -122,6 +134,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.1.0] - 2024-09-XX
 
 ### Added
+
 - Initial release
 - `scan`, `improve`, `init`, `report`, `ship` commands
 - Core scan engine and improve click loop

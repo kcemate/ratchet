@@ -8,38 +8,38 @@
  * - Idempotent: if calls are already replaced, second pass does nothing.
  */
 
-import { Project, SyntaxKind, Node } from 'ts-morph';
-import type { ASTTransform, TransformContext } from './base.js';
-import type { Finding } from '../normalize.js';
-import { isTestFile } from './base.js';
+import { Project, SyntaxKind, Node } from "ts-morph";
+import type { ASTTransform, TransformContext } from "./base.js";
+import type { Finding } from "../normalize.js";
+import { isTestFile } from "./base.js";
 
-const CONSOLE_METHODS = ['log', 'warn', 'error', 'info', 'debug'] as const;
-type ConsoleMethod = typeof CONSOLE_METHODS[number];
+const CONSOLE_METHODS = ["log", "warn", "error", "info", "debug"] as const;
+type ConsoleMethod = (typeof CONSOLE_METHODS)[number];
 
 /** Map console method → logger method (log → info for structured loggers) */
 const METHOD_MAP: Record<ConsoleMethod, string> = {
-  log: 'info',
-  warn: 'warn',
-  error: 'error',
-  info: 'info',
-  debug: 'debug',
+  log: "info",
+  warn: "warn",
+  error: "error",
+  info: "info",
+  debug: "debug",
 };
 
 export const replaceConsoleTransform: ASTTransform = {
-  id: 'replace-console-logger',
+  id: "replace-console-logger",
   matchesFindings: [
-    'console',
-    'Console.*',
-    'console.log',
-    'console in production',
-    'structured logging',
-    'replace console',
-    'CQ-',
+    "console",
+    "Console.*",
+    "console.log",
+    "console in production",
+    "structured logging",
+    "replace console",
+    "CQ-",
   ],
-  languages: ['typescript', 'javascript'],
+  languages: ["typescript", "javascript"],
 
   canApply(source: string, finding: Finding): boolean {
-    if (isTestFile(finding.file ?? '')) return false;
+    if (isTestFile(finding.file ?? "")) return false;
     return CONSOLE_METHODS.some(m => source.includes(`console.${m}(`));
   },
 
@@ -47,9 +47,9 @@ export const replaceConsoleTransform: ASTTransform = {
     if (isTestFile(context.filePath)) return null;
 
     const project = new Project({ useInMemoryFileSystem: true });
-    const sourceFile = project.createSourceFile('__transform__.ts', source);
+    const sourceFile = project.createSourceFile("__transform__.ts", source);
 
-    const loggerVar = context.loggerVarName ?? 'logger';
+    const loggerVar = context.loggerVarName ?? "logger";
     let replacementCount = 0;
 
     // Find all console.X() calls
@@ -62,11 +62,14 @@ export const replaceConsoleTransform: ASTTransform = {
       const obj = expr.getExpression();
       const method = expr.getName();
 
-      if (obj.getText() !== 'console') continue;
+      if (obj.getText() !== "console") continue;
       if (!CONSOLE_METHODS.includes(method as ConsoleMethod)) continue;
 
       const mappedMethod = METHOD_MAP[method as ConsoleMethod];
-      const args = call.getArguments().map(a => a.getText()).join(', ');
+      const args = call
+        .getArguments()
+        .map(a => a.getText())
+        .join(", ");
 
       call.replaceWithText(`${loggerVar}.${mappedMethod}(${args})`);
       replacementCount++;
@@ -79,15 +82,13 @@ export const replaceConsoleTransform: ASTTransform = {
     // Add logger import if needed
     if (context.hasStructuredLogger && context.loggerImportPath) {
       const alreadyImported =
-        result.includes(`from '${context.loggerImportPath}'`) ||
-        result.includes(`from "${context.loggerImportPath}"`);
+        result.includes(`from '${context.loggerImportPath}'`) || result.includes(`from "${context.loggerImportPath}"`);
       if (!alreadyImported) {
         result = `import { ${loggerVar} } from '${context.loggerImportPath}';\n` + result;
       }
     } else if (!context.hasStructuredLogger) {
       // No structured logger — create a minimal one inline if console not already imported
-      const alreadyHasLogger =
-        result.includes(`const ${loggerVar}`) || result.includes(`import.*${loggerVar}`);
+      const alreadyHasLogger = result.includes(`const ${loggerVar}`) || result.includes(`import.*${loggerVar}`);
       if (!alreadyHasLogger) {
         // Prepend minimal logger shim (maps to console methods)
         const shim = [
@@ -97,8 +98,8 @@ export const replaceConsoleTransform: ASTTransform = {
           `  error: (...args: unknown[]) => console.error(...args),`,
           `  debug: (...args: unknown[]) => console.debug(...args),`,
           `};`,
-          '',
-        ].join('\n');
+          "",
+        ].join("\n");
         result = shim + result;
       }
     }

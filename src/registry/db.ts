@@ -4,9 +4,9 @@
  * WAL mode gives safe concurrent reads alongside writes.
  */
 
-import Database from 'better-sqlite3';
-import { dirname, resolve } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import Database from "better-sqlite3";
+import { dirname, resolve } from "path";
+import { existsSync, mkdirSync } from "fs";
 
 export type Db = Database.Database;
 
@@ -15,21 +15,18 @@ let _db: Database.Database | null = null;
 export function getDb(dbPath?: string): Database.Database {
   if (_db) return _db;
 
-  const path =
-    dbPath ??
-    process.env['RATCHET_DB_PATH'] ??
-    resolve(process.cwd(), 'ratchet-registry.db');
+  const path = dbPath ?? process.env["RATCHET_DB_PATH"] ?? resolve(process.cwd(), "ratchet-registry.db");
 
-  if (path !== ':memory:') {
+  if (path !== ":memory:") {
     const dir = dirname(path);
-    if (dir && dir !== '.' && !existsSync(dir)) {
+    if (dir && dir !== "." && !existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
   }
 
   const sqlite = new Database(path);
-  sqlite.pragma('journal_mode = WAL');
-  sqlite.pragma('foreign_keys = ON');
+  sqlite.pragma("journal_mode = WAL");
+  sqlite.pragma("foreign_keys = ON");
   initSchema(sqlite);
 
   _db = sqlite;

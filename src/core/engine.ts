@@ -10,12 +10,7 @@
  */
 
 // ── engine-core ────────────────────────────────────────────────────────────
-export type {
-  CircuitBreakerState,
-  RunEconomics,
-  RunSummary,
-  ClickPhase,
-} from './engine-core.js';
+export type { CircuitBreakerState, RunEconomics, RunSummary, ClickPhase } from "./engine-core.js";
 
 export {
   shouldSoftSkipSubcategory,
@@ -35,23 +30,20 @@ export {
   getConsecutiveTrailingRollbacks,
   checkCircuitBreaker,
   runConfidenceGating,
-} from './engine-core.js';
+} from "./engine-core.js";
 
 // HardenPhase is a type re-export from types.js via engine-core.ts
-export type { HardenPhase } from './engine-core.js';
+export type { HardenPhase } from "./engine-core.js";
 
 // ── engine-utils ───────────────────────────────────────────────────────────
-export type {
-  EngineCallbacks,
-  EngineRunOptions,
-} from './engine-utils.js';
+export type { EngineCallbacks, EngineRunOptions } from "./engine-utils.js";
 
-export { preflightTestCommand } from './engine-utils.js';
+export { preflightTestCommand } from "./engine-utils.js";
 
 // ── engine-run ─────────────────────────────────────────────────────────────
-export { runEngine } from './engine-run.js';
+export { runEngine } from "./engine-run.js";
 
 // ── sub-module re-exports ──────────────────────────────────────────────────
-export { nextGuardProfile, isGuardRejection } from './engine-guards.js';
-export { runArchitectEngine } from './engine-architect.js';
-export { runSweepEngine, chunk } from './engine-sweep.js';
+export { nextGuardProfile, isGuardRejection } from "./engine-guards.js";
+export { runArchitectEngine } from "./engine-architect.js";
+export { runSweepEngine, chunk } from "./engine-sweep.js";

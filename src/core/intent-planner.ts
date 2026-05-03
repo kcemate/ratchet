@@ -10,16 +10,16 @@
  *   - Retry once if JSON extraction fails (appending a stricter instruction).
  */
 
-import type { Finding } from './normalize.js';
-import { OllamaCloudProvider } from './providers/ollama-cloud.js';
-import { validateIntentPlan } from './intent-schema.js';
-import type { IntentPlan } from './intent-schema.js';
+import type { Finding } from "./normalize.js";
+import { OllamaCloudProvider } from "./providers/ollama-cloud.js";
+import { validateIntentPlan } from "./intent-schema.js";
+import type { IntentPlan } from "./intent-schema.js";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const INTENT_MODEL = 'nemotron-3-super:cloud';
+const INTENT_MODEL = "nemotron-3-super:cloud";
 
 /** Lines of context to include around the finding's target line. */
 const CONTEXT_LINES = 20;
@@ -60,8 +60,8 @@ export function extractJson(raw: string): Record<string, unknown> | null {
   }
 
   // Strategy 3: first { to last }
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
+  const firstBrace = text.indexOf("{");
+  const lastBrace = text.lastIndexOf("}");
   if (firstBrace !== -1 && lastBrace > firstBrace) {
     try {
       return JSON.parse(text.slice(firstBrace, lastBrace + 1)) as Record<string, unknown>;
@@ -72,19 +72,19 @@ export function extractJson(raw: string): Record<string, unknown> | null {
 
   // Strategy 4: line-by-line cleanup — keep only lines that look like JSON
   const jsonLines = text
-    .split('\n')
-    .filter((line) => {
+    .split("\n")
+    .filter(line => {
       const t = line.trim();
       return (
-        t.startsWith('{') ||
-        t.startsWith('}') ||
+        t.startsWith("{") ||
+        t.startsWith("}") ||
         t.startsWith('"') ||
-        t.startsWith('[') ||
-        t.startsWith(']') ||
+        t.startsWith("[") ||
+        t.startsWith("]") ||
         /^"[\w_]+"\s*:/.test(t)
       );
     })
-    .join('\n');
+    .join("\n");
   if (jsonLines) {
     try {
       return JSON.parse(jsonLines) as Record<string, unknown>;
@@ -97,31 +97,31 @@ export function extractJson(raw: string): Record<string, unknown> | null {
   const partial: Record<string, unknown> = {};
 
   const actionMatch = text.match(/"action"\s*:\s*"([^"]+)"/);
-  if (actionMatch?.[1]) partial['action'] = actionMatch[1];
+  if (actionMatch?.[1]) partial["action"] = actionMatch[1];
 
   const targetLinesMatch = text.match(/"targetLines"\s*:\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]/);
-  if (targetLinesMatch) partial['targetLines'] = [Number(targetLinesMatch[1]), Number(targetLinesMatch[2])];
+  if (targetLinesMatch) partial["targetLines"] = [Number(targetLinesMatch[1]), Number(targetLinesMatch[2])];
 
   const descMatch = text.match(/"description"\s*:\s*"([^"]+)"/);
-  if (descMatch?.[1]) partial['description'] = descMatch[1];
+  if (descMatch?.[1]) partial["description"] = descMatch[1];
 
   const patternMatch = text.match(/"pattern"\s*:\s*"([^"]+)"/);
-  if (patternMatch?.[1]) partial['pattern'] = patternMatch[1];
+  if (patternMatch?.[1]) partial["pattern"] = patternMatch[1];
 
   const intentMatch = text.match(/"replacement_intent"\s*:\s*"([^"]+)"/);
-  if (intentMatch?.[1]) partial['replacement_intent'] = intentMatch[1];
+  if (intentMatch?.[1]) partial["replacement_intent"] = intentMatch[1];
 
   const importsMatch = text.match(/"imports_needed"\s*:\s*\[(.*?)\]/s);
   if (importsMatch) {
     try {
-      partial['imports_needed'] = JSON.parse(`[${importsMatch[1]}]`) as unknown[];
+      partial["imports_needed"] = JSON.parse(`[${importsMatch[1]}]`) as unknown[];
     } catch {
-      partial['imports_needed'] = [];
+      partial["imports_needed"] = [];
     }
   }
 
   const confMatch = text.match(/"confidence"\s*:\s*([\d.]+)/);
-  if (confMatch?.[1]) partial['confidence'] = Number(confMatch[1]);
+  if (confMatch?.[1]) partial["confidence"] = Number(confMatch[1]);
 
   if (Object.keys(partial).length > 0) return partial;
 
@@ -133,14 +133,14 @@ export function extractJson(raw: string): Record<string, unknown> | null {
 // ---------------------------------------------------------------------------
 
 function buildSourceWindow(source: string, targetLine: number): { window: string; startLine: number; endLine: number } {
-  const lines = source.split('\n');
+  const lines = source.split("\n");
   const startLine = Math.max(1, targetLine - CONTEXT_LINES);
   const endLine = Math.min(lines.length, targetLine + CONTEXT_LINES);
 
   const window = lines
     .slice(startLine - 1, endLine)
     .map((l, i) => `${startLine + i}: ${l}`)
-    .join('\n');
+    .join("\n");
 
   return { window, startLine, endLine };
 }
@@ -150,8 +150,8 @@ function buildPrompt(finding: Finding, source: string, strictMode = false): stri
   const { window, startLine, endLine } = buildSourceWindow(source, targetLine);
 
   const strictSuffix = strictMode
-    ? '\n\nIMPORTANT: Respond with ONLY valid JSON. No prose, no markdown, no explanation.'
-    : '';
+    ? "\n\nIMPORTANT: Respond with ONLY valid JSON. No prose, no markdown, no explanation."
+    : "";
 
   return `You are a code quality analyzer. Given a finding and the relevant source code, describe the fix as a structured JSON plan. Do NOT write code. Describe WHAT to change, not HOW.
 
@@ -160,9 +160,9 @@ Category: ${finding.category}
 Rule: ${finding.subcategory}
 Severity: ${finding.severity}
 Description: ${finding.message}
-Location: ${finding.file ?? 'unknown'}:${targetLine}
+Location: ${finding.file ?? "unknown"}:${targetLine}
 
-SOURCE (lines ${startLine}-${endLine} of ${finding.file ?? 'unknown'}):
+SOURCE (lines ${startLine}-${endLine} of ${finding.file ?? "unknown"}):
 \`\`\`
 ${window}
 \`\`\`
@@ -201,7 +201,7 @@ export class IntentPlanner {
     this.model = config.model ?? INTENT_MODEL;
     this.maxTokens = config.maxTokens ?? 512;
     this.provider = new OllamaCloudProvider({
-      provider: 'ollama-cloud',
+      provider: "ollama-cloud",
       apiKey: config.apiKey,
       model: this.model,
     });
@@ -261,7 +261,7 @@ export class IntentPlanner {
 export async function generateIntentPlan(
   finding: Finding,
   source: string,
-  config?: IntentPlannerConfig,
+  config?: IntentPlannerConfig
 ): Promise<IntentPlan | null> {
   const planner = new IntentPlanner(config);
   return planner.plan(finding, source);

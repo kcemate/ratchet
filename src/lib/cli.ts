@@ -5,20 +5,20 @@
  * writeOutputFile, printBulletList, withSpinner,
  * warnIfStaleBinary, warnIfDirtyWorktree, formatScoreDelta, renderClickTable.
  */
-import chalk, { type ChalkInstance } from 'chalk';
-import ora, { type Ora } from 'ora';
-import { writeFile } from 'fs/promises';
-import { loadConfig } from '../core/config.js';
-import { logger } from './logger.js';
-import { toErrorMessage } from '../core/utils.js';
-import { checkStaleBinary } from '../core/stale-check.js';
-import { status as gitStatus, isRepo } from '../core/git.js';
-import type { Click } from '../types.js';
-import type { ClickPhase } from '../core/engine.js';
+import chalk, { type ChalkInstance } from "chalk";
+import ora, { type Ora } from "ora";
+import { writeFile } from "fs/promises";
+import { loadConfig } from "../core/config.js";
+import { logger } from "./logger.js";
+import { toErrorMessage } from "../core/utils.js";
+import { checkStaleBinary } from "../core/stale-check.js";
+import { status as gitStatus, isRepo } from "../core/git.js";
+import type { Click } from "../types.js";
+import type { ClickPhase } from "../core/engine.js";
 
 /** Print a bold command header line, e.g. printHeader('⚙  Ratchet Improve') */
 export function printHeader(text: string): void {
-  process.stdout.write(chalk.bold(`\n${text}\n`) + '\n');
+  process.stdout.write(chalk.bold(`\n${text}\n`) + "\n");
 }
 
 /** Write a red error message to stderr and exit. Never returns. */
@@ -55,14 +55,14 @@ export function loadConfigOrExit(cwd: string): ReturnType<typeof loadConfig> {
   try {
     return loadConfig(cwd);
   } catch (err) {
-    exitWithError('Error loading .ratchet.yml: ' + String(err));
+    exitWithError("Error loading .ratchet.yml: " + String(err));
   }
 }
 
 /** Return the chalk color function for a severity level. */
 export function severityColor(severity: string): typeof chalk.red {
-  if (severity === 'high') return chalk.red;
-  if (severity === 'medium') return chalk.yellow;
+  if (severity === "high") return chalk.red;
+  if (severity === "medium") return chalk.yellow;
   return chalk.dim;
 }
 
@@ -71,8 +71,8 @@ export function severityColor(severity: string): typeof chalk.red {
  * Logs the saved path to stdout.
  */
 export async function writeOutputFile(outputPath: string, content: string): Promise<void> {
-  const resolved = outputPath.endsWith('.md') ? outputPath : `${outputPath}.md`;
-  await writeFile(resolved, content, 'utf-8');
+  const resolved = outputPath.endsWith(".md") ? outputPath : `${outputPath}.md`;
+  await writeFile(resolved, content, "utf-8");
   process.stdout.write(`  Report saved: ${chalk.dim(resolved)}\n\n`);
 }
 
@@ -87,15 +87,12 @@ export async function writeOutputFile(outputPath: string, content: string): Prom
  * @param fields          - Array of [label, preformatted-value] tuples
  * @param trailingNewline - Emit a blank line after the block (default: true)
  */
-export function printFields(
-  fields: Array<[string, string]>,
-  trailingNewline = true,
-): void {
+export function printFields(fields: Array<[string, string]>, trailingNewline = true): void {
   const width = Math.max(...fields.map(([label]) => label.length));
   for (const [label, value] of fields) {
     process.stdout.write(`  ${label.padEnd(width)} : ${value}\n`);
   }
-  if (trailingNewline) process.stdout.write('\n');
+  if (trailingNewline) process.stdout.write("\n");
 }
 
 /**
@@ -107,18 +104,13 @@ export function printFields(
  * @param color  - chalk color fn applied to the bullet character
  * @param limit  - max items to show (default: 5)
  */
-export function printBulletList(
-  title: string,
-  items: string[],
-  color: (s: string) => string,
-  limit = 5,
-): void {
+export function printBulletList(title: string, items: string[], color: (s: string) => string, limit = 5): void {
   if (items.length === 0) return;
-  process.stdout.write(chalk.bold(`  ${title}`) + '\n');
+  process.stdout.write(chalk.bold(`  ${title}`) + "\n");
   for (const item of items.slice(0, limit)) {
-    process.stdout.write(`    ${color('•')} ${item}\n`);
+    process.stdout.write(`    ${color("•")} ${item}\n`);
   }
-  process.stdout.write('\n');
+  process.stdout.write("\n");
 }
 
 /**
@@ -131,11 +123,7 @@ export function printBulletList(
  * @param failLabel - short label for spinner.fail() (e.g. 'Debate failed')
  *                    If omitted, the error message is used directly.
  */
-export async function withSpinner<T>(
-  text: string,
-  fn: (spinner: Ora) => Promise<T>,
-  failLabel?: string,
-): Promise<T> {
+export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise<T>, failLabel?: string): Promise<T> {
   const spinner = ora(text).start();
   try {
     return await fn(spinner);
@@ -164,8 +152,8 @@ export async function warnIfDirtyWorktree(cwd: string): Promise<void> {
   const allDirty = [...ws.staged, ...ws.unstaged, ...ws.untracked];
   const dirtyFiles = allDirty.length;
   if (dirtyFiles > 0) {
-    const shown = allDirty.slice(0, 3).join(', ');
-    logger.warn({ dirtyFiles, files: shown }, 'Dirty worktree');
+    const shown = allDirty.slice(0, 3).join(", ");
+    logger.warn({ dirtyFiles, files: shown }, "Dirty worktree");
   }
 }
 
@@ -193,7 +181,7 @@ export function formatScoreDelta(before: number, after: number): string {
   const delta = after - before;
   if (delta > 0) return chalk.green(`+${delta}`);
   if (delta < 0) return chalk.red(String(delta));
-  return chalk.dim('±0');
+  return chalk.dim("±0");
 }
 
 /**
@@ -201,11 +189,11 @@ export function formatScoreDelta(before: number, after: number): string {
  * Avoids duplicating the map in every file that renders spinner progress.
  */
 export const CLICK_PHASE_LABELS: Record<ClickPhase, string> = {
-  analyzing: 'analyzing…',
-  proposing: 'proposing…',
-  building: 'building…',
-  testing: 'testing…',
-  committing: 'committing…',
+  analyzing: "analyzing…",
+  proposing: "proposing…",
+  building: "building…",
+  testing: "testing…",
+  committing: "committing…",
 };
 
 /**
@@ -229,7 +217,7 @@ export async function validateProjectEnv(cwd: string): Promise<ReturnType<typeof
  */
 export async function assertIsRepo(cwd: string): Promise<void> {
   if (!(await isRepo(cwd))) {
-    logger.error('Not a git repository');
+    logger.error("Not a git repository");
     process.exit(1);
   }
 }
@@ -240,7 +228,7 @@ export async function assertIsRepo(cwd: string): Promise<void> {
  */
 export async function warnIfNotRepo(cwd: string): Promise<void> {
   if (!(await isRepo(cwd))) {
-    logger.warn('Not a git repository');
+    logger.warn("Not a git repository");
   }
 }
 
@@ -284,7 +272,7 @@ export async function tryOrAsync<T>(fn: () => Promise<T>, fallback: T): Promise<
  */
 export function wrapAction<Args extends unknown[]>(
   fn: (...args: Args) => Promise<void>,
-  errorLabel: string,
+  errorLabel: string
 ): (...args: Args) => Promise<void> {
   return async (...args: Args) => {
     try {
@@ -302,20 +290,18 @@ export function wrapAction<Args extends unknown[]>(
  */
 export function renderClickTable(clicks: Click[]): void {
   if (clicks.length === 0) return;
-  process.stdout.write('\n');
+  process.stdout.write("\n");
   for (const click of clicks) {
-    const icon = click.testsPassed ? chalk.green('✓') : chalk.yellow('✗');
-    const label = click.testsPassed ? chalk.green('passed') : chalk.yellow('rolled back');
-    const hash = click.commitHash
-      ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`)
-      : '';
+    const icon = click.testsPassed ? chalk.green("✓") : chalk.yellow("✗");
+    const label = click.testsPassed ? chalk.green("passed") : chalk.yellow("rolled back");
+    const hash = click.commitHash ? chalk.dim(` [${click.commitHash.slice(0, 7)}]`) : "";
     const files =
       click.filesModified.length > 0
         ? chalk.dim(
-            ` — ${click.filesModified.slice(0, 2).join(', ')}` +
-            `${click.filesModified.length > 2 ? ` +${click.filesModified.length - 2}` : ''}`,
+            ` — ${click.filesModified.slice(0, 2).join(", ")}` +
+              `${click.filesModified.length > 2 ? ` +${click.filesModified.length - 2}` : ""}`
           )
-        : '';
+        : "";
     process.stdout.write(`  ${icon} Click ${chalk.bold(String(click.number))}  ${label}${hash}${files}\n`);
   }
 }

@@ -17,3 +17,7 @@ node_modules/
 .ratchet/
 .claude/
 docs/landing/
+
+# Generated benchmark corpora / scripts
+datagen-scans/
+bin/

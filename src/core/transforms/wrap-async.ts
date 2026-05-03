@@ -6,10 +6,10 @@
  * Idempotent: skips functions that already have a top-level try/catch.
  */
 
-import { Project, SyntaxKind, Node } from 'ts-morph';
-import type { ASTTransform, TransformContext } from './base.js';
-import type { Finding } from '../normalize.js';
-import { isTestFile } from './base.js';
+import { Project, SyntaxKind, Node } from "ts-morph";
+import type { ASTTransform, TransformContext } from "./base.js";
+import type { Finding } from "../normalize.js";
+import { isTestFile } from "./base.js";
 
 function buildCatchBlock(loggerVar: string): string {
   return `(error) {\n    ${loggerVar}.error('Unhandled async error', error);\n  }`;
@@ -22,35 +22,35 @@ function buildCatchBlock(loggerVar: string): string {
 function bodyAlreadyWrapped(bodyText: string): boolean {
   const trimmed = bodyText.trim();
   // Remove leading/trailing braces if present
-  const inner = trimmed.startsWith('{') ? trimmed.slice(1, trimmed.lastIndexOf('}')).trim() : trimmed;
-  return inner.startsWith('try ') || inner.startsWith('try{');
+  const inner = trimmed.startsWith("{") ? trimmed.slice(1, trimmed.lastIndexOf("}")).trim() : trimmed;
+  return inner.startsWith("try ") || inner.startsWith("try{");
 }
 
 export const wrapAsyncTransform: ASTTransform = {
-  id: 'wrap-async-try-catch',
+  id: "wrap-async-try-catch",
   matchesFindings: [
-    'unhandled async',
-    'Unhandled async',
-    'missing try/catch',
-    'async error handling',
-    'unhandled promise',
-    'EH-',
+    "unhandled async",
+    "Unhandled async",
+    "missing try/catch",
+    "async error handling",
+    "unhandled promise",
+    "EH-",
   ],
-  languages: ['typescript', 'javascript'],
+  languages: ["typescript", "javascript"],
 
   canApply(source: string, finding: Finding): boolean {
-    if (!source.includes('async ')) return false;
-    if (isTestFile(finding.file ?? '')) return false;
+    if (!source.includes("async ")) return false;
+    if (isTestFile(finding.file ?? "")) return false;
     return true;
   },
 
   apply(source: string, finding: Finding, context: TransformContext): string | null {
     if (isTestFile(context.filePath)) return null;
 
-    const loggerVar = context.loggerVarName ?? 'logger';
-    const catchRef = context.hasStructuredLogger ? loggerVar : 'console';
+    const loggerVar = context.loggerVarName ?? "logger";
+    const catchRef = context.hasStructuredLogger ? loggerVar : "console";
     const project = new Project({ useInMemoryFileSystem: true });
-    const sourceFile = project.createSourceFile('__transform__.ts', source);
+    const sourceFile = project.createSourceFile("__transform__.ts", source);
 
     let modified = false;
 
@@ -84,21 +84,17 @@ export const wrapAsyncTransform: ASTTransform = {
       // Skip if the only statement IS a try statement
       if (statements.length === 1 && Node.isTryStatement(statements[0])) continue;
 
-      const indent = '  ';
-      const innerIndent = '    ';
+      const indent = "  ";
+      const innerIndent = "    ";
 
       if (Node.isBlock(body)) {
-        const stmtsText = statements
-          .map(s => s.getFullText().replace(/\n/g, `\n${indent}`))
-          .join('');
-        const newBody =
-          ` {\n${indent}try {${stmtsText.startsWith('\n') ? '' : '\n' + indent}${stmtsText}\n${indent}} catch ${buildCatchBlock(catchRef)}\n}`;
+        const stmtsText = statements.map(s => s.getFullText().replace(/\n/g, `\n${indent}`)).join("");
+        const newBody = ` {\n${indent}try {${stmtsText.startsWith("\n") ? "" : "\n" + indent}${stmtsText}\n${indent}} catch ${buildCatchBlock(catchRef)}\n}`;
         body.replaceWithText(newBody);
       } else {
         // Expression body arrow: `async () => expr` → `async () => { try { return expr; } catch (error) { ... } }`
         const exprText = body.getText().trim();
-        const newBody =
-          `{\n${indent}try {\n${innerIndent}return ${exprText};\n${indent}} catch ${buildCatchBlock(catchRef)}\n}`;
+        const newBody = `{\n${indent}try {\n${innerIndent}return ${exprText};\n${indent}} catch ${buildCatchBlock(catchRef)}\n}`;
         body.replaceWithText(newBody);
       }
 
@@ -111,7 +107,7 @@ export const wrapAsyncTransform: ASTTransform = {
     let result = sourceFile.getFullText();
     if (context.hasStructuredLogger && context.loggerImportPath) {
       const alreadyImported = context.existingImports.some(
-        i => i.includes(context.loggerVarName) && i.includes(context.loggerImportPath!),
+        i => i.includes(context.loggerVarName) && i.includes(context.loggerImportPath!)
       );
       if (!alreadyImported && !result.includes(context.loggerImportPath)) {
         result = `import { ${context.loggerVarName} } from '${context.loggerImportPath}';\n` + result;

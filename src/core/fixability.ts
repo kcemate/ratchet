@@ -1,13 +1,13 @@
-import { SUBCATEGORY_TIERS } from './score-optimizer.js';
-import { isBlacklisted } from './feedback.js';
-import { logger } from '../lib/logger.js';
-import type { IssueTask } from './issue-backlog.js';
+import { SUBCATEGORY_TIERS } from "./score-optimizer.js";
+import { isBlacklisted } from "./feedback.js";
+import { logger } from "../lib/logger.js";
+import type { IssueTask } from "./issue-backlog.js";
 
 export interface FixabilityScore {
   issueId: string;
   impactScore: number; // 0-1, how much fixing this moves the score
   fixabilityScore: number; // 0-1, can a bounded single/few-file edit solve this?
-  recommendation: 'api-agent' | 'shell-agent' | 'architect' | 'skip';
+  recommendation: "api-agent" | "shell-agent" | "architect" | "skip";
   reason: string;
 }
 
@@ -26,24 +26,24 @@ function computeFileSpreadScore(fileCount: number): number {
   return 0.2;
 }
 
-function computeFixModeScore(fixMode: IssueTask['fixMode']): number {
+function computeFixModeScore(fixMode: IssueTask["fixMode"]): number {
   switch (fixMode) {
-    case 'torque':
+    case "torque":
       return 1.0;
-    case 'sweep':
+    case "sweep":
       return 0.6;
-    case 'architect':
+    case "architect":
       return 0.3;
     default:
       return 0.6; // unknown → treat as sweep
   }
 }
 
-function computeRecommendation(score: number): FixabilityScore['recommendation'] {
-  if (score >= 0.8) return 'api-agent';
-  if (score >= 0.5) return 'shell-agent';
-  if (score >= 0.3) return 'architect';
-  return 'skip';
+function computeRecommendation(score: number): FixabilityScore["recommendation"] {
+  if (score >= 0.8) return "api-agent";
+  if (score >= 0.5) return "shell-agent";
+  if (score >= 0.3) return "architect";
+  return "skip";
 }
 
 /**
@@ -56,11 +56,7 @@ function computeRecommendation(score: number): FixabilityScore['recommendation']
  * 4. Cross-cutting penalty (if fileCount > 10)
  * 5. Feedback loop blacklist (if 3+ prior failures in .ratchet/feedback.json)
  */
-export function classifyFixability(
-  task: IssueTask,
-  repoFileCount: number,
-  cwd?: string,
-): FixabilityScore {
+export function classifyFixability(task: IssueTask, repoFileCount: number, cwd?: string): FixabilityScore {
   const issueId = task.subcategory;
   const fileCount = task.sweepFiles?.length ?? 0;
 
@@ -83,7 +79,7 @@ export function classifyFixability(
   const afterPenalty = crossCuttingPenalty < 1.0 ? baseScore * crossCuttingPenalty : baseScore;
 
   // Signal 5: feedback loop — zero out if this issue+strategy has failed >= 3 times
-  const strategy = task.fixMode ?? 'torque';
+  const strategy = task.fixMode ?? "torque";
   let fixabilityScore = afterPenalty;
   let feedbackBlacklisted = false;
 
@@ -91,7 +87,7 @@ export function classifyFixability(
     try {
       feedbackBlacklisted = isBlacklisted(cwd, issueId, strategy);
     } catch (err) {
-      logger.debug({ err, issueId }, 'fixability: failed to read feedback store');
+      logger.debug({ err, issueId }, "fixability: failed to read feedback store");
     }
   }
 
@@ -112,15 +108,15 @@ export function classifyFixability(
     reasons.push(`blacklisted: 3+ failed attempts for ${issueId}+${strategy}`);
   } else {
     if (fileCount > 10) reasons.push(`${fileCount} files (cross-cutting)`);
-    if (task.fixMode === 'architect') reasons.push('architect-mode issue');
+    if (task.fixMode === "architect") reasons.push("architect-mode issue");
     if (effort >= 4) reasons.push(`high effort (${effort}/5)`);
   }
   const reason =
     reasons.length > 0
-      ? reasons.join('; ')
+      ? reasons.join("; ")
       : `fixable — spread=${spreadScore.toFixed(2)}, mode=${modeScore.toFixed(2)}, effort=${effortScore.toFixed(2)}`;
 
-  logger.debug({ issueId, fixabilityScore, recommendation, reason }, 'fixability: classified');
+  logger.debug({ issueId, fixabilityScore, recommendation, reason }, "fixability: classified");
 
   return { issueId, impactScore, fixabilityScore, recommendation, reason };
 }
@@ -134,7 +130,7 @@ export function filterByFixability(
   tasks: IssueTask[],
   repoFileCount: number,
   threshold = 0.3,
-  cwd?: string,
+  cwd?: string
 ): { actionable: IssueTask[]; deferred: IssueTask[] } {
   const actionable: IssueTask[] = [];
   const deferred: IssueTask[] = [];

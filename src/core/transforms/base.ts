@@ -5,8 +5,8 @@
  * Each transform is idempotent — applying twice yields the same result.
  */
 
-import type { Finding } from '../normalize.js';
-import type { RepoContext } from '../familiarize.js';
+import type { Finding } from "../normalize.js";
+import type { RepoContext } from "../familiarize.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,7 +35,7 @@ export interface ASTTransform {
   /** Which scanner finding IDs / subcategory names this transform can fix */
   matchesFindings: string[];
   /** Source languages this transform supports */
-  languages: ('typescript' | 'javascript')[];
+  languages: ("typescript" | "javascript")[];
   /**
    * Apply the transform. Returns the modified source, or null if the
    * transform cannot safely apply to this finding.
@@ -94,8 +94,8 @@ export interface TransformResult {
 export function applyTransforms(
   findings: Finding[],
   fileContents: Map<string, string>,
-  context: Omit<TransformContext, 'filePath' | 'existingImports'>,
-  registry: Map<string, ASTTransform>,
+  context: Omit<TransformContext, "filePath" | "existingImports">,
+  registry: Map<string, ASTTransform>
 ): TransformResult {
   const modifiedFiles = new Map<string, string>();
   const handledFindings: Finding[] = [];
@@ -162,17 +162,14 @@ export function applyTransforms(
 // Private helpers
 // ---------------------------------------------------------------------------
 
-function findTransformForFinding(
-  finding: Finding,
-  registry: Map<string, ASTTransform>,
-): ASTTransform | undefined {
+function findTransformForFinding(finding: Finding, registry: Map<string, ASTTransform>): ASTTransform | undefined {
   for (const transform of registry.values()) {
     if (
       transform.matchesFindings.some(
-        (m) =>
+        m =>
           finding.subcategory?.toLowerCase().includes(m.toLowerCase()) ||
           finding.message?.toLowerCase().includes(m.toLowerCase()) ||
-          finding.ruleId === m,
+          finding.ruleId === m
       )
     ) {
       return transform;
@@ -183,10 +180,10 @@ function findTransformForFinding(
 
 function extractImports(source: string): string[] {
   const imports: string[] = [];
-  const lines = source.split('\n');
+  const lines = source.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed.startsWith('import ') || trimmed.startsWith('const ') && trimmed.includes('require(')) {
+    if (trimmed.startsWith("import ") || (trimmed.startsWith("const ") && trimmed.includes("require("))) {
       imports.push(trimmed);
     }
   }

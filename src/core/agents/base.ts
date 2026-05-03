@@ -1,5 +1,5 @@
-import type { Target, BuildResult, HardenPhase } from '../../types.js';
-import type { IssueTask } from '../issue-backlog.js';
+import type { Target, BuildResult, HardenPhase } from "../../types.js";
+import type { IssueTask } from "../issue-backlog.js";
 
 export interface Agent {
   /** Analyze the target context and return an analysis string */
@@ -18,7 +18,7 @@ export interface AgentOptions {
   timeout?: number;
 }
 
-export type AgentType = 'claude-code' | 'codex' | 'shell';
+export type AgentType = "claude-code" | "codex" | "shell";
 
 export function createAgentContext(target: Target, clickNumber: number, hardenPhase?: HardenPhase): string {
   const lines = [
@@ -30,5 +30,5 @@ export function createAgentContext(target: Target, clickNumber: number, hardenPh
   if (hardenPhase) {
     lines.push(`Mode: ${hardenPhase}`);
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
