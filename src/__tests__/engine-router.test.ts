@@ -4,11 +4,11 @@ import { detectProvider, createProvider } from '../core/providers/index.js';
 
 // Mock the engines and providers
 vi.mock('../core/engines/index.js', () => ({
-  ClassicEngine: vi.fn().mockImplementation(function() {
+  ClassicEngine: vi.fn().mockImplementation(function(this: any) {
     this.name = 'classic';
     this.scan = vi.fn();
   }),
-  DeepEngine: vi.fn().mockImplementation(function(provider, scanProvider) {
+  DeepEngine: vi.fn().mockImplementation(function(this: any, provider: any, scanProvider: any) {
     this.name = 'deep';
     this.provider = provider;
     this.scanProvider = scanProvider;
@@ -59,7 +59,7 @@ describe('engine-router', () => {
           engine: 'deep',
         },
       };
-      const engine = createEngine('auto', config);
+      const engine = createEngine('auto', config as any);
       expect(engine.name).toBe('deep');
     });
 
@@ -70,7 +70,7 @@ describe('engine-router', () => {
           engine: 'deep',
         },
       };
-      const engine = createEngine('classic', config);
+      const engine = createEngine('classic', config as any);
       expect(engine.name).toBe('classic');
     });
 
@@ -81,14 +81,14 @@ describe('engine-router', () => {
           engine: 'deep',
         },
       };
-      const engine = createEngine('auto', config);
+      const engine = createEngine('auto', config as any);
       expect(engine.name).toBe('classic');
     });
 
     it('should create DeepEngine with provider when mode is deep', () => {
       const engine = createEngine('deep');
       expect(engine.name).toBe('deep');
-      expect(engine.provider).toBe('mock-detected-provider');
+      expect((engine as any).provider).toBe('mock-detected-provider');
     });
 
     it('should use scanModel override when provided for deep engine', () => {
@@ -98,7 +98,7 @@ describe('engine-router', () => {
       const engine = createEngine('deep', undefined, overrides);
       expect(engine.name).toBe('deep');
       // When no providerConfig is available, scanProvider uses detectProvider
-      expect(engine.scanProvider).toBe('mock-detected-provider');
+      expect((engine as any).scanProvider).toBe('mock-detected-provider');
     });
 
     it('should use RATCHET_SCAN_MODEL env var for deep engine', () => {
@@ -106,7 +106,7 @@ describe('engine-router', () => {
       const engine = createEngine('deep');
       expect(engine.name).toBe('deep');
       // When no providerConfig is available, scanProvider uses detectProvider
-      expect(engine.scanProvider).toBe('mock-detected-provider');
+      expect((engine as any).scanProvider).toBe('mock-detected-provider');
     });
 
     it('should use config.scan.model for deep engine', () => {
@@ -115,10 +115,10 @@ describe('engine-router', () => {
           model: 'config-model',
         },
       };
-      const engine = createEngine('deep', config);
+      const engine = createEngine('deep', config as any);
       expect(engine.name).toBe('deep');
       // When no providerConfig is available, scanProvider uses detectProvider
-      expect(engine.scanProvider).toBe('mock-detected-provider');
+      expect((engine as any).scanProvider).toBe('mock-detected-provider');
     });
 
     it('should prioritize scanModel override over env and config', () => {
@@ -131,10 +131,10 @@ describe('engine-router', () => {
       const overrides: CreateEngineOverrides = {
         scanModel: 'override-model',
       };
-      const engine = createEngine('deep', config, overrides);
+      const engine = createEngine('deep', config as any, overrides);
       expect(engine.name).toBe('deep');
       // When no providerConfig is available, scanProvider uses detectProvider
-      expect(engine.scanProvider).toBe('mock-detected-provider');
+      expect((engine as any).scanProvider).toBe('mock-detected-provider');
     });
 
     it('should use RATCHET_PROVIDER env var for provider config', () => {

@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { Mock } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  loadMeta, saveMeta, acquireLock, releaseLock, extractFrequentFiles,
+  loadMeta, acquireLock, releaseLock, extractFrequentFiles,
   extractAntiPatterns, extractKnownPatterns, extractProjectStructure,
   buildRepoKnowledgeDoc, consolidateRunLearnings, loadRepoKnowledge,
 } from '../core/consolidate.js';
-import type { RatchetRun, RatchetClick } from '../types.js';
+import type { RatchetRun, Click } from '../types.js';
 
 vi.mock('node:fs');
 vi.mock('../core/feedback.js', () => ({
@@ -16,11 +17,11 @@ vi.mock('../core/feedback.js', () => ({
 }));
 
 const mockFs = fs as unknown as {
-  existsSync: vi.Mock;
-  readFileSync: vi.Mock;
-  writeFileSync: vi.Mock;
-  mkdirSync: vi.Mock;
-  unlinkSync: vi.Mock;
+  existsSync: Mock;
+  readFileSync: Mock;
+  writeFileSync: Mock;
+  mkdirSync: Mock;
+  unlinkSync: Mock;
 };
 
 describe('consolidate', () => {

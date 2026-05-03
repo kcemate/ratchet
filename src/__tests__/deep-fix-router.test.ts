@@ -26,8 +26,8 @@ describe('deep-fix-router', () => {
 
     it('should route to sweep tier when only mechanical high-severity issues', () => {
       const issues: IssueType[] = [
-        { severity: 'high', subcategory: 'Line length', file: 'src/a.ts', line: 1, column: 1, message: 'Long line' },
-        { severity: 'high', subcategory: 'Console cleanup', file: 'src/b.ts', line: 1, column: 1, message: 'console.log' },
+        { category: 'Code Quality', severity: 'high', subcategory: 'Line length', description: 'Long line', count: 1 },
+        { category: 'Code Quality', severity: 'high', subcategory: 'Console cleanup', description: 'console.log', count: 1 },
       ];
       const result = routeDeepFix(issues, mockProvider);
       expect(result.taskType).toBe('sweep');
@@ -35,7 +35,7 @@ describe('deep-fix-router', () => {
 
     it('should route to architect tier when semantic high-severity issues', () => {
       const issues: IssueType[] = [
-        { severity: 'high', subcategory: 'Error handling', file: 'src/a.ts', line: 1, column: 1, message: 'Missing error handling' },
+        { category: 'Code Quality', severity: 'high', subcategory: 'Error handling', description: 'Missing error handling', count: 1 },
       ];
       const result = routeDeepFix(issues, mockProvider);
       expect(result.taskType).toBe('architect');
@@ -43,7 +43,7 @@ describe('deep-fix-router', () => {
 
     it('should route to architect tier when no high-severity issues', () => {
       const issues: IssueType[] = [
-        { severity: 'low', subcategory: 'Line length', file: 'src/a.ts', line: 1, column: 1, message: 'Long line' },
+        { category: 'Code Quality', severity: 'low', subcategory: 'Line length', description: 'Long line', count: 1 },
       ];
       const result = routeDeepFix(issues, mockProvider);
       expect(result.taskType).toBe('architect');
@@ -51,8 +51,8 @@ describe('deep-fix-router', () => {
 
     it('should route to architect tier when mixed high-severity issues (semantic present)', () => {
       const issues: IssueType[] = [
-        { severity: 'high', subcategory: 'Line length', file: 'src/a.ts', line: 1, column: 1, message: 'Long line' },
-        { severity: 'high', subcategory: 'Error handling', file: 'src/b.ts', line: 1, column: 1, message: 'Missing error handling' },
+        { category: 'Code Quality', severity: 'high', subcategory: 'Line length', description: 'Long line', count: 1 },
+        { category: 'Code Quality', severity: 'high', subcategory: 'Error handling', description: 'Missing error handling', count: 1 },
       ];
       const result = routeDeepFix(issues, mockProvider);
       expect(result.taskType).toBe('architect');

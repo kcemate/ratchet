@@ -10,6 +10,7 @@ dotenvConfig({ path: resolve(__ratchetRoot, '.env') });
 import { Command } from 'commander';
 import { join } from 'path';
 import { readFileSync } from 'fs';
+import chalk from 'chalk';
 
 import { initCommand } from './commands/init.js';
 import { scanCommand } from './commands/scan.js';
@@ -68,8 +69,7 @@ registerGraphCommand(program);
 // Hidden internal alias
 const torque = torqueCommand();
 torque.name('torque');
-(torque as any).hidden = true;
-program.addCommand(torque);
+program.addCommand(torque, { hidden: true });
 
 // Try to load ratchet-pro plugin (paid features)
 try {
@@ -83,9 +83,10 @@ try {
   // ratchet-pro not installed — free tier only
 }
 
+// Add global error handler
 program.exitOverride((err) => {
   if (err.code !== 'commander.helpDisplayed') {
-    console.error('\x1b[31mError:\x1b[0m', err.message);
+    console.error(chalk.red('Error:'), err.message);
     process.exit(1);
   }
 });

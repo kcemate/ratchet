@@ -17,7 +17,9 @@ import {
   getConsecutiveTrailingRollbacks,
   checkCircuitBreaker,
 } from '../core/engine-core.js';
-import type { ScanResult, CategoryDelta, ClickEconomics, RatchetRun } from '../types.js';
+import type { CategoryDelta, ClickEconomics, RatchetRun } from '../types.js';
+import type { CircuitBreakerState } from '../core/engine-core.js';
+import type { ScanResult } from '../core/scanner/types.js';
 
 // ── shouldSoftSkipSubcategory ─────────────────────────────────────────────────
 
@@ -52,52 +54,72 @@ describe('shouldEscalateOnTotalZeroDelta', () => {
 
 describe('diffCategories', () => {
   const before: ScanResult = {
+    projectName: 'test',
+    total: 0,
+    maxTotal: 100,
+    totalIssuesFound: 0,
+    issuesByType: [],
     categories: [
       {
         name: 'auth',
+        emoji: '',
+        summary: 'auth',
         score: 70,
         max: 100,
         subcategories: [
-          { name: 'auth-basic', issuesFound: 5, max: 10 },
-          { name: 'auth-oauth', issuesFound: 3, max: 10 },
+          { name: 'auth-basic', score: 0, max: 10, summary: 'auth-basic', issuesFound: 5 },
+          { name: 'auth-oauth', score: 0, max: 10, summary: 'auth-oauth', issuesFound: 3 },
         ],
       },
       {
         name: 'security',
+        emoji: '',
+        summary: 'security',
         score: 80,
         max: 100,
         subcategories: [
-          { name: 'security-cors', issuesFound: 2, max: 10 },
+          { name: 'security-cors', score: 0, max: 10, summary: 'security-cors', issuesFound: 2 },
         ],
       },
     ],
   };
 
   const after: ScanResult = {
+    projectName: 'test',
+    total: 0,
+    maxTotal: 100,
+    totalIssuesFound: 0,
+    issuesByType: [],
     categories: [
       {
         name: 'auth',
+        emoji: '',
+        summary: 'auth',
         score: 85,
         max: 100,
         subcategories: [
-          { name: 'auth-basic', issuesFound: 3, max: 10 }, // Fixed 2 issues (5-3)
-          { name: 'auth-oauth', issuesFound: 2, max: 10 }, // Fixed 1 issue (3-2)
+          { name: 'auth-basic', score: 0, max: 10, summary: 'auth-basic', issuesFound: 3 }, // Fixed 2 issues (5-3)
+          { name: 'auth-oauth', score: 0, max: 10, summary: 'auth-oauth', issuesFound: 2 }, // Fixed 1 issue (3-2)
         ],
       },
       {
         name: 'security',
+        emoji: '',
+        summary: 'security',
         score: 85,
         max: 100,
         subcategories: [
-          { name: 'security-cors', issuesFound: 1, max: 10 }, // Fixed 1 issue (2-1)
+          { name: 'security-cors', score: 0, max: 10, summary: 'security-cors', issuesFound: 1 }, // Fixed 1 issue (2-1)
         ],
       },
       {
         name: 'performance',
+              emoji: '',
+              summary: 'performance',
         score: 60,
         max: 100,
         subcategories: [
-          { name: 'performance-cache', issuesFound: 4, max: 10 },
+          { name: 'performance-cache', score: 0, max: 10, summary: 'performance-cache', issuesFound: 4 },
         ],
       },
     ],
@@ -129,19 +151,26 @@ describe('diffCategories', () => {
 
   it('handles categories that exist only in before scan', () => {
     const onlyBefore: ScanResult = {
-      categories: [
+      projectName: 'test',
+    total: 0,
+    maxTotal: 100,
+    totalIssuesFound: 0,
+    issuesByType: [],
+    categories: [
         {
           name: 'legacy',
+                emoji: '',
+                summary: 'legacy',
           score: 50,
           max: 100,
           subcategories: [
-            { name: 'legacy-code', issuesFound: 10, max: 20 },
+            { name: 'legacy-code', score: 0, max: 20, summary: 'legacy-code', issuesFound: 10 },
           ],
         },
       ],
     };
 
-    const emptyAfter: ScanResult = { categories: [] };
+    const emptyAfter: ScanResult = { projectName: 'test', total: 0, maxTotal: 100, totalIssuesFound: 0, categories: [], issuesByType: [] };
     const deltas = diffCategories(onlyBefore, emptyAfter);
     
     const legacyDelta = deltas.find(d => d.category === 'legacy');
@@ -154,26 +183,40 @@ describe('diffCategories', () => {
 
   it('identifies wasted effort when issues fixed but delta is zero', () => {
     const beforeWasted: ScanResult = {
-      categories: [
+      projectName: 'test',
+    total: 0,
+    maxTotal: 100,
+    totalIssuesFound: 0,
+    issuesByType: [],
+    categories: [
         {
           name: 'test',
+                emoji: '',
+                summary: 'test',
           score: 75,
           max: 100,
           subcategories: [
-            { name: 'test-basic', issuesFound: 5, max: 10 },
+            { name: 'test-basic', score: 0, max: 10, summary: 'test-basic', issuesFound: 5 },
           ],
         },
       ],
     };
 
     const afterWasted: ScanResult = {
-      categories: [
+      projectName: 'test',
+    total: 0,
+    maxTotal: 100,
+    totalIssuesFound: 0,
+    issuesByType: [],
+    categories: [
         {
           name: 'test',
+                emoji: '',
+                summary: 'test',
           score: 75, // Same score
           max: 100,
           subcategories: [
-            { name: 'test-basic', issuesFound: 2, max: 10 }, // Fixed 3 issues
+            { name: 'test-basic', score: 0, max: 10, summary: 'test-basic', issuesFound: 2 }, // Fixed 3 issues
           ],
         },
       ],
@@ -192,6 +235,9 @@ describe('diffCategories', () => {
 describe('generateRecommendations', () => {
   const baseClick: ClickEconomics = {
     outcome: 'landed',
+    clickIndex: 0,
+    agentTimeMs: 500,
+    testTimeMs: 500,
     wallTimeMs: 1000,
     estimatedCost: 0.1,
     scoreDelta: 10,
@@ -246,6 +292,9 @@ describe('generateRecommendations', () => {
 describe('computeRunEconomics', () => {
   const baseClick: ClickEconomics = {
     outcome: 'landed',
+    clickIndex: 0,
+    agentTimeMs: 500,
+    testTimeMs: 500,
     wallTimeMs: 1000,
     estimatedCost: 0.1,
     scoreDelta: 10,
@@ -254,9 +303,18 @@ describe('computeRunEconomics', () => {
 
   it('calculates correct economics for mixed outcomes', () => {
     const clicks: ClickEconomics[] = [
-      { ...baseClick, outcome: 'landed', wallTimeMs: 1000 },
-      { ...baseClick, outcome: 'rolled-back', wallTimeMs: 500 },
-      { ...baseClick, outcome: 'timeout', wallTimeMs: 300 },
+      { ...baseClick, outcome: 'landed',
+    clickIndex: 0,
+    agentTimeMs: 500,
+    testTimeMs: 500, wallTimeMs: 1000 },
+      { ...baseClick, outcome: 'rolled-back',
+    clickIndex: 0,
+    agentTimeMs: 500,
+    testTimeMs: 500, wallTimeMs: 500 },
+      { ...baseClick, outcome: 'timeout',
+    clickIndex: 0,
+    agentTimeMs: 500,
+    testTimeMs: 500, wallTimeMs: 300 },
     ];
 
     const economics = computeRunEconomics(clicks, 1800);
@@ -303,11 +361,11 @@ describe('summarizeRun', () => {
     
     const run: RatchetRun = {
       id: 'run-123',
-      target: { name: 'test-repo' },
+      target: { name: 'test-repo', path: '.', description: 'Test repo' },
       clicks: [
-        { testsPassed: true, commitHash: 'abc123' },
-        { testsPassed: false, commitHash: undefined },
-        { testsPassed: true, commitHash: 'def456' },
+        { number: 1, target: 'test-target', analysis: 'test', proposal: 'test', filesModified: [], timestamp: new Date(), testsPassed: true, commitHash: 'abc123' },
+        { number: 1, target: 'test-target', analysis: 'test', proposal: 'test', filesModified: [], timestamp: new Date(), testsPassed: false, commitHash: undefined },
+        { number: 1, target: 'test-target', analysis: 'test', proposal: 'test', filesModified: [], timestamp: new Date(), testsPassed: true, commitHash: 'def456' },
       ],
       startedAt,
       finishedAt: now,
@@ -329,9 +387,9 @@ describe('summarizeRun', () => {
   it('handles ongoing run without finishedAt', () => {
     const run: RatchetRun = {
       id: 'run-456',
-      target: { name: 'ongoing-repo' },
+      target: { name: 'ongoing-repo', path: '.', description: 'Ongoing repo' },
       clicks: [
-        { testsPassed: true, commitHash: 'ghi789' },
+        { number: 1, target: 'test-target', analysis: 'test', proposal: 'test', filesModified: [], timestamp: new Date(), testsPassed: true, commitHash: 'ghi789' },
       ],
       startedAt: new Date(),
       finishedAt: undefined,
@@ -412,21 +470,21 @@ describe('checkCircuitBreaker', () => {
   const baseState = {
     consecutiveFailures: 0,
     currentStrategy: 'standard' as const,
-    strategiesExhausted: [],
+    strategiesExhausted: [] as string[],
     totalFailures: 0,
     maxTotalFailures: 5,
   };
 
   it('does not trigger when below thresholds', () => {
     const state = { ...baseState, consecutiveFailures: 2, totalFailures: 2 };
-    const result = checkCircuitBreaker(state);
+    const result = checkCircuitBreaker(state as any);
     expect(result.shouldEscalate).toBe(false);
     expect(result.shouldStop).toBe(false);
   });
 
   it('escalates from standard to architect on 3 consecutive failures', () => {
     const state = { ...baseState, consecutiveFailures: 3 };
-    const result = checkCircuitBreaker(state);
+    const result = checkCircuitBreaker(state as any);
     expect(result.shouldEscalate).toBe(true);
     expect(result.nextStrategy).toBe('architect');
     expect(result.shouldStop).toBe(false);
@@ -435,7 +493,7 @@ describe('checkCircuitBreaker', () => {
 
   it('escalates from architect to sweep on 3 consecutive failures', () => {
     const state = { ...baseState, currentStrategy: 'architect', consecutiveFailures: 3 };
-    const result = checkCircuitBreaker(state);
+    const result = checkCircuitBreaker(state as any);
     expect(result.shouldEscalate).toBe(true);
     expect(result.nextStrategy).toBe('sweep');
     expect(result.shouldStop).toBe(false);
@@ -444,7 +502,7 @@ describe('checkCircuitBreaker', () => {
 
   it('stops when sweep fails with 3 consecutive failures', () => {
     const state = { ...baseState, currentStrategy: 'sweep', consecutiveFailures: 3 };
-    const result = checkCircuitBreaker(state);
+    const result = checkCircuitBreaker(state as any);
     expect(result.shouldEscalate).toBe(false);
     expect(result.shouldStop).toBe(true);
     expect(result.reason).toContain('exhausted all strategies');
@@ -452,7 +510,7 @@ describe('checkCircuitBreaker', () => {
 
   it('stops when total failures reach max limit', () => {
     const state = { ...baseState, totalFailures: 5 };
-    const result = checkCircuitBreaker(state);
+    const result = checkCircuitBreaker(state as any);
     expect(result.shouldEscalate).toBe(false);
     expect(result.shouldStop).toBe(true);
     expect(result.reason).toContain('hard limit reached');

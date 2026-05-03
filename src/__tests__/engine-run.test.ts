@@ -18,7 +18,7 @@ vi.mock('../core/git.js', () => ({
 }));
 
 vi.mock('../core/scan-cache.js', () => ({
-  IncrementalScanner: vi.fn().mockImplementation(function() {
+  IncrementalScanner: vi.fn().mockImplementation(function(this: any) {
     this.incrementalScan = vi.fn().mockResolvedValue({
       total: 90,
       totalIssuesFound: 5,
@@ -64,8 +64,9 @@ describe('engine-run', () => {
     it('should create a run with basic properties', async () => {
       const target: Target = { name: 'test-target', path: '.', description: 'Test target' };
       const options = {
+        agent: { analyze: vi.fn(), propose: vi.fn(), build: vi.fn() } as any,
         target,
-        config: { defaults: { testCommand: 'npm test', baselineTests: false } } as RatchetConfig,
+        config: { agent: 'shell', defaults: { clicks: 5, testCommand: 'npm test', baselineTests: false, autoCommit: false }, targets: [] } as RatchetConfig,
         cwd: '/test',
         clicks: 5,
       };
@@ -85,8 +86,9 @@ describe('engine-run', () => {
     it('should initialize state with default values', async () => {
       const target: Target = { name: 'test-target', path: '.', description: 'Test target' };
       const options = {
+        agent: { analyze: vi.fn(), propose: vi.fn(), build: vi.fn() } as any,
         target,
-        config: { defaults: { testCommand: 'npm test', baselineTests: false } } as RatchetConfig,
+        config: { agent: 'shell', defaults: { clicks: 5, testCommand: 'npm test', baselineTests: false, autoCommit: false }, targets: [] } as RatchetConfig,
         cwd: '/test',
         clicks: 5,
       };
@@ -106,8 +108,9 @@ describe('engine-run', () => {
 
       const target: Target = { name: 'test-target', path: '.', description: 'Test target' };
       const options = {
+        agent: { analyze: vi.fn(), propose: vi.fn(), build: vi.fn() } as any,
         target,
-        config: { defaults: { testCommand: 'npm test', baselineTests: false } } as RatchetConfig,
+        config: { agent: 'shell', defaults: { clicks: 5, testCommand: 'npm test', baselineTests: false, autoCommit: false }, targets: [] } as RatchetConfig,
         cwd: '/test',
         clicks: 5,
       };

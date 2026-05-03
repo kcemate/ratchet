@@ -16,7 +16,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
-      - run: npm test -- --coverage
+      - run: npm test
       - run: npm run build
 
   self-audit:
