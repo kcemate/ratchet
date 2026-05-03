@@ -1,16 +1,16 @@
-import type { Provider, ProviderOptions } from './base.js';
-import { fetchOpenAICompatible } from './base.js';
+import type { Provider, ProviderOptions } from "./base.js";
+import { fetchOpenAICompatible } from "./base.js";
 
-const DEFAULT_MODEL = process.env['RATCHET_MODEL'] ?? 'qwen3:14b';
-export const LOCAL_MLX_DEFAULT_PORT = parseInt(process.env['OLLAMA_PORT'] ?? '11434', 10);
+const DEFAULT_MODEL = process.env["RATCHET_MODEL"] ?? "qwen3:14b";
+export const LOCAL_MLX_DEFAULT_PORT = parseInt(process.env["OLLAMA_PORT"] ?? "11434", 10);
 
 export interface ChatCompletionResponse {
   choices: Array<{ message: { content: string } }>;
 }
 
 export class LocalMLXProvider implements Provider {
-  readonly name = 'Local';
-  readonly tier = 'free' as const;
+  readonly name = "Local";
+  readonly tier = "free" as const;
 
   private readonly completionsUrl: string;
   private readonly modelsUrl: string;
@@ -28,8 +28,8 @@ export class LocalMLXProvider implements Provider {
       {},
       options?.model ?? this.defaultModel,
       prompt,
-      'Local MLX',
-      options,
+      "Local MLX",
+      options
     );
   }
 

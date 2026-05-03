@@ -1,10 +1,10 @@
-import { mkdir, readFile, writeFile, readdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
-import type { RatchetRun } from '../types.js';
-import type { ScanResult } from '../core/scanner';
+import { mkdir, readFile, writeFile, readdir } from "fs/promises";
+import { join } from "path";
+import { existsSync } from "fs";
+import type { RatchetRun } from "../types.js";
+import type { ScanResult } from "../core/scanner";
 
-export const RUNS_DIR = '.ratchet/runs';
+export const RUNS_DIR = ".ratchet/runs";
 
 export interface HistoryEntry {
   run: RatchetRun;
@@ -17,7 +17,7 @@ export async function saveRun(
   cwd: string,
   run: RatchetRun,
   scoreBefore?: ScanResult,
-  scoreAfter?: ScanResult,
+  scoreAfter?: ScanResult
 ): Promise<void> {
   const runsDir = join(cwd, RUNS_DIR);
   await mkdir(runsDir, { recursive: true });
@@ -30,15 +30,15 @@ export async function saveRun(
   };
 
   const filePath = join(runsDir, `${run.id}.json`);
-  await writeFile(filePath, JSON.stringify(entry, null, 2), 'utf-8');
+  await writeFile(filePath, JSON.stringify(entry, null, 2), "utf-8");
 }
 
 function hydrateDates(entry: HistoryEntry): HistoryEntry {
   const run = entry.run;
-  if (run.startedAt && typeof run.startedAt === 'string') {
+  if (run.startedAt && typeof run.startedAt === "string") {
     run.startedAt = new Date(run.startedAt);
   }
-  if (run.finishedAt && typeof run.finishedAt === 'string') {
+  if (run.finishedAt && typeof run.finishedAt === "string") {
     run.finishedAt = new Date(run.finishedAt);
   }
   return entry;
@@ -48,7 +48,7 @@ export async function loadRun(cwd: string, runId: string): Promise<HistoryEntry 
   const filePath = join(cwd, RUNS_DIR, `${runId}.json`);
   let raw: string;
   try {
-    raw = await readFile(filePath, 'utf-8');
+    raw = await readFile(filePath, "utf-8");
   } catch {
     return null;
   }
@@ -70,19 +70,19 @@ export async function listRuns(cwd: string): Promise<HistoryEntry[]> {
     return [];
   }
 
-  const jsonFiles = files.filter((f) => f.endsWith('.json'));
+  const jsonFiles = files.filter(f => f.endsWith(".json"));
 
   const results = await Promise.all(
-    jsonFiles.map(async (file) => {
+    jsonFiles.map(async file => {
       const filePath = join(runsDir, file);
       try {
-        const raw = await readFile(filePath, 'utf-8');
+        const raw = await readFile(filePath, "utf-8");
         return hydrateDates(JSON.parse(raw) as HistoryEntry);
       } catch {
         // Skip corrupted files
         return null;
       }
-    }),
+    })
   );
   const entries: HistoryEntry[] = results.filter((e): e is HistoryEntry => e !== null);
 
@@ -100,24 +100,24 @@ export async function loadLatestRun(cwd: string): Promise<HistoryEntry | null> {
   }
 
   // Fallback: load from legacy .ratchet-state.json
-  const legacyPath = join(cwd, '.ratchet-state.json');
+  const legacyPath = join(cwd, ".ratchet-state.json");
   if (!existsSync(legacyPath)) {
     return null;
   }
 
   let raw: string;
   try {
-    raw = await readFile(legacyPath, 'utf-8');
+    raw = await readFile(legacyPath, "utf-8");
   } catch {
     return null;
   }
 
   try {
     const parsed = JSON.parse(raw) as RatchetRun;
-    if (parsed.startedAt && typeof parsed.startedAt === 'string') {
+    if (parsed.startedAt && typeof parsed.startedAt === "string") {
       parsed.startedAt = new Date(parsed.startedAt);
     }
-    if (parsed.finishedAt && typeof parsed.finishedAt === 'string') {
+    if (parsed.finishedAt && typeof parsed.finishedAt === "string") {
       parsed.finishedAt = new Date(parsed.finishedAt);
     }
     return { run: parsed, savedAt: (parsed.finishedAt ?? parsed.startedAt) as unknown as string };

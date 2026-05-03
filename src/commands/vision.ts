@@ -2,25 +2,21 @@
  * `ratchet vision` — interactive Cytoscape.js dependency graph overlaid with
  * Ratchet quality scores.
  */
-import { Command } from 'commander';
-import { writeFile, mkdtemp, rm } from 'fs/promises';
-import { join, resolve } from 'path';
-import { tmpdir } from 'os';
-import chalk from 'chalk';
+import { Command } from "commander";
+import { writeFile, mkdtemp, rm } from "fs/promises";
+import { join, resolve } from "path";
+import { tmpdir } from "os";
+import chalk from "chalk";
 
-import { printHeader, exitWithError, validateInt, withSpinner } from '../lib/cli.js';
-import { buildVisionGraph, nodeColor, glowColor } from '../core/vision.js';
-import type { VisionGraph, VisionNode } from '../core/vision.js';
-import { detectProvider } from '../core/providers/index.js';
+import { printHeader, exitWithError, validateInt, withSpinner } from "../lib/cli.js";
+import { buildVisionGraph, nodeColor, glowColor } from "../core/vision.js";
+import type { VisionGraph, VisionNode } from "../core/vision.js";
+import { detectProvider } from "../core/providers/index.js";
 
 // ── HTML escaping
 
 function escHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 // ── HTML template
@@ -48,7 +44,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
           color,
           glow,
           borderColor,
-          size: Math.min(55, 14 + Math.sqrt(n.blastRadius) * 5) + (n.blastRadius < 3 ? (Math.sin(n.score * 7) * 2) : 0),
+          size: Math.min(55, 14 + Math.sqrt(n.blastRadius) * 5) + (n.blastRadius < 3 ? Math.sin(n.score * 7) * 2 : 0),
         },
       };
     }),
@@ -61,7 +57,7 @@ export function generateVisionHTML(graph: VisionGraph): string {
           target: e.target,
           sourceScore: sourceNode?.score ?? 100,
           edgeType: e.type,
-          semanticReason: e.semanticReason ?? '',
+          semanticReason: e.semanticReason ?? "",
         },
       };
     }),
@@ -77,15 +73,14 @@ export function generateVisionHTML(graph: VisionGraph): string {
     riskClusters: graph.riskClusters ?? [],
   });
 
-  const categories = [
-    'Testing', 'Security', 'Type Safety', 'Error Handling', 'Performance', 'Code Quality',
-  ];
+  const categories = ["Testing", "Security", "Type Safety", "Error Handling", "Performance", "Code Quality"];
   const categoryOptions = categories
     .map(c => `<option value="${escHtml(c.toLowerCase())}">${escHtml(c)}</option>`)
-    .join('\n        ');
+    .join("\n        ");
 
-  const fontsUrl = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700' +
-    '&family=Inter:wght@400;500;600&display=swap';
+  const fontsUrl =
+    "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700" +
+    "&family=Inter:wght@400;500;600&display=swap";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -1275,24 +1270,23 @@ export function generateVisionHTML(graph: VisionGraph): string {
 // ── PNG export (puppeteer)
 
 async function exportPng(htmlContent: string, outputPath: string): Promise<void> {
-  const { default: puppeteer } = await import('puppeteer');
+  const { default: puppeteer } = await import("puppeteer");
 
-  const tmpDir = await mkdtemp(join(tmpdir(), 'ratchet-vision-'));
-  const tmpHtml = join(tmpDir, 'vision.html');
+  const tmpDir = await mkdtemp(join(tmpdir(), "ratchet-vision-"));
+  const tmpHtml = join(tmpDir, "vision.html");
 
   try {
-    await writeFile(tmpHtml, htmlContent, 'utf-8');
+    await writeFile(tmpHtml, htmlContent, "utf-8");
 
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox"] });
     const page = await browser.newPage();
     await page.setViewport({ width: 1400, height: 900 });
-    await page.goto(`file://${tmpHtml}`, { waitUntil: 'networkidle2', timeout: 30_000 });
+    await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle2", timeout: 30_000 });
 
     // Wait for Cytoscape to finish layout
-    await page.waitForFunction(
-      'typeof window.cytoscape !== "undefined"',
-      { timeout: 10_000 },
-    ).catch(() => {/* proceed anyway */});
+    await page.waitForFunction('typeof window.cytoscape !== "undefined"', { timeout: 10_000 }).catch(() => {
+      /* proceed anyway */
+    });
 
     await new Promise(res => setTimeout(res, 2000));
 
@@ -1306,24 +1300,24 @@ async function exportPng(htmlContent: string, outputPath: string): Promise<void>
 // ── PDF export
 
 async function exportPdf(htmlContent: string, outputPath: string): Promise<void> {
-  const { default: puppeteer } = await import('puppeteer');
+  const { default: puppeteer } = await import("puppeteer");
 
-  const tmpDir = await mkdtemp(join(tmpdir(), 'ratchet-vision-'));
-  const tmpHtml = join(tmpDir, 'vision.html');
+  const tmpDir = await mkdtemp(join(tmpdir(), "ratchet-vision-"));
+  const tmpHtml = join(tmpDir, "vision.html");
 
   try {
-    await writeFile(tmpHtml, htmlContent, 'utf-8');
+    await writeFile(tmpHtml, htmlContent, "utf-8");
 
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox"] });
     const page = await browser.newPage();
     await page.setViewport({ width: 1400, height: 900 });
-    await page.goto(`file://${tmpHtml}`, { waitUntil: 'networkidle2', timeout: 30_000 });
+    await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle2", timeout: 30_000 });
     await new Promise(res => setTimeout(res, 2000));
 
     await page.pdf({
       path: outputPath,
-      width: '1400px',
-      height: '900px',
+      width: "1400px",
+      height: "900px",
       printBackground: true,
     });
 
@@ -1336,149 +1330,164 @@ async function exportPdf(htmlContent: string, outputPath: string): Promise<void>
 // ── Command
 
 export function visionCommand(): Command {
-  const cmd = new Command('map');
+  const cmd = new Command("map");
 
   cmd
     .description(
-      'Visualize your codebase as an interactive quality map.\n\n' +
-      'Nodes are colour-coded by score (green > 80, yellow 50–80, red < 50).\n' +
-      'Node size reflects blast radius (number of dependents).\n' +
-      'Output is a self-contained HTML file viewable in any browser.\n\n' +
-      'Use --deps for a raw dependency graph view (powered by GitNexus).',
+      "Visualize your codebase as an interactive quality map.\n\n" +
+        "Nodes are colour-coded by score (green > 80, yellow 50–80, red < 50).\n" +
+        "Node size reflects blast radius (number of dependents).\n" +
+        "Output is a self-contained HTML file viewable in any browser.\n\n" +
+        "Use --deps for a raw dependency graph view (powered by GitNexus)."
     )
-    .option('--deps',                'Show raw dependency clusters instead of quality overlay')
-    .option('--static',              'Export as PNG instead of interactive HTML')
-    .option('--export-pdf',          'Embed graph snapshot into a PDF')
-    .option('--focus <path>',        'Zoom to N-hop neighbourhood of a specific file')
-    .option('--filter <type>',       'Filter nodes by issue category (e.g. security, testing)')
-    .option('--output <path>',       'Output file path (default: ratchet-map.html / .png / .pdf)')
-    .option('--max-nodes <n>',       'Maximum nodes to render (default: 500)', '500')
-    .option('--focus-hops <n>',      'Neighbourhood depth for --focus mode (default: 2)', '2')
-    .option('--deep',                'Overlay LLM semantic dependencies (data flow, shared state, runtime coupling)')
+    .option("--deps", "Show raw dependency clusters instead of quality overlay")
+    .option("--static", "Export as PNG instead of interactive HTML")
+    .option("--export-pdf", "Embed graph snapshot into a PDF")
+    .option("--focus <path>", "Zoom to N-hop neighbourhood of a specific file")
+    .option("--filter <type>", "Filter nodes by issue category (e.g. security, testing)")
+    .option("--output <path>", "Output file path (default: ratchet-map.html / .png / .pdf)")
+    .option("--max-nodes <n>", "Maximum nodes to render (default: 500)", "500")
+    .option("--focus-hops <n>", "Neighbourhood depth for --focus mode (default: 2)", "2")
+    .option("--deep", "Overlay LLM semantic dependencies (data flow, shared state, runtime coupling)")
     .addHelpText(
-      'after',
-      '\nExamples:\n' +
-      '  $ ratchet map\n' +
-      '  $ ratchet map --deps\n' +
-      '  $ ratchet map --deep\n' +
-      '  $ ratchet map --focus src/core/engine.ts\n' +
-      '  $ ratchet map --filter security --output security-graph.html\n' +
-      '  $ ratchet map --static --output graph.png\n' +
-      '  $ ratchet map --export-pdf --output report.pdf\n',
+      "after",
+      "\nExamples:\n" +
+        "  $ ratchet map\n" +
+        "  $ ratchet map --deps\n" +
+        "  $ ratchet map --deep\n" +
+        "  $ ratchet map --focus src/core/engine.ts\n" +
+        "  $ ratchet map --filter security --output security-graph.html\n" +
+        "  $ ratchet map --static --output graph.png\n" +
+        "  $ ratchet map --export-pdf --output report.pdf\n"
     )
-    .action(async (options: {
-      deps?: boolean;
-      static?: boolean;
-      exportPdf?: boolean;
-      focus?: string;
-      filter?: string;
-      output?: string;
-      maxNodes: string;
-      focusHops: string;
-      deep?: boolean;
-    }) => {
-      const cwd = process.cwd();
+    .action(
+      async (options: {
+        deps?: boolean;
+        static?: boolean;
+        exportPdf?: boolean;
+        focus?: string;
+        filter?: string;
+        output?: string;
+        maxNodes: string;
+        focusHops: string;
+        deep?: boolean;
+      }) => {
+        const cwd = process.cwd();
 
-      // --deps: show raw dependency clusters via graph command
-      if (options.deps) {
-        const { registerGraphCommand } = await import('./graph.js');
-        const tempProgram = new Command();
-        registerGraphCommand(tempProgram);
-        await tempProgram.parseAsync(['node', 'graph', 'clusters']);
-        return;
-      }
+        // --deps: show raw dependency clusters via graph command
+        if (options.deps) {
+          const { registerGraphCommand } = await import("./graph.js");
+          const tempProgram = new Command();
+          registerGraphCommand(tempProgram);
+          await tempProgram.parseAsync(["node", "graph", "clusters"]);
+          return;
+        }
 
-      // telemetry: no-op in open-source build
+        // telemetry: no-op in open-source build
 
-      printHeader('🗺  Ratchet Map');
+        printHeader("🗺  Ratchet Map");
 
-      const maxNodes = validateInt(options.maxNodes, 'max-nodes', 1);
-      const focusHops = validateInt(options.focusHops, 'focus-hops', 1, 5);
+        const maxNodes = validateInt(options.maxNodes, "max-nodes", 1);
+        const focusHops = validateInt(options.focusHops, "focus-hops", 1, 5);
 
-      const isStatic   = options.static === true;
-      const isPdf      = options.exportPdf === true;
-      const defaultExt = isStatic ? 'png' : isPdf ? 'pdf' : 'html';
-      const outputPath = resolve(options.output ?? join(cwd, `ratchet-map.${defaultExt}`));
+        const isStatic = options.static === true;
+        const isPdf = options.exportPdf === true;
+        const defaultExt = isStatic ? "png" : isPdf ? "pdf" : "html";
+        const outputPath = resolve(options.output ?? join(cwd, `ratchet-map.${defaultExt}`));
 
-      process.stdout.write(
-        `  Project  : ${chalk.cyan(cwd)}\n` +
-        (options.focus  ? `  Focus    : ${chalk.yellow(options.focus)}\n`  : '') +
-        (options.filter ? `  Filter   : ${chalk.yellow(options.filter)}\n` : '') +
-        `  Output   : ${chalk.dim(outputPath)}\n\n`,
-      );
+        process.stdout.write(
+          `  Project  : ${chalk.cyan(cwd)}\n` +
+            (options.focus ? `  Focus    : ${chalk.yellow(options.focus)}\n` : "") +
+            (options.filter ? `  Filter   : ${chalk.yellow(options.filter)}\n` : "") +
+            `  Output   : ${chalk.dim(outputPath)}\n\n`
+        );
 
-      // Build graph
-      let graph: VisionGraph;
-      const spinnerMsg = options.deep
-        ? 'Building dependency graph + semantic analysis…'
-        : 'Building dependency graph…';
-      await withSpinner(spinnerMsg, async spinner => {
-        graph = await buildVisionGraph({
-          cwd,
-          focus: options.focus,
-          filter: options.filter,
-          maxNodes,
-          focusHops,
-          deep: options.deep,
-          provider: options.deep ? detectProvider() : undefined,
-        });
+        // Build graph
+        let graph: VisionGraph;
+        const spinnerMsg = options.deep
+          ? "Building dependency graph + semantic analysis…"
+          : "Building dependency graph…";
+        await withSpinner(
+          spinnerMsg,
+          async spinner => {
+            graph = await buildVisionGraph({
+              cwd,
+              focus: options.focus,
+              filter: options.filter,
+              maxNodes,
+              focusHops,
+              deep: options.deep,
+              provider: options.deep ? detectProvider() : undefined,
+            });
 
-        if (graph.truncated) {
-          spinner.warn(
-            chalk.yellow(
-              `  Graph truncated: showing ${graph.nodes.length} of ${graph.totalNodes} files. ` +
-              'Use --focus or --filter to narrow the view.',
-            ),
+            if (graph.truncated) {
+              spinner.warn(
+                chalk.yellow(
+                  `  Graph truncated: showing ${graph.nodes.length} of ${graph.totalNodes} files. ` +
+                    "Use --focus or --filter to narrow the view."
+                )
+              );
+            } else {
+              const semanticCount = graph.edges.filter(e => e.type === "semantic").length;
+              const semanticSuffix = semanticCount > 0 ? `, ${chalk.magenta(String(semanticCount) + " semantic")}` : "";
+              spinner.succeed(
+                `  Graph built: ${chalk.bold(String(graph.nodes.length))} nodes, ` +
+                  `${chalk.bold(String(graph.edges.length))} edges${semanticSuffix}`
+              );
+            }
+          },
+          "Graph build failed"
+        );
+
+        const html = generateVisionHTML(graph!);
+
+        if (isStatic) {
+          await withSpinner(
+            "Rendering PNG via Puppeteer…",
+            async spinner => {
+              await exportPng(html, outputPath);
+              spinner.succeed(`  PNG saved: ${chalk.dim(outputPath)}`);
+            },
+            "PNG export failed"
+          );
+        } else if (isPdf) {
+          await withSpinner(
+            "Rendering PDF via Puppeteer…",
+            async spinner => {
+              await exportPdf(html, outputPath);
+              spinner.succeed(`  PDF saved: ${chalk.dim(outputPath)}`);
+            },
+            "PDF export failed"
           );
         } else {
-          const semanticCount = graph.edges.filter(e => e.type === 'semantic').length;
-          const semanticSuffix = semanticCount > 0 ? `, ${chalk.magenta(String(semanticCount) + ' semantic')}` : '';
-          spinner.succeed(
-            `  Graph built: ${chalk.bold(String(graph.nodes.length))} nodes, ` +
-            `${chalk.bold(String(graph.edges.length))} edges${semanticSuffix}`,
+          await writeFile(outputPath, html, "utf-8");
+          process.stdout.write(`  HTML saved: ${chalk.dim(outputPath)}\n`);
+          process.stdout.write(chalk.dim(`\n  Open in your browser:\n    open ${outputPath}\n\n`));
+        }
+
+        // Print summary
+        const semanticEdges = graph!.edges.filter(e => e.type === "semantic").length;
+        process.stdout.write(
+          `  Score    : ${chalk.bold(String(graph!.totalScore))}/100\n` +
+            `  Nodes    : ${graph!.nodes.length} files\n` +
+            `  Edges    : ${graph!.edges.length} dependencies` +
+            (semanticEdges > 0 ? ` (${chalk.magenta(String(semanticEdges) + " semantic")})` : "") +
+            "\n" +
+            (graph!.riskClusters?.length
+              ? `  Clusters : ${chalk.yellow(String(graph!.riskClusters.length))} risk clusters detected\n`
+              : "") +
+            "\n"
+        );
+
+        if (graph!.truncated) {
+          process.stdout.write(
+            chalk.yellow(
+              `  ⚠  ${graph!.totalNodes - graph!.nodes.length} files were excluded due to --max-nodes=${maxNodes}\n\n`
+            )
           );
         }
-      }, 'Graph build failed');
-
-      const html = generateVisionHTML(graph!);
-
-      if (isStatic) {
-        await withSpinner('Rendering PNG via Puppeteer…', async spinner => {
-          await exportPng(html, outputPath);
-          spinner.succeed(`  PNG saved: ${chalk.dim(outputPath)}`);
-        }, 'PNG export failed');
-      } else if (isPdf) {
-        await withSpinner('Rendering PDF via Puppeteer…', async spinner => {
-          await exportPdf(html, outputPath);
-          spinner.succeed(`  PDF saved: ${chalk.dim(outputPath)}`);
-        }, 'PDF export failed');
-      } else {
-        await writeFile(outputPath, html, 'utf-8');
-        process.stdout.write(`  HTML saved: ${chalk.dim(outputPath)}\n`);
-        process.stdout.write(
-          chalk.dim(`\n  Open in your browser:\n    open ${outputPath}\n\n`),
-        );
       }
-
-      // Print summary
-      const semanticEdges = graph!.edges.filter(e => e.type === 'semantic').length;
-      process.stdout.write(
-        `  Score    : ${chalk.bold(String(graph!.totalScore))}/100\n` +
-        `  Nodes    : ${graph!.nodes.length} files\n` +
-        `  Edges    : ${graph!.edges.length} dependencies` +
-        (semanticEdges > 0 ? ` (${chalk.magenta(String(semanticEdges) + ' semantic')})` : '') + '\n' +
-        (graph!.riskClusters?.length ? `  Clusters : ${chalk.yellow(String(graph!.riskClusters.length))} risk clusters detected\n` : '') +
-        '\n',
-      );
-
-      if (graph!.truncated) {
-        process.stdout.write(
-          chalk.yellow(
-            `  ⚠  ${graph!.totalNodes - graph!.nodes.length} files were excluded due to --max-nodes=${maxNodes}\n\n`,
-          ),
-        );
-      }
-    });
+    );
 
   return cmd;
 }

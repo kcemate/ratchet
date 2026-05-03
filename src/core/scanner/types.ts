@@ -1,4 +1,4 @@
-import type { SupportedLanguage } from '../../core/language-rules.js';
+import type { SupportedLanguage } from "../../core/language-rules.js";
 
 export interface CategoryThreshold {
   categoryName: string;
@@ -37,7 +37,7 @@ export interface IssueType {
   subcategory: string;
   count: number;
   description: string;
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
   locations?: string[];
 }
 

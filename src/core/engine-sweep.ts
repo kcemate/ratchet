@@ -1,16 +1,16 @@
-import type { RatchetRun, Click } from '../types.js';
-import { buildScoreOptimizedBacklog } from './score-optimizer.js';
-import { enrichBacklogWithRisk, groupByDependencyCluster } from './issue-backlog.js';
-import { executeClick } from './click.js';
-import { SwarmExecutor } from './swarm.js';
-import * as git from './git.js';
-import { runScan } from '../core/scanner';
-import { clearCache as clearGitNexusCache } from './gitnexus.js';
-import { resolveGuards } from './engine-guards.js';
-import type { EngineRunOptions, ClickPhase } from './engine.js';
-import { createInitialRun, requireNamedBranch } from './engine-utils.js';
-import { logger } from '../lib/logger.js';
-import { selectModel } from '../lib/model-router.js';
+import type { RatchetRun, Click } from "../types.js";
+import { buildScoreOptimizedBacklog } from "./score-optimizer.js";
+import { enrichBacklogWithRisk, groupByDependencyCluster } from "./issue-backlog.js";
+import { executeClick } from "./click.js";
+import { SwarmExecutor } from "./swarm.js";
+import * as git from "./git.js";
+import { runScan } from "../core/scanner";
+import { clearCache as clearGitNexusCache } from "./gitnexus.js";
+import { resolveGuards } from "./engine-guards.js";
+import type { EngineRunOptions, ClickPhase } from "./engine.js";
+import { createInitialRun, requireNamedBranch } from "./engine-utils.js";
+import { logger } from "../lib/logger.js";
+import { selectModel } from "../lib/model-router.js";
 
 /**
  * Split an array into chunks of a given size.
@@ -41,7 +41,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
     }
 
     // 1. Run scan
-    const scanResult = options.scanResult ?? await runScan(cwd);
+    const scanResult = options.scanResult ?? (await runScan(cwd));
     await callbacks.onScanComplete?.(scanResult);
 
     // Clear GitNexus cache for fresh data
@@ -57,21 +57,19 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
 
     if (options.category) {
       const cat = options.category.toLowerCase();
-      const filtered = sweepable.filter(
-        t => t.subcategory?.toLowerCase() === cat || t.category?.toLowerCase() === cat,
-      );
+      const filtered = sweepable.filter(t => t.subcategory?.toLowerCase() === cat || t.category?.toLowerCase() === cat);
       if (filtered.length > 0) {
         sweepable = filtered;
       } else {
         logger.warn(
-          `[ratchet] --category "${options.category}" matched no sweepable issues — running without category filter`,
+          `[ratchet] --category "${options.category}" matched no sweepable issues — running without category filter`
         );
       }
     }
 
     if (sweepable.length === 0) {
-      logger.warn('[ratchet] No sweepable issues found');
-      run.status = 'completed';
+      logger.warn("[ratchet] No sweepable issues found");
+      run.status = "completed";
       run.finishedAt = new Date();
       await callbacks.onRunComplete?.(run);
       return run;
@@ -99,7 +97,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
         const clickStartMs = Date.now();
 
         // Sweep mode uses the mechanical (cheap) model tier
-        const sweepConfig = { ...config, model: selectModel('mechanical', config) };
+        const sweepConfig = { ...config, model: selectModel("mechanical", config) };
 
         let click: Click;
         let rolled_back: boolean;
@@ -114,7 +112,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
             agent,
             cwd,
             sweepMode: true,
-            resolvedGuards: resolveGuards(options.target, config, 'sweep'),
+            resolvedGuards: resolveGuards(options.target, config, "sweep"),
             issues: [batchTask],
             onPhase: callbacks.onClickPhase
               ? (phase: ClickPhase) => callbacks.onClickPhase!(phase, clickNumber)
@@ -126,9 +124,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
             click = swarmResult.winner.click;
             rolled_back = swarmResult.winner.rolled_back;
             // Attach winning specialization metadata
-            const winnerAgent = swarmResult.allResults.find(
-              r => !r.outcome.rolled_back && r.outcome.click.testsPassed,
-            );
+            const winnerAgent = swarmResult.allResults.find(r => !r.outcome.rolled_back && r.outcome.click.testsPassed);
             if (winnerAgent) {
               click.swarmSpecialization = winnerAgent.specialization;
             }
@@ -136,8 +132,8 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
             click = {
               number: clickNumber,
               target: options.target.name,
-              analysis: '',
-              proposal: 'swarm: all agents failed',
+              analysis: "",
+              proposal: "swarm: all agents failed",
               filesModified: [],
               testsPassed: false,
               timestamp: new Date(),
@@ -153,7 +149,7 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
             agent,
             cwd,
             sweepMode: true,
-            resolvedGuards: resolveGuards(options.target, config, 'sweep'),
+            resolvedGuards: resolveGuards(options.target, config, "sweep"),
             adversarial: options.adversarial,
             issues: [batchTask],
             onPhase: callbacks.onClickPhase
@@ -166,9 +162,9 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
 
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
         if (rolled_back) {
-          logger.error({ clickNumber, elapsedSec }, 'sweep click ROLLED BACK');
+          logger.error({ clickNumber, elapsedSec }, "sweep click ROLLED BACK");
         } else {
-          logger.info({ clickNumber, elapsedSec }, 'sweep click LANDED');
+          logger.info({ clickNumber, elapsedSec }, "sweep click LANDED");
         }
 
         run.clicks.push(click);
@@ -177,21 +173,23 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
         // Cross-run learning: record sweep outcome
         if (options.learningStore) {
           const elapsedMs = Date.now() - clickStartMs;
-          const specName = click.swarmSpecialization ?? 'default';
+          const specName = click.swarmSpecialization ?? "default";
           await Promise.all(
-            batch.map((file) =>
-              options.learningStore!.recordOutcome({
-                issueType: task.subcategory || task.category,
-                filePath: file,
-                specialization: specName,
-                success: click.testsPassed && !rolled_back,
-                fixTimeMs: elapsedMs,
-                scoreDelta: 0,
-                failureReason: rolled_back ? 'sweep click rolled back' : undefined,
-              }).catch(() => {
-                // Non-fatal
-              }),
-            ),
+            batch.map(file =>
+              options
+                .learningStore!.recordOutcome({
+                  issueType: task.subcategory || task.category,
+                  filePath: file,
+                  specialization: specName,
+                  success: click.testsPassed && !rolled_back,
+                  fixTimeMs: elapsedMs,
+                  scoreDelta: 0,
+                  failureReason: rolled_back ? "sweep click rolled back" : undefined,
+                })
+                .catch(() => {
+                  // Non-fatal
+                })
+            )
           );
         }
       } catch (err: unknown) {
@@ -200,9 +198,9 @@ export async function runSweepEngine(options: EngineRunOptions): Promise<Ratchet
       }
     }
 
-    run.status = 'completed';
+    run.status = "completed";
   } catch (err: unknown) {
-    run.status = 'failed';
+    run.status = "failed";
     throw err;
   } finally {
     run.finishedAt = new Date();

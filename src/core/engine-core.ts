@@ -1,14 +1,14 @@
-import { join } from 'path';
-import type { ScanResult } from './scanner/index.js';
-import type { CategoryDelta, Click, ClickEconomics, HighRiskChange, RatchetRun, HardenPhase } from '../types.js';
-import { isSweepable } from './score-optimizer.js';
-import { detectChanges } from './gitnexus.js';
-import { logger } from '../lib/logger.js';
+import { join } from "path";
+import type { ScanResult } from "./scanner/index.js";
+import type { CategoryDelta, Click, ClickEconomics, HighRiskChange, RatchetRun, HardenPhase } from "../types.js";
+import { isSweepable } from "./score-optimizer.js";
+import { detectChanges } from "./gitnexus.js";
+import { logger } from "../lib/logger.js";
 
 /** Circuit breaker tracks consecutive / total failures and current strategy. */
 export interface CircuitBreakerState {
   consecutiveFailures: number;
-  currentStrategy: 'standard' | 'architect' | 'sweep';
+  currentStrategy: "standard" | "architect" | "sweep";
   strategiesExhausted: string[];
   totalFailures: number;
   maxTotalFailures: number;
@@ -88,9 +88,9 @@ export interface RunEconomics {
 }
 
 function partitionClicks(clicks: ClickEconomics[]) {
-  const landed = clicks.filter(c => c.outcome === 'landed');
-  const rolledBack = clicks.filter(c => c.outcome !== 'landed');
-  const timedOut = clicks.filter(c => c.outcome === 'timeout');
+  const landed = clicks.filter(c => c.outcome === "landed");
+  const rolledBack = clicks.filter(c => c.outcome !== "landed");
+  const timedOut = clicks.filter(c => c.outcome === "timeout");
   return { landed, rolledBack, timedOut };
 }
 
@@ -105,14 +105,14 @@ export function generateRecommendations(clicks: ClickEconomics[]): string[] {
 
   const recs: string[] = [];
 
-  if (rollbackRate > 0.30) {
+  if (rollbackRate > 0.3) {
     recs.push(`${rolledBack.length}/${total} clicks rolled back — consider --plan-first to reduce wasted iterations`);
   }
   if (timeoutRate > 0.15) {
     recs.push(`${timedOut.length} timeout(s) detected — consider --timeout 900 for complex refactors`);
   }
   if (scoreDelta === 0 && total > 0) {
-    recs.push('Score delta is zero — consider --architect --guards refactor for structural improvements');
+    recs.push("Score delta is zero — consider --architect --guards refactor for structural improvements");
   }
 
   return recs;
@@ -156,15 +156,13 @@ export interface RunSummary {
   failed: number;
   commits: string[];
   duration: number;
-  status: RatchetRun['status'];
+  status: RatchetRun["status"];
 }
 
 export function summarizeRun(run: RatchetRun): RunSummary {
-  const passed = run.clicks.filter((c) => c.testsPassed).length;
-  const failed = run.clicks.filter((c) => !c.testsPassed).length;
-  const duration = run.finishedAt
-    ? run.finishedAt.getTime() - run.startedAt.getTime()
-    : 0;
+  const passed = run.clicks.filter(c => c.testsPassed).length;
+  const failed = run.clicks.filter(c => !c.testsPassed).length;
+  const duration = run.finishedAt ? run.finishedAt.getTime() - run.startedAt.getTime() : 0;
 
   return {
     id: run.id,
@@ -172,13 +170,13 @@ export function summarizeRun(run: RatchetRun): RunSummary {
     totalClicks: run.clicks.length,
     passed,
     failed,
-    commits: run.clicks.filter((c) => c.commitHash).map((c) => c.commitHash!),
+    commits: run.clicks.filter(c => c.commitHash).map(c => c.commitHash!),
     duration,
     status: run.status,
   };
 }
 
-export type ClickPhase = 'analyzing' | 'proposing' | 'building' | 'testing' | 'committing';
+export type ClickPhase = "analyzing" | "proposing" | "building" | "testing" | "committing";
 export type { HardenPhase };
 
 // ── Stop-condition helpers (exported for testing) ──────────────────────────
@@ -191,11 +189,9 @@ export type { HardenPhase };
  * Returns 'sweep' when the subcategory is marked sweepable in SUBCATEGORY_TIERS,
  * otherwise returns 'architect'.
  */
-export function resolveEscalationMode(
-  topTaskSubcategory: string | undefined,
-): 'sweep' | 'architect' {
-  if (topTaskSubcategory && isSweepable(topTaskSubcategory)) return 'sweep';
-  return 'architect';
+export function resolveEscalationMode(topTaskSubcategory: string | undefined): "sweep" | "architect" {
+  if (topTaskSubcategory && isSweepable(topTaskSubcategory)) return "sweep";
+  return "architect";
 }
 
 /**
@@ -210,20 +206,20 @@ export function checkRollbackEscalation(
   consecutiveRollbacks: number,
   totalLanded: number,
   totalRolled: number,
-  enabled: boolean,
+  enabled: boolean
 ): { shouldEscalate: boolean; reason?: string } {
   if (!enabled) return { shouldEscalate: false };
   if (consecutiveRollbacks >= 3) {
-    return { shouldEscalate: true, reason: '3 consecutive rollbacks' };
+    return { shouldEscalate: true, reason: "3 consecutive rollbacks" };
   }
   if (totalLanded === 0 && totalRolled >= 3) {
-    return { shouldEscalate: true, reason: 'all clicks stalled with 0 landed' };
+    return { shouldEscalate: true, reason: "all clicks stalled with 0 landed" };
   }
   // 50% rollback rate guard: if at least half of all attempts have been rolled back
   // and the last click also rolled back, the run is clearly stalling.
   const totalAttempted = totalLanded + totalRolled;
   if (totalAttempted >= 3 && consecutiveRollbacks >= 1 && totalRolled / totalAttempted >= 0.5) {
-    return { shouldEscalate: true, reason: '50% rollback rate' };
+    return { shouldEscalate: true, reason: "50% rollback rate" };
   }
   return { shouldEscalate: false };
 }
@@ -235,7 +231,7 @@ export function checkRollbackEscalation(
  */
 export function checkTotalScoreRegression(
   newTotal: number,
-  prevTotal: number,
+  prevTotal: number
 ): { shouldRollback: boolean; reason?: string } {
   if (newTotal < prevTotal) {
     return {
@@ -250,7 +246,7 @@ export function checkTotalScoreRegression(
 export function checkTimeoutStop(
   startedAt: Date,
   timeoutMs: number,
-  clickNumber: number,
+  clickNumber: number
 ): { stop: boolean; earlyStopReason?: string } {
   const elapsed = Date.now() - startedAt.getTime();
   if (elapsed > timeoutMs) {
@@ -263,7 +259,7 @@ export function checkTimeoutStop(
 /** Returns stop=true when cumulative cost has reached or exceeded the budget. */
 export function checkBudgetStop(
   cumulativeCost: number,
-  budgetUsd: number,
+  budgetUsd: number
 ): { stop: boolean; earlyStopReason?: string } {
   if (cumulativeCost >= budgetUsd) {
     return { stop: true, earlyStopReason: `Budget limit reached ($${cumulativeCost.toFixed(2)})` };
@@ -279,15 +275,15 @@ export function checkBudgetStop(
  */
 export function checkDiminishingReturns(
   recentScoreDeltas: number[],
-  totalClicks: number,
+  totalClicks: number
 ): { stop: boolean; earlyStopReason?: string } {
   if (totalClicks < 3) return { stop: false };
   if (recentScoreDeltas.length < 3) return { stop: false };
   const lastThree = recentScoreDeltas.slice(-3);
-  if (lastThree.every((d) => d === 0)) {
+  if (lastThree.every(d => d === 0)) {
     return {
       stop: true,
-      earlyStopReason: 'diminishing returns — 3 consecutive zero-delta clicks',
+      earlyStopReason: "diminishing returns — 3 consecutive zero-delta clicks",
     };
   }
   return { stop: false };
@@ -296,10 +292,10 @@ export function checkDiminishingReturns(
 /** Returns stop=true when N consecutive clicks all had zero score delta (plateau). */
 export function checkPlateauStop(
   consecutiveZeroDeltaClicks: number,
-  totalClicks: number,
+  totalClicks: number
 ): { stop: boolean; earlyStopReason?: string } {
   if (totalClicks > 3 && consecutiveZeroDeltaClicks >= 3) {
-    return { stop: true, earlyStopReason: 'Score plateau detected (3 consecutive zero-delta clicks)' };
+    return { stop: true, earlyStopReason: "Score plateau detected (3 consecutive zero-delta clicks)" };
   }
   return { stop: false };
 }
@@ -307,11 +303,11 @@ export function checkPlateauStop(
 /** Returns stop=true when a score regression was detected and --stop-on-regression is active. */
 export function checkRegressionStop(
   regressionDetected: boolean,
-  rollbackReason?: string,
+  rollbackReason?: string
 ): { stop: boolean; earlyStopReason?: string } {
   if (!regressionDetected) return { stop: false };
   const match = rollbackReason?.match(/(\d+) → (\d+)/);
-  const detail = match ? `${match[1]} → ${match[2]}` : '';
+  const detail = match ? `${match[1]} → ${match[2]}` : "";
   return { stop: true, earlyStopReason: `Score regression detected (${detail})` };
 }
 
@@ -338,7 +334,7 @@ export function getConsecutiveTrailingRollbacks(clicks: Click[]): number {
  */
 export function checkCircuitBreaker(state: CircuitBreakerState): {
   shouldEscalate: boolean;
-  nextStrategy?: 'architect' | 'sweep';
+  nextStrategy?: "architect" | "sweep";
   shouldStop: boolean;
   reason?: string;
 } {
@@ -357,21 +353,21 @@ export function checkCircuitBreaker(state: CircuitBreakerState): {
     };
   }
 
-  if (state.currentStrategy === 'standard') {
+  if (state.currentStrategy === "standard") {
     return {
       shouldEscalate: true,
-      nextStrategy: 'architect',
+      nextStrategy: "architect",
       shouldStop: false,
-      reason: 'circuit breaker: standard → architect (3 consecutive rollbacks)',
+      reason: "circuit breaker: standard → architect (3 consecutive rollbacks)",
     };
   }
 
-  if (state.currentStrategy === 'architect') {
+  if (state.currentStrategy === "architect") {
     return {
       shouldEscalate: true,
-      nextStrategy: 'sweep',
+      nextStrategy: "sweep",
       shouldStop: false,
-      reason: 'circuit breaker: architect → sweep (3 consecutive rollbacks)',
+      reason: "circuit breaker: architect → sweep (3 consecutive rollbacks)",
     };
   }
 
@@ -379,7 +375,7 @@ export function checkCircuitBreaker(state: CircuitBreakerState): {
   return {
     shouldEscalate: false,
     shouldStop: true,
-    reason: 'exhausted all strategies: standard → architect → sweep all failed with 3 consecutive rollbacks',
+    reason: "exhausted all strategies: standard → architect → sweep all failed with 3 consecutive rollbacks",
   };
 }
 
@@ -396,17 +392,17 @@ export async function logCircuitBreakerEvent(
     clickNumber: number;
     totalFailures: number;
     timestamp: string;
-  },
+  }
 ): Promise<void> {
   try {
-    const { writeFile, mkdir, readFile } = await import('fs/promises');
-    const ratchetDir = join(cwd, '.ratchet');
+    const { writeFile, mkdir, readFile } = await import("fs/promises");
+    const ratchetDir = join(cwd, ".ratchet");
     await mkdir(ratchetDir, { recursive: true });
-    const statePath = join(ratchetDir, 'run-state.json');
+    const statePath = join(ratchetDir, "run-state.json");
 
     let existing: Record<string, unknown> = {};
     try {
-      const raw = await readFile(statePath, 'utf-8');
+      const raw = await readFile(statePath, "utf-8");
       existing = JSON.parse(raw);
     } catch {
       // File doesn't exist yet — start fresh
@@ -416,9 +412,9 @@ export async function logCircuitBreakerEvent(
     events.push(event);
     existing.circuitBreakerEvents = events;
     existing.lastCircuitBreakerSwitch = event;
-    await writeFile(statePath, JSON.stringify(existing, null, 2), 'utf-8');
+    await writeFile(statePath, JSON.stringify(existing, null, 2), "utf-8");
   } catch (err) {
-    logger.debug({ err }, '[circuit-breaker] Failed to write run-state.json (non-fatal)');
+    logger.debug({ err }, "[circuit-breaker] Failed to write run-state.json (non-fatal)");
   }
 }
 
@@ -428,7 +424,7 @@ export async function logCircuitBreakerEvent(
  * HIGH_RISK_LEVELS — these risk levels trigger confidence gating.
  * If confidence > CONFIDENCE_THRESHOLD, the click is flagged for warning/rollback.
  */
-const HIGH_RISK_LEVELS = new Set(['HIGH', 'CRITICAL', 'high', 'critical']);
+const HIGH_RISK_LEVELS = new Set(["HIGH", "CRITICAL", "high", "critical"]);
 const CONFIDENCE_THRESHOLD = 0.7;
 
 /**
@@ -436,10 +432,7 @@ const CONFIDENCE_THRESHOLD = 0.7;
  * Returns high-risk changes that exceed the confidence threshold.
  * Non-blocking async — called before committing.
  */
-export async function runConfidenceGating(
-  filesModified: string[],
-  cwd: string,
-): Promise<HighRiskChange[]> {
+export async function runConfidenceGating(filesModified: string[], cwd: string): Promise<HighRiskChange[]> {
   if (filesModified.length === 0) return [];
 
   try {

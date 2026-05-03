@@ -1,5 +1,5 @@
-import { spawn } from 'child_process';
-import type { TestResult, RunnerOptions } from '../types.js';
+import { spawn } from "child_process";
+import type { TestResult, RunnerOptions } from "../types.js";
 
 const DEFAULT_TIMEOUT = 120_000; // 2 minutes
 
@@ -21,38 +21,38 @@ export async function runTests(options: RunnerOptions): Promise<TestResult> {
   }
   const [bin, ...args] = parts;
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const child = spawn(bin, args, {
       cwd,
       env: { ...process.env },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ["ignore", "pipe", "pipe"],
     });
 
-    let stdoutBuf = '';
-    let stderrBuf = '';
+    let stdoutBuf = "";
+    let stderrBuf = "";
     let totalBytes = 0;
     const maxBuffer = 10 * 1024 * 1024; // 10MB
     let timedOut = false;
 
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill('SIGTERM');
+      child.kill("SIGTERM");
     }, timeout);
 
-    child.stdout.on('data', (chunk: Buffer) => {
+    child.stdout.on("data", (chunk: Buffer) => {
       totalBytes += chunk.length;
       if (totalBytes <= maxBuffer) stdoutBuf += chunk.toString();
     });
 
-    child.stderr.on('data', (chunk: Buffer) => {
+    child.stderr.on("data", (chunk: Buffer) => {
       totalBytes += chunk.length;
       if (totalBytes <= maxBuffer) stderrBuf += chunk.toString();
     });
 
-    child.on('error', (err: NodeJS.ErrnoException) => {
+    child.on("error", (err: NodeJS.ErrnoException) => {
       clearTimeout(timer);
       const duration = Date.now() - start;
-      if (err.code === 'ENOENT') {
+      if (err.code === "ENOENT") {
         const friendlyMessage =
           `Test command not found: \`${bin}\`\n` +
           `  Make sure \`${bin}\` is installed and available in your PATH.\n` +
@@ -63,10 +63,10 @@ export async function runTests(options: RunnerOptions): Promise<TestResult> {
       }
     });
 
-    child.on('close', (code: number | null) => {
+    child.on("close", (code: number | null) => {
       clearTimeout(timer);
       const duration = Date.now() - start;
-      const output = [stdoutBuf, stderrBuf].filter(Boolean).join('\n');
+      const output = [stdoutBuf, stderrBuf].filter(Boolean).join("\n");
 
       if (timedOut) {
         resolve({ passed: false, output, duration, error: `Test command timed out after ${timeout}ms` });
@@ -81,7 +81,7 @@ export async function runTests(options: RunnerOptions): Promise<TestResult> {
 export function parseCommand(command: string): string[] {
   // Simple shell-style split: handles quoted strings
   const parts: string[] = [];
-  let current = '';
+  let current = "";
   let inSingle = false;
   let inDouble = false;
 
@@ -91,10 +91,10 @@ export function parseCommand(command: string): string[] {
       inSingle = !inSingle;
     } else if (ch === '"' && !inSingle) {
       inDouble = !inDouble;
-    } else if (ch === ' ' && !inSingle && !inDouble) {
+    } else if (ch === " " && !inSingle && !inDouble) {
       if (current) {
         parts.push(current);
-        current = '';
+        current = "";
       }
     } else {
       current += ch;
@@ -105,23 +105,23 @@ export function parseCommand(command: string): string[] {
 }
 
 export async function detectTestCommand(cwd: string): Promise<string> {
-  const { existsSync } = await import('fs');
-  const { join } = await import('path');
+  const { existsSync } = await import("fs");
+  const { join } = await import("path");
 
-  if (existsSync(join(cwd, 'package.json'))) {
-    return 'npm test';
+  if (existsSync(join(cwd, "package.json"))) {
+    return "npm test";
   }
-  if (existsSync(join(cwd, 'pytest.ini')) || existsSync(join(cwd, 'pyproject.toml'))) {
-    return 'pytest';
+  if (existsSync(join(cwd, "pytest.ini")) || existsSync(join(cwd, "pyproject.toml"))) {
+    return "pytest";
   }
-  if (existsSync(join(cwd, 'Makefile'))) {
-    return 'make test';
+  if (existsSync(join(cwd, "Makefile"))) {
+    return "make test";
   }
-  if (existsSync(join(cwd, 'go.mod'))) {
-    return 'go test ./...';
+  if (existsSync(join(cwd, "go.mod"))) {
+    return "go test ./...";
   }
-  if (existsSync(join(cwd, 'Cargo.toml'))) {
-    return 'cargo test';
+  if (existsSync(join(cwd, "Cargo.toml"))) {
+    return "cargo test";
   }
-  return 'npm test';
+  return "npm test";
 }

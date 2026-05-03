@@ -6,8 +6,8 @@
  * conversion, plus score-merging logic for hybrid classic+deep runs.
  */
 
-import type { ScanResult, CategoryResult, SubCategory, IssueType } from '../core/scanner';
-import { RULE_REGISTRY, getRuleBySubcategory } from './finding-rules.js';
+import type { ScanResult, CategoryResult, SubCategory, IssueType } from "../core/scanner";
+import { RULE_REGISTRY, getRuleBySubcategory } from "./finding-rules.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,7 +26,7 @@ export interface Finding {
   /** Subcategory within the category (e.g. "Coverage ratio", "Secrets & env vars"). */
   subcategory: string;
   /** Severity of the finding. */
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  severity: "critical" | "high" | "medium" | "low" | "info";
   /** File path where the finding was detected (optional). */
   file?: string;
   /** Line number within the file (optional). */
@@ -38,11 +38,11 @@ export interface Finding {
   /** Suggested fix for the finding (optional). */
   suggestion?: string;
   /** Which engine produced this finding. */
-  source: 'classic' | 'deep';
+  source: "classic" | "deep";
   /** ID of the AST transform that can fix this finding, if one exists. */
   transformId?: string;
   /** How to fix this finding: ast = deterministic transform, intent = cheap LLM, manual = needs human. */
-  fixStrategy?: 'ast' | 'intent' | 'manual';
+  fixStrategy?: "ast" | "intent" | "manual";
 }
 
 export interface NormalizedResult {
@@ -56,15 +56,15 @@ export interface NormalizedResult {
 // ---------------------------------------------------------------------------
 
 /** Stable fingerprint of a finding — used as its id and as a dedup lookup key. */
-function fingerprintFinding(f: Omit<Finding, 'id' | 'ruleId'>): string {
-  return `${f.category}::${f.subcategory}::${f.file ?? ''}::${f.line ?? 0}`;
+function fingerprintFinding(f: Omit<Finding, "id" | "ruleId">): string {
+  return `${f.category}::${f.subcategory}::${f.file ?? ""}::${f.line ?? 0}`;
 }
 
 /** Map finding severity → IssueType severity (3-level). */
-function toIssueSeverity(s: Finding['severity']): 'high' | 'medium' | 'low' {
-  if (s === 'critical' || s === 'high') return 'high';
-  if (s === 'medium') return 'medium';
-  return 'low';
+function toIssueSeverity(s: Finding["severity"]): "high" | "medium" | "low" {
+  if (s === "critical" || s === "high") return "high";
+  if (s === "medium") return "medium";
+  return "low";
 }
 
 // ---------------------------------------------------------------------------
@@ -97,10 +97,7 @@ export class FindingDeduplicator {
     return [...slots.values()];
   }
 
-  private _findSlot(
-    slots: Map<string, Finding>,
-    candidate: Finding,
-  ): [string, Finding] | null {
+  private _findSlot(slots: Map<string, Finding>, candidate: Finding): [string, Finding] | null {
     for (const [key, existing] of slots) {
       if (
         existing.category === candidate.category &&
@@ -118,7 +115,7 @@ export class FindingDeduplicator {
     if (b.confidence > a.confidence) return b;
     if (a.confidence > b.confidence) return a;
     // Equal confidence — prefer Deep (more semantic detail).
-    return b.source === 'deep' ? b : a;
+    return b.source === "deep" ? b : a;
   }
 }
 
@@ -152,12 +149,12 @@ export class FindingAggregator {
     }
 
     const CATEGORY_META: Record<string, { emoji: string; max: number }> = {
-      'Testing':        { emoji: '🧪', max: 25 },
-      'Security':       { emoji: '🔒', max: 15 },
-      'Type Safety':    { emoji: '📝', max: 15 },
-      'Error Handling': { emoji: '⚠️ ', max: 20 },
-      'Performance':    { emoji: '⚡', max: 10 },
-      'Code Quality':   { emoji: '📖', max: 15 },
+      Testing: { emoji: "🧪", max: 25 },
+      Security: { emoji: "🔒", max: 15 },
+      "Type Safety": { emoji: "📝", max: 15 },
+      "Error Handling": { emoji: "⚠️ ", max: 20 },
+      Performance: { emoji: "⚡", max: 10 },
+      "Code Quality": { emoji: "📖", max: 15 },
     };
 
     const categories: CategoryResult[] = [];
@@ -165,7 +162,7 @@ export class FindingAggregator {
     let totalIssuesFound = 0;
 
     for (const [catName, subMap] of catMap) {
-      const meta = CATEGORY_META[catName] ?? { emoji: '📋', max: 0 };
+      const meta = CATEGORY_META[catName] ?? { emoji: "📋", max: 0 };
       const subcategories: SubCategory[] = [];
 
       for (const [subName, subFindings] of subMap) {
@@ -173,7 +170,7 @@ export class FindingAggregator {
         const maxScore = rule?.maxScore ?? 0;
         const score = this._calculateScore(maxScore, subFindings);
         const issuesFound = subFindings.length;
-        const summary = subFindings[0]?.message ?? '';
+        const summary = subFindings[0]?.message ?? "";
 
         subcategories.push({
           name: subName,
@@ -181,25 +178,21 @@ export class FindingAggregator {
           max: maxScore,
           summary,
           issuesFound,
-          issuesDescription: subFindings.map(f => f.message).join('; '),
-          locations: subFindings.filter(f => f.file).map(f =>
-            f.line != null ? `${f.file}:${f.line}` : f.file!,
-          ),
+          issuesDescription: subFindings.map(f => f.message).join("; "),
+          locations: subFindings.filter(f => f.file).map(f => (f.line != null ? `${f.file}:${f.line}` : f.file!)),
         });
 
         // Use the finding's own severity (not SEVERITY_MAP) so the normalizer
         // preserves the engine's assessment rather than overriding it.
-        const severityForIssue = toIssueSeverity(subFindings[0]?.severity ?? 'low');
+        const severityForIssue = toIssueSeverity(subFindings[0]?.severity ?? "low");
 
         issuesByType.push({
           category: catName,
           subcategory: subName,
           count: issuesFound,
-          description: subFindings.map(f => f.message).join('; '),
+          description: subFindings.map(f => f.message).join("; "),
           severity: severityForIssue,
-          locations: subFindings.filter(f => f.file).map(f =>
-            f.line != null ? `${f.file}:${f.line}` : f.file!,
-          ),
+          locations: subFindings.filter(f => f.file).map(f => (f.line != null ? `${f.file}:${f.line}` : f.file!)),
         });
 
         totalIssuesFound += issuesFound;
@@ -207,7 +200,7 @@ export class FindingAggregator {
 
       const catScore = Math.min(
         subcategories.reduce((s, sc) => s + sc.score, 0),
-        meta.max,
+        meta.max
       );
 
       categories.push({
@@ -215,7 +208,10 @@ export class FindingAggregator {
         emoji: meta.emoji,
         score: catScore,
         max: meta.max,
-        summary: subcategories.map(sc => sc.summary).filter(Boolean).join(', '),
+        summary: subcategories
+          .map(sc => sc.summary)
+          .filter(Boolean)
+          .join(", "),
         subcategories,
       });
     }
@@ -234,11 +230,21 @@ export class FindingAggregator {
     let score = maxScore;
     for (const f of findings) {
       switch (f.severity) {
-        case 'critical': score = 0; break;
-        case 'high':     score -= maxScore * 0.5; break;
-        case 'medium':   score -= 1; break;
-        case 'low':      score -= 0.5; break;
-        case 'info':     score -= 0.25; break;
+        case "critical":
+          score = 0;
+          break;
+        case "high":
+          score -= maxScore * 0.5;
+          break;
+        case "medium":
+          score -= 1;
+          break;
+        case "low":
+          score -= 0.5;
+          break;
+        case "info":
+          score -= 0.25;
+          break;
       }
     }
     return Math.max(0, Math.round(score));
@@ -283,7 +289,7 @@ export function normalizeFindings(findings: Finding[], _specVersion?: string): N
 
   // 4. Build ScanResult.
   const scanResult: ScanResult = {
-    projectName: 'unknown',
+    projectName: "unknown",
     total,
     maxTotal,
     categories,
@@ -340,28 +346,23 @@ export function mergeResults(classic: ScanResult, deep: ScanResult): ScanResult 
       return {
         ...classicSub,
         score: mergeScores(classicSub.score, deepSub.score),
-        summary: (deepSub.summary && deepSub.summary.length > 0)
-          ? deepSub.summary
-          : classicSub.summary,
+        summary: deepSub.summary && deepSub.summary.length > 0 ? deepSub.summary : classicSub.summary,
         issuesFound: Math.max(classicSub.issuesFound, deepSub.issuesFound),
-        locations: [
-          ...(classicSub.locations ?? []),
-          ...(deepSub.locations ?? []),
-        ].filter((v, i, arr) => arr.indexOf(v) === i), // unique
+        locations: [...(classicSub.locations ?? []), ...(deepSub.locations ?? [])].filter(
+          (v, i, arr) => arr.indexOf(v) === i
+        ), // unique
       };
     });
 
     const mergedScore = Math.min(
       mergedSubs.reduce((s, sc) => s + sc.score, 0),
-      classicCat.max,
+      classicCat.max
     );
 
     return {
       ...classicCat,
       score: mergedScore,
-      summary: (deepCat.summary && deepCat.summary.length > 0)
-        ? deepCat.summary
-        : classicCat.summary,
+      summary: deepCat.summary && deepCat.summary.length > 0 ? deepCat.summary : classicCat.summary,
       subcategories: mergedSubs,
     };
   });
@@ -420,7 +421,7 @@ export function removeResolvedFindings(deepResult: ScanResult, changedFiles: str
 
   /** True if a "file:line" or "file" location string references a changed file. */
   function inChangedFile(location: string): boolean {
-    const filePart = location.includes(':') ? location.split(':')[0]! : location;
+    const filePart = location.includes(":") ? location.split(":")[0]! : location;
     if (changedSet.has(filePart)) return true;
     // Handle absolute vs relative path mismatches (one ends with the other).
     for (const cf of changedSet) {
@@ -448,7 +449,7 @@ export function removeResolvedFindings(deepResult: ScanResult, changedFiles: str
 
     const catScore = Math.min(
       subcategories.reduce((s, sc) => s + sc.score, 0),
-      cat.max,
+      cat.max
     );
 
     return { ...cat, score: catScore, subcategories };
@@ -474,4 +475,4 @@ export function removeResolvedFindings(deepResult: ScanResult, changedFiles: str
 // Re-export rule utilities for consumers
 // ---------------------------------------------------------------------------
 
-export { RULE_REGISTRY, getRuleBySubcategory } from './finding-rules.js';
+export { RULE_REGISTRY, getRuleBySubcategory } from "./finding-rules.js";

@@ -31,7 +31,7 @@ export interface ContextRound {
   /** Unix ms timestamp when this round ended. */
   endedAt: number;
   /** Whether the click was kept or rolled back. */
-  outcome: 'landed' | 'rolled-back';
+  outcome: "landed" | "rolled-back";
   /** Score delta produced by this click (0 when rolled back). */
   scoreDelta: number;
   /** Files modified during this click. */
@@ -56,7 +56,7 @@ export class ContextManager {
   /** Rounds currently held in memory (not yet compacted). */
   private rounds: ContextRound[] = [];
   /** Accumulated summary of all compacted (older) rounds. */
-  private compactedSummary = '';
+  private compactedSummary = "";
 
   readonly config: ContextManagerConfig;
 
@@ -142,13 +142,13 @@ export class ContextManager {
     }
 
     if (this.rounds.length > 0) {
-      parts.push('RECENT CLICKS:');
+      parts.push("RECENT CLICKS:");
       for (const round of this.rounds) {
-        parts.push('  ' + formatRound(round));
+        parts.push("  " + formatRound(round));
       }
     }
 
-    return parts.join('\n');
+    return parts.join("\n");
   }
 }
 
@@ -158,27 +158,24 @@ export class ContextManager {
  * Format a single round as a one-line summary.
  */
 export function formatRound(round: ContextRound): string {
-  const outcomeStr =
-    round.outcome === 'landed'
-      ? `landed (+${round.scoreDelta.toFixed(1)} pts)`
-      : 'rolled-back';
-  const categories = round.issueCategories.slice(0, 3).join(', ') || 'unknown';
-  const files = round.filesModified.slice(0, 3).join(', ');
-  return `Click ${round.clickNumber} (${outcomeStr}): ${categories}${files ? ` in ${files}` : ''}`;
+  const outcomeStr = round.outcome === "landed" ? `landed (+${round.scoreDelta.toFixed(1)} pts)` : "rolled-back";
+  const categories = round.issueCategories.slice(0, 3).join(", ") || "unknown";
+  const files = round.filesModified.slice(0, 3).join(", ");
+  return `Click ${round.clickNumber} (${outcomeStr}): ${categories}${files ? ` in ${files}` : ""}`;
 }
 
 /**
  * Format a list of rounds as a compacted summary block.
  */
 export function formatRoundsSummary(rounds: ContextRound[]): string {
-  if (rounds.length === 0) return '';
-  const lines = ['--- PRIOR CLICKS (COMPACTED) ---'];
+  if (rounds.length === 0) return "";
+  const lines = ["--- PRIOR CLICKS (COMPACTED) ---"];
   for (const round of rounds) {
-    lines.push('  ' + formatRound(round));
+    lines.push("  " + formatRound(round));
   }
-  lines.push('[Older rounds compacted — context summarized above]');
-  lines.push('---');
-  return lines.join('\n');
+  lines.push("[Older rounds compacted — context summarized above]");
+  lines.push("---");
+  return lines.join("\n");
 }
 
 /**
@@ -187,5 +184,5 @@ export function formatRoundsSummary(rounds: ContextRound[]): string {
 function appendSummary(existing: string, next: string): string {
   if (!existing) return next;
   if (!next) return existing;
-  return existing + '\n' + next;
+  return existing + "\n" + next;
 }

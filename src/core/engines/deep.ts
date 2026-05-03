@@ -12,16 +12,16 @@
  *   7. Return the merged ScanResult.
  */
 
-import type { ScanEngine, ScanEngineOptions } from '../scan-engine.js';
-import type { ScanResult } from '../../core/scanner';
-import type { Provider } from '../providers/base.js';
-import type { Finding } from '../normalize.js';
-import { normalizeFindings, mergeResults } from '../normalize.js';
-import { ClassicEngine } from './classic.js';
-import { findSourceFiles, readContents } from '../scan-constants.js';
-import { CATEGORIES, buildPromptForCategory, type FileContent, type Category } from './deep-prompts.js';
-import { parseDeepFindings } from './deep-parser.js';
-import { logger } from '../../lib/logger.js';
+import type { ScanEngine, ScanEngineOptions } from "../scan-engine.js";
+import type { ScanResult } from "../../core/scanner";
+import type { Provider } from "../providers/base.js";
+import type { Finding } from "../normalize.js";
+import { normalizeFindings, mergeResults } from "../normalize.js";
+import { ClassicEngine } from "./classic.js";
+import { findSourceFiles, readContents } from "../scan-constants.js";
+import { CATEGORIES, buildPromptForCategory, type FileContent, type Category } from "./deep-prompts.js";
+import { parseDeepFindings } from "./deep-parser.js";
+import { logger } from "../../lib/logger.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -34,15 +34,13 @@ const OUTPUT_TOKENS_PER_CATEGORY = 500;
 
 /** Pricing per million tokens (input / output). */
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  'haiku':   { input: 0.25, output: 1.25 },
-  'sonnet':  { input: 3,    output: 15   },
-  'opus':    { input: 15,   output: 75   },
+  haiku: { input: 0.25, output: 1.25 },
+  sonnet: { input: 3, output: 15 },
+  opus: { input: 15, output: 75 },
 };
 
 /** Models/providers with zero or near-zero marginal cost (flat-rate subscriptions). */
-const FREE_MODEL_PATTERNS = [
-  'mistral', 'kimi', 'glm', 'nemotron', 'qwen', 'deepseek', 'devstral', 'gpt-oss',
-];
+const FREE_MODEL_PATTERNS = ["mistral", "kimi", "glm", "nemotron", "qwen", "deepseek", "devstral", "gpt-oss"];
 
 /** High-risk file patterns — routes, auth, controllers, core services. */
 const HIGH_RISK_PATTERNS = [
@@ -74,13 +72,13 @@ function getPricing(modelHint?: string): { input: number; output: number } {
       if (lower.includes(key)) return pricing;
     }
   }
-  return MODEL_PRICING['sonnet']!; // safe default
+  return MODEL_PRICING["sonnet"]!; // safe default
 }
 
 function estimateBatchCost(
   inputChars: number,
   categoriesCount: number,
-  pricing: { input: number; output: number },
+  pricing: { input: number; output: number }
 ): number {
   const inputTokens = inputChars / CHARS_PER_TOKEN;
   const outputTokens = OUTPUT_TOKENS_PER_CATEGORY * categoriesCount;
@@ -96,12 +94,12 @@ function isHighRiskFile(filePath: string): boolean {
 // ---------------------------------------------------------------------------
 
 export class DeepEngine implements ScanEngine {
-  readonly name = 'DeepEngine';
-  readonly mode = 'deep' as const;
+  readonly name = "DeepEngine";
+  readonly mode = "deep" as const;
 
   constructor(
     private readonly provider?: Provider,
-    private readonly scanProvider?: Provider,
+    private readonly scanProvider?: Provider
   ) {}
 
   /** Returns the provider to use for deep analysis (scan-specific or fallback to fix provider). */
@@ -111,29 +109,28 @@ export class DeepEngine implements ScanEngine {
 
   async analyze(cwd: string, options: ScanEngineOptions = {}): Promise<ScanResult> {
     logger.info(
-      { cwd, provider: this.provider?.name ?? 'none', scanProvider: this.scanProvider?.name },
-      'DeepEngine: analyze started',
+      { cwd, provider: this.provider?.name ?? "none", scanProvider: this.scanProvider?.name },
+      "DeepEngine: analyze started"
     );
     if (!this.activeProvider) {
       throw new Error(
-        'Deep scanning requires an API key. ' +
-        'Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or configure a provider in .ratchet.yml',
+        "Deep scanning requires an API key. " +
+          "Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or configure a provider in .ratchet.yml"
       );
     }
 
     // 0. Model compatibility preflight — fail fast if model can't return JSON.
     const preflightPassed = await this.preflightCheck();
     if (!preflightPassed) {
-      logger.warn('DeepEngine: preflight failed — falling back to classic engine');
+      logger.warn("DeepEngine: preflight failed — falling back to classic engine");
       return new ClassicEngine().analyze(cwd, options);
     }
 
     // 1. Classic baseline.
     const classic = new ClassicEngine();
-    const { result: classicResult, findings: classicFindings } =
-      await classic.analyzeWithFindings(cwd, options);
+    const { result: classicResult, findings: classicFindings } = await classic.analyzeWithFindings(cwd, options);
 
-    logger.info({ classicTotal: classicResult.total }, 'DeepEngine: classic baseline complete');
+    logger.info({ classicTotal: classicResult.total }, "DeepEngine: classic baseline complete");
 
     // 2. Select files for deep analysis.
     const allFiles = options.files ?? findSourceFiles(cwd, { scanProductionOnly: false });
@@ -141,7 +138,7 @@ export class DeepEngine implements ScanEngine {
     const selectedFiles = this.selectFiles(allFiles, contents, classicFindings, options);
 
     if (selectedFiles.length === 0) {
-      logger.warn('DeepEngine: no files selected for deep analysis, returning classic result');
+      logger.warn("DeepEngine: no files selected for deep analysis, returning classic result");
       return classicResult;
     }
 
@@ -162,7 +159,7 @@ export class DeepEngine implements ScanEngine {
       if (budgetUsed + batchCost > budget) {
         logger.info(
           { budgetUsed: budgetUsed.toFixed(4), budget, batchIdx },
-          'DeepEngine: budget limit reached — stopping early',
+          "DeepEngine: budget limit reached — stopping early"
         );
         break;
       }
@@ -173,12 +170,12 @@ export class DeepEngine implements ScanEngine {
 
       logger.debug(
         { batchIdx, files: batch.length, findingsAdded: batchFindings.length, budgetUsed: budgetUsed.toFixed(4) },
-        'DeepEngine: batch complete',
+        "DeepEngine: batch complete"
       );
     }
 
     logger.info(
-      `Deep analysis: $${budgetUsed.toFixed(4)} / $${isFinite(budget) ? budget.toFixed(2) : '∞'} budget used`,
+      `Deep analysis: $${budgetUsed.toFixed(4)} / $${isFinite(budget) ? budget.toFixed(2) : "∞"} budget used`
     );
 
     if (deepFindings.length === 0) {
@@ -206,12 +203,12 @@ Return ONLY a valid JSON array of findings:
 
 If no issues, return: []`;
 
-    logger.info('DeepEngine: running preflight check...');
+    logger.info("DeepEngine: running preflight check...");
     const start = Date.now();
 
     try {
       const response = await this.activeProvider!.sendMessage(testPrompt, { maxTokens: 512 });
-      const findings = parseDeepFindings(response, 'Security');
+      const findings = parseDeepFindings(response, "Security");
       const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
       if (findings.length === 0) {
@@ -219,16 +216,16 @@ If no issues, return: []`;
         // This is a strong signal the model can't follow JSON instructions.
         logger.warn(
           { provider: this.activeProvider!.name, elapsed, responsePreview: response.slice(0, 200) },
-          'DeepEngine: preflight returned 0 findings — model may not support structured JSON output',
+          "DeepEngine: preflight returned 0 findings — model may not support structured JSON output"
         );
         logger.warn(
           { provider: this.activeProvider!.name, elapsed },
-          'DeepEngine: preflight returned 0 findings — model may not support structured JSON. Consider --scan-model kimi-k2:1t',
+          "DeepEngine: preflight returned 0 findings — model may not support structured JSON. Consider --scan-model kimi-k2:1t"
         );
         // Don't abort — the extractJson fallback chain may still recover some findings.
         // But warn the user so they know why coverage is low.
       } else {
-        logger.info({ findings: findings.length, elapsed: `${elapsed}s` }, 'DeepEngine: preflight OK');
+        logger.info({ findings: findings.length, elapsed: `${elapsed}s` }, "DeepEngine: preflight OK");
       }
       return true;
     } catch (err) {
@@ -236,7 +233,7 @@ If no issues, return: []`;
       // Network/auth errors: log warning and signal caller to fall back to classic engine.
       logger.warn(
         { provider: this.activeProvider!.name, elapsed, err: err instanceof Error ? err.message : String(err) },
-        'DeepEngine: preflight failed — falling back to classic engine. Check your API key and network connection.',
+        "DeepEngine: preflight failed — falling back to classic engine. Check your API key and network connection."
       );
       return false;
     }
@@ -250,14 +247,12 @@ If no issues, return: []`;
     allFiles: string[],
     contents: Map<string, string>,
     classicFindings: Finding[],
-    options: ScanEngineOptions,
+    options: ScanEngineOptions
   ): FileContent[] {
     const maxFiles = options.maxFiles ?? 50;
 
     // Build a set of files already flagged by classic analysis.
-    const classicFlaggedFiles = new Set(
-      classicFindings.map(f => f.file).filter((f): f is string => f != null),
-    );
+    const classicFlaggedFiles = new Set(classicFindings.map(f => f.file).filter((f): f is string => f != null));
 
     // Score each file: higher = higher priority.
     const scored: Array<{ path: string; score: number }> = allFiles.map(filePath => {
@@ -271,12 +266,10 @@ If no issues, return: []`;
 
     scored.sort((a, b) => b.score - a.score);
 
-    return scored
-      .slice(0, maxFiles)
-      .map(({ path }) => ({
-        path,
-        content: contents.get(path) ?? '',
-      }));
+    return scored.slice(0, maxFiles).map(({ path }) => ({
+      path,
+      content: contents.get(path) ?? "",
+    }));
   }
 
   // ---------------------------------------------------------------------------
@@ -289,7 +282,7 @@ If no issues, return: []`;
     let currentBytes = 0;
 
     for (const file of files) {
-      const fileBytes = Buffer.byteLength(file.content, 'utf8');
+      const fileBytes = Buffer.byteLength(file.content, "utf8");
 
       if (
         current.length > 0 &&
@@ -312,10 +305,7 @@ If no issues, return: []`;
   // Batch analysis
   // ---------------------------------------------------------------------------
 
-  private async analyzeBatch(
-    batch: FileContent[],
-    options: ScanEngineOptions,
-  ): Promise<Finding[]> {
+  private async analyzeBatch(batch: FileContent[], options: ScanEngineOptions): Promise<Finding[]> {
     const findings: Finding[] = [];
     const categories = options.categories
       ? (CATEGORIES.filter(c => options.categories!.includes(c)) as Category[])
@@ -325,15 +315,18 @@ If no issues, return: []`;
       const category = categories[i]!;
       try {
         const start = Date.now();
-        logger.info({ batch: batch.length, category, progress: `${i+1}/${categories.length}` }, 'DeepEngine: analyzing category');
+        logger.info(
+          { batch: batch.length, category, progress: `${i + 1}/${categories.length}` },
+          "DeepEngine: analyzing category"
+        );
         const prompt = buildPromptForCategory(category, batch);
         const response = await this.activeProvider!.sendMessage(prompt, { maxTokens: 2048 });
         const elapsed = ((Date.now() - start) / 1000).toFixed(1);
         const parsed = parseDeepFindings(response, category);
         findings.push(...parsed);
-        logger.info({ findings: parsed.length, elapsed: `${elapsed}s`, category }, 'DeepEngine: category complete');
+        logger.info({ findings: parsed.length, elapsed: `${elapsed}s`, category }, "DeepEngine: category complete");
       } catch (err) {
-        logger.warn({ err, category }, 'DeepEngine: LLM call failed for category — skipping');
+        logger.warn({ err, category }, "DeepEngine: LLM call failed for category — skipping");
       }
     }
 

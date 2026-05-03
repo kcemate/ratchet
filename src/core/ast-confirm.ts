@@ -1,13 +1,13 @@
-import ts from 'typescript';
+import ts from "typescript";
 
 export type ASTRule =
-  | 'empty-catch'
-  | 'console-usage'
-  | 'hardcoded-secret'
-  | 'todo-fixme'
-  | 'type-any'
-  | 'complex-function'
-  | 'test-assertion';
+  | "empty-catch"
+  | "console-usage"
+  | "hardcoded-secret"
+  | "todo-fixme"
+  | "type-any"
+  | "complex-function"
+  | "test-assertion";
 
 /**
  * Confirm regex matches using AST analysis. Returns the count of REAL issues
@@ -15,15 +15,22 @@ export type ASTRule =
  */
 export function confirmWithAST(content: string, rule: ASTRule): number {
   try {
-    const sf = ts.createSourceFile('check.ts', content, ts.ScriptTarget.Latest, true);
+    const sf = ts.createSourceFile("check.ts", content, ts.ScriptTarget.Latest, true);
     switch (rule) {
-      case 'empty-catch': return countEmptyCatches(sf);
-      case 'console-usage': return countConsoleUsage(sf);
-      case 'hardcoded-secret': return countHardcodedSecrets(sf);
-      case 'todo-fixme': return countTodoFixme(sf);
-      case 'type-any': return countTypeAny(sf);
-      case 'complex-function': return countComplexFunctions(sf);
-      case 'test-assertion': return countTestAssertions(sf);
+      case "empty-catch":
+        return countEmptyCatches(sf);
+      case "console-usage":
+        return countConsoleUsage(sf);
+      case "hardcoded-secret":
+        return countHardcodedSecrets(sf);
+      case "todo-fixme":
+        return countTodoFixme(sf);
+      case "type-any":
+        return countTypeAny(sf);
+      case "complex-function":
+        return countComplexFunctions(sf);
+      case "test-assertion":
+        return countTestAssertions(sf);
     }
   } catch {
     // AST parse failure — fall back to regex count (return -1 to signal no override)
@@ -55,7 +62,7 @@ function countConsoleUsage(sf: ts.SourceFile): number {
   function visit(node: ts.Node) {
     if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
       const obj = node.expression.expression;
-      if (ts.isIdentifier(obj) && obj.text === 'console') count++;
+      if (ts.isIdentifier(obj) && obj.text === "console") count++;
     }
     ts.forEachChild(node, visit);
   }
@@ -67,8 +74,10 @@ function isSecretName(name: string): boolean {
   const lower = name.toLowerCase();
   // Match compound secret-like names (api_key, secretKey, authToken, etc.)
   // but NOT bare "key" (used for identifiers like challenge template keys, storage keys)
-  return /(?:api[_-]?key|secret(?:key)?|auth[_-]?token|password|passwd|private[_-]?key)/.test(lower)
-    || (/(?:_key|Key)/.test(name) && !/storage.key|cache.key|sort.key|lookup.key/i.test(lower));
+  return (
+    /(?:api[_-]?key|secret(?:key)?|auth[_-]?token|password|passwd|private[_-]?key)/.test(lower) ||
+    (/(?:_key|Key)/.test(name) && !/storage.key|cache.key|sort.key|lookup.key/i.test(lower))
+  );
 }
 
 function isRealSecretValue(val: string): boolean {
@@ -87,8 +96,11 @@ function countHardcodedSecrets(sf: ts.SourceFile): number {
     }
     // Object property assignments: { apiKey: 'value' }
     if (ts.isPropertyAssignment(node) && ts.isStringLiteral(node.initializer)) {
-      const propName = ts.isIdentifier(node.name) ? node.name.text :
-                       ts.isStringLiteral(node.name) ? node.name.text : '';
+      const propName = ts.isIdentifier(node.name)
+        ? node.name.text
+        : ts.isStringLiteral(node.name)
+          ? node.name.text
+          : "";
       if (isSecretName(propName) && isRealSecretValue(node.initializer.text)) {
         count++;
       }
@@ -165,10 +177,14 @@ function countComplexFunctions(sf: ts.SourceFile): number {
     let branches = 0;
     function walk(node: ts.Node) {
       // Stop descending into nested function boundaries
-      if (node !== fnNode && (
-        ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) ||
-        ts.isArrowFunction(node) || ts.isMethodDeclaration(node)
-      )) return;
+      if (
+        node !== fnNode &&
+        (ts.isFunctionDeclaration(node) ||
+          ts.isFunctionExpression(node) ||
+          ts.isArrowFunction(node) ||
+          ts.isMethodDeclaration(node))
+      )
+        return;
       if (
         ts.isIfStatement(node) ||
         ts.isCaseClause(node) ||
@@ -210,7 +226,7 @@ function countComplexFunctions(sf: ts.SourceFile): number {
 // ---------------------------------------------------------------------------
 
 // Matches it() and test() declarations (same scope as the totalTestCases regex in scan.ts)
-const TEST_CASE_NAMES = new Set(['it', 'test']);
+const TEST_CASE_NAMES = new Set(["it", "test"]);
 
 function countTestAssertions(sf: ts.SourceFile): number {
   let count = 0;

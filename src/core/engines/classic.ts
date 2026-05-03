@@ -8,62 +8,64 @@
  *   const result = await engine.analyze('/path/to/project', options);
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
-import type { ScanEngine, ScanEngineOptions } from '../scan-engine.js';
-import type { ScanResult, CategoryResult, IssueType } from '../../core/scanner';
-import type { Finding } from '../normalize.js';
-import { getRuleBySubcategory } from '../finding-rules.js';
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
+import type { ScanEngine, ScanEngineOptions } from "../scan-engine.js";
+import type { ScanResult, CategoryResult, IssueType } from "../../core/scanner";
+import type { Finding } from "../normalize.js";
+import { getRuleBySubcategory } from "../finding-rules.js";
+import { SEVERITY_MAP, findSourceFiles, readContents, isTestFile } from "../scan-constants.js";
+import { classifyFiles, filterByClass } from "../file-classifier.js";
+import { logger } from "../../lib/logger.js";
+import { detectProjectLanguage } from "../detect-language.js";
+import { detectFrameworks } from "../framework-detector.js";
+import type { Framework } from "../framework-detector.js";
 import {
-  SEVERITY_MAP,
-  findSourceFiles,
-  readContents,
-  isTestFile,
-} from '../scan-constants.js';
-import { classifyFiles, filterByClass } from '../file-classifier.js';
-import { logger } from '../../lib/logger.js';
-import { detectProjectLanguage } from '../detect-language.js';
-import { detectFrameworks } from '../framework-detector.js';
-import type { Framework } from '../framework-detector.js';
-import { scoreTests, scoreSecurity, scoreTypes, scoreErrorHandling, scorePerformance, scoreCodeQuality } from './classic-scoring.js';
-import { applyFrameworkAdjustments } from './classic-frameworks.js';
-import { inferSeverity, parseLocation } from './classic-issues.js';
+  scoreTests,
+  scoreSecurity,
+  scoreTypes,
+  scoreErrorHandling,
+  scorePerformance,
+  scoreCodeQuality,
+} from "./classic-scoring.js";
+import { applyFrameworkAdjustments } from "./classic-frameworks.js";
+import { inferSeverity, parseLocation } from "./classic-issues.js";
 
 // ---------------------------------------------------------------------------
 // ClassicEngine
 // ---------------------------------------------------------------------------
 
 export class ClassicEngine implements ScanEngine {
-  readonly name = 'ClassicEngine';
-  readonly mode = 'classic' as const;
+  readonly name = "ClassicEngine";
+  readonly mode = "classic" as const;
 
   async analyze(cwd: string, options: ScanEngineOptions = {}): Promise<ScanResult> {
-    let projectName = cwd.split('/').pop() ?? 'unknown';
-    const pkgPath = join(cwd, 'package.json');
+    let projectName = cwd.split("/").pop() ?? "unknown";
+    const pkgPath = join(cwd, "package.json");
     if (existsSync(pkgPath)) {
       try {
-        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { name?: string };
+        const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as { name?: string };
         if (pkg.name) projectName = pkg.name;
       } catch (err) {
-        logger.debug({ err }, 'Failed to read package.json for project name');
+        logger.debug({ err }, "Failed to read package.json for project name");
       }
     }
 
     const includeNonProduction = options.includeNonProduction ?? false;
-    const allFiles = options.files ?? findSourceFiles(cwd, {
-      scanProductionOnly: false,
-      includeNonProduction,
-    });
-    const scoringFiles = options.includeTests
-      ? allFiles
-      : allFiles.filter(f => !isTestFile(f));
+    const allFiles =
+      options.files ??
+      findSourceFiles(cwd, {
+        scanProductionOnly: false,
+        includeNonProduction,
+      });
+    const scoringFiles = options.includeTests ? allFiles : allFiles.filter(f => !isTestFile(f));
     const contents = readContents(allFiles);
     const fileClassifications = classifyFiles(scoringFiles);
-    const prodFiles = filterByClass(scoringFiles, fileClassifications, 'production');
+    const prodFiles = filterByClass(scoringFiles, fileClassifications, "production");
 
     const lang = options.lang ?? detectProjectLanguage(cwd);
     const detectedFrameworks: Framework[] = detectFrameworks(cwd);
-    logger.debug(`Detected frameworks: ${detectedFrameworks.map(f => f.name).join(', ') || 'none'}`);
+    logger.debug(`Detected frameworks: ${detectedFrameworks.map(f => f.name).join(", ") || "none"}`);
 
     const categories: CategoryResult[] = [
       scoreTests(allFiles, contents, cwd, lang),
@@ -96,7 +98,14 @@ export class ClassicEngine implements ScanEngine {
 
     const totalIssuesFound = issuesByType.reduce((sum, i) => sum + i.count, 0);
 
-    return { projectName, total: adjustedCategories.reduce((sum, c) => sum + c.score, 0), maxTotal: adjustedCategories.reduce((sum, c) => sum + c.max, 0), categories: adjustedCategories, totalIssuesFound, issuesByType };
+    return {
+      projectName,
+      total: adjustedCategories.reduce((sum, c) => sum + c.score, 0),
+      maxTotal: adjustedCategories.reduce((sum, c) => sum + c.max, 0),
+      categories: adjustedCategories,
+      totalIssuesFound,
+      issuesByType,
+    };
   }
 
   /**
@@ -111,7 +120,7 @@ export class ClassicEngine implements ScanEngine {
    */
   async analyzeWithFindings(
     cwd: string,
-    options: ScanEngineOptions = {},
+    options: ScanEngineOptions = {}
   ): Promise<{ result: ScanResult; findings: Finding[] }> {
     const result = await this.analyze(cwd, options);
     const findings: Finding[] = [];
@@ -121,10 +130,10 @@ export class ClassicEngine implements ScanEngine {
         if (sub.issuesFound === 0) continue;
 
         const rule = getRuleBySubcategory(cat.name, sub.name);
-        const severityMap = SEVERITY_MAP[cat.name]?.[sub.name] ?? 'low';
+        const severityMap = SEVERITY_MAP[cat.name]?.[sub.name] ?? "low";
         // Map 3-level severity to Finding severity.
-        const severity: Finding['severity'] =
-          severityMap === 'high' ? 'high' : severityMap === 'medium' ? 'medium' : 'low';
+        const severity: Finding["severity"] =
+          severityMap === "high" ? "high" : severityMap === "medium" ? "medium" : "low";
 
         const locations = sub.locations ?? [];
 
@@ -140,7 +149,7 @@ export class ClassicEngine implements ScanEngine {
               line,
               message: sub.issuesDescription ?? sub.summary,
               confidence: 1.0,
-              source: 'classic',
+              source: "classic",
               ruleId: rule?.id,
             });
           }
@@ -152,7 +161,7 @@ export class ClassicEngine implements ScanEngine {
             severity,
             message: sub.issuesDescription ?? sub.summary,
             confidence: 1.0,
-            source: 'classic',
+            source: "classic",
             ruleId: rule?.id,
           });
         }

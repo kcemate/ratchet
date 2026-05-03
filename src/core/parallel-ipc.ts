@@ -26,8 +26,8 @@ import {
   openSync,
   closeSync,
   constants,
-} from 'fs';
-import { join } from 'path';
+} from "fs";
+import { join } from "path";
 
 // ─── Constants
 
@@ -42,7 +42,7 @@ export interface ClaimPayload {
   timestamp: number;
 }
 
-export type DiscoveryType = 'rename' | 'move' | 'delete' | 'create' | 'modify';
+export type DiscoveryType = "rename" | "move" | "delete" | "create" | "modify";
 
 export interface Discovery {
   agentId: string;
@@ -59,15 +59,15 @@ export interface Discovery {
 // ─── Path helpers
 
 export function parallelRunDir(cwd: string, runId: string): string {
-  return join(cwd, '.ratchet', 'parallel', runId);
+  return join(cwd, ".ratchet", "parallel", runId);
 }
 
 export function claimsDir(cwd: string, runId: string): string {
-  return join(parallelRunDir(cwd, runId), 'claims');
+  return join(parallelRunDir(cwd, runId), "claims");
 }
 
 export function discoveriesDir(cwd: string, runId: string): string {
-  return join(parallelRunDir(cwd, runId), 'discoveries');
+  return join(parallelRunDir(cwd, runId), "discoveries");
 }
 
 export function agentClaimPath(cwd: string, runId: string, agentId: string): string {
@@ -98,39 +98,47 @@ function isStale(timestamp: number): boolean {
  * is stale, overwrite it.
  */
 function atomicWrite(filePath: string, content: string): void {
-  const lockPath = filePath + '.lock';
+  const lockPath = filePath + ".lock";
   let fd: number | null = null;
   try {
     fd = openSync(lockPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL, 0o644);
     closeSync(fd);
     fd = null;
-    writeFileSync(filePath, content, 'utf-8');
+    writeFileSync(filePath, content, "utf-8");
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
-    if (code === 'EEXIST') {
+    if (code === "EEXIST") {
       // Lock held — check if stale
       try {
-        const lockContent = readFileSync(lockPath, 'utf-8').trim();
+        const lockContent = readFileSync(lockPath, "utf-8").trim();
         const lockTs = parseInt(lockContent, 10);
         if (!isNaN(lockTs) && isStale(lockTs)) {
           // Stale lock — overwrite
-          writeFileSync(lockPath, String(Date.now()), 'utf-8');
-          writeFileSync(filePath, content, 'utf-8');
+          writeFileSync(lockPath, String(Date.now()), "utf-8");
+          writeFileSync(filePath, content, "utf-8");
         }
         // Otherwise lock is live — skip (best-effort)
       } catch {
         // If we can't read lock, just try to write anyway
-        writeFileSync(filePath, content, 'utf-8');
+        writeFileSync(filePath, content, "utf-8");
       }
     } else {
       throw err;
     }
   } finally {
     if (fd !== null) {
-      try { closeSync(fd); } catch { /* ignore */ }
+      try {
+        closeSync(fd);
+      } catch {
+        /* ignore */
+      }
     }
     // Clean up lock
-    try { unlinkSync(lockPath); } catch { /* ignore */ }
+    try {
+      unlinkSync(lockPath);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -140,13 +148,7 @@ function atomicWrite(filePath: string, content: string): void {
  * Write a claim declaring that agentId is working on the given files.
  * Uses a per-agent file so each agent has exactly one claim at a time.
  */
-export function claimFiles(
-  cwd: string,
-  runId: string,
-  agentId: string,
-  files: string[],
-  action: string,
-): void {
+export function claimFiles(cwd: string, runId: string, agentId: string, files: string[], action: string): void {
   ensureDir(claimsDir(cwd, runId));
   const payload: ClaimPayload = {
     agentId,
@@ -161,12 +163,7 @@ export function claimFiles(
  * Returns true if filePath is claimed by ANOTHER agent (not agentId).
  * Stale claims (>30 min) are ignored.
  */
-export function isFileClaimed(
-  cwd: string,
-  runId: string,
-  agentId: string,
-  filePath: string,
-): boolean {
+export function isFileClaimed(cwd: string, runId: string, agentId: string, filePath: string): boolean {
   const dir = claimsDir(cwd, runId);
   if (!existsSync(dir)) return false;
 
@@ -178,14 +175,14 @@ export function isFileClaimed(
   }
 
   for (const entry of entries) {
-    if (!entry.endsWith('.json') || entry.endsWith('.lock')) continue;
+    if (!entry.endsWith(".json") || entry.endsWith(".lock")) continue;
 
     // Skip our own claim file
     if (entry === `agent-${agentId}.json`) continue;
 
     const claimPath = join(dir, entry);
     try {
-      const raw = readFileSync(claimPath, 'utf-8');
+      const raw = readFileSync(claimPath, "utf-8");
       const claim = tryParseJson<ClaimPayload>(raw);
       if (!claim) continue;
 
@@ -193,13 +190,13 @@ export function isFileClaimed(
       if (isStale(claim.timestamp)) continue;
 
       // Check if this claim covers filePath
-      const normalized = filePath.replace(/\\/g, '/').replace(/\/$/, '');
+      const normalized = filePath.replace(/\\/g, "/").replace(/\/$/, "");
       for (const claimedFile of claim.files) {
-        const normalizedClaimed = claimedFile.replace(/\\/g, '/').replace(/\/$/, '');
+        const normalizedClaimed = claimedFile.replace(/\\/g, "/").replace(/\/$/, "");
         if (
           normalizedClaimed === normalized ||
-          normalized.startsWith(normalizedClaimed + '/') ||
-          normalizedClaimed.startsWith(normalized + '/')
+          normalized.startsWith(normalizedClaimed + "/") ||
+          normalizedClaimed.startsWith(normalized + "/")
         ) {
           return true;
         }
@@ -224,8 +221,10 @@ export function releaseClaim(cwd: string, runId: string, agentId: string): void 
   }
   // Clean up any leftover lock
   try {
-    unlinkSync(claimPath + '.lock');
-  } catch { /* ignore */ }
+    unlinkSync(claimPath + ".lock");
+  } catch {
+    /* ignore */
+  }
 }
 
 // ─── Discovery API
@@ -238,7 +237,7 @@ export function writeDiscovery(
   cwd: string,
   runId: string,
   agentId: string,
-  discovery: Omit<Discovery, 'agentId' | 'timestamp'>,
+  discovery: Omit<Discovery, "agentId" | "timestamp">
 ): void {
   ensureDir(discoveriesDir(cwd, runId));
   const payload: Discovery = {
@@ -248,7 +247,7 @@ export function writeDiscovery(
   };
   const fileName = `discovery-${agentId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.json`;
   const filePath = join(discoveriesDir(cwd, runId), fileName);
-  writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+  writeFileSync(filePath, JSON.stringify(payload, null, 2), "utf-8");
 }
 
 /**
@@ -269,13 +268,13 @@ export function readDiscoveries(cwd: string, runId: string, agentId: string): Di
   const discoveries: Discovery[] = [];
 
   for (const entry of entries) {
-    if (!entry.endsWith('.json')) continue;
+    if (!entry.endsWith(".json")) continue;
 
     // Skip our own discoveries
     if (entry.startsWith(`discovery-${agentId}-`)) continue;
 
     try {
-      const raw = readFileSync(join(dir, entry), 'utf-8');
+      const raw = readFileSync(join(dir, entry), "utf-8");
       const d = tryParseJson<Discovery>(raw);
       if (d && d.agentId !== agentId) {
         discoveries.push(d);
@@ -316,10 +315,10 @@ export function purgeStaleClaimsForRun(cwd: string, runId: string): number {
   try {
     const entries = readdirSync(dir);
     for (const entry of entries) {
-      if (!entry.endsWith('.json') || entry.endsWith('.lock')) continue;
+      if (!entry.endsWith(".json") || entry.endsWith(".lock")) continue;
       const filePath = join(dir, entry);
       try {
-        const raw = readFileSync(filePath, 'utf-8');
+        const raw = readFileSync(filePath, "utf-8");
         const claim = tryParseJson<ClaimPayload>(raw);
         if (!claim || isStale(claim.timestamp)) {
           unlinkSync(filePath);
@@ -327,7 +326,12 @@ export function purgeStaleClaimsForRun(cwd: string, runId: string): number {
         }
       } catch {
         // If unreadable, treat as stale
-        try { unlinkSync(filePath); purged++; } catch { /* ignore */ }
+        try {
+          unlinkSync(filePath);
+          purged++;
+        } catch {
+          /* ignore */
+        }
       }
     }
   } catch {

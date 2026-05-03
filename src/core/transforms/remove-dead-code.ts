@@ -14,10 +14,10 @@
  * - Idempotent: running twice produces the same result.
  */
 
-import { Project, SyntaxKind, Node } from 'ts-morph';
-import type { ASTTransform, TransformContext } from './base.js';
-import type { Finding } from '../normalize.js';
-import { isTestFile } from './base.js';
+import { Project, SyntaxKind, Node } from "ts-morph";
+import type { ASTTransform, TransformContext } from "./base.js";
+import type { Finding } from "../normalize.js";
+import { isTestFile } from "./base.js";
 
 // ---------------------------------------------------------------------------
 // Terminators: statements that unconditionally end control flow
@@ -35,20 +35,20 @@ const TERMINATOR_KINDS = new Set([
 // ---------------------------------------------------------------------------
 
 export const removeDeadCodeTransform: ASTTransform = {
-  id: 'remove-dead-code',
+  id: "remove-dead-code",
   matchesFindings: [
-    'dead code',
-    'unreachable',
-    'unreachable code',
-    'unreachable statement',
-    'after return',
-    'DQ-dead',
-    'no-unreachable',
+    "dead code",
+    "unreachable",
+    "unreachable code",
+    "unreachable statement",
+    "after return",
+    "DQ-dead",
+    "no-unreachable",
   ],
-  languages: ['typescript', 'javascript'],
+  languages: ["typescript", "javascript"],
 
   canApply(source: string, finding: Finding): boolean {
-    if (isTestFile(finding.file ?? '')) return false;
+    if (isTestFile(finding.file ?? "")) return false;
     // Quick check: file must have a return/throw/break/continue followed by more code
     return /\breturn\b|\bthrow\b|\bbreak\b|\bcontinue\b/.test(source);
   },
@@ -59,10 +59,10 @@ export const removeDeadCodeTransform: ASTTransform = {
 
     try {
       const project = new Project({ useInMemoryFileSystem: true, compilerOptions: { strict: false } });
-      const sourceFile = project.createSourceFile('__transform__.ts', source);
+      const sourceFile = project.createSourceFile("__transform__.ts", source);
 
       // Collect all unreachable nodes to remove (in reverse order to preserve indices)
-      const toRemove: import('ts-morph').Statement[] = [];
+      const toRemove: import("ts-morph").Statement[] = [];
 
       // Walk all block-like nodes
       const blocks = sourceFile.getDescendantsOfKind(SyntaxKind.Block);

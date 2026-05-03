@@ -5,7 +5,7 @@
  * Plans with confidence < 0.3 are rejected as too uncertain to apply safely.
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -13,7 +13,7 @@ import { z } from 'zod';
 
 export const IntentPlanSchema = z.object({
   /** The kind of edit to make */
-  action: z.enum(['insert', 'replace', 'delete', 'wrap']),
+  action: z.enum(["insert", "replace", "delete", "wrap"]),
 
   /**
    * [startLine, endLine] — 1-based, inclusive.
@@ -23,7 +23,7 @@ export const IntentPlanSchema = z.object({
     .array(z.number().int().positive())
     .length(2)
     .refine(([start, end]) => end! >= start!, {
-      message: 'targetLines[1] must be >= targetLines[0]',
+      message: "targetLines[1] must be >= targetLines[0]",
     }),
 
   /** Human-readable summary of the change */
@@ -49,8 +49,8 @@ export const IntentPlanSchema = z.object({
     .number()
     .min(0)
     .max(1)
-    .refine((v) => v >= 0.3, {
-      message: 'Plan confidence too low (< 0.3) — rejecting as unsafe',
+    .refine(v => v >= 0.3, {
+      message: "Plan confidence too low (< 0.3) — rejecting as unsafe",
     }),
 });
 

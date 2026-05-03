@@ -7,26 +7,26 @@
  * Never modifies test files.
  */
 
-import { Project, SyntaxKind, Node } from 'ts-morph';
-import type { ASTTransform, TransformContext } from './base.js';
-import type { Finding } from '../normalize.js';
-import { isTestFile } from './base.js';
+import { Project, SyntaxKind, Node } from "ts-morph";
+import type { ASTTransform, TransformContext } from "./base.js";
+import type { Finding } from "../normalize.js";
+import { isTestFile } from "./base.js";
 
 export const addCatchHandlerTransform: ASTTransform = {
-  id: 'add-empty-catch-handler',
+  id: "add-empty-catch-handler",
   matchesFindings: [
-    'empty catch',
-    'Empty catch',
-    'swallowed error',
-    'silent catch',
-    'catch block',
-    'empty error handler',
-    'EH-',
+    "empty catch",
+    "Empty catch",
+    "swallowed error",
+    "silent catch",
+    "catch block",
+    "empty error handler",
+    "EH-",
   ],
-  languages: ['typescript', 'javascript'],
+  languages: ["typescript", "javascript"],
 
   canApply(source: string, finding: Finding): boolean {
-    if (isTestFile(finding.file ?? '')) return false;
+    if (isTestFile(finding.file ?? "")) return false;
     // Quick regex check before full AST parse
     return /catch\s*(\([^)]*\))?\s*\{\s*\}/.test(source);
   },
@@ -34,11 +34,11 @@ export const addCatchHandlerTransform: ASTTransform = {
   apply(source: string, finding: Finding, context: TransformContext): string | null {
     if (isTestFile(context.filePath)) return null;
 
-    const loggerVar = context.loggerVarName ?? 'logger';
-    const catchRef = context.hasStructuredLogger ? loggerVar : 'console';
+    const loggerVar = context.loggerVarName ?? "logger";
+    const catchRef = context.hasStructuredLogger ? loggerVar : "console";
 
     const project = new Project({ useInMemoryFileSystem: true });
-    const sourceFile = project.createSourceFile('__transform__.ts', source);
+    const sourceFile = project.createSourceFile("__transform__.ts", source);
 
     const tryCatchStatements = sourceFile.getDescendantsOfKind(SyntaxKind.TryStatement);
     let modified = false;
@@ -55,7 +55,7 @@ export const addCatchHandlerTransform: ASTTransform = {
 
       // Get the catch variable name (e.g. `e` in `catch(e)`)
       const varDecl = catchClause.getVariableDeclaration();
-      const errVar = varDecl?.getName() ?? 'error';
+      const errVar = varDecl?.getName() ?? "error";
 
       block.addStatements(`${catchRef}.error('Caught error', ${errVar});`);
       modified = true;
@@ -68,8 +68,7 @@ export const addCatchHandlerTransform: ASTTransform = {
     // Add logger import if needed
     if (context.hasStructuredLogger && context.loggerImportPath) {
       const alreadyImported =
-        result.includes(`from '${context.loggerImportPath}'`) ||
-        result.includes(`from "${context.loggerImportPath}"`);
+        result.includes(`from '${context.loggerImportPath}'`) || result.includes(`from "${context.loggerImportPath}"`);
       if (!alreadyImported) {
         result = `import { ${loggerVar} } from '${context.loggerImportPath}';\n` + result;
       }

@@ -3,8 +3,9 @@
  * Used to apply framework-aware scoring heuristics that avoid false positives.
  */
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from "fs";
+import { join } from "path";
+import { logger } from "../lib/logger.js";
 
 /**
  * Framework categories and their associated dependency names.
@@ -25,38 +26,38 @@ export interface Framework {
  */
 const FRAMEWORKS: Array<{ name: string; category: string; deps: string[] }> = [
   // Web frameworks
-  { name: 'express', category: 'web-framework', deps: ['express', 'express-validator'] },
-  { name: 'fastify', category: 'web-framework', deps: ['fastify'] },
-  { name: 'nestjs', category: 'web-framework', deps: ['@nestjs/core', '@nestjs/common', '@nestjs/platform-express'] },
-  { name: 'hono', category: 'web-framework', deps: ['hono'] },
-  { name: 'elysia', category: 'web-framework', deps: ['elysia'] },
-  { name: 'remix', category: 'full-stack-framework', deps: ['remix'] },
-  { name: 'next', category: 'full-stack-framework', deps: ['next'] },
-  
+  { name: "express", category: "web-framework", deps: ["express", "express-validator"] },
+  { name: "fastify", category: "web-framework", deps: ["fastify"] },
+  { name: "nestjs", category: "web-framework", deps: ["@nestjs/core", "@nestjs/common", "@nestjs/platform-express"] },
+  { name: "hono", category: "web-framework", deps: ["hono"] },
+  { name: "elysia", category: "web-framework", deps: ["elysia"] },
+  { name: "remix", category: "full-stack-framework", deps: ["remix"] },
+  { name: "next", category: "full-stack-framework", deps: ["next"] },
+
   // ORMs
-  { name: 'prisma', category: 'orm', deps: ['prisma'] },
-  { name: 'drizzle-orm', category: 'orm', deps: ['drizzle-orm'] },
-  { name: 'typeorm', category: 'orm', deps: ['typeorm'] },
-  { name: 'sequelize', category: 'orm', deps: ['sequelize'] },
-  
+  { name: "prisma", category: "orm", deps: ["prisma"] },
+  { name: "drizzle-orm", category: "orm", deps: ["drizzle-orm"] },
+  { name: "typeorm", category: "orm", deps: ["typeorm"] },
+  { name: "sequelize", category: "orm", deps: ["sequelize"] },
+
   // Authentication
-  { name: 'passport', category: 'auth', deps: ['passport', 'passport-local', 'passport-jwt', 'passport-google-oauth'] },
-  { name: 'clerk', category: 'auth', deps: ['clerk'] },
-  { name: 'next-auth', category: 'auth', deps: ['next-auth', 'next-auth-prisma'] },
-  { name: 'authjs', category: 'auth', deps: ['auth'] }, // NextAuth.js v5 (Auth.js)
-  
+  { name: "passport", category: "auth", deps: ["passport", "passport-local", "passport-jwt", "passport-google-oauth"] },
+  { name: "clerk", category: "auth", deps: ["clerk"] },
+  { name: "next-auth", category: "auth", deps: ["next-auth", "next-auth-prisma"] },
+  { name: "authjs", category: "auth", deps: ["auth"] }, // NextAuth.js v5 (Auth.js)
+
   // Other
-  { name: 'socket.io', category: 'real-time', deps: ['socket.io', 'socket.io-client'] },
+  { name: "socket.io", category: "real-time", deps: ["socket.io", "socket.io-client"] },
 ];
 
 /**
  * Detects frameworks used in a project by scanning package.json dependencies.
- * 
+ *
  * @param cwd - Project root directory
  * @returns List of detected frameworks with their categories
  */
 export function detectFrameworks(cwd: string): Framework[] {
-  const pkgPath = join(cwd, 'package.json');
+  const pkgPath = join(cwd, "package.json");
   const frameworks: Framework[] = [];
 
   try {
@@ -64,9 +65,9 @@ export function detectFrameworks(cwd: string): Framework[] {
       return frameworks; // No package.json, no frameworks detected
     }
 
-    const pkgContent = readFileSync(pkgPath, 'utf-8');
+    const pkgContent = readFileSync(pkgPath, "utf-8");
     const pkg = JSON.parse(pkgContent);
-    
+
     // Collect all dependency keys (including devDependencies, peerDependencies, etc.)
     const allDeps: Record<string, string> = {};
     if (pkg.dependencies) Object.assign(allDeps, pkg.dependencies);
@@ -87,7 +88,7 @@ export function detectFrameworks(cwd: string): Framework[] {
       }
     }
   } catch (error) {
-    console.warn(`Framework detection warning: ${error instanceof Error ? error.message : error}`);
+    logger.warn({ error }, "Framework detection warning");
   }
 
   return frameworks;
@@ -97,7 +98,7 @@ export function detectFrameworks(cwd: string): Framework[] {
 function existsSync(path: string): boolean {
   // Simple polyfill since we're not importing the whole fs module
   try {
-    readFileSync(path, 'utf-8');
+    readFileSync(path, "utf-8");
     return true;
   } catch {
     return false;

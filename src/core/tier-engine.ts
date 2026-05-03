@@ -20,19 +20,19 @@
  *   - Have clear tier thresholds (we know exactly how many to remove)
  */
 
-import type { RatchetRun, Target, RatchetConfig, Click } from '../types.js';
-import type { Agent } from './agents/base.js';
-import type { ScanResult } from '../core/scanner';
-import type { LearningStore } from './learning.js';
-import type { ClickPhase, EngineCallbacks } from './engine.js';
-import { createInitialRun, requireNamedBranch } from './engine-utils.js';
-import type { TierGap } from './score-optimizer.js';
-import { analyzeScoreGaps } from './score-optimizer.js';
-import { executeClick } from './click.js';
-import { runScan } from '../core/scanner';
-import * as git from './git.js';
-import { validateScope } from './scope.js';
-import { logger } from '../lib/logger.js';
+import type { RatchetRun, Target, RatchetConfig, Click } from "../types.js";
+import type { Agent } from "./agents/base.js";
+import type { ScanResult } from "../core/scanner";
+import type { LearningStore } from "./learning.js";
+import type { ClickPhase, EngineCallbacks } from "./engine.js";
+import { createInitialRun, requireNamedBranch } from "./engine-utils.js";
+import type { TierGap } from "./score-optimizer.js";
+import { analyzeScoreGaps } from "./score-optimizer.js";
+import { executeClick } from "./click.js";
+import { runScan } from "../core/scanner";
+import * as git from "./git.js";
+import { validateScope } from "./scope.js";
+import { logger } from "../lib/logger.js";
 
 // ─── Constants
 /** Use atomic mode for effort-1 sweepable fixes */
@@ -85,14 +85,14 @@ export function buildAtomicSweepPrompt(gap: TierGap, allFiles: string[]): string
 GOAL: Cross a scoring tier boundary.
   Subcategory: ${gap.subcategory}
   Current issue count: ${gap.currentCount} (current score: ${gap.currentScore}/${gap.maxScore})
-  Target count: ≤${targetCount} (this gains +${gap.pointsAtNextTier} point${gap.pointsAtNextTier !== 1 ? 's' : ''})
+  Target count: ≤${targetCount} (this gains +${gap.pointsAtNextTier} point${gap.pointsAtNextTier !== 1 ? "s" : ""})
   Must eliminate: at least ${gap.issuesToNextTier + 1} instances
 
 WHAT TO FIX:
   ${gap.fixInstruction}
 
 ALL AFFECTED FILES (fix EVERY instance in ALL of these — partial fixes do NOT cross tiers):
-${allFiles.map(f => `  - ${f}`).join('\n')}
+${allFiles.map(f => `  - ${f}`).join("\n")}
 
 STRATEGY: This is a mechanical, repetitive fix. Go file by file. In each file:
   1. Find every instance of the issue
@@ -127,7 +127,7 @@ WHAT TO FIX:
   ${gap.fixInstruction}
 
 FILES IN THIS BATCH:
-${batchFiles.map(f => `  - ${f}`).join('\n')}
+${batchFiles.map(f => `  - ${f}`).join("\n")}
 
 Fix every instance of this issue in each file above.
 
@@ -207,7 +207,14 @@ export function planTierTargets(scan: ScanResult, totalClicks: number): TierTarg
 // ─── Engine
 export async function runTierEngine(options: TierEngineOptions): Promise<RatchetRun> {
   const {
-    clicks, config, cwd, agent, callbacks = {}, createBranch = true, learningStore, scope: scopeFiles = [],
+    clicks,
+    config,
+    cwd,
+    agent,
+    callbacks = {},
+    createBranch = true,
+    learningStore,
+    scope: scopeFiles = [],
   } = options;
 
   const run: RatchetRun = createInitialRun(options.target);
@@ -215,11 +222,11 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
   try {
     if (createBranch) {
       await requireNamedBranch(cwd);
-      const branch = git.branchName(options.target.name + '-tier');
+      const branch = git.branchName(options.target.name + "-tier");
       await git.createBranch(branch, cwd);
     }
 
-    let currentScan = options.scanResult ?? await runScan(cwd);
+    let currentScan = options.scanResult ?? (await runScan(cwd));
     await callbacks.onScanComplete?.(currentScan);
     let previousTotal = currentScan.total;
 
@@ -227,8 +234,8 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
     const tierTargets = planTierTargets(currentScan, clicks);
 
     if (tierTargets.length === 0) {
-      logger.warn('[ratchet] No tier crossings available');
-      run.status = 'completed';
+      logger.warn("[ratchet] No tier crossings available");
+      run.status = "completed";
       run.finishedAt = new Date();
       await callbacks.onRunComplete?.(run);
       return run;
@@ -237,11 +244,11 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
     // Log plan
     logger.warn(`[ratchet] Tier engine plan (${tierTargets.length} targets, ${clicks} clicks):`);
     for (const t of tierTargets) {
-      const mode = t.atomic ? '⚡ ATOMIC' : `batched×${t.clickBudget}`;
+      const mode = t.atomic ? "⚡ ATOMIC" : `batched×${t.clickBudget}`;
       logger.warn(
         `[ratchet]   ${t.gap.subcategory}: ${mode}, ${t.gap.files.length} files, ` +
-        `${t.gap.currentScore}→${t.gap.currentScore + t.gap.pointsAtNextTier}/${t.gap.maxScore} ` +
-        `(+${t.gap.pointsAtNextTier}pt, ROI=${t.gap.roi.toFixed(2)})`
+          `${t.gap.currentScore}→${t.gap.currentScore + t.gap.pointsAtNextTier}/${t.gap.maxScore} ` +
+          `(+${t.gap.pointsAtNextTier}pt, ROI=${t.gap.roi.toFixed(2)})`
       );
     }
 
@@ -250,7 +257,7 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
     for (const tierTarget of tierTargets) {
       const { gap, atomic, batches, clickBudget } = tierTarget;
 
-      logger.warn(`[ratchet] ── ${gap.subcategory} (${atomic ? 'atomic' : 'batched'}) ──`);
+      logger.warn(`[ratchet] ── ${gap.subcategory} (${atomic ? "atomic" : "batched"}) ──`);
 
       for (let bi = 0; bi < Math.min(batches.length, clickBudget); bi++) {
         globalClickNum++;
@@ -259,16 +266,14 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
         await callbacks.onClickStart?.(globalClickNum, clicks);
 
         // Build the right prompt for this mode
-        const prompt = atomic
-          ? buildAtomicSweepPrompt(gap, batchFiles)
-          : buildTierBatchPrompt(gap, batchFiles);
+        const prompt = atomic ? buildAtomicSweepPrompt(gap, batchFiles) : buildTierBatchPrompt(gap, batchFiles);
 
         const tierTask = {
           category: gap.subcategory,
           subcategory: gap.subcategory,
           description: gap.fixInstruction,
           count: gap.currentCount,
-          severity: 'high' as const,
+          severity: "high" as const,
           priority: 100,
           sweepFiles: batchFiles,
           // Pass prompt verbatim to agent via architectPrompt field
@@ -293,7 +298,8 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
               : undefined,
           });
 
-          let { click, rolled_back } = result;
+          const { click } = result;
+          let { rolled_back } = result;
           const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
 
           // Scope guard: roll back if any modified file is outside scope
@@ -301,12 +307,11 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
             const scopeCheck = validateScope(click.filesModified, scopeFiles, cwd);
             if (!scopeCheck.valid) {
               logger.warn(
-                `[ratchet] ✗ click ${globalClickNum} ROLLED BACK — scope: ` +
-                scopeCheck.scopeViolations.join(', '),
+                `[ratchet] ✗ click ${globalClickNum} ROLLED BACK — scope: ` + scopeCheck.scopeViolations.join(", ")
               );
               if (click.commitHash) await git.revertLastCommit(cwd).catch(() => {});
               click.testsPassed = false;
-              click.rollbackReason = `scope-exceeded: ${scopeCheck.scopeViolations.join(', ')}`;
+              click.rollbackReason = `scope-exceeded: ${scopeCheck.scopeViolations.join(", ")}`;
               click.commitHash = undefined;
               rolled_back = true;
             }
@@ -317,7 +322,7 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
           } else {
             logger.warn(
               `[ratchet] ✓ click ${globalClickNum} landed (${elapsedSec}s) — ${gap.subcategory}` +
-              `${click.commitHash ? ` [${click.commitHash.slice(0, 7)}]` : ''}`,
+                `${click.commitHash ? ` [${click.commitHash.slice(0, 7)}]` : ""}`
             );
           }
 
@@ -334,7 +339,7 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
               } else {
                 logger.warn(
                   `[ratchet] Score: ${newScan.total} ` +
-                  `(no tier crossed yet — ${newScan.totalIssuesFound} issues remaining)`,
+                    `(no tier crossed yet — ${newScan.totalIssuesFound} issues remaining)`
                 );
               }
 
@@ -356,11 +361,11 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
                 await learningStore.recordOutcome({
                   issueType: gap.subcategory,
                   filePath: file,
-                  specialization: atomic ? 'atomic-tier' : 'batched-tier',
+                  specialization: atomic ? "atomic-tier" : "batched-tier",
                   success: click.testsPassed && !rolled_back,
                   fixTimeMs: elapsedMs,
                   scoreDelta,
-                  failureReason: rolled_back ? 'tests failed after tier sweep' : undefined,
+                  failureReason: rolled_back ? "tests failed after tier sweep" : undefined,
                 });
               } catch {
                 // Non-fatal
@@ -374,9 +379,9 @@ export async function runTierEngine(options: TierEngineOptions): Promise<Ratchet
       }
     }
 
-    run.status = 'completed';
+    run.status = "completed";
   } catch (err: unknown) {
-    run.status = 'failed';
+    run.status = "failed";
     throw err;
   } finally {
     run.finishedAt = new Date();

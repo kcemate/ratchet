@@ -21,10 +21,10 @@
  * - Idempotent: already-annotated functions are skipped.
  */
 
-import { Project, SyntaxKind, Node } from 'ts-morph';
-import type { ASTTransform, TransformContext } from './base.js';
-import type { Finding } from '../normalize.js';
-import { isTestFile } from './base.js';
+import { Project, SyntaxKind, Node } from "ts-morph";
+import type { ASTTransform, TransformContext } from "./base.js";
+import type { Finding } from "../normalize.js";
+import { isTestFile } from "./base.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -38,20 +38,20 @@ function inferReturnType(returnExprText: string): string | null {
   const trimmed = returnExprText.trim();
 
   // String literals
-  if (/^(['"`]).*\1$/.test(trimmed) || /^`[^`]*`$/.test(trimmed)) return 'string';
+  if (/^(['"`]).*\1$/.test(trimmed) || /^`[^`]*`$/.test(trimmed)) return "string";
 
   // Numeric literals
-  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return 'number';
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return "number";
 
   // Boolean literals
-  if (trimmed === 'true' || trimmed === 'false') return 'boolean';
+  if (trimmed === "true" || trimmed === "false") return "boolean";
 
   // null / undefined
-  if (trimmed === 'null') return 'null';
-  if (trimmed === 'undefined') return 'undefined';
+  if (trimmed === "null") return "null";
+  if (trimmed === "undefined") return "undefined";
 
   // Array literal (conservative: unknown[])
-  if (trimmed.startsWith('[') && trimmed.endsWith(']')) return 'unknown[]';
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) return "unknown[]";
 
   return null;
 }
@@ -61,19 +61,19 @@ function inferReturnType(returnExprText: string): string | null {
 // ---------------------------------------------------------------------------
 
 export const addTypeAnnotationsTransform: ASTTransform = {
-  id: 'add-type-annotations',
+  id: "add-type-annotations",
   matchesFindings: [
-    'type annotation',
-    'missing return type',
-    'return type',
-    'explicit return type',
-    'implicit return',
-    'TQ-',
+    "type annotation",
+    "missing return type",
+    "return type",
+    "explicit return type",
+    "implicit return",
+    "TQ-",
   ],
-  languages: ['typescript'],
+  languages: ["typescript"],
 
   canApply(source: string, finding: Finding): boolean {
-    if (isTestFile(finding.file ?? '')) return false;
+    if (isTestFile(finding.file ?? "")) return false;
     // Must be TypeScript (has function/arrow function syntax)
     return /function\s+\w+/.test(source) || /=>\s*\{/.test(source) || /=>\s*[^{]/.test(source);
   },
@@ -81,11 +81,11 @@ export const addTypeAnnotationsTransform: ASTTransform = {
   apply(source: string, finding: Finding, context: TransformContext): string | null {
     if (isTestFile(context.filePath)) return null;
     // Only TypeScript files
-    if (!context.filePath.endsWith('.ts') && !context.filePath.endsWith('.tsx')) return null;
+    if (!context.filePath.endsWith(".ts") && !context.filePath.endsWith(".tsx")) return null;
 
     try {
       const project = new Project({ useInMemoryFileSystem: true, compilerOptions: { strict: false } });
-      const sourceFile = project.createSourceFile('__transform__.ts', source);
+      const sourceFile = project.createSourceFile("__transform__.ts", source);
 
       let modified = false;
 

@@ -1,8 +1,8 @@
-import type { Provider, ProviderOptions } from './base.js';
-import { fetchOpenAICompatible } from './base.js';
+import type { Provider, ProviderOptions } from "./base.js";
+import { fetchOpenAICompatible } from "./base.js";
 
-const DEFAULT_MODEL = 'gpt-4.1';
-const API_URL = 'https://api.openai.com/v1/chat/completions';
+const DEFAULT_MODEL = "gpt-4.1";
+const API_URL = "https://api.openai.com/v1/chat/completions";
 
 // GPT-4o pricing: $2.50 input / $10 output per million tokens
 const INPUT_PRICE_PER_M = 2.5;
@@ -13,12 +13,12 @@ export interface ChatCompletionResponse {
 }
 
 export class OpenAIProvider implements Provider {
-  readonly name = 'OpenAI';
-  readonly tier = 'pro' as const;
+  readonly name = "OpenAI";
+  readonly tier = "pro" as const;
 
   constructor(
     private readonly apiKey: string,
-    private readonly defaultModel: string = DEFAULT_MODEL,
+    private readonly defaultModel: string = DEFAULT_MODEL
   ) {}
 
   async sendMessage(prompt: string, options?: ProviderOptions): Promise<string> {
@@ -27,8 +27,8 @@ export class OpenAIProvider implements Provider {
       { Authorization: `Bearer ${this.apiKey}` },
       options?.model ?? this.defaultModel,
       prompt,
-      'OpenAI',
-      options,
+      "OpenAI",
+      options
     );
   }
 

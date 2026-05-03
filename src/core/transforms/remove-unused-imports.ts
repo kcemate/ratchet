@@ -13,9 +13,9 @@
  * - Returns null (unchanged) on any error.
  */
 
-import type { ASTTransform, TransformContext } from './base.js';
-import type { Finding } from '../normalize.js';
-import { isTestFile } from './base.js';
+import type { ASTTransform, TransformContext } from "./base.js";
+import type { Finding } from "../normalize.js";
+import { isTestFile } from "./base.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -33,7 +33,7 @@ interface ParsedImport {
 }
 
 function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**
@@ -42,7 +42,7 @@ function escapeRegex(str: string): string {
  */
 function parseImportLine(line: string): ParsedImport | null {
   const trimmed = line.trim();
-  if (!trimmed.startsWith('import ') && !trimmed.startsWith('import{')) return null;
+  if (!trimmed.startsWith("import ") && !trimmed.startsWith("import{")) return null;
   // Side-effect-only: import 'foo' or import "foo"
   if (/^import\s+['"]/.test(trimmed)) {
     return { line, lineIndex: 0, identifiers: [], sideEffect: true };
@@ -59,7 +59,7 @@ function parseImportLine(line: string): ParsedImport | null {
   // Named imports: import { X, Y as Z } from '...'
   const namedMatch = trimmed.match(/import\s*\{([^}]+)\}/);
   if (namedMatch) {
-    for (const part of namedMatch[1]!.split(',')) {
+    for (const part of namedMatch[1]!.split(",")) {
       const trimPart = part.trim();
       if (!trimPart) continue;
       // 'X as Y' → use Y (local name)
@@ -101,7 +101,7 @@ function parseImportLine(line: string): ParsedImport | null {
  */
 function isIdentifierUsed(identifier: string, bodySource: string): boolean {
   // Word boundary check: identifier must appear as a standalone token
-  const pattern = new RegExp(`(?<![\\w$])${escapeRegex(identifier)}(?![\\w$])`, '');
+  const pattern = new RegExp(`(?<![\\w$])${escapeRegex(identifier)}(?![\\w$])`, "");
   return pattern.test(bodySource);
 }
 
@@ -110,18 +110,12 @@ function isIdentifierUsed(identifier: string, bodySource: string): boolean {
 // ---------------------------------------------------------------------------
 
 export const removeUnusedImportsTransform: ASTTransform = {
-  id: 'remove-unused-imports',
-  matchesFindings: [
-    'unused import',
-    'unused variable',
-    'no-unused-vars',
-    'import.*never used',
-    'DQ-unused',
-  ],
-  languages: ['typescript', 'javascript'],
+  id: "remove-unused-imports",
+  matchesFindings: ["unused import", "unused variable", "no-unused-vars", "import.*never used", "DQ-unused"],
+  languages: ["typescript", "javascript"],
 
   canApply(source: string, finding: Finding): boolean {
-    if (isTestFile(finding.file ?? '')) return false;
+    if (isTestFile(finding.file ?? "")) return false;
     // Quick check: file must have import statements
     return /^import\s/m.test(source);
   },
@@ -131,7 +125,7 @@ export const removeUnusedImportsTransform: ASTTransform = {
     if (!source.trim()) return null;
 
     try {
-      const lines = source.split('\n');
+      const lines = source.split("\n");
 
       // Collect all import line indices and their parsed data
       const parsedImports: ParsedImport[] = [];
@@ -148,7 +142,7 @@ export const removeUnusedImportsTransform: ASTTransform = {
       // Build the "body" = everything except import lines
       const importLineIndices = new Set(parsedImports.map(p => p.lineIndex));
       const bodyLines = lines.filter((_, i) => !importLineIndices.has(i));
-      const bodySource = bodyLines.join('\n');
+      const bodySource = bodyLines.join("\n");
 
       // Find which import lines to remove entirely
       const linesToRemove = new Set<number>();
@@ -158,9 +152,7 @@ export const removeUnusedImportsTransform: ASTTransform = {
         if (parsed.identifiers.length === 0) continue;
 
         // Check if ALL identifiers from this import are unused
-        const unusedIdentifiers = parsed.identifiers.filter(
-          id => !isIdentifierUsed(id, bodySource),
-        );
+        const unusedIdentifiers = parsed.identifiers.filter(id => !isIdentifierUsed(id, bodySource));
 
         if (unusedIdentifiers.length === parsed.identifiers.length) {
           // All identifiers unused — remove the whole import line
@@ -170,7 +162,7 @@ export const removeUnusedImportsTransform: ASTTransform = {
           // (Only safe to do for named imports, not default/namespace)
           const namedMatch = parsed.line.trim().match(/import\s*\{([^}]+)\}/);
           if (namedMatch) {
-            const keptParts = namedMatch[1]!.split(',').filter(part => {
+            const keptParts = namedMatch[1]!.split(",").filter(part => {
               const trimPart = part.trim();
               const localName = trimPart.match(/\w+\s+as\s+(\w+)/)?.[1] ?? trimPart;
               return !unusedIdentifiers.includes(localName);
@@ -186,9 +178,7 @@ export const removeUnusedImportsTransform: ASTTransform = {
 
       if (linesToRemove.size === 0) return null;
 
-      const result = lines
-        .filter((_, i) => !linesToRemove.has(i))
-        .join('\n');
+      const result = lines.filter((_, i) => !linesToRemove.has(i)).join("\n");
 
       return result === source ? null : result;
     } catch {

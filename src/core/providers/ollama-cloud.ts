@@ -1,8 +1,8 @@
-import type { Provider, ProviderOptions, ProviderConfig } from './base.js';
-import { fetchOpenAICompatible } from './base.js';
+import type { Provider, ProviderOptions, ProviderConfig } from "./base.js";
+import { fetchOpenAICompatible } from "./base.js";
 
-const OLLAMA_CLOUD_BASE = 'https://ollama.com/v1';
-const OLLAMA_LOCAL_BASE = 'http://localhost:11434/v1';
+const OLLAMA_CLOUD_BASE = "https://ollama.com/v1";
+const OLLAMA_LOCAL_BASE = "http://localhost:11434/v1";
 
 /**
  * Ollama Cloud provider — routes to cloud-hosted models (Kimi K2, GLM-5, etc.)
@@ -12,8 +12,8 @@ const OLLAMA_LOCAL_BASE = 'http://localhost:11434/v1';
  * which is the common setup for users with Ollama Cloud models pulled locally.
  */
 export class OllamaCloudProvider implements Provider {
-  readonly name = 'OllamaCloud';
-  readonly tier = 'pro' as const;
+  readonly name = "OllamaCloud";
+  readonly tier = "pro" as const;
 
   private readonly apiKey: string | undefined;
   private readonly model: string;
@@ -21,8 +21,8 @@ export class OllamaCloudProvider implements Provider {
   private readonly useLocal: boolean;
 
   constructor(config: ProviderConfig) {
-    this.apiKey = config.apiKey ?? process.env['OLLAMA_CLOUD_API_KEY'];
-    this.model = config.model ?? 'mistral-large-3:675b';
+    this.apiKey = config.apiKey ?? process.env["OLLAMA_CLOUD_API_KEY"];
+    this.model = config.model ?? "mistral-large-3:675b";
 
     // If no API key and base URL is not explicitly set, fall back to local Ollama server
     if (!this.apiKey && !config.baseUrl) {
@@ -46,16 +46,14 @@ export class OllamaCloudProvider implements Provider {
       model,
       prompt,
       `OllamaCloud/${model}`,
-      options,
+      options
     );
   }
 
   estimateCost(inputTokens: number, outputTokens: number): number {
     // Ollama Cloud flat-rate subscription — marginal cost is ~$0
     // Local Ollama costs nothing
-    return this.useLocal
-      ? 0
-      : (inputTokens * 0.50 + outputTokens * 1.50) / 1_000_000;
+    return this.useLocal ? 0 : (inputTokens * 0.5 + outputTokens * 1.5) / 1_000_000;
   }
 
   supportsStructuredOutput(): boolean {

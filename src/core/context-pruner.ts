@@ -1,5 +1,5 @@
-import type { ScanResult } from './scanner/index.js';
-import type { IssueTask } from './issue-backlog.js';
+import type { ScanResult } from "./scanner/index.js";
+import type { IssueTask } from "./issue-backlog.js";
 
 export interface ClickContext {
   /** Focused markdown summary for the agent prompt */
@@ -15,11 +15,7 @@ export interface ClickContext {
  * Instead of telling the agent "analyze the codebase", we give it exact file
  * paths, issue types, and line numbers so it can skip re-scanning.
  */
-export function buildClickContext(
-  scanResult: ScanResult,
-  targetIssues: IssueTask[],
-  cwd: string,
-): ClickContext {
+export function buildClickContext(scanResult: ScanResult, targetIssues: IssueTask[], cwd: string): ClickContext {
   const fileRelevanceMap: Record<string, number> = {};
 
   // Collect all files referenced by the target issues
@@ -61,14 +57,14 @@ export function buildClickContext(
   // Build the compact markdown summary
   const lines: string[] = [];
 
-  lines.push('## Context: Focused Issues for This Click');
-  lines.push('');
+  lines.push("## Context: Focused Issues for This Click");
+  lines.push("");
   lines.push(`**Project score**: ${scanResult.total}/${scanResult.maxTotal}`);
   lines.push(`**Total issues**: ${scanResult.totalIssuesFound}`);
-  lines.push('');
+  lines.push("");
 
-  lines.push('## Issues to Fix');
-  lines.push('');
+  lines.push("## Issues to Fix");
+  lines.push("");
   for (const issue of targetIssues) {
     lines.push(`### ${issue.category} > ${issue.subcategory}`);
     lines.push(`- **Severity**: ${issue.severity.toUpperCase()}`);
@@ -82,27 +78,27 @@ export function buildClickContext(
         lines.push(`  - _(${issue.sweepFiles.length - 10} more files)_`);
       }
     }
-    lines.push('');
+    lines.push("");
   }
 
   if (issueFiles.size > 0) {
-    lines.push('## Files to Edit');
-    lines.push('');
-    lines.push('Focus your changes on these files only:');
+    lines.push("## Files to Edit");
+    lines.push("");
+    lines.push("Focus your changes on these files only:");
     for (const f of issueFiles) {
       lines.push(`- \`${f}\``);
     }
-    lines.push('');
+    lines.push("");
   }
 
-  lines.push('## Instructions');
-  lines.push('');
-  lines.push('Fix ONLY the issues listed above. Do not refactor other code or touch other files.');
-  lines.push('Make surgical changes — one issue type per file where possible.');
+  lines.push("## Instructions");
+  lines.push("");
+  lines.push("Fix ONLY the issues listed above. Do not refactor other code or touch other files.");
+  lines.push("Make surgical changes — one issue type per file where possible.");
   void cwd; // used by callers for path resolution if needed
 
   return {
-    summary: lines.join('\n'),
+    summary: lines.join("\n"),
     fileRelevanceMap,
   };
 }

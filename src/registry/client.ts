@@ -6,7 +6,8 @@
  *   RATCHET_REGISTRY_KEY  — API key; submission is skipped when absent
  */
 
-import type { ScanResult } from '../core/scanner';
+import { execSync } from "child_process";
+import type { ScanResult } from "../core/scanner";
 
 export interface RegistrySubmission {
   repo_owner: string;
@@ -29,8 +30,8 @@ export interface SubmitResult {
   error?: string;
 }
 
-const DEFAULT_REGISTRY_URL = 'https://api.ratchetcli.com';
-const SUBMIT_PATH = '/api/v1/scores';
+const DEFAULT_REGISTRY_URL = "https://api.ratchetcli.com";
+const SUBMIT_PATH = "/api/v1/scores";
 
 /**
  * Attempt to detect the GitHub owner/repo from the git remote of cwd.
@@ -38,11 +39,10 @@ const SUBMIT_PATH = '/api/v1/scores';
  */
 export function detectGitRepo(cwd: string): { owner: string; name: string; url: string } | null {
   try {
-    const { execSync } = require('child_process') as typeof import('child_process');
-    const remote = execSync('git remote get-url origin', {
+    const remote = execSync("git remote get-url origin", {
       cwd,
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
     }).trim();
 
     // ssh: git@github.com:owner/repo.git  or  https://github.com/owner/repo.git
@@ -68,12 +68,12 @@ export function buildSubmission(
   result: ScanResult,
   cwd: string,
   language: string,
-  version: string,
+  version: string
 ): RegistrySubmission | null {
   const gitRepo = detectGitRepo(cwd);
 
-  const owner = gitRepo?.owner ?? 'unknown';
-  const name  = gitRepo?.name ?? result.projectName ?? 'unknown';
+  const owner = gitRepo?.owner ?? "unknown";
+  const name = gitRepo?.name ?? result.projectName ?? "unknown";
 
   const catScore = (name: string): number | undefined => {
     const cat = result.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
@@ -82,16 +82,16 @@ export function buildSubmission(
 
   return {
     repo_owner: owner,
-    repo_name:  name,
-    repo_url:   gitRepo?.url,
+    repo_name: name,
+    repo_url: gitRepo?.url,
     language,
-    overall_score:       result.total,
-    testing_score:       catScore('testing'),
-    security_score:      catScore('security'),
-    type_safety_score:   catScore('type safety'),
-    error_handling_score: catScore('error handling'),
-    performance_score:   catScore('performance'),
-    code_quality_score:  catScore('code quality'),
+    overall_score: result.total,
+    testing_score: catScore("testing"),
+    security_score: catScore("security"),
+    type_safety_score: catScore("type safety"),
+    error_handling_score: catScore("error handling"),
+    performance_score: catScore("performance"),
+    code_quality_score: catScore("code quality"),
     ratchet_version: version,
   };
 }
@@ -104,20 +104,20 @@ export async function submitToRegistry(
   result: ScanResult,
   cwd: string,
   language: string,
-  version: string,
+  version: string
 ): Promise<SubmitResult> {
-  const key = process.env['RATCHET_REGISTRY_KEY'];
-  if (!key) return { ok: false, error: 'no key' };
+  const key = process.env["RATCHET_REGISTRY_KEY"];
+  if (!key) return { ok: false, error: "no key" };
 
-  const baseUrl = (process.env['RATCHET_REGISTRY_URL'] ?? DEFAULT_REGISTRY_URL).replace(/\/$/, '');
+  const baseUrl = (process.env["RATCHET_REGISTRY_URL"] ?? DEFAULT_REGISTRY_URL).replace(/\/$/, "");
   const payload = buildSubmission(result, cwd, language, version);
-  if (!payload) return { ok: false, error: 'could not build payload' };
+  if (!payload) return { ok: false, error: "could not build payload" };
 
   try {
     const resp = await fetch(`${baseUrl}${SUBMIT_PATH}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify(payload),
@@ -125,11 +125,11 @@ export async function submitToRegistry(
     });
 
     if (!resp.ok) {
-      const body = await resp.text().catch(() => '');
+      const body = await resp.text().catch(() => "");
       return { ok: false, error: `HTTP ${resp.status}: ${body}` };
     }
 
-    const data = await resp.json() as { submission_id?: number };
+    const data = (await resp.json()) as { submission_id?: number };
     return { ok: true, submission_id: data.submission_id };
   } catch (err) {
     return { ok: false, error: String(err) };

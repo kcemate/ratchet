@@ -1,13 +1,13 @@
-export type HardenPhase = 'harden:tests' | 'improve';
+export type HardenPhase = "harden:tests" | "improve";
 
 export type RollbackReason =
-  | 'test-related'
-  | 'test-unrelated'
-  | 'timeout'
-  | 'scope-exceeded'
-  | 'score-regression'
-  | 'lint-error'
-  | 'guard-rejected';
+  | "test-related"
+  | "test-unrelated"
+  | "timeout"
+  | "scope-exceeded"
+  | "score-regression"
+  | "lint-error"
+  | "guard-rejected";
 
 export interface ClickEconomics {
   clickIndex: number;
@@ -16,7 +16,7 @@ export interface ClickEconomics {
   testTimeMs: number;
   /** USD estimate based on diff size and model pricing */
   estimatedCost: number;
-  outcome: 'landed' | 'rolled-back' | 'timeout' | 'scope-rejected' | 'guard-rejected';
+  outcome: "landed" | "rolled-back" | "timeout" | "scope-rejected" | "guard-rejected";
   rollbackReason?: RollbackReason;
   issuesFixed: number;
   scoreDelta: number;
@@ -41,20 +41,20 @@ export interface ClickGuards {
   maxFilesChanged: number;
 }
 
-export type GuardProfileName = 'tight' | 'refactor' | 'broad' | 'sweep' | 'atomic';
+export type GuardProfileName = "tight" | "refactor" | "broad" | "sweep" | "atomic";
 
 /** Named guard profiles. null means no limits (test suite is the only gate). */
 export const GUARD_PROFILES: Record<GuardProfileName, ClickGuards | null> = {
-  tight:   { maxFilesChanged: 3,  maxLinesChanged: 40   },
-  refactor: { maxFilesChanged: 12, maxLinesChanged: 280  },
-  broad:   { maxFilesChanged: 20, maxLinesChanged: 500  },
-  sweep:   { maxFilesChanged: 50, maxLinesChanged: 1000 },
-  atomic:  null,
+  tight: { maxFilesChanged: 3, maxLinesChanged: 40 },
+  refactor: { maxFilesChanged: 12, maxLinesChanged: 280 },
+  broad: { maxFilesChanged: 20, maxLinesChanged: 500 },
+  sweep: { maxFilesChanged: 50, maxLinesChanged: 1000 },
+  atomic: null,
 };
 
 export interface TestGateResult {
   passed: boolean;
-  gate: 'lint' | 'related' | 'full';
+  gate: "lint" | "related" | "full";
   output: string;
   durationMs: number;
   failedTests: string[];
@@ -70,14 +70,14 @@ export interface ModelTiers {
   default?: string;
   /** Model for complex tasks (architect, debate judge, multi-file refactor) */
   premium?: string;
-// Per-task overrides — take precedence over tier overrides above
+  // Per-task overrides — take precedence over tier overrides above
   scan?: string;
   fix?: string;
   sweep?: string;
   analyze?: string;
   architect?: string;
   report?: string;
-  'deep-scan'?: string;
+  "deep-scan"?: string;
 }
 
 export interface ProviderConfig {
@@ -90,7 +90,7 @@ export interface ProviderConfig {
 }
 
 export interface RatchetConfig {
-  agent: 'claude-code' | 'codex' | 'shell';
+  agent: "claude-code" | "codex" | "shell";
   model?: string;
   /** Per-task-type model overrides */
   models?: ModelTiers;
@@ -134,7 +134,7 @@ export interface RatchetConfig {
      *   deep     LLM-powered semantic analysis (requires Pro subscription)
      *   auto     read from RATCHET_ENGINE env var, fallback to classic
      */
-    engine?: 'classic' | 'deep' | 'auto';
+    engine?: "classic" | "deep" | "auto";
     /**
      * Model to use for deep scanning, independent of the fix/improve model.
      * Supports any model available on the configured provider (e.g. kimi-k2:1t,
@@ -144,7 +144,7 @@ export interface RatchetConfig {
     model?: string;
   };
   /** Set to 'auto-detected' when config was generated from project detection, not a .ratchet.yml */
-  _source?: 'file' | 'auto-detected';
+  _source?: "file" | "auto-detected";
   /** True when no test command was found during auto-detection; harden mode should be enabled */
   _noTestCommand?: boolean;
 }
@@ -159,7 +159,7 @@ export interface Target {
 
 export interface Boundary {
   path: string;
-  rule: 'no-modify' | 'no-delete' | 'preserve-pattern';
+  rule: "no-modify" | "no-delete" | "preserve-pattern";
   reason?: string;
 }
 
@@ -189,7 +189,7 @@ export interface Click {
   testsPassed: boolean;
   commitHash?: string;
   timestamp: Date;
-  scoreAfterClick?: number;  // total score after this click
+  scoreAfterClick?: number; // total score after this click
   issuesFixedCount?: number; // how many issues this click resolved
   riskScore?: number; // 0–1 blast radius risk from GitNexus (0=isolated, 1=high-impact)
   swarmSpecialization?: string; // which swarm agent won (e.g. 'security', 'quality')
@@ -220,7 +220,7 @@ export interface RatchetRun {
   clicks: Click[];
   startedAt: Date;
   finishedAt?: Date;
-  status: 'running' | 'completed' | 'failed' | 'interrupted';
+  status: "running" | "completed" | "failed" | "interrupted";
   earlyStopReason?: string; // set when the engine stopped early (e.g. architect-only issues remain)
   architectEscalated?: boolean; // set when the engine escalated to architect mode mid-run
   architectEscalatedAtClick?: number; // the click number at which escalation happened
@@ -249,7 +249,7 @@ export interface RatchetRun {
   /** Total false positives filtered by the pre-validation gate across all clicks. */
   falsePositivesFound?: number;
   /** Structured analysis produced by the --deep-analyze ReACT loop (when enabled). */
-  reactAnalysis?: import('./core/analyze-react.js').ReactAnalysis;
+  reactAnalysis?: import("./core/analyze-react.js").ReactAnalysis;
 }
 
 export interface BuildResult {
@@ -328,7 +328,7 @@ export interface DebateArgument {
   fromAgent: string;
   aboutProposal: string;
   argument: string;
-  stance: 'support' | 'oppose' | 'neutral';
+  stance: "support" | "oppose" | "neutral";
 }
 
 export interface DebateVerdict {
@@ -370,7 +370,7 @@ export interface FeatureStep {
   files: string[];
   /** Step IDs this step depends on — must be completed before this step runs */
   dependencies: number[];
-  status: 'pending' | 'in-progress' | 'completed' | 'failed';
+  status: "pending" | "in-progress" | "completed" | "failed";
 }
 
 export interface FeaturePlan {

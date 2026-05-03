@@ -1,15 +1,15 @@
-import { statSync, readdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { statSync, readdirSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 /**
  * Recursively find the latest mtime among all files in a directory.
  */
 function latestMtime(dir: string): number {
   let latest = 0;
-  let entries: import('fs').Dirent[];
+  let entries: import("fs").Dirent[];
   try {
-    entries = readdirSync(dir, { withFileTypes: true, encoding: 'utf-8' }) as import('fs').Dirent[];
+    entries = readdirSync(dir, { withFileTypes: true, encoding: "utf-8" }) as import("fs").Dirent[];
   } catch {
     return 0;
   }
@@ -17,7 +17,7 @@ function latestMtime(dir: string): number {
     const full = join(dir, String(entry.name));
     if (entry.isDirectory()) {
       // Skip node_modules and hidden dirs
-      if (String(entry.name) === 'node_modules' || String(entry.name).startsWith('.')) continue;
+      if (String(entry.name) === "node_modules" || String(entry.name).startsWith(".")) continue;
       const sub = latestMtime(full);
       if (sub > latest) latest = sub;
     } else if (entry.isFile()) {
@@ -44,8 +44,8 @@ export function checkStaleBinary(): string | null {
     const thisFile = fileURLToPath(import.meta.url);
     const distDir = dirname(thisFile);
     const packageRoot = dirname(distDir);
-    const distIndex = join(distDir, 'index.js');
-    const srcDir = join(packageRoot, 'src');
+    const distIndex = join(distDir, "index.js");
+    const srcDir = join(packageRoot, "src");
 
     let distMtime: number;
     try {
@@ -62,7 +62,7 @@ export function checkStaleBinary(): string | null {
     }
 
     if (srcMtime > distMtime) {
-      return '⚠ Source files are newer than the compiled binary. Run `npm run build` to update.';
+      return "⚠ Source files are newer than the compiled binary. Run `npm run build` to update.";
     }
 
     return null;

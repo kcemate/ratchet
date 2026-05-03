@@ -1,11 +1,11 @@
-import { execFileSync } from 'child_process';
-import { spawn } from 'child_process';
+import { execFileSync } from "child_process";
+import { spawn } from "child_process";
 
 export interface PrevalidateResult {
   approved: boolean;
   confidence: number; // 0-1
   concerns: string[];
-  recommendation: 'proceed' | 'escalate-swarm' | 'reject';
+  recommendation: "proceed" | "escalate-swarm" | "reject";
   /** Why prevalidate fell back to a default result (undefined when Claude reviewed normally) */
   reason?: string;
 }
@@ -25,25 +25,27 @@ export interface PrevalidateOptions {
  * On confidence > 0.7 → proceed
  */
 export async function prevalidate(
-  cwd: string, model?: string, options?: PrevalidateOptions,
+  cwd: string,
+  model?: string,
+  options?: PrevalidateOptions
 ): Promise<PrevalidateResult> {
   const strict = options?.strict ?? false;
 
   // 1. Collect the diff
   let diff: string;
   try {
-    const staged = execFileSync('git', ['diff', '--cached'], { cwd, encoding: 'utf8' });
-    const unstaged = execFileSync('git', ['diff'], { cwd, encoding: 'utf8' });
-    diff = [staged, unstaged].filter(Boolean).join('\n');
+    const staged = execFileSync("git", ["diff", "--cached"], { cwd, encoding: "utf8" });
+    const unstaged = execFileSync("git", ["diff"], { cwd, encoding: "utf8" });
+    diff = [staged, unstaged].filter(Boolean).join("\n");
   } catch {
     // Can't get diff — this is an environment issue, not a review verdict
-    const reason = 'git diff failed (git unavailable or not a repo)';
+    const reason = "git diff failed (git unavailable or not a repo)";
     if (strict) {
       return {
         approved: false,
         confidence: 0.3,
         concerns: [`prevalidate: ${reason}`],
-        recommendation: 'reject',
+        recommendation: "reject",
         reason,
       };
     }
@@ -51,7 +53,7 @@ export async function prevalidate(
       approved: true,
       confidence: 0.8,
       concerns: [],
-      recommendation: 'proceed',
+      recommendation: "proceed",
       reason,
     };
   }
@@ -62,14 +64,14 @@ export async function prevalidate(
       approved: true,
       confidence: 1.0,
       concerns: [],
-      recommendation: 'proceed',
+      recommendation: "proceed",
     };
   }
 
   // Truncate very large diffs to avoid token limits
   const MAX_DIFF_CHARS = 12_000;
   const truncated = diff.length > MAX_DIFF_CHARS;
-  const diffSnippet = truncated ? diff.slice(0, MAX_DIFF_CHARS) + '\n[... diff truncated ...]' : diff;
+  const diffSnippet = truncated ? diff.slice(0, MAX_DIFF_CHARS) + "\n[... diff truncated ...]" : diff;
 
   const prompt = `You are a code review agent. Review this git diff for correctness, safety, and completeness.
 
@@ -91,24 +93,24 @@ Rules:
 Be strict but fair. Focus on: correctness, broken logic, security issues, missing error handling, incomplete changes.`;
 
   try {
-    const args: string[] = ['--print', '--permission-mode', 'bypassPermissions'];
-    if (model) args.push('--model', model);
+    const args: string[] = ["--print", "--permission-mode", "bypassPermissions"];
+    if (model) args.push("--model", model);
     args.push(prompt);
 
     const raw = await runClaude(args, cwd);
     return parseClaudeResponse(raw, diff, strict);
   } catch (err: unknown) {
     // Claude unavailable (timeout, crash, not installed) — environment failure
-    const msg = err instanceof Error ? err.message : 'unknown error';
-    const isTimeout = msg.includes('timed out');
-    const reason = isTimeout ? 'Claude timed out' : `Claude call failed: ${msg}`;
+    const msg = err instanceof Error ? err.message : "unknown error";
+    const isTimeout = msg.includes("timed out");
+    const reason = isTimeout ? "Claude timed out" : `Claude call failed: ${msg}`;
 
     if (strict) {
       return {
         approved: false,
         confidence: 0.3,
         concerns: [`prevalidate: ${reason}`],
-        recommendation: 'reject',
+        recommendation: "reject",
         reason,
       };
     }
@@ -116,7 +118,7 @@ Be strict but fair. Focus on: correctness, broken logic, security issues, missin
       approved: true,
       confidence: 0.75,
       concerns: [`prevalidate: ${reason}, proceeding with caution`],
-      recommendation: 'proceed',
+      recommendation: "proceed",
       reason,
     };
   }
@@ -124,24 +126,28 @@ Be strict but fair. Focus on: correctness, broken logic, security issues, missin
 
 function runClaude(args: string[], cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn('claude', args, {
+    const child = spawn("claude", args, {
       cwd,
       env: { ...process.env },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ["ignore", "pipe", "pipe"],
     });
 
-    let out = '';
-    let err = '';
+    let out = "";
+    let err = "";
 
     const timer = setTimeout(() => {
-      child.kill('SIGTERM');
-      reject(new Error('prevalidate: Claude timed out after 60s'));
+      child.kill("SIGTERM");
+      reject(new Error("prevalidate: Claude timed out after 60s"));
     }, 60_000);
 
-    child.stdout.on('data', (chunk: Buffer) => { out += chunk.toString(); });
-    child.stderr.on('data', (chunk: Buffer) => { err += chunk.toString(); });
+    child.stdout.on("data", (chunk: Buffer) => {
+      out += chunk.toString();
+    });
+    child.stderr.on("data", (chunk: Buffer) => {
+      err += chunk.toString();
+    });
 
-    child.on('close', (code) => {
+    child.on("close", code => {
       clearTimeout(timer);
       if (code === 0) {
         resolve(out);
@@ -150,7 +156,7 @@ function runClaude(args: string[], cwd: string): Promise<string> {
       }
     });
 
-    child.on('error', (e) => {
+    child.on("error", e => {
       clearTimeout(timer);
       reject(e);
     });
@@ -161,7 +167,7 @@ function parseClaudeResponse(raw: string, _diff: string, strict: boolean = false
   // Extract JSON from Claude's output (may be wrapped in markdown)
   const jsonMatch = raw.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    const reason = 'could not parse Claude response (no JSON found)';
+    const reason = "could not parse Claude response (no JSON found)";
     return fallbackResult(`prevalidate: ${reason}`, strict, reason);
   }
 
@@ -169,36 +175,34 @@ function parseClaudeResponse(raw: string, _diff: string, strict: boolean = false
   try {
     parsed = JSON.parse(jsonMatch[0]);
   } catch {
-    const reason = 'invalid JSON from Claude';
+    const reason = "invalid JSON from Claude";
     return fallbackResult(`prevalidate: ${reason}`, strict, reason);
   }
 
-  const confidence = typeof parsed.confidence === 'number'
-    ? Math.max(0, Math.min(1, parsed.confidence))
-    : 0.75;
+  const confidence = typeof parsed.confidence === "number" ? Math.max(0, Math.min(1, parsed.confidence)) : 0.75;
 
   const concerns: string[] = Array.isArray(parsed.concerns)
-    ? parsed.concerns.filter((c): c is string => typeof c === 'string')
+    ? parsed.concerns.filter((c): c is string => typeof c === "string")
     : [];
 
-  if (parsed.summary && typeof parsed.summary === 'string') {
+  if (parsed.summary && typeof parsed.summary === "string") {
     concerns.unshift(`Summary: ${parsed.summary}`);
   }
 
   const recommendation = getRecommendation(confidence);
 
   return {
-    approved: recommendation !== 'reject',
+    approved: recommendation !== "reject",
     confidence,
     concerns,
     recommendation,
   };
 }
 
-function getRecommendation(confidence: number): PrevalidateResult['recommendation'] {
-  if (confidence > 0.7) return 'proceed';
-  if (confidence >= 0.5) return 'escalate-swarm';
-  return 'reject';
+function getRecommendation(confidence: number): PrevalidateResult["recommendation"] {
+  if (confidence > 0.7) return "proceed";
+  if (confidence >= 0.5) return "escalate-swarm";
+  return "reject";
 }
 
 function fallbackResult(concern: string, strict: boolean = false, reason?: string): PrevalidateResult {
@@ -207,7 +211,7 @@ function fallbackResult(concern: string, strict: boolean = false, reason?: strin
       approved: false,
       confidence: 0.3,
       concerns: [concern],
-      recommendation: 'reject',
+      recommendation: "reject",
       reason,
     };
   }
@@ -215,7 +219,7 @@ function fallbackResult(concern: string, strict: boolean = false, reason?: strin
     approved: true,
     confidence: 0.75,
     concerns: [concern],
-    recommendation: 'proceed',
+    recommendation: "proceed",
     reason,
   };
 }

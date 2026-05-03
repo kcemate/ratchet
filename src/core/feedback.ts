@@ -1,5 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
 const FEEDBACK_VERSION = 1;
 const MAX_ENTRIES = 500;
@@ -9,7 +9,7 @@ export interface RollbackEntry {
   issueId: string;
   strategy: string;
   filesTargeted: string[];
-  rollbackReason: 'test_fail' | 'score_regression' | 'parse_error' | 'timeout' | 'guard_violation';
+  rollbackReason: "test_fail" | "score_regression" | "parse_error" | "timeout" | "guard_violation";
   model: string;
   timestamp: string; // ISO 8601
 }
@@ -20,7 +20,7 @@ export interface FeedbackStore {
 }
 
 function feedbackPath(cwd: string): string {
-  return path.join(cwd, '.ratchet', 'feedback.json');
+  return path.join(cwd, ".ratchet", "feedback.json");
 }
 
 export function loadFeedback(cwd: string): FeedbackStore {
@@ -29,7 +29,7 @@ export function loadFeedback(cwd: string): FeedbackStore {
     return { version: FEEDBACK_VERSION, entries: [] };
   }
   try {
-    const raw = fs.readFileSync(fp, 'utf8');
+    const raw = fs.readFileSync(fp, "utf8");
     return JSON.parse(raw) as FeedbackStore;
   } catch {
     return { version: FEEDBACK_VERSION, entries: [] };
@@ -43,11 +43,11 @@ export function recordRollback(cwd: string, entry: RollbackEntry): void {
   if (store.entries.length > MAX_ENTRIES) {
     store.entries = store.entries.slice(store.entries.length - MAX_ENTRIES);
   }
-  const dir = path.join(cwd, '.ratchet');
+  const dir = path.join(cwd, ".ratchet");
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  fs.writeFileSync(feedbackPath(cwd), JSON.stringify(store, null, 2), 'utf8');
+  fs.writeFileSync(feedbackPath(cwd), JSON.stringify(store, null, 2), "utf8");
 }
 
 export function getFailureCount(cwd: string, issueId: string, strategy?: string): number {
@@ -63,7 +63,7 @@ export function isBlacklisted(
   cwd: string,
   issueId: string,
   strategy?: string,
-  maxFailures = DEFAULT_MAX_FAILURES,
+  maxFailures = DEFAULT_MAX_FAILURES
 ): boolean {
   return getFailureCount(cwd, issueId, strategy) >= maxFailures;
 }

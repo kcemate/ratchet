@@ -1,12 +1,12 @@
-import { join } from 'path';
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import { logger } from '../lib/logger.js';
-import type { SwarmResult } from '../types.js';
-import type { DebateRound } from './swarm-debate.js';
+import { join } from "path";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { existsSync } from "fs";
+import { logger } from "../lib/logger.js";
+import type { SwarmResult } from "../types.js";
+import type { DebateRound } from "./swarm-debate.js";
 
 const log = logger;
-const MEMORY_FILE = '.ratchet/swarm-memory.json';
+const MEMORY_FILE = ".ratchet/swarm-memory.json";
 
 // ─── Types
 export interface DebatePattern {
@@ -48,31 +48,31 @@ export async function loadSwarmMemory(cwd: string): Promise<SwarmMemory> {
   }
 
   try {
-    const raw = await readFile(filePath, 'utf-8');
+    const raw = await readFile(filePath, "utf-8");
     const parsed = JSON.parse(raw) as SwarmMemory;
     if (parsed.version !== 1) {
-      log.warn({ filePath }, 'swarm-memory: unknown version, resetting');
+      log.warn({ filePath }, "swarm-memory: unknown version, resetting");
       return emptyMemory();
     }
     return parsed;
   } catch (err) {
-    log.warn({ err, filePath }, 'swarm-memory: failed to load, using empty memory');
+    log.warn({ err, filePath }, "swarm-memory: failed to load, using empty memory");
     return emptyMemory();
   }
 }
 
 /** Save swarm memory to .ratchet/swarm-memory.json */
 export async function saveSwarmMemory(cwd: string, memory: SwarmMemory): Promise<void> {
-  const dir = join(cwd, '.ratchet');
+  const dir = join(cwd, ".ratchet");
   const filePath = join(cwd, MEMORY_FILE);
 
   try {
     if (!existsSync(dir)) {
       await mkdir(dir, { recursive: true });
     }
-    await writeFile(filePath, JSON.stringify(memory, null, 2), 'utf-8');
+    await writeFile(filePath, JSON.stringify(memory, null, 2), "utf-8");
   } catch (err) {
-    log.warn({ err, filePath }, 'swarm-memory: failed to save');
+    log.warn({ err, filePath }, "swarm-memory: failed to save");
   }
 }
 
@@ -81,21 +81,17 @@ export async function saveSwarmMemory(cwd: string, memory: SwarmMemory): Promise
  * Record a swarm run outcome into memory.
  * Updates personality win/loss stats, debate patterns, and combo history.
  */
-export function recordSwarmOutcome(
-  memory: SwarmMemory,
-  result: SwarmResult,
-  debate?: DebateRound,
-): SwarmMemory {
+export function recordSwarmOutcome(memory: SwarmMemory, result: SwarmResult, debate?: DebateRound): SwarmMemory {
   const updated = structuredClone(memory) as SwarmMemory;
 
   // 1. Update per-personality win/loss stats
   const winnerAgent = result.winner
-    ? result.allResults.find((r) => r.outcome === result.winner || r.outcome.click === result.winner?.click)
+    ? result.allResults.find(r => r.outcome === result.winner || r.outcome.click === result.winner?.click)
     : null;
 
   const winnerPersonality: string = winnerAgent
-    ? (winnerAgent as { personality?: string }).personality ?? winnerAgent.specialization
-    : '';
+    ? ((winnerAgent as { personality?: string }).personality ?? winnerAgent.specialization)
+    : "";
 
   for (const agent of result.allResults) {
     const personality = (agent as { personality?: string }).personality ?? agent.specialization;
@@ -117,17 +113,15 @@ export function recordSwarmOutcome(
   // 2. Record debate patterns (if a debate was run)
   if (debate && debate.verdict.confidence >= 0.6) {
     const losingPersonalities = debate.proposals
-      .filter((p) => p.agentName !== debate.verdict.winner)
-      .map((p) => p.personality);
+      .filter(p => p.agentName !== debate.verdict.winner)
+      .map(p => p.personality);
 
-    const winnerProposal = debate.proposals.find((p) => p.agentName === debate.verdict.winner);
-    const context = winnerProposal?.specialization ?? 'unknown';
+    const winnerProposal = debate.proposals.find(p => p.agentName === debate.verdict.winner);
+    const context = winnerProposal?.specialization ?? "unknown";
 
     // Avoid exact duplicate patterns
     const exists = updated.debatePatterns.some(
-      (dp) =>
-        dp.context === context &&
-        dp.winningPersonality === winnerProposal?.personality,
+      dp => dp.context === context && dp.winningPersonality === winnerProposal?.personality
     );
 
     if (!exists && winnerProposal) {
@@ -147,18 +141,15 @@ export function recordSwarmOutcome(
 
   // 3. Update personality combination stats
   const personalities = result.allResults
-    .map((r) => (r as { personality?: string }).personality ?? r.specialization)
+    .map(r => (r as { personality?: string }).personality ?? r.specialization)
     .filter(Boolean)
     .sort();
 
   if (personalities.length > 0) {
-    const comboKey = personalities.join(',');
-    const avgDelta =
-      result.allResults.reduce((sum, r) => sum + r.scoreDelta, 0) / result.allResults.length;
+    const comboKey = personalities.join(",");
+    const avgDelta = result.allResults.reduce((sum, r) => sum + r.scoreDelta, 0) / result.allResults.length;
 
-    const existingCombo = updated.bestCombos.find(
-      (c) => c.personalities.sort().join(',') === comboKey,
-    );
+    const existingCombo = updated.bestCombos.find(c => c.personalities.sort().join(",") === comboKey);
 
     if (existingCombo) {
       existingCombo.avgScoreDelta =
@@ -193,7 +184,7 @@ export function recommendPersonalities(memory: SwarmMemory, agentCount: number):
   if (names.length === 0) return null;
 
   // Need at least 3 runs per personality to trust the data
-  const qualified = names.filter((n) => {
+  const qualified = names.filter(n => {
     const s = personalityWins[n];
     return s.wins + s.losses >= 3;
   });

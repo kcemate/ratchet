@@ -1,9 +1,9 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join } from 'path';
-import { execSync } from 'child_process';
-import { logger } from '../lib/logger.js';
-import type { ScanResult } from '../core/scanner';
-import { runScan } from '../core/scanner';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
+import { join } from "path";
+import { execSync } from "child_process";
+import { logger } from "../lib/logger.js";
+import type { ScanResult } from "../core/scanner";
+import { runScan } from "../core/scanner";
 import {
   TEST_PATTERNS,
   LOOP_DB_API_PATTERN,
@@ -13,7 +13,7 @@ import {
   scoreByThresholds,
   DUP_SCORE_THRESHOLDS,
   scoreStrictConfig,
-} from './scan-constants.js';
+} from "./scan-constants.js";
 import {
   scoreCoverageRatio,
   scoreEdgeCases,
@@ -32,7 +32,7 @@ import {
   scoreLineLength,
   scoreDeadCode,
   aggregateAndSortIssues,
-} from './scan-scorers.js';
+} from "./scan-scorers.js";
 
 // ---------------------------------------------------------------------------
 // Per-file metrics for delta-based incremental updates
@@ -80,14 +80,14 @@ export interface ScanCache {
 }
 
 const CACHE_MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
-const FULL_SCAN_THRESHOLD = 0.30; // force full scan if >30% of files changed
+const FULL_SCAN_THRESHOLD = 0.3; // force full scan if >30% of files changed
 
 function ratchetDir(cwd: string): string {
-  return join(cwd, '.ratchet');
+  return join(cwd, ".ratchet");
 }
 
 function cachePath(cwd: string): string {
-  return join(ratchetDir(cwd), 'scan-cache.json');
+  return join(ratchetDir(cwd), "scan-cache.json");
 }
 
 /** Get the git blob hash for a file (fast, no file I/O) */
@@ -95,12 +95,12 @@ function gitBlobHash(filePath: string, cwd: string): string | null {
   try {
     const result = execSync(`git hash-object "${filePath}"`, {
       cwd,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
     }).trim();
     return result || null;
   } catch (err) {
-    logger.debug({ err, filePath }, 'git hash-object failed, file may not be tracked');
+    logger.debug({ err, filePath }, "git hash-object failed, file may not be tracked");
     return null;
   }
 }
@@ -108,22 +108,22 @@ function gitBlobHash(filePath: string, cwd: string): string | null {
 /** Get changed files using git diff */
 function getChangedFiles(cwd: string): string[] {
   try {
-    const unstaged = execSync('git diff --name-only HEAD', {
+    const unstaged = execSync("git diff --name-only HEAD", {
       cwd,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
     })
       .trim()
-      .split('\n')
+      .split("\n")
       .filter(Boolean);
 
-    const staged = execSync('git diff --name-only --cached', {
+    const staged = execSync("git diff --name-only --cached", {
       cwd,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
     })
       .trim()
-      .split('\n')
+      .split("\n")
       .filter(Boolean);
 
     const all = new Set([...unstaged, ...staged]);
@@ -131,7 +131,7 @@ function getChangedFiles(cwd: string): string[] {
       .filter(f => f.length > 0)
       .map(f => join(cwd, f));
   } catch (err) {
-    logger.debug({ err, cwd }, 'git diff failed, assuming no changed files');
+    logger.debug({ err, cwd }, "git diff failed, assuming no changed files");
     return [];
   }
 }
@@ -154,9 +154,9 @@ function buildFileHashes(filePaths: string[], cwd: string): Record<string, strin
  * This is the core building block for incremental scanning.
  */
 export function analyzeFile(filePath: string, content: string): PerFileMetrics {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   const isTest = isTestFile(filePath);
-  const isScript = filePath.replace(/\\/g, '/').includes('/scripts/');
+  const isScript = filePath.replace(/\\/g, "/").includes("/scripts/");
 
   let consoleLogCount = 0;
   let anyTypeCount = 0;
@@ -184,7 +184,7 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
   }
 
   // Any types (only for non-test .ts/.tsx source files, not .d.ts)
-  const isTsSource = !isTest && !filePath.endsWith('.d.ts') && (filePath.endsWith('.ts') || filePath.endsWith('.tsx'));
+  const isTsSource = !isTest && !filePath.endsWith(".d.ts") && (filePath.endsWith(".ts") || filePath.endsWith(".tsx"));
   if (isTsSource) {
     anyTypeCount = (content.match(/:\s*any\b|<any>|\bas\s+any\b/g) ?? []).length;
   }
@@ -206,10 +206,10 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
   let fnStart = -1;
   let depth = 0;
   let loopDepth = 0;
-  let braceStack: number[] = [];
+  const braceStack: number[] = [];
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i] ?? '';
+    const line = lines[i] ?? "";
     const stripped = line.trim();
 
     if (!isTest) {
@@ -218,7 +218,7 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
         /\b(?:const|let)\s+\w+\s*=\s*(?:async\s+)?\(/.test(line) ||
         /\b(?:const|let)\s+\w+\s*=\s*async\s+function/.test(line);
 
-      if (isFnDecl && line.includes('{') && fnStart === -1) {
+      if (isFnDecl && line.includes("{") && fnStart === -1) {
         fnStart = i;
         depth = (line.match(/\{/g) ?? []).length - (line.match(/\}/g) ?? []).length;
       } else if (fnStart !== -1) {
@@ -266,11 +266,8 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
   }
 
   if (isTest) {
-    const edgeTerms = 'error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed';
-    const edgePatterns = new RegExp(
-      `\\b(?:it|test)\\s*[.(]['"\`][^'"\`]*(?:${edgeTerms})[^'"\`]*['"\`]`,
-      'gi',
-    );
+    const edgeTerms = "error|invalid|edge|boundary|fail|reject|throw|null|undefined|empty|missing|exceed";
+    const edgePatterns = new RegExp(`\\b(?:it|test)\\s*[.(]['"\`][^'"\`]*(?:${edgeTerms})[^'"\`]*['"\`]`, "gi");
     edgeCaseTestCount = (content.match(edgePatterns) ?? []).length;
     testCaseCount = (content.match(/\b(?:it|test)\s*[.(]/g) ?? []).length;
     assertCount = (content.match(/\b(?:expect|assert)\s*[.(]/g) ?? []).length;
@@ -285,19 +282,26 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
 
   if (!isTest) {
     hasValidation =
-      /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content)
-      || /\buuid\b.*\bvalidate\b|\bvalidate.*uuid\b|isUUID|uuidv[1-5]/i.test(content)
-      || /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i
-        .test(content);
+      /\b(?:zod|joi|yup|valibot)\b|z\.object\s*\(|Joi\.object\s*\(|z\.string\s*\(|z\.number\s*\(/i.test(content) ||
+      /\buuid\b.*\bvalidate\b|\bvalidate.*uuid\b|isUUID|uuidv[1-5]/i.test(content) ||
+      /(?:req\.params|req\.body|req\.query).*(?:typeof|instanceof|\.match|\.test|\.validate|schema\.parse)/i.test(
+        content
+      );
     isRouteFile = /(?:router\.|app\.(?:get|post|put|patch|delete)|@(?:Get|Post|Put|Patch|Delete))/i.test(content);
-    const authTerms = 'authenticate|authorize|isAuthenticated|requireAuth|authMiddleware' +
-      '|verifyToken|passport\\.authenticate|jwt\\.verify|bearer|middleware.*auth';
-    const authPattern = new RegExp(`\\b(?:${authTerms})\\b`, 'i');
+    const authTerms =
+      "authenticate|authorize|isAuthenticated|requireAuth|authMiddleware" +
+      "|verifyToken|passport\\.authenticate|jwt\\.verify|bearer|middleware.*auth";
+    const authPattern = new RegExp(`\\b(?:${authTerms})\\b`, "i");
     hasAuthMiddleware = authPattern.test(content);
     hasRateLimit = /\b(?:rateLimit|rate[-_]limit|express-rate-limit|throttle|limiter)\b/i.test(content);
     hasCors = /\b(?:cors\s*\(|cors\s*\{|helmet\s*\(|'cors'|"cors")\b/i.test(content);
 
-    const basename = filePath.replace(/\\/g, '/').split('/').pop()?.replace(/\.tsx?$/, '') ?? '';
+    const basename =
+      filePath
+        .replace(/\\/g, "/")
+        .split("/")
+        .pop()
+        ?.replace(/\.tsx?$/, "") ?? "";
     if (basename && new RegExp(`from ['"].*/${basename}['"]`).test(content)) {
       importIssueCount++;
     }
@@ -309,7 +313,7 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
   if (!isTest) {
     for (const line of lines) {
       const s = line.trim();
-      if (s.length > 10 && !s.startsWith('//') && !s.startsWith('*')) {
+      if (s.length > 10 && !s.startsWith("//") && !s.startsWith("*")) {
         significantLines.push(s);
       }
     }
@@ -350,21 +354,18 @@ export function analyzeFile(filePath: string, content: string): PerFileMetrics {
  * Rebuild a ScanResult from aggregated per-file metrics.
  * Pure aggregation — no file I/O for content.
  */
-export function rebuildScanFromMetrics(
-  allFileMetrics: Record<string, PerFileMetrics>,
-  cwd: string,
-): ScanResult {
-  let projectName = cwd.split('/').pop() ?? 'unknown';
+export function rebuildScanFromMetrics(allFileMetrics: Record<string, PerFileMetrics>, cwd: string): ScanResult {
+  let projectName = cwd.split("/").pop() ?? "unknown";
   let hasTestScript = false;
-  const pkgPath = join(cwd, 'package.json');
+  const pkgPath = join(cwd, "package.json");
   if (existsSync(pkgPath)) {
     try {
-      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { name?: string; scripts?: Record<string, string> };
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as { name?: string; scripts?: Record<string, string> };
       if (pkg.name) projectName = pkg.name;
-      const ts = pkg.scripts?.test ?? '';
-      if (ts && !ts.includes('no test') && !ts.includes('echo "Error')) hasTestScript = true;
+      const ts = pkg.scripts?.test ?? "";
+      if (ts && !ts.includes("no test") && !ts.includes('echo "Error')) hasTestScript = true;
     } catch (err) {
-      logger.debug({ err }, 'Failed to read package.json for project metadata');
+      logger.debug({ err }, "Failed to read package.json for project metadata");
     }
   }
 
@@ -373,13 +374,29 @@ export function rebuildScanFromMetrics(
   const sourceFiles = files.filter(f => !allFileMetrics[f]!.isTestFile);
 
   // Aggregate all metrics
-  let totalConsoleLog = 0, totalAnyType = 0, totalLongLines = 0, totalEmptyCatch = 0;
-  let totalLongFunctions = 0, totalFunctionCount = 0, totalFunctionLength = 0;
-  let totalTryCatch = 0, totalAsync = 0, totalAwaitInLoop = 0;
-  let totalCommentedCode = 0, totalTodo = 0, totalSecrets = 0;
-  let totalEdgeCases = 0, totalTestCases = 0, totalAsserts = 0, totalDescribes = 0;
-  let validationFileCount = 0, routeFileCount = 0;
-  let hasAuth = false, hasRate = false, hasCorsFlag = false, hasEnvVarsFlag = false;
+  let totalConsoleLog = 0,
+    totalAnyType = 0,
+    totalLongLines = 0,
+    totalEmptyCatch = 0;
+  let totalLongFunctions = 0,
+    totalFunctionCount = 0,
+    totalFunctionLength = 0;
+  let totalTryCatch = 0,
+    totalAsync = 0,
+    totalAwaitInLoop = 0;
+  let totalCommentedCode = 0,
+    totalTodo = 0,
+    totalSecrets = 0;
+  let totalEdgeCases = 0,
+    totalTestCases = 0,
+    totalAsserts = 0,
+    totalDescribes = 0;
+  let validationFileCount = 0,
+    routeFileCount = 0;
+  let hasAuth = false,
+    hasRate = false,
+    hasCorsFlag = false,
+    hasEnvVarsFlag = false;
   let totalImportIssues = 0;
   let srcTsLineCount = 0;
 
@@ -422,7 +439,7 @@ export function rebuildScanFromMetrics(
     if (m.hasRateLimit) hasRate = true;
     if (m.hasCors) hasCorsFlag = true;
     totalImportIssues += m.importIssueCount;
-    if (!m.isTestFile && !fp.endsWith('.d.ts') && (fp.endsWith('.ts') || fp.endsWith('.tsx'))) {
+    if (!m.isTestFile && !fp.endsWith(".d.ts") && (fp.endsWith(".ts") || fp.endsWith(".tsx"))) {
       srcTsLineCount += m.lineCount;
     }
     for (const line of m.significantLines) {
@@ -431,71 +448,110 @@ export function rebuildScanFromMetrics(
   }
 
   // ========== Testing (25 pts) ==========
-  const { score: coverageScore, summary: coverageSummary, issues: coverageIssues } =
-    scoreCoverageRatio(testFiles.length, sourceFiles.length, hasTestScript);
+  const {
+    score: coverageScore,
+    summary: coverageSummary,
+    issues: coverageIssues,
+  } = scoreCoverageRatio(testFiles.length, sourceFiles.length, hasTestScript);
   const { score: edgeCaseScore, summary: edgeCaseSummary } = scoreEdgeCases(totalEdgeCases);
-  const { score: testQualityScore, summary: testQualitySummary } =
-    scoreTestQuality(totalTestCases, totalAsserts, totalDescribes > 0);
+  const { score: testQualityScore, summary: testQualitySummary } = scoreTestQuality(
+    totalTestCases,
+    totalAsserts,
+    totalDescribes > 0
+  );
 
   const testingCategory = {
-    name: 'Testing', emoji: '🧪',
-    score: Math.min(coverageScore + edgeCaseScore + testQualityScore, 25), max: 25,
-    summary: [coverageSummary, edgeCaseSummary].filter(Boolean).join(', '),
+    name: "Testing",
+    emoji: "🧪",
+    score: Math.min(coverageScore + edgeCaseScore + testQualityScore, 25),
+    max: 25,
+    summary: [coverageSummary, edgeCaseSummary].filter(Boolean).join(", "),
     subcategories: [
       {
-        name: 'Coverage ratio', score: coverageScore, max: 8, summary: coverageSummary,
-        issuesFound: coverageIssues, issuesDescription: 'source files without tests',
+        name: "Coverage ratio",
+        score: coverageScore,
+        max: 8,
+        summary: coverageSummary,
+        issuesFound: coverageIssues,
+        issuesDescription: "source files without tests",
         locations: coverageIssues > 0 ? sourceFiles : [],
       },
       {
-        name: 'Edge case depth', score: edgeCaseScore, max: 9, summary: edgeCaseSummary,
-        issuesFound: totalEdgeCases === 0 ? 1 : 0, issuesDescription: 'no edge case tests',
+        name: "Edge case depth",
+        score: edgeCaseScore,
+        max: 9,
+        summary: edgeCaseSummary,
+        issuesFound: totalEdgeCases === 0 ? 1 : 0,
+        issuesDescription: "no edge case tests",
       },
-      { name: 'Test quality', score: testQualityScore, max: 8, summary: testQualitySummary, issuesFound: 0 },
+      { name: "Test quality", score: testQualityScore, max: 8, summary: testQualitySummary, issuesFound: 0 },
     ],
   };
 
   // ========== Security (15 pts) ==========
   const { score: secretsScore, summary: secretsSummary } = scoreSecrets(totalSecrets, hasEnvVarsFlag);
-  const { score: inputValScore, summary: inputValSummary, issues: inputValIssues } =
-    scoreInputValidation(validationFileCount, routeFileCount);
-  const { score: authScore, summary: authSummary, issues: authIssues } =
-    scoreAuthChecks(hasAuth, hasRate, hasCorsFlag);
+  const {
+    score: inputValScore,
+    summary: inputValSummary,
+    issues: inputValIssues,
+  } = scoreInputValidation(validationFileCount, routeFileCount);
+  const { score: authScore, summary: authSummary, issues: authIssues } = scoreAuthChecks(hasAuth, hasRate, hasCorsFlag);
 
   const securityCategory = {
-    name: 'Security', emoji: '🔒',
-    score: Math.min(secretsScore + inputValScore + authScore, 15), max: 15,
-    summary: [secretsSummary, inputValSummary].filter(Boolean).join(', '),
+    name: "Security",
+    emoji: "🔒",
+    score: Math.min(secretsScore + inputValScore + authScore, 15),
+    max: 15,
+    summary: [secretsSummary, inputValSummary].filter(Boolean).join(", "),
     subcategories: [
       {
-        name: 'Secrets & env vars', score: secretsScore, max: 3, summary: secretsSummary,
-        issuesFound: totalSecrets, issuesDescription: 'hardcoded secrets',
+        name: "Secrets & env vars",
+        score: secretsScore,
+        max: 3,
+        summary: secretsSummary,
+        issuesFound: totalSecrets,
+        issuesDescription: "hardcoded secrets",
       },
       {
-        name: 'Input validation', score: inputValScore, max: 6, summary: inputValSummary,
-        issuesFound: inputValIssues, issuesDescription: 'route files without validation',
+        name: "Input validation",
+        score: inputValScore,
+        max: 6,
+        summary: inputValSummary,
+        issuesFound: inputValIssues,
+        issuesDescription: "route files without validation",
       },
       {
-        name: 'Auth & rate limiting', score: authScore, max: 6, summary: authSummary,
-        issuesFound: authIssues, issuesDescription: 'missing auth/security controls',
+        name: "Auth & rate limiting",
+        score: authScore,
+        max: 6,
+        summary: authSummary,
+        issuesFound: authIssues,
+        issuesDescription: "missing auth/security controls",
       },
     ],
   };
 
   // ========== Type Safety (15 pts) ==========
-  const tsFiles = files.filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
+  const tsFiles = files.filter(f => f.endsWith(".ts") || f.endsWith(".tsx"));
   let typeCategory;
 
   if (tsFiles.length === 0) {
     typeCategory = {
-      name: 'Type Safety', emoji: '📝', score: 0, max: 15,
-      summary: 'JavaScript only — no static types',
+      name: "Type Safety",
+      emoji: "📝",
+      score: 0,
+      max: 15,
+      summary: "JavaScript only — no static types",
       subcategories: [
         {
-          name: 'Strict config', score: 0, max: 7, summary: 'JavaScript only',
-          issuesFound: 1, issuesDescription: 'no TypeScript',
+          name: "Strict config",
+          score: 0,
+          max: 7,
+          summary: "JavaScript only",
+          issuesFound: 1,
+          issuesDescription: "no TypeScript",
         },
-        { name: 'Any type count', score: 0, max: 8, summary: 'JavaScript only', issuesFound: 0 },
+        { name: "Any type count", score: 0, max: 8, summary: "JavaScript only", issuesFound: 0 },
       ],
     };
   } else {
@@ -504,17 +560,28 @@ export function rebuildScanFromMetrics(
     const { score: anyScore, summary: anySummary } = scoreAnyTypeDensity(totalAnyType, srcTsLineCount);
 
     typeCategory = {
-      name: 'Type Safety', emoji: '📝',
-      score: Math.min(strictScore + anyScore, 15), max: 15,
-      summary: [strictSummary, anySummary].filter(Boolean).join(', '),
+      name: "Type Safety",
+      emoji: "📝",
+      score: Math.min(strictScore + anyScore, 15),
+      max: 15,
+      summary: [strictSummary, anySummary].filter(Boolean).join(", "),
       subcategories: [
         {
-          name: 'Strict config', score: strictScore, max: 7, summary: strictSummary,
-          issuesFound: strictScore < 7 ? 1 : 0, issuesDescription: 'missing strict TypeScript config',
+          name: "Strict config",
+          score: strictScore,
+          max: 7,
+          summary: strictSummary,
+          issuesFound: strictScore < 7 ? 1 : 0,
+          issuesDescription: "missing strict TypeScript config",
         },
         {
-          name: 'Any type count', score: anyScore, max: 8, summary: anySummary,
-          issuesFound: totalAnyType, issuesDescription: 'any types', locations: anyTypeFiles,
+          name: "Any type count",
+          score: anyScore,
+          max: 8,
+          summary: anySummary,
+          issuesFound: totalAnyType,
+          issuesDescription: "any types",
+          locations: anyTypeFiles,
         },
       ],
     };
@@ -527,22 +594,37 @@ export function rebuildScanFromMetrics(
   const { score: loggingScore, summary: loggingSummary } = scoreStructuredLogging(0, 0);
 
   const errorHandlingCategory = {
-    name: 'Error Handling', emoji: '⚠️ ',
-    score: Math.min(ehCovScore + ecScore + loggingScore, 20), max: 20,
-    summary: [ehCovSummary, ecSummary].filter(Boolean).join(', '),
+    name: "Error Handling",
+    emoji: "⚠️ ",
+    score: Math.min(ehCovScore + ecScore + loggingScore, 20),
+    max: 20,
+    summary: [ehCovSummary, ecSummary].filter(Boolean).join(", "),
     subcategories: [
       {
-        name: 'Coverage', score: ehCovScore, max: 8, summary: ehCovSummary,
+        name: "Coverage",
+        score: ehCovScore,
+        max: 8,
+        summary: ehCovSummary,
         issuesFound: Math.max(0, totalAsync - totalTryCatch),
-        issuesDescription: 'async functions without error handling', locations: asyncNoHandlerFiles,
+        issuesDescription: "async functions without error handling",
+        locations: asyncNoHandlerFiles,
       },
       {
-        name: 'Empty catches', score: ecScore, max: 5, summary: ecSummary,
-        issuesFound: totalEmptyCatch, issuesDescription: 'empty catch blocks', locations: emptyCatchFiles,
+        name: "Empty catches",
+        score: ecScore,
+        max: 5,
+        summary: ecSummary,
+        issuesFound: totalEmptyCatch,
+        issuesDescription: "empty catch blocks",
+        locations: emptyCatchFiles,
       },
       {
-        name: 'Structured logging', score: loggingScore, max: 7, summary: loggingSummary,
-        issuesFound: 1, issuesDescription: 'no structured logger',
+        name: "Structured logging",
+        score: loggingScore,
+        max: 7,
+        summary: loggingSummary,
+        issuesFound: 1,
+        issuesDescription: "no structured logger",
       },
     ],
   };
@@ -553,23 +635,36 @@ export function rebuildScanFromMetrics(
   const { score: importScore, summary: importSummary } = scoreImportHygiene(totalImportIssues);
 
   const perfCategory = {
-    name: 'Performance', emoji: '⚡',
-    score: Math.min(
-      Math.min(asyncPScore, 3) + Math.min(consoleScore, 5) + Math.min(importScore, 2), 10,
-    ), max: 10,
-    summary: [asyncPSummary, consoleSummary].filter(Boolean).join(', '),
+    name: "Performance",
+    emoji: "⚡",
+    score: Math.min(Math.min(asyncPScore, 3) + Math.min(consoleScore, 5) + Math.min(importScore, 2), 10),
+    max: 10,
+    summary: [asyncPSummary, consoleSummary].filter(Boolean).join(", "),
     subcategories: [
       {
-        name: 'Async patterns', score: Math.min(asyncPScore, 3), max: 3, summary: asyncPSummary,
-        issuesFound: totalAwaitInLoop, issuesDescription: 'await-in-loop patterns',
+        name: "Async patterns",
+        score: Math.min(asyncPScore, 3),
+        max: 3,
+        summary: asyncPSummary,
+        issuesFound: totalAwaitInLoop,
+        issuesDescription: "await-in-loop patterns",
       },
       {
-        name: 'Console cleanup', score: Math.min(consoleScore, 5), max: 5, summary: consoleSummary,
-        issuesFound: totalConsoleLog, issuesDescription: 'console.log calls in src', locations: consoleLogFiles,
+        name: "Console cleanup",
+        score: Math.min(consoleScore, 5),
+        max: 5,
+        summary: consoleSummary,
+        issuesFound: totalConsoleLog,
+        issuesDescription: "console.log calls in src",
+        locations: consoleLogFiles,
       },
       {
-        name: 'Import hygiene', score: Math.min(importScore, 2), max: 2, summary: importSummary,
-        issuesFound: totalImportIssues, issuesDescription: 'import issues',
+        name: "Import hygiene",
+        score: Math.min(importScore, 2),
+        max: 2,
+        summary: importSummary,
+        issuesFound: totalImportIssues,
+        issuesDescription: "import issues",
       },
     ],
   };
@@ -581,38 +676,65 @@ export function rebuildScanFromMetrics(
   const { score: deadCodeScore, summary: deadCodeSummary } = scoreDeadCode(totalCommentedCode, totalTodo);
 
   let duplicatedLines = 0;
-  for (const [, count] of lineFrequency) { if (count >= 3) duplicatedLines++; }
+  for (const [, count] of lineFrequency) {
+    if (count >= 3) duplicatedLines++;
+  }
   const { score: dupScore, summary: dupSummary } = scoreByThresholds(duplicatedLines, DUP_SCORE_THRESHOLDS);
 
   const codeQualityCategory = {
-    name: 'Code Quality', emoji: '📖',
+    name: "Code Quality",
+    emoji: "📖",
     score: Math.min(
-      Math.min(fnLenScore, 4) + Math.min(lineLenScore, 4) + Math.min(deadCodeScore, 4) + Math.min(dupScore, 3), 15,
-    ), max: 15,
-    summary: [fnLenSummary, lineLenSummary].filter(Boolean).join(', '),
+      Math.min(fnLenScore, 4) + Math.min(lineLenScore, 4) + Math.min(deadCodeScore, 4) + Math.min(dupScore, 3),
+      15
+    ),
+    max: 15,
+    summary: [fnLenSummary, lineLenSummary].filter(Boolean).join(", "),
     subcategories: [
       {
-        name: 'Function length', score: Math.min(fnLenScore, 4), max: 4, summary: fnLenSummary,
-        issuesFound: totalLongFunctions, issuesDescription: 'functions >50 lines', locations: longFuncFiles,
+        name: "Function length",
+        score: Math.min(fnLenScore, 4),
+        max: 4,
+        summary: fnLenSummary,
+        issuesFound: totalLongFunctions,
+        issuesDescription: "functions >50 lines",
+        locations: longFuncFiles,
       },
       {
-        name: 'Line length', score: Math.min(lineLenScore, 4), max: 4, summary: lineLenSummary,
-        issuesFound: totalLongLines, issuesDescription: 'lines >120 chars', locations: longLineFiles,
+        name: "Line length",
+        score: Math.min(lineLenScore, 4),
+        max: 4,
+        summary: lineLenSummary,
+        issuesFound: totalLongLines,
+        issuesDescription: "lines >120 chars",
+        locations: longLineFiles,
       },
       {
-        name: 'Dead code', score: Math.min(deadCodeScore, 4), max: 4, summary: deadCodeSummary,
+        name: "Dead code",
+        score: Math.min(deadCodeScore, 4),
+        max: 4,
+        summary: deadCodeSummary,
         issuesFound: totalCommentedCode + totalTodo,
-        issuesDescription: 'dead code indicators (TODO, commented code)',
+        issuesDescription: "dead code indicators (TODO, commented code)",
       },
       {
-        name: 'Duplication', score: Math.min(dupScore, 3), max: 3, summary: dupSummary,
-        issuesFound: duplicatedLines, issuesDescription: 'repeated code lines',
+        name: "Duplication",
+        score: Math.min(dupScore, 3),
+        max: 3,
+        summary: dupSummary,
+        issuesFound: duplicatedLines,
+        issuesDescription: "repeated code lines",
       },
     ],
   };
 
   const categories = [
-    testingCategory, securityCategory, typeCategory, errorHandlingCategory, perfCategory, codeQualityCategory,
+    testingCategory,
+    securityCategory,
+    typeCategory,
+    errorHandlingCategory,
+    perfCategory,
+    codeQualityCategory,
   ];
   const total = categories.reduce((sum, c) => sum + c.score, 0);
   const maxTotal = categories.reduce((sum, c) => sum + c.max, 0);
@@ -620,7 +742,6 @@ export function rebuildScanFromMetrics(
 
   return { projectName, total, maxTotal, categories, totalIssuesFound, issuesByType };
 }
-
 
 // ---------------------------------------------------------------------------
 // IncrementalScanner
@@ -636,20 +757,16 @@ export class IncrementalScanner {
     const p = cachePath(this.cwd);
     if (!existsSync(p)) return null;
     try {
-      const raw = readFileSync(p, 'utf-8');
+      const raw = readFileSync(p, "utf-8");
       const parsed = JSON.parse(raw) as ScanCache;
-      if (
-        typeof parsed.lastScanAt !== 'number' ||
-        !parsed.lastFullScan ||
-        typeof parsed.fileHashes !== 'object'
-      ) {
+      if (typeof parsed.lastScanAt !== "number" || !parsed.lastFullScan || typeof parsed.fileHashes !== "object") {
         return null;
       }
       if (!parsed.fileMetrics) parsed.fileMetrics = {};
       this.cachedTimestamp = parsed.lastScanAt;
       return parsed;
     } catch (err) {
-      logger.warn({ err }, 'Failed to parse scan cache, will perform full scan');
+      logger.warn({ err }, "Failed to parse scan cache, will perform full scan");
       return null;
     }
   }
@@ -659,7 +776,7 @@ export class IncrementalScanner {
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
-    writeFileSync(cachePath(this.cwd), JSON.stringify(cache, null, 2), 'utf-8');
+    writeFileSync(cachePath(this.cwd), JSON.stringify(cache, null, 2), "utf-8");
     this.cachedTimestamp = cache.lastScanAt;
     this._needsFullScan = false;
   }
@@ -677,16 +794,16 @@ export class IncrementalScanner {
       return this._needsFullScan;
     }
     try {
-      const raw = readFileSync(p, 'utf-8');
+      const raw = readFileSync(p, "utf-8");
       const parsed = JSON.parse(raw) as { lastScanAt?: number };
-      if (typeof parsed.lastScanAt === 'number') {
+      if (typeof parsed.lastScanAt === "number") {
         this.cachedTimestamp = parsed.lastScanAt;
         const age = Date.now() - parsed.lastScanAt;
         this._needsFullScan = age > CACHE_MAX_AGE_MS;
         return this._needsFullScan;
       }
     } catch (err) {
-      logger.warn({ err }, 'Failed to read scan cache timestamp, forcing full scan');
+      logger.warn({ err }, "Failed to read scan cache timestamp, forcing full scan");
     }
     this._needsFullScan = true;
     return true;
@@ -751,10 +868,10 @@ export class IncrementalScanner {
 
       let content: string;
       try {
-        content = readFileSync(filePath, 'utf-8');
+        content = readFileSync(filePath, "utf-8");
       } catch (err) {
-        logger.debug({ err, filePath }, 'Failed to read file for incremental rescan');
-        content = '';
+        logger.debug({ err, filePath }, "Failed to read file for incremental rescan");
+        content = "";
       }
 
       updatedFileMetrics[filePath] = analyzeFile(filePath, content);
@@ -787,10 +904,10 @@ export class IncrementalScanner {
     for (const filePath of files) {
       let content: string;
       try {
-        content = readFileSync(filePath, 'utf-8');
+        content = readFileSync(filePath, "utf-8");
       } catch (err) {
-        logger.debug({ err, filePath }, 'Failed to read file for full scan');
-        content = '';
+        logger.debug({ err, filePath }, "Failed to read file for full scan");
+        content = "";
       }
       fileMetrics[filePath] = analyzeFile(filePath, content);
     }

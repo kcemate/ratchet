@@ -1,7 +1,7 @@
-import { readFileSync, writeFileSync, writeSync, unlinkSync, openSync, closeSync, constants } from 'fs';
-import { join } from 'path';
+import { readFileSync, writeFileSync, writeSync, unlinkSync, openSync, closeSync, constants } from "fs";
+import { join } from "path";
 
-const LOCK_FILE = '.ratchet.lock';
+const LOCK_FILE = ".ratchet.lock";
 
 /**
  * Returns the path to the lock file for the given working directory.
@@ -28,7 +28,7 @@ export function acquireLock(cwd: string): void {
     return;
   } catch (err: unknown) {
     const code = (err as NodeJS.ErrnoException).code;
-    if (code !== 'EEXIST') {
+    if (code !== "EEXIST") {
       throw err; // Unexpected error (permissions, disk full, etc.)
     }
   }
@@ -36,7 +36,7 @@ export function acquireLock(cwd: string): void {
   // Lock file already exists — check if the owning process is still alive
   let existingPid: number | null = null;
   try {
-    existingPid = parseInt(readFileSync(lockPath, 'utf-8').trim(), 10);
+    existingPid = parseInt(readFileSync(lockPath, "utf-8").trim(), 10);
   } catch {
     // Unreadable lock file — treat as stale
   }
@@ -45,12 +45,12 @@ export function acquireLock(cwd: string): void {
     throw new Error(
       `Another ratchet process (PID ${existingPid}) is already running in this directory.\n` +
         `  Concurrent ratchet runs on the same repo can corrupt git history.\n` +
-        `  Wait for it to finish, or remove the lock: rm ${LOCK_FILE}`,
+        `  Wait for it to finish, or remove the lock: rm ${LOCK_FILE}`
     );
   }
 
   // Stale lock — overwrite with our PID
-  writeFileSync(lockPath, String(process.pid), 'utf-8');
+  writeFileSync(lockPath, String(process.pid), "utf-8");
 }
 
 /**

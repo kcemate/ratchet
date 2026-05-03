@@ -22,14 +22,14 @@ export const DEFAULT_CONTEXT_WINDOW_CHARS = 100_000;
 const TRUNCATE_KEEP_LINES = 20;
 
 /**
- * Remove single-line (//) and block (/* ... *​/) comments from a file content string.
+ * Remove single-line and block comments from a file content string.
  * Preserves string literals and does not attempt to be a full parser.
  */
 export function removeCodeComments(text: string): string {
   // Remove block comments (/* ... */)
-  let result = text.replace(/\/\*[\s\S]*?\*\//g, '');
+  let result = text.replace(/\/\*[\s\S]*?\*\//g, "");
   // Remove single-line comments (// ...) — but not inside strings (best effort)
-  result = result.replace(/(?<!["'`])\/\/[^\n]*/g, '');
+  result = result.replace(/(?<!["'`])\/\/[^\n]*/g, "");
   return result;
 }
 
@@ -37,7 +37,7 @@ export function removeCodeComments(text: string): string {
  * Collapse 3+ consecutive blank lines into 2 blank lines.
  */
 export function collapseBlankLines(text: string): string {
-  return text.replace(/(\n\s*){3,}/g, '\n\n');
+  return text.replace(/(\n\s*){3,}/g, "\n\n");
 }
 
 /**
@@ -45,12 +45,12 @@ export function collapseBlankLines(text: string): string {
  * Only applies to blocks with more than 2 * keepLines lines.
  */
 export function truncateFileBlock(content: string, keepLines: number = TRUNCATE_KEEP_LINES): string {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   if (lines.length <= keepLines * 2) return content;
   const head = lines.slice(0, keepLines);
   const tail = lines.slice(-keepLines);
   const trimmedCount = lines.length - keepLines * 2;
-  return [...head, `[...${trimmedCount} lines trimmed...]`, ...tail].join('\n');
+  return [...head, `[...${trimmedCount} lines trimmed...]`, ...tail].join("\n");
 }
 
 /**
@@ -59,12 +59,9 @@ export function truncateFileBlock(content: string, keepLines: number = TRUNCATE_
  */
 export function truncateFileBlocks(prompt: string, keepLines: number = TRUNCATE_KEEP_LINES): string {
   // Match FILE blocks: --- FILE: path --- ... --- END FILE ---
-  return prompt.replace(
-    /(--- FILE:[^\n]*---\n)([\s\S]*?)(--- END FILE ---)/g,
-    (_, header, content, footer) => {
-      return header + truncateFileBlock(content, keepLines) + footer;
-    },
-  );
+  return prompt.replace(/(--- FILE:[^\n]*---\n)([\s\S]*?)(--- END FILE ---)/g, (_, header, content, footer) => {
+    return header + truncateFileBlock(content, keepLines) + footer;
+  });
 }
 
 /**
@@ -72,19 +69,16 @@ export function truncateFileBlocks(prompt: string, keepLines: number = TRUNCATE_
  * These are injected as --- READ-ONLY: path --- ... --- END READ-ONLY --- blocks.
  */
 export function dropReadOnlyBlocks(prompt: string): string {
-  return prompt.replace(/\n?--- READ-ONLY:[^\n]*---\n[\s\S]*?--- END READ-ONLY ---\n?/g, '');
+  return prompt.replace(/\n?--- READ-ONLY:[^\n]*---\n[\s\S]*?--- END READ-ONLY ---\n?/g, "");
 }
 
 /**
  * Remove code comments from all FILE blocks in the prompt.
  */
 export function removeCommentsFromFileBlocks(prompt: string): string {
-  return prompt.replace(
-    /(--- FILE:[^\n]*---\n)([\s\S]*?)(--- END FILE ---)/g,
-    (_, header, content, footer) => {
-      return header + removeCodeComments(content) + footer;
-    },
-  );
+  return prompt.replace(/(--- FILE:[^\n]*---\n)([\s\S]*?)(--- END FILE ---)/g, (_, header, content, footer) => {
+    return header + removeCodeComments(content) + footer;
+  });
 }
 
 /**
@@ -128,7 +122,7 @@ export function microCompact(prompt: string, maxChars: number): string {
 export function shouldMicroCompact(
   promptLength: number,
   contextWindowChars: number = DEFAULT_CONTEXT_WINDOW_CHARS,
-  threshold: number = MICRO_COMPACT_THRESHOLD,
+  threshold: number = MICRO_COMPACT_THRESHOLD
 ): boolean {
   return promptLength > contextWindowChars * threshold;
 }

@@ -1,9 +1,12 @@
-import type { Target, RatchetConfig, ClickGuards } from '../types.js';
-import { GUARD_PROFILES } from '../types.js';
+import type { Target, RatchetConfig, ClickGuards } from "../types.js";
+import { GUARD_PROFILES } from "../types.js";
 
 /** Guard profile escalation chain: tight → refactor → broad → atomic */
-export const GUARD_ESCALATION_ORDER: Array<import('../types.js').GuardProfileName> = [
-  'tight', 'refactor', 'broad', 'atomic',
+export const GUARD_ESCALATION_ORDER: Array<import("../types.js").GuardProfileName> = [
+  "tight",
+  "refactor",
+  "broad",
+  "atomic",
 ];
 
 /**
@@ -11,8 +14,8 @@ export const GUARD_ESCALATION_ORDER: Array<import('../types.js').GuardProfileNam
  * Returns null if already at atomic or if guards can't be matched to a known profile.
  */
 export function nextGuardProfile(
-  current: ClickGuards | null,
-): { name: import('../types.js').GuardProfileName; guards: ClickGuards | null } | null {
+  current: ClickGuards | null
+): { name: import("../types.js").GuardProfileName; guards: ClickGuards | null } | null {
   if (current === null) return null; // already atomic
   // Match current guards to a known profile
   const currentIdx = GUARD_ESCALATION_ORDER.findIndex(name => {
@@ -29,9 +32,11 @@ export function nextGuardProfile(
 /** Detect guard-rejection rollbacks from click rollbackReason */
 export function isGuardRejection(reason?: string): boolean {
   if (!reason) return false;
-  return reason.startsWith('Too many lines changed:') ||
-    reason.startsWith('Too many files changed:') ||
-    reason.startsWith('Single file changed too many lines');
+  return (
+    reason.startsWith("Too many lines changed:") ||
+    reason.startsWith("Too many files changed:") ||
+    reason.startsWith("Single file changed too many lines")
+  );
 }
 
 /**
@@ -41,21 +46,21 @@ export function isGuardRejection(reason?: string): boolean {
  */
 export function resolveGuards(
   target: Target,
-  config: RatchetConfig,
-  mode: 'normal' | 'sweep' | 'architect',
-  focusCategory?: string,
+  config: Pick<RatchetConfig, "guards">,
+  mode: "normal" | "sweep" | "architect",
+  focusCategory?: string
 ): ClickGuards | null {
   // config.guards is set by CLI (highest priority)
   const source = config.guards !== undefined ? config.guards : target.guards;
   if (source !== undefined) {
     if (source === null) return null;
-    if (typeof source === 'string') return GUARD_PROFILES[source];
+    if (typeof source === "string") return GUARD_PROFILES[source];
     return source;
   }
   // Auto-elevate to refactor (12 files / 280 lines) for testing — test creation is cross-cutting
-  if (focusCategory === 'testing') return GUARD_PROFILES.refactor;
+  if (focusCategory === "testing") return GUARD_PROFILES.refactor;
   // Mode defaults
-  if (mode === 'architect') return GUARD_PROFILES.broad;
-  if (mode === 'sweep') return GUARD_PROFILES.sweep;
+  if (mode === "architect") return GUARD_PROFILES.broad;
+  if (mode === "sweep") return GUARD_PROFILES.sweep;
   return GUARD_PROFILES.tight;
 }

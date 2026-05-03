@@ -1,9 +1,9 @@
-import { spawn } from 'child_process';
-import { readFile, writeFile, access } from 'fs/promises';
-import { basename, dirname, join, extname } from 'path';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { runTests } from './runner.js';
+import { spawn } from "child_process";
+import { readFile, writeFile, access } from "fs/promises";
+import { basename, dirname, join, extname } from "path";
+import { execFile } from "child_process";
+import { promisify } from "util";
+import { runTests } from "./runner.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -39,12 +39,7 @@ export class RedTeamAgent {
     this.timeout = config.timeout ?? DEFAULT_TIMEOUT;
   }
 
-  async challenge(
-    originalCode: string,
-    newCode: string,
-    testFile: string,
-    cwd: string,
-  ): Promise<RedTeamResult> {
+  async challenge(originalCode: string, newCode: string, testFile: string, cwd: string): Promise<RedTeamResult> {
     // If there's no behavioral diff, skip
     const diff = computeSimpleDiff(originalCode, newCode);
     if (!diff.trim()) {
@@ -52,8 +47,8 @@ export class RedTeamAgent {
         challenged: false,
         testPassed: false,
         testFailed: false,
-        testCode: '',
-        reasoning: 'No behavioral change detected between original and new code.',
+        testCode: "",
+        reasoning: "No behavioral change detected between original and new code.",
         rollbackRecommended: false,
       };
     }
@@ -65,7 +60,7 @@ export class RedTeamAgent {
         challenged: false,
         testPassed: false,
         testFailed: false,
-        testCode: '',
+        testCode: "",
         reasoning: `Test file not found: ${testFile}. Skipping adversarial challenge.`,
         rollbackRecommended: false,
       };
@@ -74,13 +69,13 @@ export class RedTeamAgent {
     // Read existing test file content
     let existingTests: string;
     try {
-      existingTests = await readFile(join(cwd, testFile), 'utf-8');
+      existingTests = await readFile(join(cwd, testFile), "utf-8");
     } catch {
       return {
         challenged: false,
         testPassed: false,
         testFailed: false,
-        testCode: '',
+        testCode: "",
         reasoning: `Could not read test file: ${testFile}`,
         rollbackRecommended: false,
       };
@@ -97,7 +92,7 @@ export class RedTeamAgent {
         challenged: false,
         testPassed: false,
         testFailed: false,
-        testCode: '',
+        testCode: "",
         reasoning: `Agent failed to generate test: ${error.message}`,
         rollbackRecommended: false,
       };
@@ -110,8 +105,8 @@ export class RedTeamAgent {
         challenged: false,
         testPassed: false,
         testFailed: false,
-        testCode: '',
-        reasoning: 'Agent did not produce a valid test code block.',
+        testCode: "",
+        reasoning: "Agent did not produce a valid test code block.",
         rollbackRecommended: false,
       };
     }
@@ -120,10 +115,10 @@ export class RedTeamAgent {
 
     // Append the test to the test file, run tests, then restore
     const originalTestContent = existingTests;
-    const augmentedContent = existingTests + '\n\n' + testCode + '\n';
+    const augmentedContent = existingTests + "\n\n" + testCode + "\n";
 
     try {
-      await writeFile(join(cwd, testFile), augmentedContent, 'utf-8');
+      await writeFile(join(cwd, testFile), augmentedContent, "utf-8");
 
       // Run the test suite
       const testResult = await runTests({
@@ -145,60 +140,60 @@ export class RedTeamAgent {
       };
     } finally {
       // Always restore the original test file
-      await writeFile(join(cwd, testFile), originalTestContent, 'utf-8').catch(() => {});
+      await writeFile(join(cwd, testFile), originalTestContent, "utf-8").catch(() => {});
     }
   }
 
   private runAgent(prompt: string, cwd: string): Promise<string> {
-    const args = ['--print', '--permission-mode', 'bypassPermissions'];
+    const args = ["--print", "--permission-mode", "bypassPermissions"];
     if (this.model) {
-      args.push('--model', this.model);
+      args.push("--model", this.model);
     }
     args.push(prompt);
 
     const maxBuffer = 10 * 1024 * 1024;
 
     return new Promise((resolve, reject) => {
-      const child = spawn('claude', args, {
+      const child = spawn("claude", args, {
         cwd,
         env: { ...process.env },
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: ["ignore", "pipe", "pipe"],
       });
 
-      let stdoutBuf = '';
-      let stderrBuf = '';
+      let stdoutBuf = "";
+      let stderrBuf = "";
       let totalBytes = 0;
       let timedOut = false;
 
       const timer = setTimeout(() => {
         timedOut = true;
-        child.kill('SIGTERM');
+        child.kill("SIGTERM");
       }, this.timeout);
 
-      child.stdout.on('data', (chunk: Buffer) => {
+      child.stdout.on("data", (chunk: Buffer) => {
         totalBytes += chunk.length;
         if (totalBytes <= maxBuffer) stdoutBuf += chunk.toString();
       });
 
-      child.stderr.on('data', (chunk: Buffer) => {
+      child.stderr.on("data", (chunk: Buffer) => {
         totalBytes += chunk.length;
         if (totalBytes <= maxBuffer) stderrBuf += chunk.toString();
       });
 
-      child.on('error', (err: NodeJS.ErrnoException) => {
+      child.on("error", (err: NodeJS.ErrnoException) => {
         clearTimeout(timer);
         reject(new Error(`Red team agent error: ${err.message}`));
       });
 
-      child.on('close', (code: number | null) => {
+      child.on("close", (code: number | null) => {
         clearTimeout(timer);
 
         if (timedOut) {
-          reject(new Error('Red team agent timed out'));
+          reject(new Error("Red team agent timed out"));
           return;
         }
 
-        const output = [stdoutBuf, stderrBuf].filter(Boolean).join('\n').trim();
+        const output = [stdoutBuf, stderrBuf].filter(Boolean).join("\n").trim();
 
         if (code === 0 || output) {
           resolve(output);
@@ -216,7 +211,7 @@ function buildRedTeamPrompt(
   newCode: string,
   diff: string,
   existingTests: string,
-  testFile: string,
+  testFile: string
 ): string {
   return (
     `You are a RED TEAM test engineer. Your job is to find regressions in code changes.\n\n` +
@@ -245,15 +240,15 @@ function buildRedTeamPrompt(
  * Strips whitespace-only and comment-only changes to focus on behavioral diffs.
  */
 export function computeSimpleDiff(original: string, updated: string): string {
-  const origLines = original.split('\n');
-  const newLines = updated.split('\n');
+  const origLines = original.split("\n");
+  const newLines = updated.split("\n");
 
   const diffs: string[] = [];
   const maxLen = Math.max(origLines.length, newLines.length);
 
   for (let i = 0; i < maxLen; i++) {
-    const origLine = origLines[i] ?? '';
-    const newLine = newLines[i] ?? '';
+    const origLine = origLines[i] ?? "";
+    const newLine = newLines[i] ?? "";
 
     if (normalizeLine(origLine) !== normalizeLine(newLine)) {
       if (i < origLines.length) diffs.push(`- ${origLine}`);
@@ -261,14 +256,14 @@ export function computeSimpleDiff(original: string, updated: string): string {
     }
   }
 
-  return diffs.join('\n');
+  return diffs.join("\n");
 }
 
 function normalizeLine(line: string): string {
   // Strip comments and normalize whitespace for comparison
   return line
-    .replace(/\/\/.*$/, '')
-    .replace(/\/\*.*?\*\//g, '')
+    .replace(/\/\/.*$/, "")
+    .replace(/\/\*.*?\*\//g, "")
     .trim();
 }
 
@@ -277,7 +272,7 @@ function normalizeLine(line: string): string {
  */
 export function extractTestCode(output: string): string {
   const match = output.match(/```(?:typescript|ts|javascript|js)?\n([\s\S]*?)```/);
-  return match ? match[1].trim() : '';
+  return match ? match[1].trim() : "";
 }
 
 /**
@@ -285,7 +280,7 @@ export function extractTestCode(output: string): string {
  */
 export function extractReasoning(output: string): string {
   const match = output.match(/REASONING:\s*([\s\S]*?)(?=```|$)/);
-  return match ? match[1].trim() : 'No reasoning provided.';
+  return match ? match[1].trim() : "No reasoning provided.";
 }
 
 /**
@@ -302,14 +297,14 @@ export async function detectTestFile(sourceFile: string, cwd: string): Promise<s
     join(dir, `${base}.test${ext}`),
     join(dir, `${base}.spec${ext}`),
     // __tests__ directory
-    join(dir, '__tests__', `${base}.test${ext}`),
-    join(dir, '__tests__', `${base}.spec${ext}`),
+    join(dir, "__tests__", `${base}.test${ext}`),
+    join(dir, "__tests__", `${base}.spec${ext}`),
     // tests/ at repo root
-    join('tests', `${base}.test${ext}`),
-    join('tests', `${base}.spec${ext}`),
+    join("tests", `${base}.test${ext}`),
+    join("tests", `${base}.spec${ext}`),
     // test/ at repo root
-    join('test', `${base}.test${ext}`),
-    join('test', `${base}.spec${ext}`),
+    join("test", `${base}.test${ext}`),
+    join("test", `${base}.spec${ext}`),
   ];
 
   for (const candidate of candidates) {
@@ -326,10 +321,10 @@ export async function detectTestFile(sourceFile: string, cwd: string): Promise<s
  */
 export async function getOriginalCode(filepath: string, cwd: string): Promise<string> {
   try {
-    const { stdout } = await execFileAsync('git', ['show', `HEAD~1:${filepath}`], { cwd });
+    const { stdout } = await execFileAsync("git", ["show", `HEAD~1:${filepath}`], { cwd });
     return stdout;
   } catch {
-    return '';
+    return "";
   }
 }
 

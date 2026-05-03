@@ -1,14 +1,14 @@
-import type { ScanResult } from './scanner/index.js';
-import { assessFileRisk, getDependencyClusters, getCypherClusters, getEntryPointScore } from './gitnexus.js';
-import { SEVERITY_WEIGHT } from './taxonomy.js';
-import { SUBCATEGORY_TIERS } from './score-optimizer.js';
+import type { ScanResult } from "./scanner/index.js";
+import { assessFileRisk, getDependencyClusters, getCypherClusters, getEntryPointScore } from "./gitnexus.js";
+import { SEVERITY_WEIGHT } from "./taxonomy.js";
+import { SUBCATEGORY_TIERS } from "./score-optimizer.js";
 
 export interface IssueTask {
   category: string;
   subcategory: string;
   description: string;
   count: number;
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
   priority: number; // computed: severity_weight * count * gap_ratio
   sweepFiles?: string[];
   riskScore?: number; // 0–1 blast radius risk from GitNexus
@@ -16,7 +16,7 @@ export interface IssueTask {
   /** If set, this task carries a pre-built architect prompt to use verbatim */
   architectPrompt?: string;
   /** Mode required to fix: 'torque' (single-file), 'sweep' (batch), or 'architect' (structural redesign) */
-  fixMode?: 'torque' | 'sweep' | 'architect';
+  fixMode?: "torque" | "sweep" | "architect";
   /** Fix instruction from matching SUBCATEGORY_TIERS entry, for agent prompt injection */
   fixInstruction?: string;
   /** Current score for this subcategory (from scan result) */
@@ -64,10 +64,10 @@ export function buildBacklog(scan: ScanResult): IssueTask[] {
 
     // Apply penalty for architect-mode tasks: they require structural redesign and
     // can't be addressed in a normal torque click, so they sink to the bottom.
-    const architectPenalty = fixMode === 'architect' ? 0.1 : 1;
+    const architectPenalty = fixMode === "architect" ? 0.1 : 1;
     // Penalize cross-cutting issues (>10 files) and sweep-mode issues
     const crossCuttingPenalty = issue.count > 10 ? 10 / issue.count : 1;
-    const sweepPenalty = fixMode === 'sweep' ? 0.3 : 1;
+    const sweepPenalty = fixMode === "sweep" ? 0.3 : 1;
     const priority = severityWeight * cappedCount * gapRatio * architectPenalty * crossCuttingPenalty * sweepPenalty;
 
     let currentScore: number | undefined;
@@ -154,15 +154,15 @@ export function enrichBacklogWithRisk(tasks: IssueTask[], cwd: string): IssueTas
 
     // Adjust priority: high-risk files should be deprioritized for structural changes
     // but prioritized for test coverage (safety-first)
-    const isTestCoverage = task.subcategory.toLowerCase().includes('test') ||
-      task.subcategory.toLowerCase().includes('coverage');
+    const isTestCoverage =
+      task.subcategory.toLowerCase().includes("test") || task.subcategory.toLowerCase().includes("coverage");
 
     if (isTestCoverage) {
       // High-impact code NEEDS tests more — boost priority
-      task.priority *= (1 + avgRisk);
+      task.priority *= 1 + avgRisk;
     } else {
       // High-impact code is RISKIER to change — reduce priority
-      task.priority *= (1 - avgRisk * 0.5);
+      task.priority *= 1 - avgRisk * 0.5;
     }
   }
 
@@ -192,7 +192,7 @@ export function enrichBacklogWithEntryPoints(tasks: IssueTask[], cwd: string): I
 
     // High entry-point score = more user-facing = higher priority multiplier
     // Score of 1.0 (pure entry point) doubles the priority; 0.5 (neutral) adds 50%; 0 = no boost
-    task.priority *= (1 + avgScore);
+    task.priority *= 1 + avgScore;
   }
 
   // Re-sort after entry-point adjustment
@@ -208,7 +208,7 @@ export async function groupByDependencyClusterSmart(
   files: string[],
   cwd: string,
   issueTypes: string[] = [],
-  maxPerCluster = 6,
+  maxPerCluster = 6
 ): Promise<string[][]> {
   if (files.length === 0) return [];
 
@@ -237,11 +237,7 @@ export async function groupByDependencyClusterSmart(
  * Tightly-coupled files (shared imports) are grouped together so a sweep click
  * can fix related files in the same pass. Falls back to chunking if GitNexus is unavailable.
  */
-export function groupByDependencyCluster(
-  files: string[],
-  cwd: string,
-  maxPerCluster = 6,
-): string[][] {
+export function groupByDependencyCluster(files: string[], cwd: string, maxPerCluster = 6): string[][] {
   const clusters = getDependencyClusters(files, cwd);
 
   // Split large clusters into chunks of maxPerCluster
@@ -263,17 +259,14 @@ export function groupByDependencyCluster(
  *
  * Issues without a fixMode set are always included.
  */
-export function filterBacklogByMode(
-  backlog: IssueTask[],
-  mode: 'torque' | 'sweep' | 'architect',
-): IssueTask[] {
-  if (mode === 'architect') return backlog;
+export function filterBacklogByMode(backlog: IssueTask[], mode: "torque" | "sweep" | "architect"): IssueTask[] {
+  if (mode === "architect") return backlog;
 
   return backlog.filter(task => {
     if (!task.fixMode) return true; // unknown mode — include by default
-    if (mode === 'torque') return task.fixMode === 'torque';
+    if (mode === "torque") return task.fixMode === "torque";
     // sweep: keep torque + sweep, exclude architect
-    return task.fixMode === 'torque' || task.fixMode === 'sweep';
+    return task.fixMode === "torque" || task.fixMode === "sweep";
   });
 }
 
@@ -282,6 +275,6 @@ export function filterBacklogByMode(
  */
 export function formatIssuesForPrompt(issues: IssueTask[]): string {
   return issues
-    .map((t) => `- [${t.severity.toUpperCase()}] ${t.count} ${t.description} (${t.category} > ${t.subcategory})`)
-    .join('\n');
+    .map(t => `- [${t.severity.toUpperCase()}] ${t.count} ${t.description} (${t.category} > ${t.subcategory})`)
+    .join("\n");
 }

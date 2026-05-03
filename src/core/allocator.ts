@@ -1,9 +1,5 @@
-import type { ScanResult } from '../core/scanner';
-import {
-  STRUCTURAL_SUBCATEGORIES,
-  LOCAL_SUBCATEGORIES,
-  SEVERITY_WEIGHT,
-} from './taxonomy.js';
+import type { ScanResult } from "../core/scanner";
+import { STRUCTURAL_SUBCATEGORIES, LOCAL_SUBCATEGORIES, SEVERITY_WEIGHT } from "./taxonomy.js";
 
 export interface ClickAllocation {
   architectClicks: number;
@@ -23,14 +19,14 @@ export interface ClickAllocation {
  */
 export function allocateClicks(scan: ScanResult, totalClicks: number): ClickAllocation {
   if (totalClicks <= 0) {
-    return { architectClicks: 0, surgicalClicks: 0, reasoning: 'No clicks to allocate.' };
+    return { architectClicks: 0, surgicalClicks: 0, reasoning: "No clicks to allocate." };
   }
 
   if (totalClicks === 1) {
     return {
       architectClicks: 1,
       surgicalClicks: 0,
-      reasoning: 'Only 1 click — using architect for maximum structural impact.',
+      reasoning: "Only 1 click — using architect for maximum structural impact.",
     };
   }
 

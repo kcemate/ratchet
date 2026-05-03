@@ -1,20 +1,20 @@
-import type { Provider, ProviderOptions } from './base.js';
-import { fetchOpenAICompatible } from './base.js';
+import type { Provider, ProviderOptions } from "./base.js";
+import { fetchOpenAICompatible } from "./base.js";
 
-const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-6';
-const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const DEFAULT_MODEL = "anthropic/claude-sonnet-4-6";
+const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // OpenRouter uses Sonnet pricing as default estimate: $3 input / $15 output per million tokens
 const INPUT_PRICE_PER_M = 3;
 const OUTPUT_PRICE_PER_M = 15;
 
 export class OpenRouterProvider implements Provider {
-  readonly name = 'OpenRouter';
-  readonly tier = 'pro' as const;
+  readonly name = "OpenRouter";
+  readonly tier = "pro" as const;
 
   constructor(
     private readonly apiKey: string,
-    private readonly defaultModel: string = DEFAULT_MODEL,
+    private readonly defaultModel: string = DEFAULT_MODEL
   ) {}
 
   async sendMessage(prompt: string, options?: ProviderOptions): Promise<string> {
@@ -23,8 +23,8 @@ export class OpenRouterProvider implements Provider {
       { Authorization: `Bearer ${this.apiKey}` },
       options?.model ?? this.defaultModel,
       prompt,
-      'OpenRouter',
-      options,
+      "OpenRouter",
+      options
     );
   }
 

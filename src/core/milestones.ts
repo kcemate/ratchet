@@ -1,6 +1,6 @@
-import type { ScanHistoryEntry } from './scan-history.js';
+import type { ScanHistoryEntry } from "./scan-history.js";
 
-export type MilestoneTier = 'None' | 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Verified';
+export type MilestoneTier = "None" | "Bronze" | "Silver" | "Gold" | "Platinum" | "Verified";
 
 export interface MilestoneBadge {
   tier: MilestoneTier;
@@ -13,19 +13,19 @@ export interface MilestoneResult {
   currentTier: MilestoneTier;
   badge: MilestoneBadge;
   nextTier: MilestoneTier | null;
-  progressDays: number;   // consecutive days at ≥ threshold for next streak tier
-  requiredDays: number;   // days required for that streak tier
-  progressScore: number;  // current score
-  nextThreshold: number;  // score needed for next tier (0 when already at top)
+  progressDays: number; // consecutive days at ≥ threshold for next streak tier
+  requiredDays: number; // days required for that streak tier
+  progressScore: number; // current score
+  nextThreshold: number; // score needed for next tier (0 when already at top)
 }
 
 const TIER_BADGES: Record<MilestoneTier, MilestoneBadge> = {
-  None:     { tier: 'None',     color: '#9f9f9f', icon: '—',  label: 'No tier'          },
-  Bronze:   { tier: 'Bronze',   color: '#cd7f32', icon: '🥉', label: 'Bronze'            },
-  Silver:   { tier: 'Silver',   color: '#c0c0c0', icon: '🥈', label: 'Silver'            },
-  Gold:     { tier: 'Gold',     color: '#ffd700', icon: '🥇', label: 'Gold'              },
-  Platinum: { tier: 'Platinum', color: '#e5e4e2', icon: '💎', label: 'Platinum'          },
-  Verified: { tier: 'Verified', color: '#7c3aed', icon: '👑', label: 'Ratchet Verified'  },
+  None: { tier: "None", color: "#9f9f9f", icon: "—", label: "No tier" },
+  Bronze: { tier: "Bronze", color: "#cd7f32", icon: "🥉", label: "Bronze" },
+  Silver: { tier: "Silver", color: "#c0c0c0", icon: "🥈", label: "Silver" },
+  Gold: { tier: "Gold", color: "#ffd700", icon: "🥇", label: "Gold" },
+  Platinum: { tier: "Platinum", color: "#e5e4e2", icon: "💎", label: "Platinum" },
+  Verified: { tier: "Verified", color: "#7c3aed", icon: "👑", label: "Ratchet Verified" },
 };
 
 /**
@@ -60,9 +60,9 @@ export function consecutiveDaysAbove(history: ScanHistoryEntry[], threshold: num
 export function checkMilestones(history: ScanHistoryEntry[]): MilestoneResult {
   if (history.length === 0) {
     return {
-      currentTier: 'None',
-      badge: TIER_BADGES['None'],
-      nextTier: 'Bronze',
+      currentTier: "None",
+      badge: TIER_BADGES["None"],
+      nextTier: "Bronze",
       progressDays: 0,
       requiredDays: 0,
       progressScore: 0,
@@ -81,31 +81,31 @@ export function checkMilestones(history: ScanHistoryEntry[]): MilestoneResult {
   let nextThreshold = 0;
 
   if (verifiedStreak >= 90) {
-    currentTier = 'Verified';
+    currentTier = "Verified";
     nextTier = null;
   } else if (platinumStreak >= 30) {
-    currentTier = 'Platinum';
-    nextTier = 'Verified';
+    currentTier = "Platinum";
+    nextTier = "Verified";
     progressDays = verifiedStreak;
     requiredDays = 90;
     nextThreshold = 95;
   } else if (latestScore >= 90) {
-    currentTier = 'Gold';
-    nextTier = 'Platinum';
+    currentTier = "Gold";
+    nextTier = "Platinum";
     progressDays = platinumStreak;
     requiredDays = 30;
     nextThreshold = 90;
   } else if (latestScore >= 75) {
-    currentTier = 'Silver';
-    nextTier = 'Gold';
+    currentTier = "Silver";
+    nextTier = "Gold";
     nextThreshold = 90;
   } else if (latestScore >= 60) {
-    currentTier = 'Bronze';
-    nextTier = 'Silver';
+    currentTier = "Bronze";
+    nextTier = "Silver";
     nextThreshold = 75;
   } else {
-    currentTier = 'None';
-    nextTier = 'Bronze';
+    currentTier = "None";
+    nextTier = "Bronze";
     nextThreshold = 60;
   }
 

@@ -1,15 +1,8 @@
-import type { ModelTiers } from '../types.js';
+import type { ModelTiers } from "../types.js";
 
-export type TaskType =
-  | 'scan'
-  | 'fix'
-  | 'sweep'
-  | 'analyze'
-  | 'architect'
-  | 'report'
-  | 'deep-scan';
+export type TaskType = "scan" | "fix" | "sweep" | "analyze" | "architect" | "report" | "deep-scan";
 
-export type CapabilityTier = 'cheap' | 'standard' | 'best';
+export type CapabilityTier = "cheap" | "standard" | "best";
 
 export interface ModelEntry {
   provider: string;
@@ -23,31 +16,31 @@ export interface RegisterConfig extends ModelEntry {
 }
 
 const TASK_TIER: Record<TaskType, CapabilityTier> = {
-  scan: 'cheap',
-  sweep: 'cheap',
-  report: 'cheap',
-  analyze: 'standard',
-  fix: 'standard',
-  'deep-scan': 'standard',
-  architect: 'best',
+  scan: "cheap",
+  sweep: "cheap",
+  report: "cheap",
+  analyze: "standard",
+  fix: "standard",
+  "deep-scan": "standard",
+  architect: "best",
 };
 
 /** Default model IDs per provider per tier. undefined = use provider's own default (e.g. Local). */
 const DEFAULT_PROVIDER_MODELS: Record<string, Record<CapabilityTier, string | undefined>> = {
   Anthropic: {
-    cheap: 'claude-haiku-4-5-20251001',
-    standard: 'claude-sonnet-4-6',
-    best: 'claude-opus-4-6',
+    cheap: "claude-haiku-4-5-20251001",
+    standard: "claude-sonnet-4-6",
+    best: "claude-opus-4-6",
   },
   OpenAI: {
-    cheap: 'gpt-4o-mini',
-    standard: 'gpt-4o',
-    best: 'gpt-4o',
+    cheap: "gpt-4o-mini",
+    standard: "gpt-4o",
+    best: "gpt-4o",
   },
   OpenRouter: {
-    cheap: 'anthropic/claude-haiku-4-5-20251001',
-    standard: 'anthropic/claude-sonnet-4-6',
-    best: 'anthropic/claude-opus-4-6',
+    cheap: "anthropic/claude-haiku-4-5-20251001",
+    standard: "anthropic/claude-sonnet-4-6",
+    best: "anthropic/claude-opus-4-6",
   },
   Local: {
     cheap: undefined,
@@ -55,20 +48,18 @@ const DEFAULT_PROVIDER_MODELS: Record<string, Record<CapabilityTier, string | un
     best: undefined,
   },
   OllamaCloud: {
-    cheap: 'nemotron-3-super:cloud',
-    standard: 'kimi-k2.6:cloud',
-    best: 'kimi-k2.6:cloud',
+    cheap: "nemotron-3-super:cloud",
+    standard: "kimi-k2.6:cloud",
+    best: "kimi-k2.6:cloud",
   },
   SI: {
-    cheap: 'si-1-mini',
-    standard: 'si-1',
-    best: 'si-1-pro',
+    cheap: "si-1-mini",
+    standard: "si-1",
+    best: "si-1-pro",
   },
 };
 
-function copyProviderModels(
-  src: typeof DEFAULT_PROVIDER_MODELS,
-): typeof DEFAULT_PROVIDER_MODELS {
+function copyProviderModels(src: typeof DEFAULT_PROVIDER_MODELS): typeof DEFAULT_PROVIDER_MODELS {
   const out: typeof DEFAULT_PROVIDER_MODELS = {};
   for (const [k, v] of Object.entries(src)) {
     out[k] = { ...v };
@@ -110,7 +101,7 @@ export class ModelRegistry {
     const tierOverride = this.tierOverrides.get(tier);
     if (tierOverride) return tierOverride;
 
-    return this.providerModels['Anthropic']![tier] ?? 'claude-sonnet-4-6';
+    return this.providerModels["Anthropic"]![tier] ?? "claude-sonnet-4-6";
   }
 
   /**
@@ -128,7 +119,7 @@ export class ModelRegistry {
       if (model) return model;
     }
 
-    return this.providerModels['Anthropic']![tier] ?? 'claude-sonnet-4-6';
+    return this.providerModels["Anthropic"]![tier] ?? "claude-sonnet-4-6";
   }
 
   /**
@@ -181,8 +172,8 @@ export class ModelRegistry {
    * List all task→model mappings for a given provider.
    * Useful for inspection and debugging.
    */
-  listModels(providerName = 'Anthropic'): Array<{ task: TaskType; tier: CapabilityTier; modelId: string }> {
-    return (Object.keys(TASK_TIER) as TaskType[]).map((task) => ({
+  listModels(providerName = "Anthropic"): Array<{ task: TaskType; tier: CapabilityTier; modelId: string }> {
+    return (Object.keys(TASK_TIER) as TaskType[]).map(task => ({
       task,
       tier: TASK_TIER[task],
       modelId: this.getModel(task, providerName),
@@ -206,11 +197,11 @@ export class ModelRegistry {
     if (!models && !globalModel) return;
 
     if (models) {
-      if (models.cheap) this.setDefault('cheap', models.cheap);
-      if (models.default) this.setDefault('standard', models.default);
-      if (models.premium) this.setDefault('best', models.premium);
+      if (models.cheap) this.setDefault("cheap", models.cheap);
+      if (models.default) this.setDefault("standard", models.default);
+      if (models.premium) this.setDefault("best", models.premium);
 
-      const taskKeys: TaskType[] = ['scan', 'fix', 'sweep', 'analyze', 'architect', 'report', 'deep-scan'];
+      const taskKeys: TaskType[] = ["scan", "fix", "sweep", "analyze", "architect", "report", "deep-scan"];
       for (const task of taskKeys) {
         const val = (models as Record<string, string | undefined>)[task];
         if (val) this.setModel(task, val);
@@ -219,7 +210,7 @@ export class ModelRegistry {
 
     // Single global `model:` key → standard tier fallback (only if not already set by models.default)
     if (globalModel && !models?.default) {
-      this.setDefault('standard', globalModel);
+      this.setDefault("standard", globalModel);
     }
   }
 

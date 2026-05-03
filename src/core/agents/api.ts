@@ -1,11 +1,11 @@
-import type { Target, BuildResult, HardenPhase } from '../../types.js';
-import type { Agent, AgentOptions } from './base.js';
-import type { Provider, ProviderOptions } from '../providers/base.js';
-import type { IssueTask } from '../issue-backlog.js';
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { join, dirname } from 'path';
-import { logger } from '../../lib/logger.js';
-import { microCompact, shouldMicroCompact, DEFAULT_CONTEXT_WINDOW_CHARS } from '../micro-compact.js';
+import type { Target, BuildResult, HardenPhase } from "../../types.js";
+import type { Agent, AgentOptions } from "./base.js";
+import type { Provider, ProviderOptions } from "../providers/base.js";
+import type { IssueTask } from "../issue-backlog.js";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { join, dirname } from "path";
+import { logger } from "../../lib/logger.js";
+import { microCompact, shouldMicroCompact, DEFAULT_CONTEXT_WINDOW_CHARS } from "../micro-compact.js";
 
 export interface APIAgentConfig extends AgentOptions {
   provider: Provider;
@@ -39,13 +39,18 @@ export class APIAgent implements Agent {
     if (issues && issues.length > 0) {
       this._issueDrivenClick = true;
       // Dynamic import avoids circular dep (shell.ts already imports from api.ts)
-      const { buildIssuePlanPrompt } = await import('./shell.js');
-      return buildIssuePlanPrompt(context, issues, this.gitnexusCwd ?? process.cwd(), this.strategyContext, this.repoContext, this.priorRoundsContext);
+      const { buildIssuePlanPrompt } = await import("./shell.js");
+      return buildIssuePlanPrompt(
+        context,
+        issues,
+        this.gitnexusCwd ?? process.cwd(),
+        this.strategyContext,
+        this.repoContext,
+        this.priorRoundsContext
+      );
     }
     this._issueDrivenClick = false;
-    const prompt = hardenPhase === 'harden:tests'
-      ? buildHardenAnalyzePrompt(context)
-      : buildAnalyzePrompt(context);
+    const prompt = hardenPhase === "harden:tests" ? buildHardenAnalyzePrompt(context) : buildAnalyzePrompt(context);
     return this.provider.sendMessage(prompt, this.providerOptions);
   }
 
@@ -54,9 +59,10 @@ export class APIAgent implements Agent {
     if (issues && issues.length > 0) {
       return analysis;
     }
-    const prompt = hardenPhase === 'harden:tests'
-      ? buildHardenProposePrompt(analysis, target)
-      : buildProposePrompt(analysis, target);
+    const prompt =
+      hardenPhase === "harden:tests"
+        ? buildHardenProposePrompt(analysis, target)
+        : buildProposePrompt(analysis, target);
     return this.provider.sendMessage(prompt, this.providerOptions);
   }
 
@@ -77,14 +83,14 @@ export class APIAgent implements Agent {
       }
 
       const maxFilesToEdit = this.clickGuards?.maxFiles ?? 1;
-      let fileContents = '';
+      let fileContents = "";
       let primaryFileContent: string | null = null;
       // Extract line number hint from prompt for windowed injection
       const lineHint = extractLineHint(basePrompt);
       for (const filePath of targetFiles.slice(0, maxFilesToEdit)) {
         try {
           const absPath = join(cwd, filePath);
-          const content = await readFile(absPath, 'utf-8');
+          const content = await readFile(absPath, "utf-8");
           if (!primaryFileContent) primaryFileContent = content;
           const window = extractLineWindow(content, lineHint, 75);
           fileContents += `\n--- FILE: ${filePath}${window.note} ---\n${window.text}\n--- END FILE ---\n`;
@@ -100,25 +106,29 @@ export class APIAgent implements Agent {
         // 1. Check for a matching test file
         for (const tc of buildTestCandidates(primaryFile)) {
           try {
-            const content = await readFile(join(cwd, tc), 'utf-8');
-            const preview = content.split('\n').slice(0, 60).join('\n');
+            const content = await readFile(join(cwd, tc), "utf-8");
+            const preview = content.split("\n").slice(0, 60).join("\n");
             readOnlyParts.push(`\n--- READ-ONLY: ${tc} ---\n${preview}\n--- END READ-ONLY ---\n`);
             break;
-          } catch { /* not found */ }
+          } catch {
+            /* not found */
+          }
         }
         // 2. Check for imported files
         for (const ip of extractRelativeImports(primaryFileContent, primaryFile)) {
           if (readOnlyParts.length >= 4) break;
           if (targetFiles.includes(ip)) continue; // already in editable set
           try {
-            const content = await readFile(join(cwd, ip), 'utf-8');
-            const preview = content.split('\n').slice(0, 60).join('\n');
+            const content = await readFile(join(cwd, ip), "utf-8");
+            const preview = content.split("\n").slice(0, 60).join("\n");
             readOnlyParts.push(`\n--- READ-ONLY: ${ip} ---\n${preview}\n--- END READ-ONLY ---\n`);
-          } catch { /* not found */ }
+          } catch {
+            /* not found */
+          }
         }
       }
 
-      const readOnlyContext = readOnlyParts.join('');
+      const readOnlyContext = readOnlyParts.join("");
       let prompt = buildAPIBuildPrompt(basePrompt, fileContents, this.clickGuards, readOnlyContext, this.repoContext);
 
       // Micro-compaction: if prompt exceeds 80% of context window estimate, trim it down
@@ -128,7 +138,7 @@ export class APIAgent implements Agent {
         if (prompt.length < before) {
           logger.debug(
             { before, after: prompt.length, saved: before - prompt.length },
-            '[APIAgent] Micro-compacted prompt',
+            "[APIAgent] Micro-compacted prompt"
           );
         }
       }
@@ -142,7 +152,7 @@ export class APIAgent implements Agent {
       const allModified = [...new Set([...writtenFiles, ...declaredFiles])];
 
       if (writtenFiles.length > 0) {
-        logger.info(`[APIAgent] Wrote ${writtenFiles.length} file(s) to disk: ${writtenFiles.join(', ')}`);
+        logger.info(`[APIAgent] Wrote ${writtenFiles.length} file(s) to disk: ${writtenFiles.join(", ")}`);
       }
 
       // Pre-flight failure: EDIT blocks existed but all search texts were not found in files.
@@ -156,7 +166,7 @@ export class APIAgent implements Agent {
       return { success: true, output, filesModified: allModified };
     } catch (err: unknown) {
       const error = err as Error;
-      return { success: false, output: error.message ?? '', filesModified: [], error: error.message };
+      return { success: false, output: error.message ?? "", filesModified: [], error: error.message };
     }
   }
 }
@@ -228,15 +238,15 @@ function buildAPIBuildPrompt(
   fileContents: string,
   guards?: { maxFiles?: number; maxLines?: number },
   readOnlyContext?: string,
-  repoContext?: string,
+  repoContext?: string
 ): string {
-  const maxFiles = guards?.maxFiles ?? 1;   // default 1 for backward compat
-  const maxLines = guards?.maxLines ?? 20;  // default 20 for backward compat
+  const maxFiles = guards?.maxFiles ?? 1; // default 1 for backward compat
+  const maxLines = guards?.maxLines ?? 20; // default 20 for backward compat
   return (
-    (repoContext ? `${repoContext}\n\n` : '') +
+    (repoContext ? `${repoContext}\n\n` : "") +
     `TASK: ${basePrompt}\n\n` +
-    (fileContents ? `FILE CONTENTS (editable — use SEARCH/REPLACE to modify):\n${fileContents}\n\n` : '') +
-    (readOnlyContext ? `READ-ONLY CONTEXT (do NOT edit these — for reference only):\n${readOnlyContext}\n\n` : '') +
+    (fileContents ? `FILE CONTENTS (editable — use SEARCH/REPLACE to modify):\n${fileContents}\n\n` : "") +
+    (readOnlyContext ? `READ-ONLY CONTEXT (do NOT edit these — for reference only):\n${readOnlyContext}\n\n` : "") +
     `PRE-EXECUTION CHECKLIST (MUST confirm verbally BEFORE outputting changes):\n` +
     `1. "I will modify at most ${maxFiles} file(s)."\n` +
     `2. "I will change at most ${maxLines} total lines."\n` +
@@ -284,20 +294,24 @@ function extractLineHint(prompt: string): number | null {
  * Extract a window of ~windowSize lines centered on the target line.
  * Falls back to first windowSize lines when no line hint is provided.
  */
-function extractLineWindow(content: string, lineHint: number | null, windowSize: number): { text: string; note: string } {
-  const lines = content.split('\n');
+function extractLineWindow(
+  content: string,
+  lineHint: number | null,
+  windowSize: number
+): { text: string; note: string } {
+  const lines = content.split("\n");
   if (lineHint === null || lineHint <= 0) {
     // No hint — use first windowSize lines
     const sliced = lines.slice(0, windowSize);
-    const note = lines.length > windowSize ? ` (lines 1-${windowSize} of ${lines.length})` : '';
-    return { text: sliced.join('\n'), note };
+    const note = lines.length > windowSize ? ` (lines 1-${windowSize} of ${lines.length})` : "";
+    return { text: sliced.join("\n"), note };
   }
   const half = Math.floor(windowSize / 2);
   const start = Math.max(0, lineHint - 1 - half);
   const end = Math.min(lines.length, start + windowSize);
   const sliced = lines.slice(start, end);
   const note = ` (lines ${start + 1}-${end} of ${lines.length}, centered on line ${lineHint})`;
-  return { text: sliced.join('\n'), note };
+  return { text: sliced.join("\n"), note };
 }
 
 /**
@@ -310,23 +324,27 @@ async function resolveWithSourceRoots(filePath: string, cwd: string, sourceRoots
     await readFile(join(cwd, filePath));
     return filePath;
   } catch {
-    for (const root of (sourceRoots ?? [])) {
-      const prefix = root.endsWith('/') ? root : root + '/';
+    for (const root of sourceRoots ?? []) {
+      const prefix = root.endsWith("/") ? root : root + "/";
       // Try 1: direct prepend (e.g. 'server/' + 'routes/foo.ts')
       const direct = prefix + filePath;
       try {
         await readFile(join(cwd, direct));
         return direct;
-      } catch { /* not found */ }
+      } catch {
+        /* not found */
+      }
       // Try 2: strip first path segment from filePath when it overlaps with the source root
       // e.g. sourceRoot='client/src/', filePath='src/pages/X.tsx' → 'client/src/pages/X.tsx'
-      const stripped = filePath.replace(/^[^/]+\//, '');
+      const stripped = filePath.replace(/^[^/]+\//, "");
       if (stripped !== filePath) {
         const withStripped = prefix + stripped;
         try {
           await readFile(join(cwd, withStripped));
           return withStripped;
-        } catch { /* not found */ }
+        } catch {
+          /* not found */
+        }
       }
     }
     return filePath; // fall back to original
@@ -343,8 +361,8 @@ export function buildTestCandidates(filePath: string): string[] {
   const ext = extMatch[1];
   const base = filePath.slice(0, filePath.length - ext.length - 1);
   const dir = dirname(filePath);
-  const filename = base.slice(dir === '.' ? 0 : dir.length + 1);
-  const dirPrefix = dir === '.' ? '' : dir + '/';
+  const filename = base.slice(dir === "." ? 0 : dir.length + 1);
+  const dirPrefix = dir === "." ? "" : dir + "/";
   return [
     `${base}.test.${ext}`,
     `${base}.spec.${ext}`,
@@ -367,11 +385,17 @@ export function extractRelativeImports(content: string, filePath: string): strin
     const importPath = match[1];
     // If the import already has a source extension, use it directly (+ .ts swap for .js)
     const tryExts = /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(importPath)
-      ? [importPath, importPath.replace(/\.js$/, '.ts'), importPath.replace(/\.jsx$/, '.tsx')]
-      : [`${importPath}.ts`, `${importPath}.tsx`, `${importPath}.js`, `${importPath}/index.ts`, `${importPath}/index.js`];
+      ? [importPath, importPath.replace(/\.js$/, ".ts"), importPath.replace(/\.jsx$/, ".tsx")]
+      : [
+          `${importPath}.ts`,
+          `${importPath}.tsx`,
+          `${importPath}.js`,
+          `${importPath}/index.ts`,
+          `${importPath}/index.js`,
+        ];
 
     for (const candidate of tryExts) {
-      const resolved = join(dir, candidate).replace(/\\/g, '/');
+      const resolved = join(dir, candidate).replace(/\\/g, "/");
       if (seen.has(resolved)) {
         break; // already included an equivalent import — skip whole import
       }
@@ -394,13 +418,13 @@ function extractTargetFiles(prompt: string, _cwd: string): string[] {
   // Pattern 1: "Path: ./server/routes/groups.ts"
   const pathMatches = prompt.matchAll(/^Path:\s*(.+)$/gm);
   for (const m of pathMatches) {
-    files.add(m[1].trim().replace(/^\.\//, ''));
+    files.add(m[1].trim().replace(/^\.\//, ""));
   }
 
   // Pattern 2: "FILES TO FIX:" block with "  - path" lines
   const filesBlock = prompt.match(/FILES TO FIX[^:]*:\n((?:\s+-\s+.+\n?)+)/);
   if (filesBlock) {
-    const lines = filesBlock[1].split('\n');
+    const lines = filesBlock[1].split("\n");
     for (const line of lines) {
       const m = line.match(/^\s+-\s+(.+)/);
       if (m) files.add(m[1].trim());
@@ -408,7 +432,9 @@ function extractTargetFiles(prompt: string, _cwd: string): string[] {
   }
 
   // Pattern 3: References to .ts/.js/.tsx/.jsx/.py files in issue descriptions
-  const fileRefMatches = prompt.matchAll(/(?:^|\s)((?:src|lib|server|client|app|test|tests|packages)\/[\w/.-]+\.(?:ts|tsx|js|jsx|py|go|rs))/gm);
+  const fileRefMatches = prompt.matchAll(
+    /(?:^|\s)((?:src|lib|server|client|app|test|tests|packages)\/[\w/.-]+\.(?:ts|tsx|js|jsx|py|go|rs))/gm
+  );
   for (const m of fileRefMatches) {
     files.add(m[1].trim());
   }
@@ -422,10 +448,10 @@ function extractTargetFiles(prompt: string, _cwd: string): string[] {
  */
 function normalizePath(filePath: string, cwd: string): string | null {
   let p = filePath.trim();
-  if (p.startsWith(cwd + '/') || p.startsWith(cwd + '\\')) {
+  if (p.startsWith(cwd + "/") || p.startsWith(cwd + "\\")) {
     p = p.slice(cwd.length + 1);
   }
-  if (p.startsWith('/') || p.includes('..') || p.startsWith('~')) {
+  if (p.startsWith("/") || p.includes("..") || p.startsWith("~")) {
     logger.warn(`[APIAgent] Skipping unsafe path: ${p}`);
     return null;
   }
@@ -443,7 +469,10 @@ function normalizePath(filePath: string, cwd: string): string | null {
  * search text was not found in the target file }. A non-zero searchMisses with zero written
  * indicates the LLM output contained edits but none could be applied (pre-flight failure).
  */
-export async function applyFileBlocks(output: string, cwd: string): Promise<{ written: string[]; searchMisses: number }> {
+export async function applyFileBlocks(
+  output: string,
+  cwd: string
+): Promise<{ written: string[]; searchMisses: number }> {
   const written: string[] = [];
 
   // Try EDIT: search/replace format first
@@ -463,28 +492,34 @@ export async function applyFileBlocks(output: string, cwd: string): Promise<{ wr
     // If not found, skip this edit and count as a miss instead of silently wasting a click.
     try {
       const absPath = join(cwd, filePath);
-      const content = await readFile(absPath, 'utf-8');
+      const content = await readFile(absPath, "utf-8");
 
       if (content.includes(searchText)) {
         const newContent = content.replace(searchText, replaceText);
-        await writeFile(absPath, newContent, 'utf-8');
+        await writeFile(absPath, newContent, "utf-8");
         editsApplied.add(filePath);
         logger.debug(`[APIAgent] Applied search/replace edit to ${filePath}`);
       } else {
         // Try with normalized whitespace (trim trailing spaces per line)
-        const normalizedContent = content.split('\n').map(l => l.trimEnd()).join('\n');
-        const normalizedSearch = searchText.split('\n').map(l => l.trimEnd()).join('\n');
+        const normalizedContent = content
+          .split("\n")
+          .map(l => l.trimEnd())
+          .join("\n");
+        const normalizedSearch = searchText
+          .split("\n")
+          .map(l => l.trimEnd())
+          .join("\n");
         if (normalizedContent.includes(normalizedSearch)) {
           // Find the original position and replace
-          const lines = content.split('\n');
-          const searchLines = searchText.split('\n');
-          const replaceLines = replaceText.split('\n');
+          const lines = content.split("\n");
+          const searchLines = searchText.split("\n");
+          const replaceLines = replaceText.split("\n");
           let found = false;
           for (let i = 0; i <= lines.length - searchLines.length; i++) {
             const slice = lines.slice(i, i + searchLines.length);
-            if (slice.map(l => l.trimEnd()).join('\n') === normalizedSearch) {
+            if (slice.map(l => l.trimEnd()).join("\n") === normalizedSearch) {
               lines.splice(i, searchLines.length, ...replaceLines);
-              await writeFile(absPath, lines.join('\n'), 'utf-8');
+              await writeFile(absPath, lines.join("\n"), "utf-8");
               editsApplied.add(filePath);
               found = true;
               logger.debug(`[APIAgent] Applied whitespace-normalized edit to ${filePath}`);
@@ -533,7 +568,7 @@ export async function applyFileBlocks(output: string, cwd: string): Promise<{ wr
         // File doesn't exist — safe to create
       }
       await mkdir(dirname(absPath), { recursive: true });
-      await writeFile(absPath, content, 'utf-8');
+      await writeFile(absPath, content, "utf-8");
       written.push(filePath);
       logger.debug(`[APIAgent] Created new file ${filePath} (${content.length} bytes)`);
     } catch (err) {
@@ -546,7 +581,7 @@ export async function applyFileBlocks(output: string, cwd: string): Promise<{ wr
 
 export function parseModifiedFiles(output: string): string[] {
   const files: string[] = [];
-  for (const line of output.split('\n')) {
+  for (const line of output.split("\n")) {
     const match = line.match(/^MODIFIED:\s*(.+)$/);
     if (match) files.push(match[1].trim());
   }
