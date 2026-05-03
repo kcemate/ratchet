@@ -52,17 +52,17 @@ describe('engine-guards', () => {
   });
 
   describe('resolveGuards', () => {
-    const mockTarget: Target = { name: 'test-repo', cwd: '/tmp/test' };
-    const mockConfig: RatchetConfig = { guards: undefined };
+    const mockTarget: Target = { name: 'test-repo', path: '/tmp/test', description: 'Test repo' };
+    const mockConfig: RatchetConfig = { agent: 'shell', defaults: { clicks: 1, testCommand: 'npm test', autoCommit: false }, targets: [], guards: undefined };
 
     it('should prioritize config.guards (CLI) over target.guards', () => {
-      const config: RatchetConfig = { guards: { maxFilesChanged: 99, maxLinesChanged: 999 } };
+      const config: RatchetConfig = { agent: 'shell', defaults: { clicks: 1, testCommand: 'npm test', autoCommit: false }, targets: [], guards: { maxFilesChanged: 99, maxLinesChanged: 999 } };
       const result = resolveGuards(mockTarget, config, 'normal');
       expect(result).toEqual({ maxFilesChanged: 99, maxLinesChanged: 999 });
     });
 
     it('should use target.guards when config.guards is undefined', () => {
-      const target: Target = { name: 'test-repo', cwd: '/tmp/test', guards: 'refactor' };
+      const target: Target = { name: 'test-repo', path: '/tmp/test', description: 'Test repo', guards: 'refactor' };
       const result = resolveGuards(target, mockConfig, 'normal');
       expect(result).toEqual({ maxFilesChanged: 12, maxLinesChanged: 280 });
     });
@@ -88,7 +88,7 @@ describe('engine-guards', () => {
     });
 
     it('should handle null guards (atomic)', () => {
-      const config: RatchetConfig = { guards: null };
+      const config: RatchetConfig = { agent: 'shell', defaults: { clicks: 1, testCommand: 'npm test', autoCommit: false }, targets: [], guards: null as any };
       const result = resolveGuards(mockTarget, config, 'normal');
       expect(result).toBeNull();
     });
