@@ -68,8 +68,8 @@ registerGraphCommand(program);
 
 // Hidden internal alias
 const torque = torqueCommand();
-torque.name('torque').hidden();
-program.addCommand(torque);
+torque.name('torque');
+program.addCommand(torque, { hidden: true });
 
 // Try to load ratchet-pro plugin (paid features)
 try {

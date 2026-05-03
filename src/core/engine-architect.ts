@@ -87,6 +87,7 @@ export async function runArchitectEngine(options: EngineRunOptions): Promise<Rat
         });
 
         const { click } = result;
+        click.number = clickNumber;
         let rolled_back = result.rolled_back;
         const elapsedSec = ((Date.now() - clickStartMs) / 1000).toFixed(1);
 

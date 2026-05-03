@@ -24,7 +24,10 @@ describe('createAgentContext', () => {
   });
 
   it('includes target description', () => {
-    const ctx = createAgentContext(makeTarget({ description: 'Fix error handling' }), 1);
+    const ctx = createAgentContext(
+      makeTarget({ description: 'Fix error handling' }),
+      1
+    );
     expect(ctx).toContain('Description: Fix error handling');
   });
 
@@ -77,15 +80,22 @@ describe('ShellAgent', () => {
     });
 
     it('returns a friendly timeout error message', async () => {
-      // Use a 1ms timeout so the sleep command definitely exceeds it
-      const agent = new ShellAgent({ command: 'sleep', extraArgs: [], timeout: 1 });
+      // Use the current Node binary for a cross-platform command that definitely exceeds the timeout.
+      const agent = new ShellAgent({
+        command: process.execPath,
+        extraArgs: ['-e', 'setTimeout(() => {}, 10_000)', '--'],
+        timeout: 1,
+      });
       const result = await agent.build('proposal', process.cwd());
       expect(result.success).toBe(false);
       expect(result.error).toMatch(/timed out/i);
     });
 
     it('returns a friendly ENOENT error message', async () => {
-      const agent = new ShellAgent({ command: 'nonexistent-command-xyz', extraArgs: [] });
+      const agent = new ShellAgent({
+        command: 'nonexistent-command-xyz',
+        extraArgs: [],
+      });
       const result = await agent.build('proposal', process.cwd());
       expect(result.success).toBe(false);
       expect(result.error).toMatch(/not found/i);
