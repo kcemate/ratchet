@@ -1,7 +1,7 @@
 {
   "name": "ratchet-run",
   "version": "1.2.0",
-  "description": "Autonomous code quality CLI — scan, score, and fix your codebase",
+  "description": "Security scanner for AI-generated code. Scan, score, and auto-fix what AI gets wrong — only changes that pass tests get committed.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -39,13 +39,21 @@
     "code-quality",
     "scanner",
     "automation",
-    "ratchet"
+    "ratchet",
+    "security",
+    "static-analysis",
+    "devtools",
+    "code-review",
+    "ai-generated-code"
   ],
   "author": "kcemate",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kcemate/ratchet.git"
+    "url": "git+https://github.com/kcemate/ratchet.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kcemate/ratchet/issues"
   },
   "homepage": "https://ratchetcli.com",
   "engines": {

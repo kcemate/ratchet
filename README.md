@@ -4,12 +4,12 @@
 
 > **Security scanner for AI-generated code.** Ratchet scans, scores, and auto-fixes what AI gets wrong — only changes that pass tests get committed.
 
-**Self-audit score: 89/100** (May 2026 — [we run on ourselves](https://github.com/kcemate/ratchet/actions/workflows/ci.yml))
+**Self-audit score: 100/100** (May 2026 — [we run on ourselves](https://github.com/kcemate/ratchet/actions/workflows/ci.yml))
 
 ```
 $ ratchet scan
 
-  🔒 Security Score: 89/100
+  🔒 Security Score: 100/100
 
   🧪 Testing         ████████████████       23/25
   🔒 Security        ███████████████████    15/15
@@ -29,6 +29,8 @@ ratchet init        # Set up your project
 ratchet scan        # Score your codebase
 ratchet scan --explain-deductions   # See what cost you points
 ```
+
+> _Installs the `ratchet` CLI. The npm package is named `ratchet-run` because `ratchet` was already taken on the registry._
 
 <details>
 <summary>More commands</summary>
@@ -97,17 +99,18 @@ $ ratchet improve --clicks 7
 | AI-powered semantic analysis  | ✅      | ❌               | ❌        | ❌         | ❌             |
 | Zero-config first run         | ✅      | ❌               | ❌        | ❌         | ✅             |
 | Open source core              | ✅      | ✅ (OSS edition) | ❌        | ❌         | ✅             |
-| Self-audit score (dogfood)    | 89/100  | N/A              | N/A       | N/A        | N/A            |
+| Self-audit score (dogfood)    | 100/100 | N/A              | N/A       | N/A        | N/A            |
 | Node.js native                | ✅      | ❌ (Python)      | ❌ (Java) | ❌ (OCaml) | ✅             |
 
 ---
 
 ## Privacy & Security
 
-- **Local-first**: All scanning runs on your machine. Your code never leaves your filesystem.
-- **BYOK**: Bring your own API key for AI features. Ratchet never sees or stores your credentials.
-- **Open source core**: MIT licensed. Audit the source at [github.com/kcemate/ratchet](https://github.com/kcemate/ratchet).
-- **Self-auditing**: We run Ratchet on Ratchet. Current score: 89/100.
+- **Local-first by default.** `ratchet scan` (without `--deep`) runs entirely on your machine with no network calls.
+- **AI features are opt-in and BYOK.** `ratchet scan --deep` and `ratchet improve` send relevant code snippets to your chosen model provider (Anthropic, OpenAI, Ollama) using your own API key — scoped to the file being analyzed, never the whole repo.
+- **No telemetry, ever.** Ratchet itself has no servers that see your code.
+- **Open source core.** MIT licensed. Audit the source at [github.com/kcemate/ratchet](https://github.com/kcemate/ratchet).
+- **Self-auditing.** We run Ratchet on Ratchet. Current score: 100/100.
 
 ---
 
