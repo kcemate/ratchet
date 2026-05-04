@@ -4,16 +4,3 @@ docs/
 *.md
 !README.md
 !LICENSE
-.gitignore
-.gitattributes
-.eslintrc*
-.prettierrc*
-tsconfig.json
-tsup.config.ts
-vitest.config.ts
-.github/
-action/
-api/
-datagen-scans/
-knowledge/
-results/
