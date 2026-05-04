@@ -17,19 +17,19 @@ describe("engine-utils.ts", () => {
   // ── createInitialRun() ─────────────────────────────────────────────────────
   describe("createInitialRun()", () => {
     it("returns a RatchetRun with the correct target", () => {
-      const target: Target = { repo: "/tmp/test-repo" };
+      const target: Target = { name: "test", path: "/tmp/test-repo", description: "Test repo" };
       const run = createInitialRun(target);
       expect(run.target).toBe(target);
     });
 
     it("assigns a valid UUID id", () => {
-      const target: Target = { repo: "/tmp/test-repo" };
+      const target: Target = { name: "test", path: "/tmp/test-repo", description: "Test repo" };
       const run = createInitialRun(target);
       expect(run.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     });
 
     it("initializes status to running and empty clicks array", () => {
-      const target: Target = { repo: "/tmp/test-repo" };
+      const target: Target = { name: "test", path: "/tmp/test-repo", description: "Test repo" };
       const run = createInitialRun(target);
       expect(run.status).toBe("running");
       expect(run.clicks).toEqual([]);
@@ -37,7 +37,7 @@ describe("engine-utils.ts", () => {
 
     it("sets startedAt to a recent Date", () => {
       const before = new Date().getTime();
-      const run = createInitialRun({ repo: "/tmp/test-repo" });
+      const run = createInitialRun({ name: "test", path: "/tmp/test-repo", description: "Test repo" });
       const after = new Date().getTime();
       expect(run.startedAt.getTime()).toBeGreaterThanOrEqual(before);
       expect(run.startedAt.getTime()).toBeLessThanOrEqual(after);

@@ -17,7 +17,7 @@ jobs:
 
       - name: Ratchet Code Quality Scan
         id: ratchet
-        uses: giovanni-labs/ratchet@v1
+        uses: kcemate/ratchet@v1
         # No threshold — never fails, just scores
 
       - name: Commit scan JSON so badge stays fresh

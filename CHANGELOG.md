@@ -3,6 +3,20 @@
 All notable changes to ratchet-run are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.2.0] - 2026-05-03
+
+### Changed
+
+- Cleaned public repo positioning and npm metadata for the `ratchet-run` package.
+- Documented the package-name / CLI-name distinction: package `ratchet-run`, installed command `ratchet`.
+- Updated README privacy language to distinguish local scan mode from opt-in BYOK AI features.
+
+### Fixed
+
+- Restored resume-facing quality gates and Ratchet self-scan to 100/100 with no deductions.
+- Hardened repo hygiene by removing committed local artifacts, generated cache files, and one-off fix scripts.
+- Tightened CI, lint-staged, formatting, and package hygiene configuration.
+
 ## [1.0.8] - 2025-03-23
 
 ### Fixed

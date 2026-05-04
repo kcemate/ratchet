@@ -1,6 +1,6 @@
 #!/bin/bash
 # run.sh — composite action entry point for ratchet-code-quality-scan
-# https://github.com/giovanni-labs/ratchet-code-quality-scan
+# https://github.com/kcemate/ratchet
 
 set -euo pipefail
 
@@ -254,7 +254,7 @@ ${DELTA_LINE}
 [![Ratchet Score](${BADGE_URL})](https://github.com/${GITHUB_REPOSITORY}/actions)
 
 $(if [ -n "$CAT_TABLE" ]; then printf "### Category Breakdown\n\n${CAT_TABLE}\n"; fi)
-> [View scan JSON](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/${WORKING_DIRECTORY}/ratchet-scan.json) · Powered by [ratchet-run](https://github.com/giovanni-labs/ratchet)
+> [View scan JSON](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/${WORKING_DIRECTORY}/ratchet-scan.json) · Powered by [ratchet-run](https://github.com/kcemate/ratchet)
 "
 
     # Escape for JSON

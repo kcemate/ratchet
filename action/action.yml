@@ -1,65 +1,65 @@
-name: 'Ratchet'
-description: 'Autonomously improve your codebase with AI-powered iterative refinement'
-author: 'Ratchet'
+name: "Ratchet"
+description: "Autonomously improve your codebase with AI-powered iterative refinement"
+author: "Ratchet"
 
 branding:
-  icon: 'zap'
-  color: 'purple'
+  icon: "zap"
+  color: "purple"
 
 inputs:
   target:
-    description: 'Target directory to improve (uses auto-detect if not set)'
+    description: "Target directory to improve (uses auto-detect if not set)"
     required: false
-    default: ''
+    default: ""
   clicks:
-    description: 'Number of improvement iterations to run'
+    description: "Number of improvement iterations to run"
     required: false
-    default: '7'
+    default: "7"
   mode:
-    description: 'Improvement mode: normal or harden'
+    description: "Improvement mode: normal or harden"
     required: false
-    default: 'normal'
+    default: "normal"
   api-key:
-    description: 'OpenRouter, Anthropic, or OpenAI API key'
+    description: "OpenRouter, Anthropic, or OpenAI API key"
     required: true
   license-key:
-    description: 'Ratchet Pro license key'
+    description: "Ratchet Pro license key"
     required: false
-    default: ''
+    default: ""
   create-pr:
-    description: 'Open a pull request with the improvements'
+    description: "Open a pull request with the improvements"
     required: false
-    default: 'true'
+    default: "true"
   pr-title:
-    description: 'Title for the pull request'
+    description: "Title for the pull request"
     required: false
-    default: ''
+    default: ""
 
 outputs:
   pr-url:
-    description: 'URL of the created pull request (empty if create-pr is false)'
+    description: "URL of the created pull request (empty if create-pr is false)"
     value: ${{ steps.ratchet.outputs.pr-url }}
   score-before:
-    description: 'Production Readiness Score before improvements'
+    description: "Production Readiness Score before improvements"
     value: ${{ steps.ratchet.outputs.score-before }}
   score-after:
-    description: 'Production Readiness Score after improvements'
+    description: "Production Readiness Score after improvements"
     value: ${{ steps.ratchet.outputs.score-after }}
   clicks-landed:
-    description: 'Number of improvement clicks that landed'
+    description: "Number of improvement clicks that landed"
     value: ${{ steps.ratchet.outputs.clicks-landed }}
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Set up Node.js 18
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: "18"
 
     - name: Install Ratchet CLI
       shell: bash
-      run: npm install -g ratchet
+      run: npm install -g ratchet-run
 
     - name: Run Ratchet
       id: ratchet

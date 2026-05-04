@@ -3,18 +3,18 @@ name: Ratchet — Auto-Improve
 on:
   # Run on a schedule (weekly)
   schedule:
-    - cron: '0 9 * * 1'  # Every Monday at 09:00 UTC
+    - cron: "0 9 * * 1" # Every Monday at 09:00 UTC
   # Or trigger manually
   workflow_dispatch:
     inputs:
       clicks:
-        description: 'Number of improvement iterations'
+        description: "Number of improvement iterations"
         required: false
-        default: '7'
+        default: "7"
       mode:
-        description: 'Mode: normal or harden'
+        description: "Mode: normal or harden"
         required: false
-        default: 'normal'
+        default: "normal"
 
 permissions:
   contents: write
@@ -31,12 +31,12 @@ jobs:
 
       - name: Run Ratchet
         id: ratchet
-        uses: ratchet-dev/ratchet@v1
+        uses: kcemate/ratchet@v1
         with:
           api-key: ${{ secrets.OPENROUTER_API_KEY }}
           clicks: ${{ github.event.inputs.clicks || '7' }}
           mode: ${{ github.event.inputs.mode || 'normal' }}
-          create-pr: 'true'
+          create-pr: "true"
 
       - name: Print Results
         run: |

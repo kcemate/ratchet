@@ -17,10 +17,10 @@ jobs:
 
       - name: Ratchet Code Quality Scan
         id: ratchet
-        uses: giovanni-labs/ratchet@v1
+        uses: kcemate/ratchet@v1
         with:
-          threshold: '70'
-          category-thresholds: 'Security=80,Testing=60'
+          threshold: "70"
+          category-thresholds: "Security=80,Testing=60"
 
       - name: Print score
         if: always()
