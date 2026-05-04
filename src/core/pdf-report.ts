@@ -1,4 +1,3 @@
-import puppeteer from "puppeteer";
 import { mkdir, writeFile } from "fs/promises";
 import { dirname, join } from "path";
 import type { Click } from "../types.js";
@@ -689,7 +688,16 @@ export async function generatePDF(options: ReportOptions): Promise<Buffer> {
     const { writeFileSync } = await import("fs");
     writeFileSync("/tmp/ratchet-report-debug.html", html);
   }
-  const browser = await puppeteer.launch({
+  let puppeteer: typeof import("puppeteer");
+  try {
+    puppeteer = await import("puppeteer");
+  } catch {
+    throw new Error(
+      "PDF reports require the optional puppeteer dependency. Install optional dependencies or run `npm install puppeteer` before using `ratchet report --pdf`."
+    );
+  }
+
+  const browser = await puppeteer.default.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
