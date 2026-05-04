@@ -2,7 +2,7 @@ name: Nightly Quality Scan
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # 02:00 UTC every night
+    - cron: "0 2 * * *" # 02:00 UTC every night
   workflow_dispatch:
 
 permissions:
@@ -17,9 +17,9 @@ jobs:
 
       - name: Ratchet Code Quality Scan
         id: ratchet
-        uses: giovanni-labs/ratchet@v1
+        uses: kcemate/ratchet@v1
         with:
-          explain: 'true'
+          explain: "true"
 
       - name: Post results to Slack
         if: always()

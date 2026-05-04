@@ -76,3 +76,15 @@ docs/architecture-review-*.md
 /REPO-SPLIT-PLAN.md
 /notes.md
 /fix.awk
+
+# === Local Ratchet / internal iteration artifacts ===
+.ratchet.yml
+/docs/competitive-intel/
+/docs/prompt-iterations/
+/docs/map.md
+/docs/push.md
+/docs/x-thread-*.md
+/bin/generate-*
+/bin/generate_*
+/bin/wiki_*
+/bin/test-script.sh
