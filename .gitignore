@@ -50,6 +50,7 @@ docs/architecture-review-*.md
 .gitnexus/
 .brv/
 .wrangler/
+.herenow/
 .cursor/
 .aider/
 .zed/
