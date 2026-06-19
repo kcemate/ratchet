@@ -62,6 +62,7 @@ docs/architecture-review-*.md
 /Documents/
 *.tmp
 *.bak
+*.backup*
 *.orig
 
 # === QA / test generators (move to scripts/ if you want to keep them) ===

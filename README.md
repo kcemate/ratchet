@@ -129,6 +129,18 @@ See [ratchetcli.com](https://ratchetcli.com) for Pro pricing.
 
 ---
 
+## Architecture
+
+Ratchet is a commander CLI over a pluggable scan engine and a test-gated auto-fix loop:
+
+- **Classic engine** (`src/core/engines/`) — deterministic, local AST analysis via `ts-morph`, scoring 0–100 across six weighted categories.
+- **Deep engine** (`src/core/providers/`) — opt-in, BYOK LLM analysis behind a provider-agnostic interface.
+- **Auto-fix "click" loop** (`src/core/click.ts`) — picks the highest-impact finding, applies an AST transform or agent fix, then **commits only if the build and full test suite still pass** (otherwise it rolls back). The score is monotonic by construction.
+
+See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the full subsystem breakdown and data flow.
+
+---
+
 ## Development
 
 ```bash
