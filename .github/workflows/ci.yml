@@ -14,10 +14,13 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: rm -rf ~/.cache/puppeteer/chrome && npm exec puppeteer -- browsers install chrome
+      - uses: browser-actions/setup-chrome@v2
+        id: setup-chrome
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
       - run: npm run build
 
   self-audit:
